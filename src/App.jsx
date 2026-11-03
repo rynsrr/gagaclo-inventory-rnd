@@ -8,6 +8,7 @@ import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
 import { BoxQrModal } from './components/BoxQrModal';
 import { QuickScannerModal } from './components/QuickScannerModal';
+import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
 import { 
   FileText, 
   Box as BoxIcon, 
@@ -19,6 +20,7 @@ import {
 const AppContent = () => {
   // Mode selection: default to 'simple-cards' for ultra simple & practical flow!
   const [appMode, setAppMode] = useState('simple-cards'); // 'simple-cards', '3d-warehouse', 'rack-map', 'manifests'
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
@@ -112,7 +114,9 @@ const AppContent = () => {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {appMode === 'simple-cards' && <SimpleInventoryView />}
-        {appMode === '3d-warehouse' && <Warehouse3DView />}
+        {appMode === '3d-warehouse' && (
+          <Warehouse3DView onOpenLabelPrintModal={() => setIsLabelModalOpen(true)} />
+        )}
         {appMode === 'rack-map' && <RackView />}
         {appMode === 'manifests' && <PrintableManifestView />}
       </main>
@@ -134,6 +138,10 @@ const AppContent = () => {
       <ItemModal />
       <BoxQrModal />
       <QuickScannerModal />
+      <BoxLabelPrintModal 
+        isOpen={isLabelModalOpen} 
+        onClose={() => setIsLabelModalOpen(false)} 
+      />
       
     </div>
   );

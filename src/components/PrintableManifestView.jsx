@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { Printer, Download, Eye, QrCode, FileText, Check } from 'lucide-react';
+import { BoxLabel } from './BoxLabel';
 import QRCode from 'qrcode';
 
 export const PrintableManifestView = () => {
@@ -256,12 +257,12 @@ export const PrintableManifestView = () => {
         </div>
       )}
 
-      {/* MODE 2: STICKER VIEW (PRINTABLE QR BOX STICKERS FOR 72 BOXES) */}
+      {/* MODE 2: STICKER VIEW (PRINTABLE OFFICIAL BOX LABELS FOR 72 BOXES) */}
       {viewMode === 'stickers' && (
         <div className="space-y-4">
           <div className="no-print bg-blue-50 border border-blue-200 text-blue-900 p-4 rounded-xl text-xs flex items-center justify-between">
             <div>
-              <strong>Petunjuk Cetak Stiker Box:</strong> Tampilan ini siap cetak di kertas stiker label. Berisi kode QR, nomor box, nama PIC PPIC, dan lokasi rak untuk ditempelkan pada fisik box di gudang.
+              <strong>Format Label Box Fisik:</strong> Tampilan ini siap cetak di kertas stiker label atau kertas HVS A4. Desain persis dengan standar GAGACLO (SAMPLE BOX / MATERIAL BOX, nomor raksasa, bar nama PIC, dan lokasi rak).
             </div>
             <button
               onClick={handlePrint}
@@ -271,58 +272,13 @@ export const PrintableManifestView = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 print:grid-cols-3 print:gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-items-center print:grid-cols-2 print:gap-4 print:p-2">
             {boxes.map((box) => (
               <div 
                 key={box.boxNumber}
-                className="bg-white border-2 border-black p-4 rounded-lg flex flex-col justify-between print-break-inside-avoid shadow-xs"
+                className="print:break-inside-avoid print:page-break-inside-avoid"
               >
-                {/* Header */}
-                <div className="flex items-start justify-between border-b-2 border-black pb-2 mb-2">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider block text-slate-600">
-                      GAGACLO RND STORAGE
-                    </span>
-                    <h3 className="text-2xl font-black text-black leading-none mt-1">
-                      BOX #{box.boxNumber}
-                    </h3>
-                  </div>
-                  <span className="bg-black text-white text-[10px] font-black px-2 py-0.5 uppercase tracking-wider">
-                    {box.category}
-                  </span>
-                </div>
-
-                {/* Content with QR */}
-                <div className="flex items-center space-x-3 my-2">
-                  {qrCodes[box.boxNumber] ? (
-                    <img 
-                      src={qrCodes[box.boxNumber]} 
-                      alt={`QR Box ${box.boxNumber}`} 
-                      className="w-16 h-16 border border-slate-300 rounded"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-slate-100 flex items-center justify-center text-xs font-mono">
-                      QR
-                    </div>
-                  )}
-
-                  <div className="flex-1 text-xs space-y-1">
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase block">PIC PPIC:</span>
-                      <strong className="text-sm font-black text-black">#{box.ppicNumber} {box.picName}</strong>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase block">Lokasi:</span>
-                      <span className="text-[11px] font-bold text-slate-800">{box.rackName}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="pt-2 border-t border-slate-300 text-[9px] text-slate-600 flex items-center justify-between font-mono">
-                  <span>{box.code}</span>
-                  <span>Dok: 20261102</span>
-                </div>
+                <BoxLabel box={box} isPrintMode={true} />
               </div>
             ))}
           </div>

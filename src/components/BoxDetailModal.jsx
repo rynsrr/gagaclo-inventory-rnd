@@ -20,8 +20,10 @@ import {
   FileText,
   Save,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Printer
 } from 'lucide-react';
+import { BoxLabel } from './BoxLabel';
 
 export const BoxDetailModal = () => {
   const { 
@@ -46,6 +48,11 @@ export const BoxDetailModal = () => {
   const [boxNotes, setBoxNotes] = useState(box.notes || '');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [showBoxLabelModal, setShowBoxLabelModal] = useState(false);
+
+  const handlePrintLabel = () => {
+    setShowBoxLabelModal(true);
+  };
 
   const handleSaveNotes = () => {
     setIsSavingNotes(true);
@@ -113,12 +120,12 @@ export const BoxDetailModal = () => {
 
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setQrModalBox(box)}
-              className="flex items-center space-x-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition"
-              title="Cetak Label QR Box"
+              onClick={() => setShowBoxLabelModal(true)}
+              className="flex items-center space-x-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg shadow-sm transition"
+              title="Cetak Label Stiker Box (Desain Resmi)"
             >
-              <QrCode className="w-4 h-4 text-sky-400" />
-              <span className="hidden sm:inline">Label QR</span>
+              <Printer className="w-4 h-4" />
+              <span>Cetak Label Box</span>
             </button>
             <button
               onClick={() => setSelectedBoxNumber(null)}
@@ -319,15 +326,60 @@ export const BoxDetailModal = () => {
         {/* Footer */}
         <div className="bg-slate-100 px-5 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span>Nomor Box: <strong>{box.boxNumber} of 72</strong></span>
-          <button
-            onClick={() => setSelectedBoxNumber(null)}
-            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg transition"
-          >
-            Tutup
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowBoxLabelModal(true)}
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition flex items-center space-x-1"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Label Box Fisik</span>
+            </button>
+            <button
+              onClick={() => setSelectedBoxNumber(null)}
+              className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg transition"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
 
       </div>
+
+      {/* Box Label Print Modal Preview */}
+      {showBoxLabelModal && (
+        <div className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full flex flex-col items-center animate-fade-in">
+            <div className="no-print w-full flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
+              <h3 className="font-black text-slate-900 text-sm">Preview Label Box #{box.boxNumber}</h3>
+              <button onClick={() => setShowBoxLabelModal(false)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Exact Box Label Component */}
+            <div className="my-2">
+              <BoxLabel box={box} isPrintMode={true} />
+            </div>
+
+            {/* Print & Close Buttons */}
+            <div className="no-print w-full flex items-center justify-end space-x-2 pt-4 border-t border-slate-100">
+              <button
+                onClick={() => setShowBoxLabelModal(false)}
+                className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Tutup
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-md"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Cetak Label Ini</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

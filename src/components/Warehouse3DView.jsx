@@ -17,7 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-export const Warehouse3DView = () => {
+export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
   const containerRef = useRef(null);
   const { 
     racks, 
@@ -25,8 +25,7 @@ export const Warehouse3DView = () => {
     items, 
     ppicMembers, 
     getItemsInBox, 
-    setSelectedBoxNumber,
-    setQrModalBox 
+    setSelectedBoxNumber 
   } = useInventory();
 
   // Filter / view state
@@ -43,7 +42,7 @@ export const Warehouse3DView = () => {
   const boxMeshesRef = useRef([]);
   const animationFrameIdRef = useRef(null);
 
-  // PPIC color palette for 3D boxes
+  // PPIC color palette for 3D boxes body
   const ppicColorMap = {
     'Royan': 0x4f46e5,   // Indigo
     'Cynara': 0x9333ea,  // Purple
@@ -52,53 +51,68 @@ export const Warehouse3DView = () => {
     'Hanami': 0xe11d48,  // Rose
   };
 
-  // Helper to create label texture for each box front face
-  const createBoxFaceTexture = (boxNumber, picName, category) => {
+  /**
+   * Generates high-res canvas texture matching the exact user Box Label:
+   * Header: SAMPLE BOX / MATERIAL BOX
+   * Center: Giant Box Number
+   * Divider Line
+   * Lavender bar (#c8d0ff) with PIC Name
+   * Rack & Location Subtitle
+   * Footer: INVENTORY MANAGEMENT RND
+   */
+  const createBoxFaceTexture = (boxNumber, picName, category, rackName, rackDescription) => {
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 512;
+    canvas.height = 384; // 4:3 aspect ratio
     const ctx = canvas.getContext('2d');
 
-    // Background: Box Cardboard / Label
+    // 1. Background White
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillRect(0, 0, 512, 384);
 
-    // Border
+    // 2. Thick Outer Black Border
     ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 10;
-    ctx.strokeRect(5, 5, 246, 246);
+    ctx.lineWidth = 14;
+    ctx.strokeRect(7, 7, 498, 370);
 
-    // Header banner
-    ctx.fillStyle = category === 'SAMPLE' ? '#f59e0b' : '#10b981';
-    ctx.fillRect(10, 10, 236, 45);
-
+    // 3. Header: SAMPLE BOX or MATERIAL BOX
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 22px system-ui, sans-serif';
+    ctx.font = 'bold 36px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(category, 128, 42);
+    const headerTitle = category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX';
+    ctx.fillText(headerTitle, 256, 52);
 
-    // Big Box Number
-    ctx.fillStyle = '#0f172a';
-    ctx.font = '900 68px system-ui, sans-serif';
-    ctx.fillText(`BOX ${boxNumber}`, 128, 135);
+    // 4. Giant Box Number
+    ctx.fillStyle = '#000000';
+    ctx.font = '900 150px system-ui, sans-serif';
+    ctx.fillText(String(boxNumber), 256, 205);
 
-    // Divider
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 4;
+    // 5. Black Divider Line
+    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.moveTo(30, 160);
-    ctx.lineTo(226, 160);
+    ctx.moveTo(14, 230);
+    ctx.lineTo(498, 230);
     ctx.stroke();
 
-    // PIC Name
-    ctx.fillStyle = '#334155';
-    ctx.font = 'bold 26px system-ui, sans-serif';
-    ctx.fillText(`PIC: ${picName}`, 128, 200);
+    // 6. Lavender Bar for PIC Name (matching user image #c8d0ff)
+    ctx.fillStyle = '#c8d0ff';
+    ctx.fillRect(14, 234, 484, 60);
 
-    // Subtext
-    ctx.fillStyle = '#64748b';
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText('GAGACLO R&D', 128, 230);
+    // PIC Name text
+    ctx.fillStyle = '#000000';
+    ctx.font = '900 42px system-ui, sans-serif';
+    ctx.fillText(picName, 256, 278);
+
+    // 7. Rack & Location Subtitle
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 20px system-ui, sans-serif';
+    const locationText = `${rackName}  |  ${rackDescription || ''}`;
+    ctx.fillText(locationText, 256, 326);
+
+    // 8. Footer: INVENTORY MANAGEMENT RND
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 16px system-ui, sans-serif';
+    ctx.fillText('INVENTORY MANAGEMENT RND', 256, 356);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -143,7 +157,7 @@ export const Warehouse3DView = () => {
     controlsRef.current = controls;
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
     scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
@@ -195,15 +209,15 @@ export const Warehouse3DView = () => {
     scene.add(aisleLine2);
 
     // Build the 5 3D Physical Racks
-    // Layout:
-    // Rack 1 & Rack 2 (SAMPLE) on the Left/Front aisle
-    // Rack 3, Rack 4, Rack 5 (MATERIAL) on the Right/Back aisle
+    // Rack 1: Blue rack (16 boxes)
+    // Rack 2: White rack (20 boxes)
+    // Rack 3, 4, 5: White rack (12 boxes each)
     const rackPositions = [
-      { rackId: 1, x: -16, z: 0, cols: 4, rows: 4, beamColor: 0x1d4ed8 }, // Rack 1: Blue rack (16 boxes)
-      { rackId: 2, x: -6,  z: 0, cols: 4, rows: 5, beamColor: 0xe2e8f0 }, // Rack 2: White rack (20 boxes)
-      { rackId: 3, x: 6,   z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 }, // Rack 3: White rack (12 boxes)
-      { rackId: 4, x: 15,  z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 }, // Rack 4: White rack (12 boxes)
-      { rackId: 5, x: 24,  z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 }, // Rack 5: White rack (12 boxes)
+      { rackId: 1, x: -16, z: 0, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
+      { rackId: 2, x: -6,  z: 0, cols: 4, rows: 5, beamColor: 0xe2e8f0 },
+      { rackId: 3, x: 6,   z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      { rackId: 4, x: 15,  z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      { rackId: 5, x: 24,  z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
     ];
 
     const boxMeshes = [];
@@ -274,7 +288,7 @@ export const Warehouse3DView = () => {
         scene.add(deck);
       }
 
-      // 3. Rack Top Label Plate
+      // 3. Rack Top Sign Plate
       const labelCanvas = document.createElement('canvas');
       labelCanvas.width = 256;
       labelCanvas.height = 64;
@@ -282,7 +296,7 @@ export const Warehouse3DView = () => {
       lctx.fillStyle = rackData.category === 'SAMPLE' ? '#f59e0b' : '#10b981';
       lctx.fillRect(0, 0, 256, 64);
       lctx.fillStyle = '#000000';
-      lctx.font = 'bold 32px sans-serif';
+      lctx.font = 'bold 30px sans-serif';
       lctx.textAlign = 'center';
       lctx.fillText(rackData.name, 128, 44);
 
@@ -293,8 +307,7 @@ export const Warehouse3DView = () => {
       sign.position.set(rx, totalRackHeight + 0.45, rz + halfD + 0.05);
       scene.add(sign);
 
-      // 4. Place 3D Boxes on the Shelves
-      // Get all boxes belonging to this rack
+      // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
       const rackBoxes = boxes.filter((b) => b.rackId === rackConf.rackId);
 
       rackBoxes.forEach((boxObj, index) => {
@@ -309,30 +322,35 @@ export const Warehouse3DView = () => {
         // Box geometry: 1.35m wide, 0.75m high, 1.1m deep
         const boxGeo = new THREE.BoxGeometry(1.35, 0.75, 1.1);
 
-        // Box materials: 6 sides
-        // Side 4 is front face (faces +Z)
-        const frontTexture = createBoxFaceTexture(boxObj.boxNumber, boxObj.picName, boxObj.category);
+        // Exact front label texture matching user uploaded image
+        const frontTexture = createBoxFaceTexture(
+          boxObj.boxNumber, 
+          boxObj.picName, 
+          boxObj.category,
+          boxObj.rackName,
+          boxObj.rackDescription
+        );
         const baseColor = ppicColorMap[boxObj.picName] || 0x3b82f6;
 
         const sideMat = new THREE.MeshStandardMaterial({
-          color: baseColor,
+          color: 0xffffff,
           roughness: 0.6,
-          metalness: 0.1,
+          metalness: 0.05,
         });
 
         const frontMat = new THREE.MeshStandardMaterial({
           map: frontTexture,
-          roughness: 0.4,
-          metalness: 0.1,
+          roughness: 0.3,
+          metalness: 0.05,
         });
 
-        // Materials array: [right, left, top, bottom, front, back]
+        // Materials: [right, left, top, bottom, front, back]
         const materials = [
           sideMat,
           sideMat,
           sideMat,
           sideMat,
-          frontMat, // Front
+          frontMat, // Front face has the official label
           sideMat,
         ];
 
@@ -341,7 +359,7 @@ export const Warehouse3DView = () => {
         boxMesh.castShadow = true;
         boxMesh.receiveShadow = true;
 
-        // Store custom metadata
+        // Metadata
         boxMesh.userData = {
           boxNumber: boxObj.boxNumber,
           code: boxObj.code,
@@ -376,12 +394,10 @@ export const Warehouse3DView = () => {
       if (intersects.length > 0) {
         const hit = intersects[0].object;
         if (currentHoveredMesh !== hit) {
-          // Restore previous
           if (currentHoveredMesh) {
             currentHoveredMesh.position.y = currentHoveredMesh.userData.initialY;
           }
           currentHoveredMesh = hit;
-          // Hover lift animation
           currentHoveredMesh.position.y = currentHoveredMesh.userData.initialY + 0.12;
 
           const boxData = boxes.find(b => b.boxNumber === hit.userData.boxNumber);
@@ -480,7 +496,6 @@ export const Warehouse3DView = () => {
     if (!controlsRef.current || !cameraRef.current) return;
 
     if (rackId === 'ALL') {
-      // Zoom out overview
       cameraRef.current.position.set(0, 18, 38);
       controlsRef.current.target.set(0, 4, 0);
     } else {
@@ -509,18 +524,26 @@ export const Warehouse3DView = () => {
             <span className="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
               Interactive 3D Warehouse
             </span>
-            <span className="text-xs text-slate-400">WebGL 3D Engine • 72 Boxes</span>
+            <span className="text-xs text-slate-400">WebGL 3D Engine • Label Box Sesuai Format Asli</span>
           </div>
           <h2 className="text-xl font-black tracking-tight mt-1">
-            Visualisasi 3D Rak Fisik & Box Penyimpanan
+            Visualisasi 3D Rak Fisik & Label Box (1 - 72)
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Klik dan seret mouse untuk memutar 360°, scroll untuk zoom, dan <strong>klik box mana pun</strong> untuk membuka isi dan mencetak kartu.
+            Setiap box 3D menampilkan <strong>Label Box resmi</strong> dengan nomor raksasa dan nama PIC PPIC. Klik box untuk melihat isi & print.
           </p>
         </div>
 
-        {/* Camera Quick Buttons */}
+        {/* Camera Quick Buttons & Print All Labels */}
         <div className="flex items-center flex-wrap gap-2 text-xs">
+          <button
+            onClick={() => onOpenLabelPrintModal && onOpenLabelPrintModal()}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition shadow-sm"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Cetak Stiker Label Box</span>
+          </button>
+
           <button
             onClick={() => focusOnRack('ALL')}
             className={`px-3 py-1.5 rounded-lg font-bold transition ${
@@ -617,7 +640,7 @@ export const Warehouse3DView = () => {
                 highlightCategory === 'SAMPLE' ? 'bg-amber-400 text-slate-950' : 'text-slate-400'
               }`}
             >
-              SAMPLE (Rak 1-2)
+              SAMPLE
             </button>
             <button
               onClick={() => setHighlightCategory('MATERIAL')}
@@ -625,7 +648,7 @@ export const Warehouse3DView = () => {
                 highlightCategory === 'MATERIAL' ? 'bg-emerald-400 text-slate-950' : 'text-slate-400'
               }`}
             >
-              MATERIAL (Rak 3-5)
+              MATERIAL
             </button>
           </div>
 
@@ -644,7 +667,7 @@ export const Warehouse3DView = () => {
               <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
                 hoveredBox.category === 'SAMPLE' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
               }`}>
-                {hoveredBox.category}
+                {hoveredBox.category} BOX
               </span>
             </div>
 
