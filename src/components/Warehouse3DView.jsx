@@ -34,6 +34,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
   const [hoveredBox, setHoveredBox] = useState(null);
   const [activeRackView, setActiveRackView] = useState('ALL');
   const [isAutoRotate, setIsAutoRotate] = useState(false);
+  const [webGlError, setWebGlError] = useState(false);
 
   // References for Three.js scene objects
   const sceneRef = useRef(null);
@@ -138,8 +139,15 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
     camera.position.set(0, 18, 38);
     cameraRef.current = camera;
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // Renderer with safe WebGL check
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (e) {
+      console.warn('WebGL not supported:', e);
+      setWebGlError(true);
+      return;
+    }
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
@@ -513,6 +521,18 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
       }
     }
   };
+
+  if (webGlError) {
+    return (
+      <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
+        <BoxIcon className="w-12 h-12 text-blue-500 mx-auto" />
+        <h3 className="text-base font-bold text-slate-900">Akselerasi 3D (WebGL) Tidak Aktif</h3>
+        <p className="text-xs text-slate-500 max-w-md mx-auto">
+          Browser atau perangkat Anda tidak mengaktifkan WebGL. Anda tetap dapat menggunakan fitur <strong>Input Kartu & Cetak</strong> dan <strong>Denah Rak 2D</strong> secara normal.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
