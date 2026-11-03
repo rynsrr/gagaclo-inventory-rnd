@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { SimpleInventoryView } from './components/SimpleInventoryView';
 import { Warehouse3DView } from './components/Warehouse3DView';
-import { RackView } from './components/RackView';
 import { PrintableManifestView } from './components/PrintableManifestView';
 import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
@@ -12,7 +11,6 @@ import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
 import { 
   FileText, 
   Box as BoxIcon, 
-  Layers, 
   Printer, 
   Boxes 
 } from 'lucide-react';
@@ -79,19 +77,6 @@ const AppContent = () => {
                 <span>Ilustrasi 3D Rak & Box</span>
               </button>
 
-              {/* 2D Denah Rak */}
-              <button
-                onClick={() => setAppMode('rack-map')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  appMode === 'rack-map'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Denah Rak (1 - 5)</span>
-              </button>
-
               {/* Dokumen Manifes */}
               <button
                 onClick={() => setAppMode('manifests')}
@@ -117,7 +102,6 @@ const AppContent = () => {
         {appMode === '3d-warehouse' && (
           <Warehouse3DView onOpenLabelPrintModal={() => setIsLabelModalOpen(true)} />
         )}
-        {appMode === 'rack-map' && <RackView />}
         {appMode === 'manifests' && <PrintableManifestView />}
       </main>
 
