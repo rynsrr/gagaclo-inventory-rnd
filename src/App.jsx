@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { InventoryProvider, useInventory } from './context/InventoryContext';
-import { SimpleInventoryView } from './components/SimpleInventoryView';
+import { InventoryProvider } from './context/InventoryContext';
 import { Warehouse3DView } from './components/Warehouse3DView';
 import { PrintableManifestView } from './components/PrintableManifestView';
 import { BoxDetailModal } from './components/BoxDetailModal';
@@ -9,15 +8,14 @@ import { BoxQrModal } from './components/BoxQrModal';
 import { QuickScannerModal } from './components/QuickScannerModal';
 import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
 import { 
-  FileText, 
   Box as BoxIcon, 
   Printer, 
   Boxes 
 } from 'lucide-react';
 
 const AppContent = () => {
-  // Mode selection: default to 'simple-cards' for ultra simple & practical flow!
-  const [appMode, setAppMode] = useState('simple-cards'); // 'simple-cards', '3d-warehouse', 'rack-map', 'manifests'
+  // Mode selection: default to '3d-warehouse'
+  const [appMode, setAppMode] = useState('3d-warehouse'); // '3d-warehouse', 'manifests'
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
 
   return (
@@ -43,7 +41,7 @@ const AppContent = () => {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Pencatatan Sample, Cetak Kartu & Visualisasi 3D
+                  Visualisasi 3D Gudang, Manajemen Box & Dokumen Manifes
                 </p>
               </div>
             </div>
@@ -51,19 +49,6 @@ const AppContent = () => {
             {/* Mode Switcher Tabs */}
             <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs overflow-x-auto scrollbar-none">
               
-              {/* Super Simple Mode */}
-              <button
-                onClick={() => setAppMode('simple-cards')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  appMode === 'simple-cards'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Kartu & Input (Super Simple)</span>
-              </button>
-
               {/* 3D Visualizer Mode */}
               <button
                 onClick={() => setAppMode('3d-warehouse')}
@@ -98,7 +83,6 @@ const AppContent = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {appMode === 'simple-cards' && <SimpleInventoryView />}
         {appMode === '3d-warehouse' && (
           <Warehouse3DView onOpenLabelPrintModal={() => setIsLabelModalOpen(true)} />
         )}
@@ -112,7 +96,7 @@ const AppContent = () => {
             GAGACLO • INVENTORY MANAGEMENT RND
           </p>
           <p className="text-[11px] text-slate-500">
-            Pencatatan Sampel, Material & Kartu Fisik • Dokumen Ref: 20261102
+            Pencatatan Sampel, Material & Label Box • Dokumen Ref: 20261102
           </p>
         </div>
       </footer>
