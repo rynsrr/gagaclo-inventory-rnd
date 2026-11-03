@@ -1,0 +1,746 @@
+import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
+import { 
+  Plus, 
+  Search, 
+  Printer, 
+  FileSpreadsheet, 
+  RotateCcw, 
+  Trash2, 
+  Edit3, 
+  CheckSquare, 
+  Square, 
+  Boxes, 
+  Sparkles, 
+  MapPin, 
+  Calendar,
+  X,
+  Eye,
+  Check
+} from 'lucide-react';
+import { INITIAL_CARD_ITEMS, DEFAULT_PLACES } from '../data/simpleData';
+import { InventoryCard } from './InventoryCard';
+import { CardPrintModal } from './CardPrintModal';
+
+const STORAGE_KEY = 'gagaclo_simple_card_inventory_v1';
+
+export const SimpleInventoryView = () => {
+  // Items state
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_CARD_ITEMS;
+  });
+
+  // Persist items
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [items]);
+
+  // Form State
+  const defaultForm = {
+    id: null,
+    track: 'DHL : 5475890895',
+    tanggal: formatTodayDate(),
+    kode: 'RF08-84',
+    deskripsi: 'metal buckle 50mm metal buckle-female',
+    color: '-',
+    jumlah: 15,
+    satuan: 'PCS',
+    place: 'SOFI 1',
+    qtyDipakai: '',
+    tanggalDipakai: '',
+  };
+
+  const [form, setForm] = useState(defaultForm);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showLivePreview, setShowLivePreview] = useState(true);
+
+  // Search & Filters
+  const [search, setSearch] = useState('');
+  const [filterPlace, setFilterPlace] = useState('ALL');
+
+  // Print modal state
+  const [printModalItems, setPrintModalItems] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  function formatTodayDate() {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    return `${now.getDate()}-${months[now.getMonth()]}-${now.getFullYear()}`;
+  }
+
+  // Handle Form Submit
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (!form.kode.trim() || !form.deskripsi.trim()) {
+      alert('Mohon isi minimal Kode dan Deskripsi barang.');
+      return;
+    }
+
+    if (isEditing && form.id) {
+      // Update
+      setItems((prev) =>
+        prev.map((item) => (item.id === form.id ? { ...form } : item))
+      );
+      setIsEditing(false);
+    } else {
+      // Add New
+      const newItem = {
+        ...form,
+        id: 'item-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      };
+      setItems((prev) => [newItem, ...prev]);
+    }
+
+    // Reset to clean default
+    setForm({
+      id: null,
+      track: '',
+      tanggal: formatTodayDate(),
+      kode: '',
+      deskripsi: '',
+      color: '-',
+      jumlah: 1,
+      satuan: 'PCS',
+      place: form.place || 'SOFI 1',
+      qtyDipakai: '',
+      tanggalDipakai: '',
+    });
+  };
+
+  const handleEdit = (item) => {
+    setForm(item);
+    setIsEditing(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Hapus "${name}" dari list data?`)) {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setForm({
+      id: null,
+      track: '',
+      tanggal: formatTodayDate(),
+      kode: '',
+      deskripsi: '',
+      color: '-',
+      jumlah: 1,
+      satuan: 'PCS',
+      place: 'SOFI 1',
+      qtyDipakai: '',
+      tanggalDipakai: '',
+    });
+  };
+
+  const handleResetData = () => {
+    if (window.confirm('Reset data kembali ke contoh awal? Semua data akan dikembalikan ke contoh bawaan.')) {
+      setItems(INITIAL_CARD_ITEMS);
+      localStorage.removeItem(STORAGE_KEY);
+      setSelectedIds([]);
+    }
+  };
+
+  // Selection for batch print
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filteredItems.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredItems.map((i) => i.id));
+    }
+  };
+
+  // Print handlers
+  const handlePrintSingle = (item) => {
+    setPrintModalItems([item]);
+  };
+
+  const handlePrintSelected = () => {
+    const selected = items.filter((i) => selectedIds.includes(i.id));
+    if (selected.length === 0) {
+      alert('Pilih minimal 1 item dengan mencentang kotak di tabel.');
+      return;
+    }
+    setPrintModalItems(selected);
+  };
+
+  const handlePrintAll = () => {
+    if (filteredItems.length === 0) {
+      alert('Tidak ada item untuk dicetak.');
+      return;
+    }
+    setPrintModalItems(filteredItems);
+  };
+
+  // Export Excel
+  const handleExportExcel = () => {
+    const dataToExport = items.map((item, idx) => ({
+      'No': idx + 1,
+      'Track': item.track,
+      'Tanggal': item.tanggal,
+      'Kode': item.kode,
+      'Deskripsi': item.deskripsi,
+      'Color': item.color,
+      'Jumlah': item.jumlah,
+      'Satuan': item.satuan,
+      'Place': item.place,
+      'Qty Dipakai': item.qtyDipakai || '',
+      'Tanggal Dipakai': item.tanggalDipakai || '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventory Cards');
+    XLSX.writeFile(wb, `GAGACLO_INVENTORY_CARDS_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  // Filter Items
+  const filteredItems = items.filter((item) => {
+    if (filterPlace !== 'ALL' && item.place !== filterPlace) {
+      return false;
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (
+        item.kode.toLowerCase().includes(q) ||
+        item.deskripsi.toLowerCase().includes(q) ||
+        (item.track && item.track.toLowerCase().includes(q)) ||
+        (item.place && item.place.toLowerCase().includes(q)) ||
+        (item.color && item.color.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
+
+  return (
+    <div className="space-y-6">
+      
+      {/* Top Banner / Actions Bar */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="bg-blue-600 text-white text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                GAGACLO STORAGE
+              </span>
+              <span className="text-xs text-slate-500 font-medium">Input & Cetak Kartu Fisik</span>
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-1">
+              Pencatatan Inventory & Cetak Kartu Sampel
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Input data barang, simpan ke daftar, dan langsung print kartu fisik sesuai format standar kotak penyimpanan.
+            </p>
+          </div>
+
+          {/* Quick Buttons */}
+          <div className="flex items-center flex-wrap gap-2">
+            <button
+              onClick={handlePrintSelected}
+              disabled={selectedIds.length === 0}
+              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-xs ${
+                selectedIds.length > 0
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print Terpilih ({selectedIds.length})</span>
+            </button>
+
+            <button
+              onClick={handlePrintAll}
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-xs"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print Semua ({filteredItems.length})</span>
+            </button>
+
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition shadow-xs"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="hidden sm:inline">Export Excel</span>
+            </button>
+
+            <button
+              onClick={handleResetData}
+              className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition"
+              title="Reset ke Contoh Bawaan"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Section: Form Input & Real-Time Card Preview */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Form (7 cols) */}
+        <div className="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-base font-black text-slate-900">
+                {isEditing ? '✏️ Edit Data Kartu' : '➕ Input Data Baru'}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Isi data di bawah ini, format kartu akan otomatis terbuat.
+              </p>
+            </div>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="text-xs text-slate-500 hover:text-rose-600 font-bold"
+              >
+                Batal Edit
+              </button>
+            )}
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-4 text-xs">
+            
+            {/* Row 1: Track & Tanggal */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Track (No. Resi / Kurir)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: DHL : 5475890895"
+                  value={form.track}
+                  onChange={(e) => setForm({ ...form, track: e.target.value })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Tanggal
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: 17-Jul-2026"
+                  value={form.tanggal}
+                  onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Kode & Color */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Kode Barang / SKU <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: RF08-84"
+                  value={form.kode}
+                  onChange={(e) => setForm({ ...form, kode: e.target.value })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-black font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Color (Warna)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: - atau Silver / Black"
+                  value={form.color}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Deskripsi */}
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                Deskripsi Barang <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows={2}
+                required
+                placeholder="Contoh: metal buckle 50mm metal buckle-female"
+                value={form.deskripsi}
+                onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 leading-relaxed"
+              />
+            </div>
+
+            {/* Row 4: Jumlah, Satuan, Place */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Jumlah (Qty)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.jumlah}
+                  onChange={(e) => setForm({ ...form, jumlah: Number(e.target.value) || 0 })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-black text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Satuan
+                </label>
+                <input
+                  type="text"
+                  placeholder="PCS, ROLL, METER"
+                  value={form.satuan}
+                  onChange={(e) => setForm({ ...form, satuan: e.target.value.toUpperCase() })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Place (Lokasi Simpan)
+                </label>
+                <input
+                  type="text"
+                  list="places-list"
+                  placeholder="Contoh: SOFI 1 atau BOX 1"
+                  value={form.place}
+                  onChange={(e) => setForm({ ...form, place: e.target.value })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-black uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <datalist id="places-list">
+                  {DEFAULT_PLACES.map((p, idx) => (
+                    <option key={idx} value={p} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            {/* Row 5: Optional Qty Dipakai & Tanggal Dipakai */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-100">
+              <div>
+                <label className="block font-bold italic text-slate-600 mb-1">
+                  Qty Dipakai (Opsional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Kosongkan jika kartu untuk tulis manual"
+                  value={form.qtyDipakai}
+                  onChange={(e) => setForm({ ...form, qtyDipakai: e.target.value })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold italic text-slate-600 mb-1">
+                  Tanggal Dipakai (Opsional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Kosongkan jika kartu untuk tulis manual"
+                  value={form.tanggalDipakai}
+                  onChange={(e) => setForm({ ...form, tanggalDipakai: e.target.value })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-3 flex items-center justify-end space-x-2">
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl font-semibold"
+                >
+                  Batal
+                </button>
+              )}
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-md transition flex items-center space-x-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isEditing ? 'Simpan Perubahan' : 'Tambahkan ke List'}</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        {/* Right: Live Preview of Card (5 cols) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 sticky top-20">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <div className="flex items-center space-x-1.5">
+              <Eye className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-black text-slate-900">
+                Preview Kartu Fisik
+              </h3>
+            </div>
+            <button
+              onClick={() => handlePrintSingle(form)}
+              className="flex items-center space-x-1 text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Preview Ini</span>
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-400 mb-3">
+            Format di bawah ini adalah tampilan persis saat dicetak:
+          </p>
+
+          <div className="flex justify-center p-2 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+            <InventoryCard item={form} isPrintMode={false} />
+          </div>
+        </div>
+
+      </div>
+
+      {/* Bottom Section: Table List Semua Data */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        {/* Table Toolbar */}
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          
+          <div className="flex items-center space-x-3">
+            <h3 className="text-base font-black text-slate-900">
+              Daftar Semua Data Inventory
+            </h3>
+            <span className="bg-blue-100 text-blue-800 font-bold text-xs px-2.5 py-0.5 rounded-full">
+              {filteredItems.length} Data
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Search */}
+            <div className="relative min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari kode, deskripsi, place..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Filter Place */}
+            <select
+              value={filterPlace}
+              onChange={(e) => setFilterPlace(e.target.value)}
+              className="text-xs p-1.5 border border-slate-300 rounded-lg bg-white font-medium"
+            >
+              <option value="ALL">Semua Place / Lokasi</option>
+              {Array.from(new Set(items.map((i) => i.place))).map((p, idx) => (
+                <option key={idx} value={p}>{p}</option>
+              ))}
+            </select>
+
+            {/* Select All Checkbox Button */}
+            <button
+              onClick={handleSelectAll}
+              className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+            >
+              {selectedIds.length === filteredItems.length && filteredItems.length > 0
+                ? 'Batal Pilih Semua'
+                : 'Pilih Semua'}
+            </button>
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-900 text-slate-200 font-bold uppercase tracking-wider text-[11px]">
+              <tr>
+                <th className="py-3 px-3 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === filteredItems.length && filteredItems.length > 0}
+                    onChange={handleSelectAll}
+                    className="rounded cursor-pointer"
+                  />
+                </th>
+                <th className="py-3 px-3">Kode</th>
+                <th className="py-3 px-3">Deskripsi Barang</th>
+                <th className="py-3 px-3">Track</th>
+                <th className="py-3 px-3">Tanggal</th>
+                <th className="py-3 px-3">Color</th>
+                <th className="py-3 px-3 text-center">Jumlah</th>
+                <th className="py-3 px-3">Place</th>
+                <th className="py-3 px-3 text-center">Qty Dipakai</th>
+                <th className="py-3 px-4 text-right">Aksi Cetak / Kelola</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="py-12 text-center text-slate-400">
+                    Belum ada data barang. Silakan input data pada formulir di atas.
+                  </td>
+                </tr>
+              ) : (
+                filteredItems.map((item) => {
+                  const isChecked = selectedIds.includes(item.id);
+                  return (
+                    <tr 
+                      key={item.id} 
+                      className={`hover:bg-blue-50/50 transition ${
+                        isChecked ? 'bg-blue-50/70' : ''
+                      }`}
+                    >
+                      <td className="py-3 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleToggleSelect(item.id)}
+                          className="rounded cursor-pointer"
+                        />
+                      </td>
+
+                      {/* Kode */}
+                      <td className="py-3 px-3 font-mono font-black text-slate-900 text-sm whitespace-nowrap">
+                        {item.kode}
+                      </td>
+
+                      {/* Deskripsi */}
+                      <td className="py-3 px-3 font-semibold text-slate-800 max-w-xs leading-relaxed">
+                        {item.deskripsi}
+                      </td>
+
+                      {/* Track */}
+                      <td className="py-3 px-3 font-mono text-slate-600 whitespace-nowrap">
+                        {item.track || '-'}
+                      </td>
+
+                      {/* Tanggal */}
+                      <td className="py-3 px-3 font-medium text-slate-600 whitespace-nowrap">
+                        {item.tanggal}
+                      </td>
+
+                      {/* Color */}
+                      <td className="py-3 px-3 text-slate-600">
+                        {item.color || '-'}
+                      </td>
+
+                      {/* Jumlah */}
+                      <td className="py-3 px-3 text-center font-bold text-slate-900">
+                        {item.jumlah} <span className="text-[10px] text-slate-500 font-normal">{item.satuan}</span>
+                      </td>
+
+                      {/* Place */}
+                      <td className="py-3 px-3 font-black text-slate-900 uppercase">
+                        <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200">
+                          {item.place}
+                        </span>
+                      </td>
+
+                      {/* Qty Dipakai */}
+                      <td className="py-3 px-3 text-center text-slate-500 italic">
+                        {item.qtyDipakai || '-'}
+                      </td>
+
+                      {/* Action Buttons */}
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end space-x-1.5">
+                          {/* Print Card Button */}
+                          <button
+                            onClick={() => handlePrintSingle(item)}
+                            className="flex items-center space-x-1 px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold shadow-2xs transition"
+                            title="Cetak Kartu Fisik Ini"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>Print Card</span>
+                          </button>
+
+                          {/* Edit */}
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => handleDelete(item.id, item.deskripsi)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2">
+          <div>
+            Menampilkan <strong>{filteredItems.length}</strong> data | Terpilih untuk print:{' '}
+            <strong className="text-blue-600">{selectedIds.length}</strong> kartu
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handlePrintSelected}
+              disabled={selectedIds.length === 0}
+              className={`px-3 py-1.5 rounded-lg font-bold text-xs transition ${
+                selectedIds.length > 0
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              Cetak Kartu Terpilih
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Print Modal */}
+      {printModalItems && (
+        <CardPrintModal
+          itemsToPrint={printModalItems}
+          onClose={() => setPrintModalItems(null)}
+        />
+      )}
+
+    </div>
+  );
+};
