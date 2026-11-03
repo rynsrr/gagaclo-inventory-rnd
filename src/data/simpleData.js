@@ -1,44 +1,158 @@
-// Data awal sederhana dan daftar lokasi penyimpanan
-export const DEFAULT_PLACES = [
-  'SOFI 1',
-  'SOFI 2',
-  'BOX 1 (RACK 1 - Royan)',
-  'BOX 2 (RACK 1 - Royan)',
-  'BOX 3 (RACK 1 - Royan)',
-  'BOX 4 (RACK 1 - Cynara)',
-  'BOX 5 (RACK 1 - Cynara)',
-  'BOX 6 (RACK 1 - Cynara)',
-  'BOX 7 (RACK 1 - Ami)',
-  'BOX 8 (RACK 1 - Ami)',
-  'BOX 9 (RACK 1 - Ami)',
-  'BOX 10 (RACK 1 - Ryan)',
-  'BOX 11 (RACK 1 - Ryan)',
-  'BOX 12 (RACK 1 - Ryan)',
-  'BOX 13 (RACK 1 - Hanami)',
-  'BOX 14 (RACK 1 - Hanami)',
-  'BOX 15 (RACK 1 - Hanami)',
-  'BOX 16 (RACK 1 - Royan)',
-  'BOX 17 (RACK 2 - Royan)',
-  'BOX 21 (RACK 2 - Cynara)',
-  'BOX 25 (RACK 2 - Ami)',
-  'BOX 29 (RACK 2 - Ryan)',
-  'BOX 33 (RACK 2 - Hanami)',
-  'BOX 37 (RACK 3 - Royan)',
-  'BOX 39 (RACK 3 - Cynara)',
-  'BOX 41 (RACK 3 - Ami)',
-  'BOX 43 (RACK 3 - Ryan)',
-  'BOX 45 (RACK 3 - Hanami)',
-  'BOX 49 (RACK 4 - Royan)',
-  'BOX 51 (RACK 4 - Cynara)',
-  'BOX 53 (RACK 4 - Ami)',
-  'BOX 55 (RACK 4 - Ryan)',
-  'BOX 57 (RACK 4 - Hanami)',
-  'BOX 61 (RACK 5 - Royan)',
-  'BOX 63 (RACK 5 - Cynara)',
-  'BOX 65 (RACK 5 - Ami)',
-  'BOX 67 (RACK 5 - Ryan)',
-  'BOX 69 (RACK 5 - Hanami)',
+// Daftar 72 Box penyimpanan resmi GAGACLO (Rak 1 - 5)
+// Sesuai Dokumen Manifes: GAGACLO - Storage - 20261102
+
+export const RACK_GROUPS = [
+  {
+    id: 1,
+    name: 'RACK 1 (SAMPLE)',
+    detail: 'Blue rack, sample warehouse',
+    range: 'Box 1 s/d 16',
+    category: 'SAMPLE',
+    boxes: [
+      { boxNumber: 1, pic: 'Royan' },
+      { boxNumber: 2, pic: 'Royan' },
+      { boxNumber: 3, pic: 'Royan' },
+      { boxNumber: 4, pic: 'Cynara' },
+      { boxNumber: 5, pic: 'Cynara' },
+      { boxNumber: 6, pic: 'Cynara' },
+      { boxNumber: 7, pic: 'Ami' },
+      { boxNumber: 8, pic: 'Ami' },
+      { boxNumber: 9, pic: 'Ami' },
+      { boxNumber: 10, pic: 'Ryan' },
+      { boxNumber: 11, pic: 'Ryan' },
+      { boxNumber: 12, pic: 'Ryan' },
+      { boxNumber: 13, pic: 'Hanami' },
+      { boxNumber: 14, pic: 'Hanami' },
+      { boxNumber: 15, pic: 'Hanami' },
+      { boxNumber: 16, pic: 'Royan' },
+    ].map(b => ({
+      ...b,
+      rack: 'RACK 1',
+      category: 'SAMPLE',
+      value: `BOX ${b.boxNumber} (RACK 1 - ${b.pic})`,
+      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+    }))
+  },
+  {
+    id: 2,
+    name: 'RACK 2 (SAMPLE)',
+    detail: 'White rack, sample warehouse, way to new building',
+    range: 'Box 17 s/d 36',
+    category: 'SAMPLE',
+    boxes: [
+      { boxNumber: 17, pic: 'Royan' },
+      { boxNumber: 18, pic: 'Royan' },
+      { boxNumber: 19, pic: 'Royan' },
+      { boxNumber: 20, pic: 'Royan' },
+      { boxNumber: 21, pic: 'Cynara' },
+      { boxNumber: 22, pic: 'Cynara' },
+      { boxNumber: 23, pic: 'Cynara' },
+      { boxNumber: 24, pic: 'Cynara' },
+      { boxNumber: 25, pic: 'Ami' },
+      { boxNumber: 26, pic: 'Ami' },
+      { boxNumber: 27, pic: 'Ami' },
+      { boxNumber: 28, pic: 'Ami' },
+      { boxNumber: 29, pic: 'Ryan' },
+      { boxNumber: 30, pic: 'Ryan' },
+      { boxNumber: 31, pic: 'Ryan' },
+      { boxNumber: 32, pic: 'Ryan' },
+      { boxNumber: 33, pic: 'Hanami' },
+      { boxNumber: 34, pic: 'Hanami' },
+      { boxNumber: 35, pic: 'Hanami' },
+      { boxNumber: 36, pic: 'Hanami' },
+    ].map(b => ({
+      ...b,
+      rack: 'RACK 2',
+      category: 'SAMPLE',
+      value: `BOX ${b.boxNumber} (RACK 2 - ${b.pic})`,
+      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+    }))
+  },
+  {
+    id: 3,
+    name: 'RACK 3 (MATERIAL)',
+    detail: 'White rack, new building',
+    range: 'Box 37 s/d 48',
+    category: 'MATERIAL',
+    boxes: [
+      { boxNumber: 37, pic: 'Royan' },
+      { boxNumber: 38, pic: 'Royan' },
+      { boxNumber: 39, pic: 'Cynara' },
+      { boxNumber: 40, pic: 'Cynara' },
+      { boxNumber: 41, pic: 'Ami' },
+      { boxNumber: 42, pic: 'Ami' },
+      { boxNumber: 43, pic: 'Ryan' },
+      { boxNumber: 44, pic: 'Ryan' },
+      { boxNumber: 45, pic: 'Hanami' },
+      { boxNumber: 46, pic: 'Hanami' },
+      { boxNumber: 47, pic: 'Royan' },
+      { boxNumber: 48, pic: 'Cynara' },
+    ].map(b => ({
+      ...b,
+      rack: 'RACK 3',
+      category: 'MATERIAL',
+      value: `BOX ${b.boxNumber} (RACK 3 - ${b.pic})`,
+      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+    }))
+  },
+  {
+    id: 4,
+    name: 'RACK 4 (MATERIAL)',
+    detail: 'White rack, new building',
+    range: 'Box 49 s/d 60',
+    category: 'MATERIAL',
+    boxes: [
+      { boxNumber: 49, pic: 'Royan' },
+      { boxNumber: 50, pic: 'Royan' },
+      { boxNumber: 51, pic: 'Cynara' },
+      { boxNumber: 52, pic: 'Cynara' },
+      { boxNumber: 53, pic: 'Ami' },
+      { boxNumber: 54, pic: 'Ami' },
+      { boxNumber: 55, pic: 'Ryan' },
+      { boxNumber: 56, pic: 'Ryan' },
+      { boxNumber: 57, pic: 'Hanami' },
+      { boxNumber: 58, pic: 'Hanami' },
+      { boxNumber: 59, pic: 'Ami' },
+      { boxNumber: 60, pic: 'Ryan' },
+    ].map(b => ({
+      ...b,
+      rack: 'RACK 4',
+      category: 'MATERIAL',
+      value: `BOX ${b.boxNumber} (RACK 4 - ${b.pic})`,
+      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+    }))
+  },
+  {
+    id: 5,
+    name: 'RACK 5 (MATERIAL)',
+    detail: 'White rack, new building',
+    range: 'Box 61 s/d 72',
+    category: 'MATERIAL',
+    boxes: [
+      { boxNumber: 61, pic: 'Royan' },
+      { boxNumber: 62, pic: 'Royan' },
+      { boxNumber: 63, pic: 'Cynara' },
+      { boxNumber: 64, pic: 'Cynara' },
+      { boxNumber: 65, pic: 'Ami' },
+      { boxNumber: 66, pic: 'Ami' },
+      { boxNumber: 67, pic: 'Ryan' },
+      { boxNumber: 68, pic: 'Ryan' },
+      { boxNumber: 69, pic: 'Hanami' },
+      { boxNumber: 70, pic: 'Hanami' },
+      { boxNumber: 71, pic: 'Hanami' },
+      { boxNumber: 72, pic: 'Royan' },
+    ].map(b => ({
+      ...b,
+      rack: 'RACK 5',
+      category: 'MATERIAL',
+      value: `BOX ${b.boxNumber} (RACK 5 - ${b.pic})`,
+      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+    }))
+  }
 ];
+
+// Flat array of all 72 box values
+export const DEFAULT_PLACES = RACK_GROUPS.flatMap(rg => rg.boxes.map(b => b.value));
 
 export const INITIAL_CARD_ITEMS = [
   {
@@ -50,7 +164,7 @@ export const INITIAL_CARD_ITEMS = [
     color: '-',
     jumlah: 15,
     satuan: 'PCS',
-    place: 'SOFI 1',
+    place: 'BOX 1 (RACK 1 - Royan)',
     qtyDipakai: '',
     tanggalDipakai: '',
   },

@@ -18,7 +18,7 @@ import {
   Eye,
   Check
 } from 'lucide-react';
-import { INITIAL_CARD_ITEMS, DEFAULT_PLACES } from '../data/simpleData';
+import { INITIAL_CARD_ITEMS, DEFAULT_PLACES, RACK_GROUPS } from '../data/simpleData';
 import { InventoryCard } from './InventoryCard';
 import { CardPrintModal } from './CardPrintModal';
 
@@ -29,7 +29,17 @@ export const SimpleInventoryView = () => {
   const [items, setItems] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((item) => {
+            if (!item.place || item.place === 'SOFI 1' || item.place === 'SOFI 2') {
+              return { ...item, place: 'BOX 1 (RACK 1 - Royan)' };
+            }
+            return item;
+          });
+        }
+      }
     } catch (e) {
       console.error(e);
     }
@@ -55,7 +65,7 @@ export const SimpleInventoryView = () => {
     color: '-',
     jumlah: 15,
     satuan: 'PCS',
-    place: 'SOFI 1',
+    place: 'BOX 1 (RACK 1 - Royan)',
     qtyDipakai: '',
     tanggalDipakai: '',
   };
@@ -111,7 +121,7 @@ export const SimpleInventoryView = () => {
       color: '-',
       jumlah: 1,
       satuan: 'PCS',
-      place: form.place || 'SOFI 1',
+      place: form.place || 'BOX 1 (RACK 1 - Royan)',
       qtyDipakai: '',
       tanggalDipakai: '',
     });
@@ -141,7 +151,7 @@ export const SimpleInventoryView = () => {
       color: '-',
       jumlah: 1,
       satuan: 'PCS',
-      place: 'SOFI 1',
+      place: 'BOX 1 (RACK 1 - Royan)',
       qtyDipakai: '',
       tanggalDipakai: '',
     });
@@ -425,22 +435,36 @@ export const SimpleInventoryView = () => {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Place (Lokasi Simpan)
-                </label>
-                <input
-                  type="text"
-                  list="places-list"
-                  placeholder="Contoh: SOFI 1 atau BOX 1"
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-700">
+                    Place (Lokasi Box Penyimpanan)
+                  </label>
+                  <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-bold">
+                    72 Box Tersedia
+                  </span>
+                </div>
+                <select
                   value={form.place}
                   onChange={(e) => setForm({ ...form, place: e.target.value })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-black uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <datalist id="places-list">
-                  {DEFAULT_PLACES.map((p, idx) => (
-                    <option key={idx} value={p} />
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-xs cursor-pointer"
+                >
+                  {!DEFAULT_PLACES.includes(form.place) && form.place && (
+                    <option value={form.place}>{form.place}</option>
+                  )}
+                  {RACK_GROUPS.map((rg) => (
+                    <optgroup key={rg.name} label={`${rg.name} — ${rg.range}`}>
+                      {rg.boxes.map((b) => (
+                        <option key={b.value} value={b.value}>
+                          {b.value}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
-                </datalist>
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
+                  <span>Ambil tempat langsung dari Box 1 - 72 (Rak 1 - 5)</span>
+                </p>
               </div>
             </div>
 
