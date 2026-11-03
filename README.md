@@ -1,114 +1,82 @@
-# GAGACLO - R&D Storage Inventory Management App
+# GAGACLO - R&D Storage Inventory Management App (3D Warehouse & Card Print)
 
-Aplikasi Web Manajemen & Pencatatan Inventory Sample & Material R&D Gagaclo yang dibangun berdasarkan data manifes penyimpanan resmi:
-- **Ref Dokumen**: `GAGACLO - Storage - 20261102`
-- **Unit**: `INVENTORY MANAGEMENT RND`
-- **Total Rak**: 5 Racks (36 Box Sample, 36 Box Material)
-- **Total Box**: 72 Boxes (Box 1 s/d 72)
-- **Tim PPIC**: 5 PIC (Royan, Cynara, Ami, Ryan, Hanami)
-
----
-
-## 📋 Struktur Data Rak & Alokasi Box (Sesuai Dokumen)
-
-### 1. RACK 1 (SAMPLE)
-- **Lokasi & Deskripsi**: *Blue rack, sample warehouse*
-- **Rentang Box**: Box 1 - 16 (Total: 16 Box)
-- **Alokasi Tim PPIC**:
-  - `1` **Royan**: Box 1-3, 16 (4 Box)
-  - `2` **Cynara**: Box 4-6 (3 Box)
-  - `3` **Ami**: Box 7-9 (3 Box)
-  - `4` **Ryan**: Box 10-12 (3 Box)
-  - `5` **Hanami**: Box 13-15 (3 Box)
-
-### 2. RACK 2 (SAMPLE)
-- **Lokasi & Deskripsi**: *White rack, sample warehouse, way to the new building*
-- **Rentang Box**: Box 17 - 36 (Total: 20 Box)
-- **Alokasi Tim PPIC**:
-  - `1` **Royan**: Box 17-20 (4 Box)
-  - `2` **Cynara**: Box 21-24 (4 Box)
-  - `3` **Ami**: Box 25-28 (4 Box)
-  - `4` **Ryan**: Box 29-32 (4 Box)
-  - `5` **Hanami**: Box 33-36 (4 Box)
-
-### 3. RACK 3 (MATERIAL)
-- **Lokasi & Deskripsi**: *White rack, new building*
-- **Rentang Box**: Box 37 - 48 (Total: 12 Box)
-- **Alokasi Tim PPIC**:
-  - `1` **Royan**: Box 37-38, 47 (3 Box)
-  - `2` **Cynara**: Box 39-40, 48 (3 Box)
-  - `3` **Ami**: Box 41-42 (2 Box)
-  - `4` **Ryan**: Box 43-44 (2 Box)
-  - `5` **Hanami**: Box 45-46 (2 Box)
-
-### 4. RACK 4 (MATERIAL)
-- **Lokasi & Deskripsi**: *White rack, new building*
-- **Rentang Box**: Box 49 - 60 (Total: 12 Box)
-- **Alokasi Tim PPIC**:
-  - `1` **Royan**: Box 49-50 (2 Box)
-  - `2` **Cynara**: Box 51-52 (2 Box)
-  - `3` **Ami**: Box 53-54, 59 (3 Box)
-  - `4` **Ryan**: Box 55-56, 60 (3 Box)
-  - `5` **Hanami**: Box 57-58 (2 Box)
-
-### 5. RACK 5 (MATERIAL)
-- **Lokasi & Deskripsi**: *White rack, new building*
-- **Rentang Box**: Box 61 - 72 (Total: 12 Box)
-- **Alokasi Tim PPIC**:
-  - `1` **Royan**: Box 61-62, 72 (3 Box)
-  - `2` **Cynara**: Box 63-64 (2 Box)
-  - `3` **Ami**: Box 65-66 (2 Box)
-  - `4` **Ryan**: Box 67-68 (2 Box)
-  - `5` **Hanami**: Box 69-70, 71 (3 Box)
+Aplikasi Web Manajemen & Pencatatan Inventory Sample & Material R&D Gagaclo lengkap dengan:
+1. **Pencatatan Cepat & Cetak Kartu Fisik (1:1 Standar Kotak Penyimpanan)**
+2. **Visualisasi 3D Interaktif Rak Fisik & 72 Box Penyimpanan (Three.js WebGL)**
+3. **Denah Rak 2D (Rak 1 s/d 5) & Pembagian Tim PPIC (Royan, Cynara, Ami, Ryan, Hanami)**
+4. **Export Excel (.xlsx) & Backup Data**
+5. **Siap Deploy ke GitHub & Vercel**
 
 ---
 
-## 🎯 Rekapitulasi Alokasi per PIC PPIC
+## 🚀 Panduan Upload ke GitHub & Vercel
 
-| No | Nama PIC | Box Sample | Box Material | Total Box |
-|---|---|:---:|:---:|:---:|
-| 1 | **Royan** | 8 | 8 | **16 Box** |
-| 2 | **Cynara** | 7 | 7 | **14 Box** |
-| 3 | **Ami** | 7 | 7 | **14 Box** |
-| 4 | **Ryan** | 7 | 7 | **14 Box** |
-| 5 | **Hanami** | 7 | 7 | **14 Box** |
-| **TOTAL** | | **36** | **36** | **72 Box** |
+Repository git lokal sudah diinisialisasi pada branch `main`.
 
----
+### Langkah 1: Upload ke GitHub
 
-## 🚀 Fitur Utama Aplikasi
-
-1. **Denah Rak & Box Interaktif (Visual 1-72)**:
-   - Visualisasi tata letak fisik Rak 1 s/d 5.
-   - Filter cepat berdasarkan Rak, Kategori (Sample/Material), atau PIC PPIC.
-   - Indikator kapasitas dan jumlah item tersimpan di setiap box.
-   - Klik box mana pun untuk membuka detail dan daftar sampel di dalamnya.
-
-2. **Pencatatan & Master Item Inventory**:
-   - Catat sampel/material baru lengkap dengan SKU, nama, kategori, nomor box, PIC, qty, unit, status (In Storage, Borrowed, In Review), tanggal masuk, dan catatan.
-   - Edit, hapus, dan pindah box.
-
-3. **Log Mutasi (In / Out / Borrow / Return)**:
-   - Mencatat keluar-masuk sampel, peminjaman oleh tim QC / fitting, dan mutasi relokasi antar box.
-
-4. **Dashboard Tim PPIC**:
-   - Pantau alokasi box dan volume sampel yang sedang dipegang oleh masing-masing PIC (Royan, Cynara, Ami, Ryan, Hanami).
-
-5. **Dokumen Cetak & Label QR**:
-   - Cetak lembar manifes persis format dokumen resmi asli per rak.
-   - Cetak stiker label QR untuk fisik box di gudang.
-
-6. **Export & Backup**:
-   - Export langsung ke file Microsoft Excel (`.xlsx`) multi-sheet (Items, Master Box, Racks, PPIC Summary, Log Mutasi).
-   - Backup & Restore data format JSON.
-   - Reset ke kondisi awal sewaktu-waktu.
+1. Buka [github.com/new](https://github.com/new) dan buat repository baru (misal diberi nama: `gagaclo-inventory-rnd`).
+2. Jangan centang "Initialize this repository with a README" (karena sudah ada).
+3. Salin URL repository Anda (misal: `https://github.com/USERNAME/gagaclo-inventory-rnd.git`).
+4. Buka PowerShell / Terminal di folder ini dan jalankan:
+   ```bash
+   git remote add origin https://github.com/USERNAME/gagaclo-inventory-rnd.git
+   git push -u origin main
+   ```
 
 ---
 
-## 💻 Menjalankan Aplikasi
+### Langkah 2: Deploy ke Vercel
 
-Aplikasi berjalan di server lokal:
+Aplikasi sudah dilengkapi file `vercel.json` sehingga proses deploy langsung otomatis:
+
+#### Cara 1: Menggunakan Website Vercel (Direkomendasikan)
+1. Buka [vercel.com](https://vercel.com) dan login dengan akun GitHub Anda.
+2. Klik tombol **"Add New..."** -> **"Project"**.
+3. Pilih repository `gagaclo-inventory-rnd` dari daftar repository GitHub Anda.
+4. Pada konfigurasi build:
+   - **Framework Preset**: Vite (otomatis terdeteksi)
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+5. Klik **"Deploy"**. Dalam ~30 detik, website inventaris Anda akan langsung aktif dengan link publik (misal: `https://gagaclo-inventory-rnd.vercel.app`)!
+
+#### Cara 2: Menggunakan Terminal (Vercel CLI)
+Jika Anda memiliki akun Vercel dan ingin deploy langsung dari terminal:
+```bash
+npx vercel
+```
+Ikuti petunjuk di layar (login & konfirmasi deploy).
+
+---
+
+## 🧊 Fitur 3D Warehouse & Ilustrasi Rak
+
+Tab **"Ilustrasi 3D Rak & Box"** menampilkan ruang gudang 3D secara interaktif:
+- **Rak 1 (SAMPLE - Blue Rack)**: Tiang baja biru dengan kapasitas 16 box (Box 1 - 16).
+- **Rak 2 (SAMPLE - White Rack)**: Tiang putih lorong gudang dengan 20 box (Box 17 - 36).
+- **Rak 3, 4, 5 (MATERIAL - White Rack)**: Rak gedung baru dengan masing-masing 12 box (Box 37 - 72).
+- **Interaksi 3D**:
+  - **Putar Kamera 360°**: Klik kiri mouse dan seret.
+  - **Zoom In/Out**: Scroll roda mouse.
+  - **Geser Posisi**: Klik kanan mouse dan seret.
+  - **Hover Box**: Menampilkan kartu info mengambang (*HUD tooltip*) berisi Nomor Box, PIC PPIC, dan jumlah barang di dalamnya.
+  - **Klik Box**: Langsung membuka detail barang di box tersebut dan pilihan cetak kartu.
+  - **Filter Highlight PIC**: Sorot hanya box milik Royan, Cynara, Ami, Ryan, atau Hanami. Box lain otomatis menjadi transparan.
+
+---
+
+## 🏷️ Fitur Cetak Kartu Fisik
+
+Tab **"Kartu & Input (Super Simple)"**:
+- Formulir input mencakup field standar: `Track`, `Tanggal`, `Kode`, `Deskripsi`, `Color`, `Jumlah`, `Satuan`, `Place`, `Qty Dipakai`, `Tanggal Dipakai`.
+- *Live Preview* di sisi kanan langsung menyesuaikan tampilan kartu.
+- Cetak satuan atau cetak banyak kartu (*batch print A4*) siap potong dan diselipkan ke wadah fisik sampel.
+
+---
+
+## 💻 Menjalankan di Komputer Lokal
+
 ```bash
 npm run dev
 ```
-Akses melalui browser: `http://127.0.0.1:5173/`
+Akses di browser: `http://127.0.0.1:5173/`
