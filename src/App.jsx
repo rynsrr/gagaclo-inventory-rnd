@@ -10,11 +10,13 @@ import { QuickScannerModal } from './components/QuickScannerModal';
 import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
+import { BoxManageModal } from './components/BoxManageModal';
 import { 
   Box as BoxIcon, 
   Boxes,
   Database,
-  LayoutDashboard
+  LayoutDashboard,
+  PackagePlus
 } from 'lucide-react';
 
 const AppContent = () => {
@@ -29,6 +31,7 @@ const AppContent = () => {
 
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
+  const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const connected = supabaseStatus.isConnected;
   useEffect(() => {
     const client = supabase;
@@ -99,6 +102,18 @@ const AppContent = () => {
 
               <InventoryImport />
 
+              {/* Kelola Box / Rak / Orang */}
+              <button
+                type="button"
+                onClick={() => setIsBoxManageOpen(true)}
+                className="flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition border bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
+                aria-label="Kelola Box, Rak & Orang"
+                title="Tambah Box, atur Rak/Lantai, kelola data Orang (PIC)"
+              >
+                <PackagePlus className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Kelola</span>
+              </button>
+
               {/* Mode Switcher Tabs */}
               <div className="inventory-segments flex items-center gap-0.5 p-0.5 rounded-lg text-xs">
                 
@@ -160,6 +175,12 @@ const AppContent = () => {
       <SupabaseModal 
         isOpen={isSupabaseModalOpen} 
         onClose={() => setIsSupabaseModalOpen(false)} 
+      />
+
+      {/* Box / Rack / People Management Modal */}
+      <BoxManageModal
+        isOpen={isBoxManageOpen}
+        onClose={() => setIsBoxManageOpen(false)}
       />
 
     </div>

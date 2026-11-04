@@ -19,7 +19,47 @@ const InventoryContext = createContext(null);
 
 const STORAGE_KEY = 'gagaclo_inventory_data_v1';
 
+// Fallback placement whenever a box has no rack (or its rack was removed).
+const getFloorRack = (category = 'SAMPLE') => ({
+  id: 0,
+  name: 'LANTAI',
+  category: category || 'SAMPLE',
+  rackType: 'Lantai',
+  location: 'Lantai (tanpa rak)',
+  fullDescription: 'Lantai (tanpa rak)',
+});
+
+// Distinct badge colors for people added at runtime.
+const PPIC_BADGE_PALETTES = [
+  { color: 'blue', avatarBg: 'bg-blue-600', badgeClass: 'bg-blue-600 text-white', tagBg: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { color: 'indigo', avatarBg: 'bg-indigo-600', badgeClass: 'bg-indigo-600 text-white', tagBg: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  { color: 'emerald', avatarBg: 'bg-emerald-600', badgeClass: 'bg-emerald-600 text-white', tagBg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { color: 'amber', avatarBg: 'bg-amber-600', badgeClass: 'bg-amber-600 text-white', tagBg: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { color: 'rose', avatarBg: 'bg-rose-600', badgeClass: 'bg-rose-600 text-white', tagBg: 'bg-rose-50 text-rose-700 border-rose-200' },
+];
+
 export const InventoryProvider = ({ children }) => {
+  // Racks and PPIC members are now stateful (editable at runtime)
+  const [racks, setRacks] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + '_racks');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to load racks from localStorage', e);
+    }
+    return RACKS_DATA;
+  });
+
+  const [ppicMembers, setPpicMembers] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + '_ppic');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to load ppic from localStorage', e);
+    }
+    return PPIC_MEMBERS;
+  });
+
   // Load state from localStorage or use initial data
   const [boxes, setBoxes] = useState(() => {
     try {
@@ -98,13 +138,15 @@ export const InventoryProvider = ({ children }) => {
   // Persist to localStorage on change as safety cache
   useEffect(() => {
     try {
+      localStorage.setItem(STORAGE_KEY + '_racks', JSON.stringify(racks));
+      localStorage.setItem(STORAGE_KEY + '_ppic', JSON.stringify(ppicMembers));
       localStorage.setItem(STORAGE_KEY + '_boxes', JSON.stringify(boxes));
       localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(items));
       localStorage.setItem(STORAGE_KEY + '_transactions', JSON.stringify(transactions));
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
-  }, [boxes, items, transactions]);
+  }, [racks, ppicMembers, boxes, items, transactions]);
 
   // Sync from Supabase down to local state
   const syncFromSupabase = useCallback(async (clientInstance = supabase) => {
@@ -148,10 +190,16 @@ export const InventoryProvider = ({ children }) => {
 
       if (dbBoxes && dbBoxes.length > 0) {
         setBoxes(prev => {
-          return prev.map(box => {
+          const updated = prev.map(box => {
             const remoteBox = dbBoxes.find(b => b.box_number === box.boxNumber);
             return remoteBox ? dbBoxToLocal(remoteBox, [box]) : box;
           });
+          // Include boxes that exist remotely but not locally (added on another device)
+          const knownNumbers = new Set(prev.map(b => b.boxNumber));
+          const extra = dbBoxes
+            .filter(b => !knownNumbers.has(Number(b.box_number)))
+            .map(b => dbBoxToLocal(b, []));
+          return [...updated, ...extra].sort((a, b) => a.boxNumber - b.boxNumber);
         });
       }
 
@@ -546,11 +594,284 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
+  // --- Box Management ---
+
+  const addBox = async ({ rackId, category, picName, notes }) => {
+    // Auto-assign next box number (tolerate string / missing values)
+    const maxBoxNum = boxes.reduce(
+      (max, b) => Math.max(max, Number(b.boxNumber) || 0),
+      0
+    );
+    const newBoxNumber = maxBoxNum + 1;
+
+    // If no racks exist (or the requested rack is gone), place on "Lantai" (floor)
+    const useRackId = rackId != null && rackId !== '' ? Number(rackId) : null;
+    const targetRack = useRackId != null
+      ? racks.find(r => Number(r.id) === useRackId)
+      : null;
+    const effectiveRack = targetRack || getFloorRack(category);
+    const effectiveCategory = category || effectiveRack.category || 'SAMPLE';
+
+    // Find PPIC member by name
+    const ppicObj = ppicMembers.find(p => p.name === picName) || ppicMembers[0];
+
+    const newBox = {
+      boxNumber: newBoxNumber,
+      code: `BOX-${String(newBoxNumber).padStart(2, '0')}`,
+      rackId: effectiveRack.id,
+      rackName: effectiveRack.name,
+      category: effectiveCategory,
+      location: effectiveRack.location || '',
+      rackDescription: effectiveRack.fullDescription || effectiveRack.location || '',
+      picName: ppicObj ? ppicObj.name : (picName || 'Royan'),
+      ppicId: ppicObj ? ppicObj.id : '',
+      ppicNumber: ppicObj ? ppicObj.ppicNumber : 0,
+      capacityLimit: 20,
+      notes: notes || '',
+    };
+
+    setBoxes(prev => [...prev, newBox]);
+
+    // Sync to Supabase
+    if (supabase) {
+      try {
+        await supabase.from('boxes').upsert([localBoxToDb(newBox)], { onConflict: 'box_number' });
+      } catch (err) {
+        console.error('Supabase add box error:', err);
+      }
+    }
+
+    return newBox;
+  };
+
+  const updateBox = async (boxNumber, updates) => {
+    const box = boxes.find(b => Number(b.boxNumber) === Number(boxNumber));
+    if (!box) throw new Error('Box tidak ditemukan.');
+
+    // An empty PIC selection means "keep the current PIC", not "clear it".
+    const cleanUpdates = { ...updates };
+    if (!cleanUpdates.picName) delete cleanUpdates.picName;
+
+    let updatedBox = { ...box, ...cleanUpdates };
+    if (cleanUpdates.rackId !== undefined) {
+      const rack = cleanUpdates.rackId != null && cleanUpdates.rackId !== ''
+        ? racks.find(r => Number(r.id) === Number(cleanUpdates.rackId))
+        : null;
+      const effectiveRack = rack || getFloorRack(cleanUpdates.category || box.category);
+      updatedBox.rackId = effectiveRack.id;
+      updatedBox.rackName = effectiveRack.name;
+      updatedBox.location = effectiveRack.location || '';
+      updatedBox.rackDescription = effectiveRack.fullDescription || effectiveRack.location || '';
+      if (!cleanUpdates.category) {
+        updatedBox.category = effectiveRack.category || updatedBox.category;
+      }
+    }
+
+    // If picName changed, keep the denormalised PPIC id/number in sync
+    if (cleanUpdates.picName !== undefined) {
+      const ppicObj = ppicMembers.find(p => p.name === cleanUpdates.picName);
+      if (ppicObj) {
+        updatedBox.ppicId = ppicObj.id;
+        updatedBox.ppicNumber = ppicObj.ppicNumber;
+      }
+    }
+
+    setBoxes(prev => prev.map(b => Number(b.boxNumber) === Number(boxNumber) ? updatedBox : b));
+
+    // Items store a denormalised copy of their box's rack/PIC. Keep it in sync
+    // so the summary table, filters and printed labels stay consistent.
+    const affectedItems = items.filter(i => Number(i.boxNumber) === Number(boxNumber));
+    if (affectedItems.length > 0) {
+      const refreshedItems = affectedItems.map(i => ({
+        ...i,
+        rackId: updatedBox.rackId,
+        rackName: updatedBox.rackName,
+        picName: updatedBox.picName,
+        category: updatedBox.category,
+      }));
+      setItems(prev => prev.map(i => (
+        Number(i.boxNumber) === Number(boxNumber)
+          ? {
+              ...i,
+              rackId: updatedBox.rackId,
+              rackName: updatedBox.rackName,
+              picName: updatedBox.picName,
+              category: updatedBox.category,
+            }
+          : i
+      )));
+
+      if (supabase && refreshedItems.some(i => i.id)) {
+        try {
+          await supabase.from('items').upsert(
+            refreshedItems.filter(i => i.id).map(localItemToDb),
+            { onConflict: 'id' }
+          );
+        } catch (err) {
+          console.error('Supabase sync items after box update error:', err);
+        }
+      }
+    }
+
+    // Sync to Supabase
+    if (supabase) {
+      try {
+        await supabase.from('boxes').upsert([localBoxToDb(updatedBox)], { onConflict: 'box_number' });
+      } catch (err) {
+        console.error('Supabase update box error:', err);
+      }
+    }
+  };
+
+  const deleteBox = async (boxNumber) => {
+    // Don't delete if box has items
+    const itemsInBox = items.filter(i => Number(i.boxNumber) === Number(boxNumber));
+    if (itemsInBox.length > 0) {
+      throw new Error(`Box #${boxNumber} masih berisi ${itemsInBox.length} item. Kosongkan dulu sebelum dihapus.`);
+    }
+
+    setBoxes(prev => prev.filter(b => Number(b.boxNumber) !== Number(boxNumber)));
+
+    // Sync to Supabase
+    if (supabase) {
+      try {
+        await supabase.from('boxes').delete().eq('box_number', boxNumber);
+      } catch (err) {
+        console.error('Supabase delete box error:', err);
+      }
+    }
+  };
+
+  // --- Rack Management ---
+
+  const addRack = ({ name, category, location }) => {
+    if (!name || !name.trim()) throw new Error('Nama rak wajib diisi.');
+    const cleanName = name.trim().toUpperCase();
+    if (racks.some(r => r.name.toUpperCase() === cleanName)) {
+      throw new Error(`Rak ${cleanName} sudah ada.`);
+    }
+    const maxId = racks.length > 0 ? Math.max(...racks.map(r => Number(r.id) || 0)) : 0;
+    const newRack = {
+      id: maxId + 1,
+      name: cleanName,
+      category: category || 'SAMPLE',
+      rackType: 'Rak',
+      location: location?.trim() || 'Area gudang',
+      fullDescription: location?.trim() || 'Area gudang',
+      boxRange: '',
+      boxStart: null,
+      boxEnd: null,
+      totalBoxes: 0,
+      badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+      accentColor: 'blue',
+    };
+    setRacks(prev => [...prev, newRack]);
+    return newRack;
+  };
+
+  const deleteRack = (id) => {
+    const target = racks.find(r => r.id === id || Number(r.id) === Number(id));
+    const rackBoxes = boxes.filter(b => Number(b.rackId) === Number(target?.id ?? id));
+    if (rackBoxes.length > 0) {
+      throw new Error(`${rackBoxes.length} box masih ada di rak ini. Pindahkan ke rak lain / Lantai dulu.`);
+    }
+    setRacks(prev => prev.filter(r => String(r.id) !== String(target?.id ?? id)));
+  };
+
+  // --- PPIC Member Management ---
+
+  const addPpicMember = (member) => {
+    const name = String(member.name || '').trim();
+    if (!name) throw new Error('Nama orang wajib diisi.');
+    if (ppicMembers.some(p => String(p.name).trim().toLowerCase() === name.toLowerCase())) {
+      throw new Error(`${name} sudah terdaftar sebagai PIC.`);
+    }
+    const maxNumber = ppicMembers.reduce((max, p) => Math.max(max, Number(p.ppicNumber) || 0), 0);
+    const palette = PPIC_BADGE_PALETTES[ppicMembers.length % PPIC_BADGE_PALETTES.length];
+    const newMember = {
+      id: member.id || `ppic-${Date.now()}`,
+      ppicNumber: maxNumber + 1,
+      name,
+      role: member.role || 'PPIC Staff',
+      email: member.email || '',
+      totalBoxes: 0,
+      ...palette,
+    };
+    setPpicMembers(prev => [...prev, newMember]);
+    return newMember;
+  };
+
+  const updatePpicMember = (id, updates) => {
+    const member = ppicMembers.find(p => String(p.id) === String(id));
+    if (!member) throw new Error('Data orang tidak ditemukan.');
+
+    const nextName = String(updates.name ?? member.name).trim();
+    if (!nextName) throw new Error('Nama orang wajib diisi.');
+    if (ppicMembers.some(p => String(p.id) !== String(member.id)
+        && String(p.name).trim().toLowerCase() === nextName.toLowerCase())) {
+      throw new Error(`Nama ${nextName} sudah digunakan orang lain.`);
+    }
+
+    setPpicMembers(prev => prev.map(p => (
+      String(p.id) === String(member.id) ? { ...p, ...updates, name: nextName } : p
+    )));
+
+    // A person's name is denormalised into boxes and items. Propagate a rename
+    // so filters, the 3D warehouse, printed labels and the summary stay consistent.
+    if (nextName === member.name) return;
+
+    const matchesMember = (record) =>
+      String(record.ppicId ?? '') === String(member.id) ||
+      String(record.picName ?? '').trim().toLowerCase() === String(member.name).trim().toLowerCase();
+
+    const renamedBoxes = boxes
+      .filter(matchesMember)
+      .map(b => ({ ...b, picName: nextName, ppicId: member.id }));
+    if (renamedBoxes.length > 0) {
+      setBoxes(prev => prev.map(b => (
+        matchesMember(b) ? { ...b, picName: nextName, ppicId: member.id } : b
+      )));
+    }
+
+    const renamedItems = items.filter(matchesMember).map(i => ({ ...i, picName: nextName }));
+    if (renamedItems.length > 0) {
+      setItems(prev => prev.map(i => (matchesMember(i) ? { ...i, picName: nextName } : i)));
+    }
+
+    if (supabase) {
+      if (renamedBoxes.length > 0) {
+        supabase.from('boxes').upsert(renamedBoxes.map(localBoxToDb), { onConflict: 'box_number' })
+          .then(({ error }) => { if (error) console.error('Supabase rename boxes error:', error); });
+      }
+      const itemsWithIds = renamedItems.filter(i => i.id);
+      if (itemsWithIds.length > 0) {
+        supabase.from('items').upsert(itemsWithIds.map(localItemToDb), { onConflict: 'id' })
+          .then(({ error }) => { if (error) console.error('Supabase rename items error:', error); });
+      }
+    }
+  };
+
+  const deletePpicMember = (id) => {
+    const member = ppicMembers.find(p => String(p.id) === String(id));
+    if (!member) throw new Error('Data orang tidak ditemukan.');
+    const assignedBoxes = boxes.filter(b =>
+      String(b.ppicId ?? '') === String(member.id) || b.picName === member.name
+    );
+    if (assignedBoxes.length > 0) {
+      throw new Error(`${assignedBoxes.length} box masih ditugaskan ke orang ini. Reassign box dulu.`);
+    }
+    setPpicMembers(prev => prev.filter(p => String(p.id) !== String(member.id)));
+  };
+
   const resetToInitialData = () => {
     if (window.confirm('Apakah Anda yakin ingin me-reset data inventory kembali ke konfigurasi awal sesuai dokumen? Semua perubahan manual akan dikembalikan.')) {
+      setRacks(RACKS_DATA);
+      setPpicMembers(PPIC_MEMBERS);
       setBoxes(generateInitialBoxes());
       setItems(INITIAL_ITEMS);
       setTransactions(INITIAL_TRANSACTIONS);
+      localStorage.removeItem(STORAGE_KEY + '_racks');
+      localStorage.removeItem(STORAGE_KEY + '_ppic');
       localStorage.removeItem(STORAGE_KEY + '_boxes');
       localStorage.removeItem(STORAGE_KEY + '_items');
       localStorage.removeItem(STORAGE_KEY + '_transactions');
@@ -562,8 +883,8 @@ export const InventoryProvider = ({ children }) => {
     const data = {
       appName: 'GAGACLO - Storage Inventory Management RND',
       exportDate: new Date().toISOString(),
-      racks: RACKS_DATA,
-      ppicMembers: PPIC_MEMBERS,
+      racks: racks,
+      ppicMembers: ppicMembers,
       boxes,
       items,
       transactions,
@@ -582,6 +903,8 @@ export const InventoryProvider = ({ children }) => {
     try {
       const parsed = JSON.parse(fileContent);
       if (parsed.boxes && parsed.items) {
+        if (parsed.racks) setRacks(parsed.racks);
+        if (parsed.ppicMembers) setPpicMembers(parsed.ppicMembers);
         setBoxes(parsed.boxes);
         setItems(parsed.items);
         if (parsed.transactions) setTransactions(parsed.transactions);
@@ -645,7 +968,7 @@ export const InventoryProvider = ({ children }) => {
     XLSX.utils.book_append_sheet(wb, wsBoxes, 'Master 72 Box');
 
     // 3. Sheet Racks Summary
-    const racksSummary = RACKS_DATA.map((rack) => {
+    const racksSummary = racks.map((rack) => {
       const rackBoxes = boxes.filter(b => b.rackId === rack.id);
       const boxNumbers = rackBoxes.map(b => b.boxNumber);
       const rackItems = items.filter(i => boxNumbers.includes(Number(i.boxNumber)));
@@ -663,7 +986,7 @@ export const InventoryProvider = ({ children }) => {
     XLSX.utils.book_append_sheet(wb, wsRacks, 'Rekap Rak');
 
     // 4. Sheet PPIC Allocation
-    const ppicSummary = PPIC_MEMBERS.map((ppic) => {
+    const ppicSummary = ppicMembers.map((ppic) => {
       const ppicBoxes = boxes.filter(b => b.picName.toLowerCase() === ppic.name.toLowerCase());
       const ppicItems = items.filter(i => i.picName.toLowerCase() === ppic.name.toLowerCase());
       const sampleBoxes = ppicBoxes.filter(b => b.category === 'SAMPLE').length;
@@ -736,8 +1059,8 @@ export const InventoryProvider = ({ children }) => {
 
   const value = {
     // Data
-    racks: RACKS_DATA,
-    ppicMembers: PPIC_MEMBERS,
+    racks: racks,
+    ppicMembers: ppicMembers,
     boxes,
     items,
     transactions,
@@ -754,6 +1077,17 @@ export const InventoryProvider = ({ children }) => {
     addTransaction,
     updateBoxNotes,
     setBoxFull,
+    // Box Management
+    addBox,
+    updateBox,
+    deleteBox,
+    // Rack Management
+    addRack,
+    deleteRack,
+    // PPIC Member Management
+    addPpicMember,
+    updatePpicMember,
+    deletePpicMember,
     resetToInitialData,
     exportJsonBackup,
     importJsonBackup,

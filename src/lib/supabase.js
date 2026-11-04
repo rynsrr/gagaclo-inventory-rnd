@@ -167,10 +167,18 @@ export function dbBoxToLocal(db, defaultBoxes = []) {
     ...defaultBox,
     boxNumber: Number(db.box_number),
     code: db.code || defaultBox.code,
-    rackId: Number(db.rack_id || defaultBox.rackId || 1),
-    rackName: db.rack_name || defaultBox.rackName || 'RACK 1',
+    // Use ?? so rackId 0 (LANTAI / floor) is preserved instead of falling back to 1
+    rackId: Number(db.rack_id ?? defaultBox.rackId ?? 1),
+    rackName: db.rack_name || defaultBox.rackName || 'LANTAI',
+    rackDescription: defaultBox.rackDescription || (db.rack_name === 'LANTAI' ? 'Lantai (tanpa rak)' : ''),
+    location: defaultBox.location || (db.rack_name === 'LANTAI' ? 'Lantai (tanpa rak)' : ''),
     category: db.category || defaultBox.category || 'SAMPLE',
     picName: db.pic_name || defaultBox.picName || 'Royan',
+    // Leave ppicId empty when unknown: guessing 'royan' here would make a
+    // rename of that person incorrectly reassign unrelated remote boxes.
+    ppicId: defaultBox.ppicId || '',
+    ppicNumber: defaultBox.ppicNumber ?? 0,
+    capacityLimit: defaultBox.capacityLimit ?? 20,
     notes: db.notes ?? defaultBox.notes ?? '',
     isFull: db.is_full === true,
   };

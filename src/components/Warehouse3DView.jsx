@@ -17,6 +17,13 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+// Indigo, purple, emerald, amber, rose — the original five PPIC colors,
+// followed by extra shades for PICs added at runtime.
+const PPIC_COLOR_PALETTE = [
+  0x4f46e5, 0x9333ea, 0x059669, 0xd97706, 0xe11d48,
+  0x0891b2, 0x65a30d, 0xdb2777, 0x7c3aed, 0xea580c,
+];
+
 function matchesPic(picName, selectedPic) {
   return String(picName ?? '').trim().toLowerCase() === selectedPic.trim().toLowerCase();
 }
@@ -46,7 +53,7 @@ export const Warehouse3DView = ({ controlsHost }) => {
     { label: 'Penuh', color: 'bg-emerald-100 text-emerald-900', boxes: [] },
   ];
   for (const box of boxes) {
-    if (activeRackView !== 'ALL' && box.rackId !== activeRackView) continue;
+    if (activeRackView !== 'ALL' && Number(box.rackId) !== Number(activeRackView)) continue;
     if (highlightPpic !== 'ALL' && !matchesPic(box.picName, highlightPpic)) continue;
     const hasData = getItemsInBox(box.boxNumber).length > 0;
     const group = box.isFull ? 2 : hasData ? 1 : 0;
@@ -60,14 +67,14 @@ export const Warehouse3DView = ({ controlsHost }) => {
   const boxMeshesRef = useRef([]);
   const animationFrameIdRef = useRef(null);
 
-  // PPIC color palette for 3D boxes body
-  const ppicColorMap = {
-    'Royan': 0x4f46e5,   // Indigo
-    'Cynara': 0x9333ea,  // Purple
-    'Ami': 0x059669,     // Emerald
-    'Ryan': 0xd97706,    // Amber
-    'Hanami': 0xe11d48,  // Rose
-  };
+  // PPIC color palette for 3D boxes body. Built from the live PPIC list so
+  // people added at runtime get their own color instead of all being blue.
+  const ppicColorMap = Object.fromEntries(
+    ppicMembers.map((pic, index) => [
+      pic.name,
+      PPIC_COLOR_PALETTE[index % PPIC_COLOR_PALETTE.length],
+    ])
+  );
 
   /**
    * Generates high-res canvas texture matching the exact user Box Label:
@@ -238,22 +245,40 @@ export const Warehouse3DView = ({ controlsHost }) => {
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // Build the 5 3D Physical Racks
-    // Rack 1: Blue rack (16 boxes)
-    // Rack 2: White rack (20 boxes)
-    // Rack 3, 4, 5: White rack (12 boxes each)
-    const rackPositions = [
-      { rackId: 1, x: -16, z: 0, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
-      { rackId: 2, x: -6,  z: 0, cols: 4, rows: 5, beamColor: 0xe2e8f0 },
-      { rackId: 3, x: 6,   z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
-      { rackId: 4, x: 15,  z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
-      { rackId: 5, x: 24,  z: 0, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
-    ];
+    // Build the 3D Physical Racks from current rack data.
+    // Racks 1-5 keep their original warehouse layout; any newly added rack
+    // is placed further to the right with a standard 4x3 shelf layout.
+    const presetPositions = {
+      1: { x: -16, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
+      2: { x: -6,  cols: 4, rows: 5, beamColor: 0xe2e8f0 },
+      3: { x: 6,   cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      4: { x: 15,  cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      5: { x: 24,  cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+    };
+    let nextExtraX = 33;
+    const rackPositions = racks
+      .filter((r) => Number(r.id) !== 0)
+      .map((r) => {
+        const preset = presetPositions[r.id];
+        if (preset) {
+          return { rackId: r.id, z: 0, ...preset };
+        }
+        const conf = { rackId: r.id, x: nextExtraX, z: 0, cols: 4, rows: 3, beamColor: 0xcbd5e1 };
+        nextExtraX += 9;
+        return conf;
+      });
+
+    // Grow a rack vertically when boxes are added beyond its original
+    // capacity, so newly created boxes always sit on a real shelf.
+    rackPositions.forEach((conf) => {
+      const count = boxes.filter(b => Number(b.rackId) === Number(conf.rackId)).length;
+      conf.rows = Math.max(conf.rows, Math.ceil(count / conf.cols));
+    });
 
     const boxMeshes = [];
 
     rackPositions.forEach((rackConf) => {
-      const rackData = racks.find((r) => r.id === rackConf.rackId);
+      const rackData = racks.find((r) => Number(r.id) === Number(rackConf.rackId));
       if (!rackData) return;
 
       const { x: rx, z: rz, cols, rows, beamColor } = rackConf;
@@ -344,7 +369,7 @@ export const Warehouse3DView = ({ controlsHost }) => {
       scene.add(sign);
 
       // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
-      const rackBoxes = boxes.filter((b) => b.rackId === rackConf.rackId);
+      const rackBoxes = boxes.filter((b) => Number(b.rackId) === Number(rackConf.rackId));
 
       rackBoxes.forEach((boxObj, index) => {
         const colIdx = index % cols;
@@ -410,6 +435,47 @@ export const Warehouse3DView = ({ controlsHost }) => {
         scene.add(boxMesh);
         boxMeshes.push(boxMesh);
       });
+    });
+
+    // 5. Floor boxes (rackId 0 / "LANTAI") — boxes without a rack sit on the ground
+    // in front of the racks so they stay visible and clickable.
+    const floorBoxes = boxes.filter((b) => Number(b.rackId) === 0);
+    const floorCols = 6;
+    floorBoxes.forEach((boxObj, index) => {
+      const colIdx = index % floorCols;
+      const rowIdx = Math.floor(index / floorCols);
+      const fx = -12 + colIdx * 2.0;
+      const fy = 0.4; // sits on the floor
+      const fz = 5 + rowIdx * 2.0;
+
+      const boxGeo = new THREE.BoxGeometry(1.35, 0.75, 1.1);
+      const frontTexture = createBoxFaceTexture(
+        boxObj.boxNumber,
+        boxObj.picName,
+        boxObj.category,
+        boxObj.rackName,
+        boxObj.rackDescription
+      );
+      const baseColor = ppicColorMap[boxObj.picName] || 0x3b82f6;
+      const sideMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0.05 });
+      const frontMat = new THREE.MeshStandardMaterial({ map: frontTexture, roughness: 0.3, metalness: 0.05 });
+
+      const boxMesh = new THREE.Mesh(boxGeo, [sideMat, sideMat, sideMat, sideMat, frontMat, sideMat]);
+      boxMesh.position.set(fx, fy, fz);
+      boxMesh.castShadow = true;
+      boxMesh.receiveShadow = true;
+      boxMesh.userData = {
+        boxNumber: boxObj.boxNumber,
+        code: boxObj.code,
+        rackId: boxObj.rackId,
+        rackName: boxObj.rackName,
+        category: boxObj.category,
+        picName: boxObj.picName,
+        baseColor: baseColor,
+        initialY: fy,
+      };
+      scene.add(boxMesh);
+      boxMeshes.push(boxMesh);
     });
 
     boxMeshesRef.current = boxMeshes;
@@ -480,7 +546,7 @@ export const Warehouse3DView = ({ controlsHost }) => {
     const fitFrontView = () => {
       const bounds = new THREE.Box3();
       for (const mesh of boxMeshes) {
-        if (activeRackRef.current === 'ALL' || mesh.userData.rackId === activeRackRef.current) {
+        if (activeRackRef.current === 'ALL' || Number(mesh.userData.rackId) === Number(activeRackRef.current)) {
           bounds.expandByObject(mesh);
         }
       }
@@ -535,7 +601,7 @@ export const Warehouse3DView = ({ controlsHost }) => {
       floorGeo.dispose();
       renderer.dispose();
     };
-  }, [boxes, racks]);
+  }, [boxes, racks, ppicMembers]);
 
   // Reapply the selection whenever cloud sync rebuilds the scene.
   useEffect(() => {
@@ -555,7 +621,7 @@ export const Warehouse3DView = ({ controlsHost }) => {
         material.needsUpdate = true;
       }
     }
-  }, [highlightPpic, boxes, racks]);
+  }, [highlightPpic, boxes, racks, ppicMembers]);
 
   // Camera presets
   const focusOnRack = (rackId) => {
@@ -606,11 +672,16 @@ export const Warehouse3DView = ({ controlsHost }) => {
         <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
           Semua Rak
         </button>
-        {[1, 2, 3, 4, 5].map((id) => (
-          <button key={id} onClick={() => focusOnRack(id)} aria-pressed={activeRackView === id}>
-            Rak {id}
+        {racks.filter((r) => Number(r.id) !== 0).map((r) => (
+          <button key={r.id} onClick={() => focusOnRack(r.id)} aria-pressed={activeRackView === r.id}>
+            {r.name}
           </button>
         ))}
+        {boxes.some((b) => Number(b.rackId) === 0) && (
+          <button onClick={() => focusOnRack(0)} aria-pressed={activeRackView === 0}>
+            Lantai ({boxes.filter((b) => Number(b.rackId) === 0).length})
+          </button>
+        )}
       </div>
 
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
