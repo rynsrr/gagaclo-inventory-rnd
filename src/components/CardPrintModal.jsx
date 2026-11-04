@@ -80,15 +80,15 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-black tracking-tight text-white uppercase">
+                <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase">
                   Cetak Multi-Kartu A4 (Ukuran KTP)
                 </h3>
                 <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded uppercase">
                   85.6 × 54 mm
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {activeItems.length} kartu terpilih = <strong className="text-white font-bold">{totalCards} kartu dicetak</strong> (± {estimatedPages} lembar A4)
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeItems.length} kartu terpilih = <strong className="text-slate-900 font-bold">{totalCards} kartu dicetak</strong> (± {estimatedPages} lembar A4)
               </p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
 
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              className="p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-200 transition cursor-pointer"
               title="Tutup dialog"
             >
               <X className="w-5 h-5" />

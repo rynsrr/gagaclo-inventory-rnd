@@ -244,18 +244,18 @@ export const ItemModal = () => {
           <div className="flex items-center space-x-3">
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-black tracking-tight text-white uppercase">
+                <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase">
                   {isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`}
                 </h3>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Ketik langsung pada baris kartu sampel di bawah ini:
               </p>
             </div>
           </div>
           <button
             onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+            className="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-200 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>

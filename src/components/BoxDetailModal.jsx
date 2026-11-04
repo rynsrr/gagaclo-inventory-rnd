@@ -189,7 +189,7 @@ function BoxDetail({ box }) {
             <button
               onClick={() => setSelectedBoxNumber(null)}
               aria-label="Tutup detail box"
-              className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition"
+              className="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-200 transition"
             >
               <X className="w-5 h-5" />
             </button>

@@ -207,12 +207,12 @@ CREATE POLICY "Public Full Access Transactions" ON public.transactions FOR ALL U
         {/* Modal Header */}
         <div className="inventory-dialog-heading p-5 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
-            <div className={`p-2.5 rounded-xl ${supabaseStatus.isConnected ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-blue-600/30 text-blue-400 border border-blue-500/30'}`}>
+            <div className={`p-2.5 rounded-xl ${supabaseStatus.isConnected ? 'bg-emerald-100 text-emerald-600 border border-emerald-300' : 'bg-blue-100 text-blue-600 border border-blue-300'}`}>
               <Database className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-base font-bold text-white tracking-wide">
+                <h3 className="text-base font-bold text-slate-900 tracking-wide">
                   Database Supabase Corporate Gagaclo
                 </h3>
                 {supabaseStatus.isConnected ? (
@@ -226,14 +226,14 @@ CREATE POLICY "Public Full Access Transactions" ON public.transactions FOR ALL U
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Penyimpanan cloud terpusat untuk tim R&D & PPIC Gagaclo
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition"
           >
             <X className="w-5 h-5" />
           </button>

@@ -50,10 +50,10 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
               <Printer className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-slate-900">
                 Cetak Label Stiker Box (Desain Resmi GAGACLO)
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Desain 1:1 sesuai standar: Judul Box, Nomor Raksasa, Bar Lavender Nama PIC, Lokasi Rak & Unit RND.
               </p>
             </div>
@@ -70,7 +70,7 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
 
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+              className="p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-200 transition"
             >
               <X className="w-5 h-5" />
             </button>
