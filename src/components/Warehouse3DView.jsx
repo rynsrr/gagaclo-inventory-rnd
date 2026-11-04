@@ -35,6 +35,8 @@ export const Warehouse3DView = () => {
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredBox, setHoveredBox] = useState(null);
   const [activeRackView, setActiveRackView] = useState('ALL');
+  const activeRackRef = useRef('ALL');
+  const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
 
   const occupancyGroups = [
@@ -150,7 +152,6 @@ export const Warehouse3DView = () => {
 
     // Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.5, 200);
-    camera.position.set(0, 18, 38);
     cameraRef.current = camera;
 
     // Renderer with safe WebGL check
@@ -162,7 +163,7 @@ export const Warehouse3DView = () => {
       setWebGlError(true);
       return;
     }
-    renderer.setSize(width, height);
+    renderer.setSize(width, height, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -172,7 +173,7 @@ export const Warehouse3DView = () => {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.02; // Don't go below floor
+    controls.maxPolarAngle = Math.PI / 2; // Don't go below floor
     controls.minDistance = 6;
     controls.maxDistance = 75;
     controls.target.set(0, 4, 0);
@@ -463,20 +464,53 @@ export const Warehouse3DView = () => {
     };
     animate();
 
-    // Window Resize Handler
-    const handleResize = () => {
-      if (!container) return;
-      const newW = container.clientWidth;
-      const newH = container.clientHeight || 580;
-      camera.aspect = newW / newH;
+    const fitFrontView = () => {
+      const bounds = new THREE.Box3();
+      for (const mesh of boxMeshes) {
+        if (activeRackRef.current === 'ALL' || mesh.userData.rackId === activeRackRef.current) {
+          bounds.expandByObject(mesh);
+        }
+      }
+      if (bounds.isEmpty()) return;
+
+      // Include room for the frame and rack sign above the boxes.
+      bounds.min.x -= 1;
+      bounds.max.x += 1;
+      bounds.min.y -= 1;
+      bounds.max.y += 2;
+      const size = bounds.getSize(new THREE.Vector3());
+      const center = bounds.getCenter(new THREE.Vector3());
+      const verticalSlope = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const distance = 1.12 * Math.max(
+        size.y / (2 * verticalSlope),
+        size.x / (2 * verticalSlope * camera.aspect),
+      ) + size.z / 2;
+
+      controls.maxDistance = Math.max(75, distance * 1.5);
+      camera.far = Math.max(200, distance * 3);
       camera.updateProjectionMatrix();
-      renderer.setSize(newW, newH);
+      controls.target.copy(center);
+      camera.position.set(center.x, center.y, center.z + distance);
+      controls.update();
     };
-    window.addEventListener('resize', handleResize);
+    fitCameraRef.current = fitFrontView;
+
+    const handleResize = () => {
+      const newWidth = container.clientWidth;
+      const newHeight = container.clientHeight;
+      if (!newWidth || !newHeight) return;
+      camera.aspect = newWidth / newHeight;
+      renderer.setSize(newWidth, newHeight, false);
+      fitFrontView();
+    };
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
+    handleResize();
 
     // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
+      fitCameraRef.current = null;
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('click', onClick);
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
@@ -509,26 +543,9 @@ export const Warehouse3DView = () => {
 
   // Camera presets
   const focusOnRack = (rackId) => {
+    activeRackRef.current = rackId;
     setActiveRackView(rackId);
-    if (!controlsRef.current || !cameraRef.current) return;
-
-    if (rackId === 'ALL') {
-      cameraRef.current.position.set(0, 18, 38);
-      controlsRef.current.target.set(0, 4, 0);
-    } else {
-      const rackConfMap = {
-        1: { x: -16, z: 0, y: 4 },
-        2: { x: -6,  z: 0, y: 5 },
-        3: { x: 6,   z: 0, y: 3.5 },
-        4: { x: 15,  z: 0, y: 3.5 },
-        5: { x: 24,  z: 0, y: 3.5 },
-      };
-      const t = rackConfMap[rackId];
-      if (t) {
-        cameraRef.current.position.set(t.x, t.y + 4, t.z + 14);
-        controlsRef.current.target.set(t.x, t.y, t.z);
-      }
-    }
+    fitCameraRef.current?.();
   };
 
   if (webGlError) {
@@ -544,7 +561,7 @@ export const Warehouse3DView = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="warehouse-layout space-y-4">
       
       <div className="inventory-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
         {/* Camera Quick Buttons */}
@@ -615,7 +632,7 @@ export const Warehouse3DView = () => {
               {group.label}
               <span className={`rounded-full px-2 py-0.5 ${group.color}`}>{group.boxes.length}</span>
             </h2>
-            <div className="flex max-h-28 flex-wrap gap-1.5 overflow-auto p-1">
+            <div className="warehouse-box-list flex max-h-28 flex-wrap gap-1.5 overflow-auto p-1">
               {group.boxes.map(box => (
                 <button key={box.boxNumber} type="button"
                   aria-label={`Box ${box.boxNumber}, ${group.label}`}
@@ -631,7 +648,7 @@ export const Warehouse3DView = () => {
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="inventory-panel relative w-full h-[530px] sm:h-[600px] overflow-hidden bg-slate-100">
+      <div className="warehouse-viewport inventory-panel relative w-full h-[530px] sm:h-[600px] overflow-hidden bg-slate-100">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />

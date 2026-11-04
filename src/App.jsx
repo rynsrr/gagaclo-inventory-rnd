@@ -53,7 +53,7 @@ const AppContent = () => {
     : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB terpakai`;
 
   return (
-    <div className="inventory-shell min-h-screen flex flex-col font-sans">
+    <div className={`inventory-shell min-h-screen flex flex-col font-sans ${appMode === '3d-warehouse' ? 'warehouse-screen' : ''}`}>
       
       {/* Top Navigation Bar */}
       <header className="inventory-header no-print sticky top-0 z-30">
@@ -149,7 +149,7 @@ const AppContent = () => {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="inventory-main flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {appMode === '3d-warehouse' && (
           <Warehouse3DView />
         )}
