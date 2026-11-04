@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { Warehouse3DView } from './components/Warehouse3DView';
-import { PrintableManifestView } from './components/PrintableManifestView';
 import { TotalItemsSummaryView } from './components/TotalItemsSummaryView';
 import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
@@ -11,19 +10,16 @@ import { QuickScannerModal } from './components/QuickScannerModal';
 import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
-import { BackupModal } from './components/BackupModal';
 import { 
   Box as BoxIcon, 
-  Printer, 
   Boxes,
   Database,
-  LayoutDashboard,
-  HardDriveDownload
+  LayoutDashboard
 } from 'lucide-react';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse'
-  const [appMode, setAppMode] = useState('3d-warehouse'); // '3d-warehouse', 'manifests'
+  const [appMode, setAppMode] = useState('3d-warehouse'); // '3d-warehouse', 'summary'
 
   const {
     supabaseStatus,
@@ -31,7 +27,6 @@ const AppContent = () => {
     setIsSupabaseModalOpen
   } = useInventory();
 
-  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const connected = supabaseStatus.isConnected;
@@ -104,18 +99,6 @@ const AppContent = () => {
 
               <InventoryImport />
 
-              {/* Data Management & Backup */}
-              <button
-                type="button"
-                onClick={() => setIsBackupModalOpen(true)}
-                className="flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition border bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
-                aria-label="Buka Manajemen Data & Backup"
-                title="Manajemen Data, Backup & Hapus Item"
-              >
-                <HardDriveDownload className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Data</span>
-              </button>
-
               {/* Mode Switcher Tabs */}
               <div className="inventory-segments flex items-center gap-0.5 p-0.5 rounded-lg text-xs">
                 
@@ -130,19 +113,6 @@ const AppContent = () => {
                 >
                   <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
                   <span>Rak 3D</span>
-                </button>
-
-                {/* Dokumen Manifes */}
-                <button
-                  onClick={() => setAppMode('manifests')}
-                  className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md font-semibold transition whitespace-nowrap ${
-                    appMode === 'manifests'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Manifes</span>
                 </button>
 
                 {/* Ringkasan Total Item */}
@@ -171,7 +141,6 @@ const AppContent = () => {
         {appMode === '3d-warehouse' && (
           <Warehouse3DView controlsHost={warehouseControlsHost} />
         )}
-        {appMode === 'manifests' && <PrintableManifestView />}
         {appMode === 'summary' && <TotalItemsSummaryView />}
       </main>
       <footer className="no-print mx-auto w-full max-w-7xl shrink-0 px-4 pb-3 sm:px-6 lg:px-8">
@@ -191,12 +160,6 @@ const AppContent = () => {
       <SupabaseModal 
         isOpen={isSupabaseModalOpen} 
         onClose={() => setIsSupabaseModalOpen(false)} 
-      />
-
-      {/* Data Management & Backup Modal */}
-      <BackupModal
-        isOpen={isBackupModalOpen}
-        onClose={() => setIsBackupModalOpen(false)}
       />
 
     </div>
