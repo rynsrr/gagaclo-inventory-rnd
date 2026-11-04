@@ -8,7 +8,6 @@ import { ChevronDown, Check, X, Sparkles, Clock } from 'lucide-react';
  * - Shows searchable suggestion list from past inputs.
  * - Automatically registers and saves new values when submitted.
  * - Allows 1-click removal of accidental typos.
- * - Native <datalist> support for full browser integration.
  */
 export const SuggestionInput = ({
   value = '',
@@ -31,7 +30,6 @@ export const SuggestionInput = ({
   const containerRef = useRef(null);
   const inputRef = useRef(null);
   const listboxId = useId();
-  const datalistId = `datalist-${listboxId}`;
 
   const stringVal = String(value || '');
 
@@ -79,11 +77,9 @@ export const SuggestionInput = ({
     if (onChange) {
       onChange(uppercase ? String(option).toUpperCase() : String(option));
     }
+    inputRef.current?.focus();
     setIsOpen(false);
     setHighlightedIndex(-1);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
   };
 
   const handleKeyDown = (e) => {
@@ -137,7 +133,6 @@ export const SuggestionInput = ({
       <input
         ref={inputRef}
         type="text"
-        list={datalistId}
         value={stringVal}
         onChange={handleInputChange}
         onFocus={() => {
@@ -154,13 +149,6 @@ export const SuggestionInput = ({
         className={`w-full ${inputClassName}`}
         {...restProps}
       />
-
-      {/* Native Browser Datalist Fallback */}
-      <datalist id={datalistId}>
-        {suggestions.slice(0, 30).map((opt, i) => (
-          <option key={`dl-${i}`} value={opt} />
-        ))}
-      </datalist>
 
       {/* Interactive Toggle Chevron */}
       {showChevron && !disabled && (
