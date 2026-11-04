@@ -65,7 +65,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             </td>
           </tr>
 
-          {/* Deskripsi (Nama/Nomer Style & Size) */}
+          {/* Deskripsi (Nama/Nomer Style, Sample No., & Size) */}
           <tr className="border-b border-black">
             <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Deskripsi
@@ -73,15 +73,29 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             <td className="py-[2px] px-1.5 font-medium align-middle text-black leading-tight">
               {item.style ? (
                 <div className="flex items-center justify-between gap-1">
-                  <span className="font-bold truncate text-[9px]">{item.style}</span>
-                  {item.size && (
-                    <span className="shrink-0 px-1 py-0 border border-black font-black uppercase text-[8px] bg-slate-50">
-                      SZ: {item.size}
+                  <span className="font-bold truncate text-[8.5px] max-w-[42%]" title={item.style}>
+                    {item.style}
+                  </span>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7.5px] bg-slate-50">
+                      SMPL: {item.sampleNo || 'NA'}
+                    </span>
+                    {item.size && (
+                      <span className="px-1 py-0 border border-black font-black uppercase text-[7.5px] bg-slate-50">
+                        SZ: {item.size}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-1">
+                  <span className="truncate block text-[8.5px] max-w-[55%]">{deskripsi}</span>
+                  {item.sampleNo && (
+                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7.5px] bg-slate-50 shrink-0">
+                      SMPL: {item.sampleNo}
                     </span>
                   )}
                 </div>
-              ) : (
-                <span className="truncate block">{deskripsi}</span>
               )}
             </td>
           </tr>
@@ -91,7 +105,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Color
             </td>
-            <td className="py-[2px] px-1.5 font-medium align-middle text-black truncate text-[8.5px]">
+            <td className="py-[2px] px-1.5 font-bold align-middle text-black truncate text-[8.5px]">
               {color}
             </td>
           </tr>

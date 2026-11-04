@@ -61,8 +61,11 @@ export const SimpleInventoryView = () => {
     track: 'DHL : 5475890895',
     tanggal: formatTodayDate(),
     kode: 'SAMPLE-00001',
-    deskripsi: 'metal buckle 50mm - Size: 50MM',
-    color: '-',
+    style: 'Metal Buckle 50mm',
+    sampleNo: 'NA',
+    size: '50MM',
+    deskripsi: 'Metal Buckle 50mm - Sample: NA - Size: 50MM',
+    color: 'Silver',
     jumlah: 15,
     satuan: 'PCS',
     place: 'BOX 1 (RACK 1 - Royan)',
@@ -89,21 +92,36 @@ export const SimpleInventoryView = () => {
   // Handle Form Submit
   const handleSave = (e) => {
     e.preventDefault();
-    if (!form.kode.trim() || !form.deskripsi.trim()) {
-      alert('Mohon isi minimal Kode dan Deskripsi barang.');
+    if (!form.kode.trim() || !form.color.trim() || form.color.trim() === '-') {
+      alert('Mohon isi Kode dan Color (Wajib diisi).');
       return;
     }
+
+    const sampleNoTrim = (form.sampleNo || '').trim() || 'NA';
+    const styleTrim = (form.style || form.deskripsi || '').trim();
+    const sizeTrim = (form.size || '').trim();
+    const fullDeskripsi = styleTrim 
+      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}` 
+      : form.deskripsi;
+
+    const itemToSave = {
+      ...form,
+      style: styleTrim,
+      sampleNo: sampleNoTrim,
+      size: sizeTrim,
+      deskripsi: fullDeskripsi,
+    };
 
     if (isEditing && form.id) {
       // Update
       setItems((prev) =>
-        prev.map((item) => (item.id === form.id ? { ...form } : item))
+        prev.map((item) => (item.id === form.id ? { ...itemToSave } : item))
       );
       setIsEditing(false);
     } else {
       // Add New
       const newItem = {
-        ...form,
+        ...itemToSave,
         id: 'item-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
       };
       setItems((prev) => [newItem, ...prev]);
@@ -115,8 +133,11 @@ export const SimpleInventoryView = () => {
       track: '',
       tanggal: formatTodayDate(),
       kode: '',
+      style: '',
+      sampleNo: 'NA',
+      size: '',
       deskripsi: '',
-      color: '-',
+      color: '',
       jumlah: 1,
       satuan: 'PCS',
       place: form.place || 'BOX 1 (RACK 1 - Royan)',
@@ -374,31 +395,72 @@ export const SimpleInventoryView = () => {
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  Color (Warna)
+                  Color (Warna) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: - atau Silver / Black"
+                  required
+                  placeholder="Warna / Color * (Wajib)"
                   value={form.color}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
                 />
               </div>
             </div>
 
-            {/* Row 3: Deskripsi */}
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Deskripsi Barang <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                rows={2}
-                required
-                placeholder="Contoh: metal buckle 50mm metal buckle-female"
-                value={form.deskripsi}
-                onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 leading-relaxed"
-              />
+            {/* Row 3: Deskripsi (Nama Style, Sample Number, Size) */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-5">
+                <label className="block font-bold text-slate-700 mb-1">
+                  Nama / No. Style <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Metal Buckle 50mm"
+                  value={form.style || ''}
+                  onChange={(e) => setForm({ ...form, style: e.target.value, deskripsi: `${e.target.value} - Sample: ${form.sampleNo || 'NA'} - Size: ${form.size || ''}` })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
+                />
+              </div>
+
+              <div className="sm:col-span-4">
+                <label className="block font-bold text-slate-700 mb-1">
+                  Sample Number <span className="text-rose-500">*</span>
+                </label>
+                <div className="flex items-center space-x-1">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Sample No. (NA) *"
+                    value={form.sampleNo || ''}
+                    onChange={(e) => setForm({ ...form, sampleNo: e.target.value.toUpperCase(), deskripsi: `${form.style || ''} - Sample: ${e.target.value.toUpperCase()} - Size: ${form.size || ''}` })}
+                    className="flex-1 text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, sampleNo: 'NA', deskripsi: `${form.style || ''} - Sample: NA - Size: ${form.size || ''}` })}
+                    className="px-2.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-black transition border border-slate-200"
+                    title="Isi 'NA' jika tidak ada nomor sample"
+                  >
+                    NA
+                  </button>
+                </div>
+              </div>
+
+              <div className="sm:col-span-3">
+                <label className="block font-bold text-slate-700 mb-1">
+                  Size <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="50MM / L"
+                  value={form.size || ''}
+                  onChange={(e) => setForm({ ...form, size: e.target.value.toUpperCase(), deskripsi: `${form.style || ''} - Sample: ${form.sampleNo || 'NA'} - Size: ${e.target.value.toUpperCase()}` })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-black uppercase"
+                />
+              </div>
             </div>
 
             {/* Row 4: Jumlah, Satuan, Place */}

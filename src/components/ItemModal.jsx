@@ -62,8 +62,9 @@ export const ItemModal = () => {
     tanggal: formatTodayDate(),
     kode: '',
     style: '',
+    sampleNo: 'NA',
     size: '',
-    color: '-',
+    color: '',
     jumlah: 1,
     satuan: 'PCS',
     boxNumber: 1,
@@ -89,8 +90,9 @@ export const ItemModal = () => {
           tanggal: item.tanggal || item.dateIn || formatTodayDate(),
           kode: item.kode || item.sku || getNextSampleCode(items),
           style: item.style || item.name || item.deskripsi || '',
+          sampleNo: item.sampleNo || 'NA',
           size: item.size || '',
-          color: item.color || '-',
+          color: item.color && item.color !== '-' ? item.color : '',
           jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
           satuan: item.satuan || item.unit || 'PCS',
           boxNumber: bNum,
@@ -110,8 +112,9 @@ export const ItemModal = () => {
           tanggal: formatTodayDate(),
           kode: getNextSampleCode(items),
           style: '',
+          sampleNo: 'NA',
           size: '',
-          color: '-',
+          color: '',
           jumlah: 1,
           satuan: 'PCS',
           boxNumber: bNum,
@@ -158,7 +161,9 @@ export const ItemModal = () => {
     const newErrors = {};
     if (!formData.kode.trim()) newErrors.kode = 'Wajib isi Kode barang';
     if (!formData.style.trim()) newErrors.style = 'Wajib isi Nama / Nomer Style';
+    if (!formData.sampleNo.trim()) newErrors.sampleNo = 'Wajib isi Sample Number (ketik NA jika tidak ada)';
     if (!formData.size.trim()) newErrors.size = 'Wajib isi Size';
+    if (!formData.color.trim() || formData.color.trim() === '-') newErrors.color = 'Wajib isi Color / Warna';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -169,23 +174,26 @@ export const ItemModal = () => {
     const boxObj = boxes.find(b => b.boxNumber === boxNum);
 
     const styleTrim = formData.style.trim();
+    const sampleNoTrim = formData.sampleNo.trim() || 'NA';
     const sizeTrim = formData.size.trim().toUpperCase();
-    const fullDeskripsi = `${styleTrim} - Size: ${sizeTrim}`;
+    const colorTrim = formData.color.trim();
+    const fullDeskripsi = `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`;
 
     const payload = {
       track: formData.track.trim() || '-',
       tanggal: formData.tanggal.trim(),
       kode: formData.kode.trim(),
       style: styleTrim,
+      sampleNo: sampleNoTrim,
       size: sizeTrim,
       deskripsi: fullDeskripsi,
-      color: formData.color.trim() || '-',
+      color: colorTrim,
       jumlah: Number(formData.jumlah) || 1,
       satuan: (formData.satuan || 'PCS').toUpperCase().trim(),
       place: formData.place || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`),
 
       // System context mappings
-      name: `${styleTrim} (Size: ${sizeTrim})`,
+      name: `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`,
       sku: formData.kode.trim(),
       description: fullDeskripsi,
       qty: Number(formData.jumlah) || 1,
@@ -246,10 +254,10 @@ export const ItemModal = () => {
         <div className="flex-1 overflow-y-auto p-4 bg-slate-100 flex flex-col items-center justify-center">
           
           {/* Validation Alert */}
-          {(errors.kode || errors.style || errors.size) && (
+          {(errors.kode || errors.style || errors.sampleNo || errors.size || errors.color) && (
             <div className="no-print w-full max-w-[340px] mb-2.5 p-2 bg-rose-50 border border-rose-300 rounded-lg text-rose-700 text-[11px] flex items-center space-x-1.5">
               <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
-              <span>{errors.style || errors.size || errors.kode}</span>
+              <span>{errors.style || errors.sampleNo || errors.size || errors.color || errors.kode}</span>
             </div>
           )}
 
@@ -346,7 +354,7 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Deskripsi (2 Kolom: Nama/Nomer Style * & Size *) */}
+                  {/* Deskripsi (3 Kolom: Nama/Nomer Style *, Sample No. *, & Size *) */}
                   <tr className="border-b border-black">
                     <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Deskripsi <span className="text-rose-500">*</span>
@@ -354,26 +362,60 @@ export const ItemModal = () => {
                     <td className="p-0 align-middle">
                       <div className="grid grid-cols-12 gap-0.5 p-0.5">
                         {/* Kolom 1: Nama / Nomer Style (Wajib) */}
-                        <div className="col-span-8">
+                        <div className="col-span-5">
                           <input
                             type="text"
-                            placeholder="Nama / No. Style *"
+                            placeholder="Nama/No. Style *"
                             value={formData.style}
-                            onChange={(e) => setFormData({ ...formData, style: e.target.value })}
-                            className={`w-full py-0.5 px-1 text-[9px] font-bold text-black border focus:outline-none rounded transition ${
+                            onChange={(e) => {
+                              setFormData({ ...formData, style: e.target.value });
+                              if (errors.style) setErrors(prev => ({ ...prev, style: null }));
+                            }}
+                            className={`w-full py-0.5 px-1 text-[8.5px] font-bold text-black border focus:outline-none rounded transition ${
                               errors.style ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
                           />
                         </div>
 
-                        {/* Kolom 2: Size (Wajib) */}
-                        <div className="col-span-4">
+                        {/* Kolom 2: Sample Number (Wajib, ketik NA jika tidak ada) */}
+                        <div className="col-span-4 relative flex items-center">
+                          <input
+                            type="text"
+                            placeholder="Sample No. *"
+                            value={formData.sampleNo}
+                            onChange={(e) => {
+                              setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() });
+                              if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
+                            }}
+                            className={`w-full py-0.5 pl-1 pr-5 text-[8.5px] font-black uppercase text-black font-mono border focus:outline-none rounded transition ${
+                              errors.sampleNo ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
+                            }`}
+                            title="Sample Number (Wajib diisi, ketik NA jika tidak ada)"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, sampleNo: 'NA' }));
+                              if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
+                            }}
+                            className="no-print absolute right-0.5 text-[7px] font-black px-1 py-0.2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded transition"
+                            title="Klik untuk isi 'NA' jika tidak ada nomor sample"
+                          >
+                            NA
+                          </button>
+                        </div>
+
+                        {/* Kolom 3: Size (Wajib) */}
+                        <div className="col-span-3">
                           <input
                             type="text"
                             placeholder="Size *"
                             value={formData.size}
-                            onChange={(e) => setFormData({ ...formData, size: e.target.value.toUpperCase() })}
-                            className={`w-full py-0.5 px-1 text-[9px] font-black uppercase text-black border focus:outline-none rounded transition ${
+                            onChange={(e) => {
+                              setFormData({ ...formData, size: e.target.value.toUpperCase() });
+                              if (errors.size) setErrors(prev => ({ ...prev, size: null }));
+                            }}
+                            className={`w-full py-0.5 px-1 text-[8.5px] font-black uppercase text-black border focus:outline-none rounded transition ${
                               errors.size ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
                           />
@@ -382,18 +424,23 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Color */}
+                  {/* Color (Wajib Isi) */}
                   <tr className="border-b border-black">
                     <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
-                      Color
+                      Color <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
                       <input
                         type="text"
-                        placeholder="Contoh: Navy / -"
+                        placeholder="Warna / Color * (Wajib)"
                         value={formData.color}
-                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="w-full py-0.5 px-1.5 text-[9px] font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
+                        onChange={(e) => {
+                          setFormData({ ...formData, color: e.target.value });
+                          if (errors.color) setErrors(prev => ({ ...prev, color: null }));
+                        }}
+                        className={`w-full py-0.5 px-1.5 text-[9px] font-bold text-black focus:outline-none transition bg-transparent ${
+                          errors.color ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-400'
+                        }`}
                       />
                     </td>
                   </tr>
