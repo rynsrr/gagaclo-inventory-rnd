@@ -165,12 +165,12 @@ export const ItemModal = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.kode.trim()) newErrors.kode = 'Wajib isi Kode barang';
-    if (!formData.buyerNo.trim() || formData.buyerNo.trim() === '-') newErrors.buyerNo = 'Wajib isi Buyer No';
-    if (!formData.style.trim()) newErrors.style = 'Wajib isi Nama / Nomer Style';
-    if (!formData.sampleNo.trim() || formData.sampleNo.trim() === '-') newErrors.sampleNo = 'Wajib isi Sample No';
-    if (!formData.size.trim()) newErrors.size = 'Wajib isi Size';
-    if (!formData.color.trim() || formData.color.trim() === '-') newErrors.color = 'Wajib isi Color / Warna';
+    if (!formData.kode.trim()) newErrors.kode = 'Kode Sampel';
+    if (!formData.buyerNo.trim() || formData.buyerNo.trim() === '-') newErrors.buyerNo = 'Buyer No';
+    if (!formData.style.trim()) newErrors.style = 'Nama / No. Style';
+    if (!formData.sampleNo.trim() || formData.sampleNo.trim() === '-') newErrors.sampleNo = 'Sample No';
+    if (!formData.size.trim()) newErrors.size = 'Size';
+    if (!formData.color.trim() || formData.color.trim() === '-') newErrors.color = 'Color / Warna';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -269,12 +269,15 @@ export const ItemModal = () => {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
           
           {/* Validation Alert */}
-          {(errors.kode || errors.buyerNo || errors.style || errors.sampleNo || errors.size || errors.color) && (
-            <div className="no-print w-full max-w-[580px] mb-3 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-700 text-xs flex items-center space-x-2 shadow-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-              <span className="font-semibold">
-                {errors.buyerNo || errors.sampleNo || errors.kode || errors.style || errors.size || errors.color}
-              </span>
+          {Object.keys(errors).length > 0 && (
+            <div className="no-print w-full max-w-[580px] mb-3 p-3 bg-rose-50 border-2 border-rose-400 rounded-xl text-rose-800 text-xs flex items-start space-x-2.5 shadow-sm animate-fade-in">
+              <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
+              <div>
+                <p className="font-bold text-rose-900">Kolom Wajib Belum Diisi (*):</p>
+                <p className="font-semibold mt-0.5 text-rose-700">
+                  {Object.values(errors).join(' • ')}
+                </p>
+              </div>
             </div>
           )}
 
@@ -371,9 +374,11 @@ export const ItemModal = () => {
                         </div>
 
                         {/* Kolom 2: Buyer No (50% - Wajib Diisi) */}
-                        <div className="flex items-center min-w-0 px-3 py-1.5 gap-1.5">
-                          <span className="text-[11px] font-bold text-slate-700 shrink-0 select-none">
-                            Buyer <span className="text-rose-500">*</span>:
+                        <div className={`flex items-center min-w-0 px-2.5 py-1.5 gap-1.5 transition rounded ${
+                          errors.buyerNo ? 'bg-rose-50 ring-2 ring-rose-500' : ''
+                        }`}>
+                          <span className="text-[11px] font-bold text-slate-800 shrink-0 select-none">
+                            Buyer <span className="text-rose-600 font-black">*</span>:
                           </span>
                           <input
                             type="text"
@@ -383,8 +388,8 @@ export const ItemModal = () => {
                               setFormData({ ...formData, buyerNo: e.target.value.toUpperCase() });
                               if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
                             }}
-                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-bold text-black font-mono focus:outline-none transition bg-transparent ${
-                              errors.buyerNo ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-400'
+                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-bold font-mono focus:outline-none transition bg-transparent ${
+                              errors.buyerNo ? 'text-rose-900 placeholder:text-rose-400' : 'text-black focus:bg-blue-50/60 placeholder:text-slate-400'
                             }`}
                             title="Nomor Buyer / Buyer PO (Wajib diisi)"
                           />
@@ -455,10 +460,10 @@ export const ItemModal = () => {
                               setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() });
                               if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
                             }}
-                            className={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase text-black font-mono border focus:outline-none rounded-lg transition ${
+                            className={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase font-mono border focus:outline-none rounded-lg transition ${
                               errors.sampleNo 
-                                ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' 
-                                : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
+                                ? 'border-rose-500 bg-rose-50 text-rose-900 ring-2 ring-rose-500 placeholder:text-rose-400' 
+                                : 'text-black border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
                             title="Nomor Sample (Wajib diisi)"
                           />
