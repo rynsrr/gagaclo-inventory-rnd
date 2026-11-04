@@ -345,6 +345,54 @@ export const InventoryProvider = ({ children }) => {
     return newItem;
   };
 
+  const importInventoryItems = async (records) => {
+    const client = supabase;
+    if (client && !supabaseStatus.isConnected) {
+      throw new Error('Hubungkan Supabase sebelum mengimpor.');
+    }
+
+    const now = new Date().toISOString();
+    const newItems = records.map(record => ({
+      ...record,
+      id: `item-${crypto.randomUUID()}`,
+      dateIn: record.dateIn || now.slice(0, 10),
+      status: 'In Storage',
+    }));
+    if (client) {
+      const { error } = await client.from('items').insert(newItems.map(localItemToDb));
+      if (error) throw new Error(`Gagal menyimpan item: ${error.message}`);
+    }
+
+    setItems(prev => {
+      const importedIds = new Set(newItems.map(item => item.id));
+      return [...newItems, ...prev.filter(item => !importedIds.has(item.id))];
+    });
+
+    const entries = newItems.map(item => ({
+      id: `trx-${crypto.randomUUID()}`,
+      date: now,
+      type: 'IN',
+      itemId: item.id,
+      itemName: item.name,
+      sku: item.sku,
+      boxNumber: item.boxNumber,
+      qty: item.qty,
+      unit: item.unit,
+      picName: item.picName,
+      notes: 'Impor Excel',
+    }));
+    if (client) {
+      try {
+        const { error } = await client.from('transactions').insert(entries.map(localTrxToDb));
+        if (error) throw error;
+      } catch {
+        return 'Item sudah tersimpan, tetapi riwayat transaksi impor gagal dicatat.';
+      }
+    }
+    setTransactions(prev => [...entries, ...prev]);
+    return null;
+  };
+
   const updateItem = async (itemId, updatedData) => {
     // Automatically record and remember newly inputted data
     recordSuggestions(updatedData);
@@ -678,6 +726,7 @@ export const InventoryProvider = ({ children }) => {
     removeSuggestion,
     // Operations
     addItem,
+    importInventoryItems,
     updateItem,
     deleteItem,
     addTransaction,

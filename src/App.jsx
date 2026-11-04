@@ -7,6 +7,7 @@ import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
 import { BoxQrModal } from './components/BoxQrModal';
 import { QuickScannerModal } from './components/QuickScannerModal';
+import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
 import { 
   Box as BoxIcon, 
@@ -94,6 +95,8 @@ const AppContent = () => {
                 <Database className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>{connected ? usageLabel : 'Hubungkan'}</span>
               </button>
+
+              <InventoryImport />
 
               {/* Mode Switcher Tabs */}
               <div className="inventory-segments flex items-center gap-0.5 p-0.5 rounded-lg text-xs">
