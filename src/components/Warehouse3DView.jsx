@@ -31,7 +31,6 @@ export const Warehouse3DView = () => {
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredBox, setHoveredBox] = useState(null);
   const [activeRackView, setActiveRackView] = useState('ALL');
-  const [isAutoRotate, setIsAutoRotate] = useState(false);
   const [webGlError, setWebGlError] = useState(false);
 
   // References for Three.js scene objects
@@ -441,8 +440,6 @@ export const Warehouse3DView = () => {
     const animate = () => {
       animationFrameIdRef.current = requestAnimationFrame(animate);
       if (controlsRef.current) {
-        controlsRef.current.autoRotate = isAutoRotate;
-        controlsRef.current.autoRotateSpeed = 1.0;
         controlsRef.current.update();
       }
       renderer.render(scene, camera);
@@ -558,17 +555,6 @@ export const Warehouse3DView = () => {
               Rak {id}
             </button>
           ))}
-          <button
-            onClick={() => setIsAutoRotate(!isAutoRotate)}
-            className={`px-2.5 py-1.5 rounded-lg font-bold border transition ${
-              isAutoRotate
-                ? 'bg-emerald-600 text-white border-emerald-500'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-            }`}
-            title="Auto Putar 360°"
-          >
-            {isAutoRotate ? 'Stop Putar' : 'Auto Putar'}
-          </button>
         </div>
       </div>
 
