@@ -38,83 +38,87 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
         <tbody>
           {/* Track */}
           <tr className="border-b border-black">
-            <td className="w-[30%] py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="w-[28%] py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Track
             </td>
-            <td className="py-[2px] px-1.5 font-medium align-middle text-black truncate font-mono text-[8.5px]">
+            <td className="py-[1px] px-1.5 font-medium align-middle text-black break-all font-mono text-[8px] leading-tight">
               {track}
             </td>
           </tr>
 
           {/* Tanggal */}
           <tr className="border-b border-black">
-            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Tanggal
             </td>
-            <td className="py-[2px] px-1.5 font-medium align-middle text-black truncate text-[8.5px]">
+            <td className="py-[1px] px-1.5 font-medium align-middle text-black text-[8px] leading-tight">
               {tanggal}
             </td>
           </tr>
 
           {/* Kode */}
           <tr className="border-b border-black">
-            <td className="py-[1.5px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Kode
             </td>
-            <td className="py-[1.5px] px-1.5 font-black align-middle text-black tracking-tight font-mono text-[9px]">
+            <td className="py-[1px] px-1.5 font-black align-middle text-black tracking-tight font-mono text-[9px] leading-tight">
               {kode}
             </td>
           </tr>
 
           {/* Jenis Sample (ORI / DEVELOP / PPS) */}
           <tr className="border-b border-black">
-            <td className="py-[1.5px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Jenis Sample
             </td>
-            <td className="py-[1.5px] px-1.5 align-middle text-black">
-              <div className="flex items-center gap-1.5 font-mono text-[7.5px]">
-                <span className={`px-1.5 py-0 border border-black ${jenisSample === 'ORI' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
+            <td className="py-[1px] px-1.5 align-middle text-black">
+              <div className="flex items-center gap-1.5 font-mono text-[7px] leading-none">
+                <span className={`px-1 py-0.2 border border-black ${jenisSample === 'ORI' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
                   {jenisSample === 'ORI' ? '✓ ORI' : 'ORI'}
                 </span>
-                <span className={`px-1.5 py-0 border border-black ${jenisSample === 'DEVELOP' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
+                <span className={`px-1 py-0.2 border border-black ${jenisSample === 'DEVELOP' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
                   {jenisSample === 'DEVELOP' ? '✓ DEVELOP' : 'DEVELOP'}
                 </span>
-                <span className={`px-1.5 py-0 border border-black ${jenisSample === 'PPS' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
+                <span className={`px-1 py-0.2 border border-black ${jenisSample === 'PPS' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
                   {jenisSample === 'PPS' ? '✓ PPS' : 'PPS'}
                 </span>
               </div>
             </td>
           </tr>
 
-          {/* Deskripsi (Nama/Nomer Style, Sample No., & Size) */}
+          {/* Deskripsi (Nama/Nomer Style, Sample No., & Size) - FULL VISIBILITY */}
           <tr className="border-b border-black">
-            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1.5px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Deskripsi
             </td>
-            <td className="py-[2px] px-1.5 font-medium align-middle text-black leading-tight">
+            <td className="py-[1.5px] px-1.5 font-medium align-middle text-black leading-tight break-words">
               {item.style ? (
-                <div className="flex items-center justify-between gap-1">
-                  <span className="font-bold truncate text-[8.5px] max-w-[42%]" title={item.style}>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold text-[8.5px] leading-tight break-words text-black">
                     {item.style}
                   </span>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7.5px] bg-slate-50">
+                  <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
                       SMPL: {item.sampleNo || 'NA'}
                     </span>
                     {item.size && (
-                      <span className="px-1 py-0 border border-black font-black uppercase text-[7.5px] bg-slate-50">
+                      <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
                         SZ: {item.size}
                       </span>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-1">
-                  <span className="truncate block text-[8.5px] max-w-[55%]">{deskripsi}</span>
-                  {item.sampleNo && (
-                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7.5px] bg-slate-50 shrink-0">
-                      SMPL: {item.sampleNo}
-                    </span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold text-[8.5px] leading-tight break-words text-black">
+                    {deskripsi}
+                  </span>
+                  {item.sampleNo && item.sampleNo !== 'NA' && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                        SMPL: {item.sampleNo}
+                      </span>
+                    </div>
                   )}
                 </div>
               )}
@@ -123,40 +127,40 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
 
           {/* Color */}
           <tr className="border-b border-black">
-            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Color
             </td>
-            <td className="py-[2px] px-1.5 font-bold align-middle text-black truncate text-[8.5px]">
+            <td className="py-[1px] px-1.5 font-bold align-middle text-black break-words text-[8px] leading-tight">
               {color}
             </td>
           </tr>
 
           {/* Jumlah */}
           <tr className="border-b border-black">
-            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Jumlah
             </td>
-            <td className="py-[2px] px-1.5 font-black text-[9.5px] align-middle text-black">
+            <td className="py-[1px] px-1.5 font-black text-[9px] align-middle text-black leading-tight">
               {jumlah}
             </td>
           </tr>
 
           {/* Satuan */}
           <tr className="border-b border-black">
-            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Satuan
             </td>
-            <td className="py-[2px] px-1.5 font-bold uppercase align-middle text-black text-[8.5px]">
+            <td className="py-[1px] px-1.5 font-bold uppercase align-middle text-black text-[8px] leading-tight">
               {satuan}
             </td>
           </tr>
 
           {/* Place */}
           <tr>
-            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Place
             </td>
-            <td className="py-[2px] px-1.5 font-black align-middle text-black uppercase text-[8.5px] truncate">
+            <td className="py-[1px] px-1.5 font-black align-middle text-black uppercase text-[8px] break-words leading-tight">
               {place}
             </td>
           </tr>
