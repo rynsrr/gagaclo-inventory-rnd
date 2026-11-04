@@ -13,6 +13,7 @@ import {
   localTrxToDb,
   dbTrxToLocal,
 } from '../lib/supabase';
+import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
 
 const InventoryContext = createContext(null);
 
@@ -49,6 +50,25 @@ export const InventoryProvider = ({ children }) => {
     }
     return INITIAL_TRANSACTIONS;
   });
+
+  // Dynamic Reusable Suggestions (Auto-learns all inputs)
+  const [suggestions, setSuggestions] = useState(() => getMergedSuggestions(items));
+
+  useEffect(() => {
+    setSuggestions(getMergedSuggestions(items));
+  }, [items]);
+
+  const recordSuggestions = useCallback((newRecord) => {
+    const updated = recordInputtedData(newRecord, items);
+    setSuggestions(updated);
+    return updated;
+  }, [items]);
+
+  const removeSuggestion = useCallback((field, valueToRemove) => {
+    const updated = removeSuggestionItem(field, valueToRemove, items);
+    setSuggestions(updated);
+    return updated;
+  }, [items]);
 
   // UI state
   const [selectedBoxNumber, setSelectedBoxNumber] = useState(null);
@@ -284,6 +304,9 @@ export const InventoryProvider = ({ children }) => {
 
   // Actions
   const addItem = async (itemData) => {
+    // Automatically record and remember newly inputted data
+    recordSuggestions(itemData);
+
     const newItem = {
       ...itemData,
       id: 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
@@ -323,6 +346,9 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const updateItem = async (itemId, updatedData) => {
+    // Automatically record and remember newly inputted data
+    recordSuggestions(updatedData);
+
     let finalItem = null;
 
     setItems((prev) =>
@@ -629,6 +655,10 @@ export const InventoryProvider = ({ children }) => {
     boxes,
     items,
     transactions,
+    // Reusable Suggestion Lists
+    suggestions,
+    recordSuggestions,
+    removeSuggestion,
     // Operations
     addItem,
     updateItem,

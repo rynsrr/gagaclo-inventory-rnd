@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { RACK_GROUPS, DEFAULT_PLACES } from '../data/simpleData';
 import { CardPrintModal } from './CardPrintModal';
+import { SuggestionInput } from './SuggestionInput';
 import { 
   X, 
   Save, 
@@ -42,7 +43,9 @@ export const ItemModal = () => {
     addItem, 
     updateItem, 
     boxes,
-    items
+    items,
+    suggestions = {},
+    removeSuggestion
   } = useInventory();
 
   const hiddenDateRef = useRef(null);
@@ -294,12 +297,15 @@ export const ItemModal = () => {
                       Track
                     </td>
                     <td className="p-0 align-middle">
-                      <input
-                        type="text"
-                        placeholder="Contoh: DHL : 5475890895"
+                      <SuggestionInput
                         value={formData.track}
-                        onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                        className="w-full py-2 px-3 text-xs sm:text-sm font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
+                        onChange={(val) => setFormData(prev => ({ ...prev, track: val }))}
+                        suggestions={suggestions.track || []}
+                        placeholder="Contoh: DHL : 5475890895"
+                        onRemoveOption={(val) => removeSuggestion && removeSuggestion('track', val)}
+                        className="w-full"
+                        inputClassName="w-full py-2 px-3 text-xs sm:text-sm font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
+                        title="Pilih tracking dari list atau ketik baru"
                       />
                     </td>
                   </tr>
@@ -380,18 +386,21 @@ export const ItemModal = () => {
                           <span className="text-[11px] font-bold text-slate-800 shrink-0 select-none">
                             Buyer <span className="text-rose-600 font-black">*</span>:
                           </span>
-                          <input
-                            type="text"
-                            placeholder="No. Buyer *"
+                          <SuggestionInput
                             value={formData.buyerNo}
-                            onChange={(e) => {
-                              setFormData({ ...formData, buyerNo: e.target.value.toUpperCase() });
+                            onChange={(val) => {
+                              setFormData(prev => ({ ...prev, buyerNo: val.toUpperCase() }));
                               if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
                             }}
-                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-bold font-mono focus:outline-none transition bg-transparent ${
+                            suggestions={suggestions.buyerNo || []}
+                            placeholder="No. Buyer *"
+                            uppercase
+                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('buyerNo', val)}
+                            className="min-w-0 flex-1"
+                            inputClassName={`w-full py-0.5 text-xs sm:text-sm font-bold font-mono focus:outline-none transition bg-transparent ${
                               errors.buyerNo ? 'text-rose-900 placeholder:text-rose-400' : 'text-black focus:bg-blue-50/60 placeholder:text-slate-400'
                             }`}
-                            title="Nomor Buyer / Buyer PO (Wajib diisi)"
+                            title="Nomor Buyer / Buyer PO (Pilih dari list atau ketik baru)"
                           />
                         </div>
                       </div>
@@ -436,52 +445,62 @@ export const ItemModal = () => {
                       <div className="grid grid-cols-12 gap-1.5 p-1.5">
                         {/* Kolom 1: Nama / Nomer Style (Wajib) */}
                         <div className="col-span-5">
-                          <input
-                            type="text"
-                            placeholder="Nama/No. Style *"
+                          <SuggestionInput
                             value={formData.style}
-                            onChange={(e) => {
-                              setFormData({ ...formData, style: e.target.value });
+                            onChange={(val) => {
+                              setFormData(prev => ({ ...prev, style: val }));
                               if (errors.style) setErrors(prev => ({ ...prev, style: null }));
                             }}
-                            className={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-bold text-black border focus:outline-none rounded-lg transition ${
+                            suggestions={suggestions.style || []}
+                            placeholder="Nama/No. Style *"
+                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('style', val)}
+                            className="w-full"
+                            inputClassName={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-bold text-black border focus:outline-none rounded-lg transition ${
                               errors.style ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
+                            title="Nama / No. Style (Pilih dari list atau ketik baru)"
                           />
                         </div>
 
                         {/* Kolom 2: Sample Number (Wajib Diisi) */}
                         <div className="col-span-4">
-                          <input
-                            type="text"
-                            placeholder="SAMPLE NO *"
+                          <SuggestionInput
                             value={formData.sampleNo}
-                            onChange={(e) => {
-                              setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() });
+                            onChange={(val) => {
+                              setFormData(prev => ({ ...prev, sampleNo: val.toUpperCase() }));
                               if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
                             }}
-                            className={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase font-mono border focus:outline-none rounded-lg transition ${
+                            suggestions={suggestions.sampleNo || []}
+                            placeholder="SAMPLE NO *"
+                            uppercase
+                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('sampleNo', val)}
+                            className="w-full"
+                            inputClassName={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase font-mono border focus:outline-none rounded-lg transition ${
                               errors.sampleNo 
                                 ? 'border-rose-500 bg-rose-50 text-rose-900 ring-2 ring-rose-500 placeholder:text-rose-400' 
                                 : 'text-black border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
-                            title="Nomor Sample (Wajib diisi)"
+                            title="Nomor Sample (Pilih dari list atau ketik baru)"
                           />
                         </div>
 
                         {/* Kolom 3: Size (Wajib) */}
                         <div className="col-span-3">
-                          <input
-                            type="text"
-                            placeholder="SIZE *"
+                          <SuggestionInput
                             value={formData.size}
-                            onChange={(e) => {
-                              setFormData({ ...formData, size: e.target.value.toUpperCase() });
+                            onChange={(val) => {
+                              setFormData(prev => ({ ...prev, size: val.toUpperCase() }));
                               if (errors.size) setErrors(prev => ({ ...prev, size: null }));
                             }}
-                            className={`w-full py-1.5 px-2 text-xs sm:text-sm font-black uppercase text-black border focus:outline-none rounded-lg transition text-center ${
+                            suggestions={suggestions.size || []}
+                            placeholder="SIZE *"
+                            uppercase
+                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('size', val)}
+                            className="w-full"
+                            inputClassName={`w-full py-1.5 px-2 text-xs sm:text-sm font-black uppercase text-black border focus:outline-none rounded-lg transition text-center ${
                               errors.size ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
+                            title="Size (Pilih dari list atau ketik baru)"
                           />
                         </div>
                       </div>
@@ -494,17 +513,21 @@ export const ItemModal = () => {
                       Color <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
-                      <input
-                        type="text"
-                        placeholder="Warna / Color * (Wajib)"
+                      <SuggestionInput
                         value={formData.color}
-                        onChange={(e) => {
-                          setFormData({ ...formData, color: e.target.value });
+                        onChange={(val) => {
+                          setFormData(prev => ({ ...prev, color: val.toUpperCase() }));
                           if (errors.color) setErrors(prev => ({ ...prev, color: null }));
                         }}
-                        className={`w-full py-2 px-3 text-xs sm:text-sm font-bold text-black focus:outline-none transition bg-transparent ${
-                          errors.color ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-400'
+                        suggestions={suggestions.color || []}
+                        placeholder="Warna / Color * (Wajib)"
+                        uppercase
+                        onRemoveOption={(val) => removeSuggestion && removeSuggestion('color', val)}
+                        className="w-full"
+                        inputClassName={`w-full py-2 px-3 text-xs sm:text-sm font-bold text-black focus:outline-none transition bg-transparent ${
+                          errors.color ? 'bg-rose-50 placeholder:text-rose-400 ring-2 ring-rose-500' : 'focus:bg-blue-50/60 placeholder:text-slate-400'
                         }`}
+                        title="Warna / Color (Pilih dari list atau ketik baru)"
                       />
                     </td>
                   </tr>
@@ -527,12 +550,16 @@ export const ItemModal = () => {
                           />
                         </div>
                         <div className="flex items-center min-w-0 px-3 py-1.5">
-                          <input
-                            type="text"
-                            placeholder="Satuan (PCS)"
+                          <SuggestionInput
                             value={formData.satuan}
-                            onChange={(e) => setFormData({ ...formData, satuan: e.target.value.toUpperCase() })}
-                            className="w-full py-0.5 text-xs sm:text-sm font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
+                            onChange={(val) => setFormData(prev => ({ ...prev, satuan: val.toUpperCase() }))}
+                            suggestions={suggestions.satuan || []}
+                            placeholder="Satuan (PCS)"
+                            uppercase
+                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('satuan', val)}
+                            className="w-full"
+                            inputClassName="w-full py-0.5 text-xs sm:text-sm font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
+                            title="Satuan Unit (Pilih dari list atau ketik baru)"
                           />
                         </div>
                       </div>
@@ -568,6 +595,61 @@ export const ItemModal = () => {
 
                 </tbody>
               </table>
+
+              {/* Quick Preset Chips for Ultra-Fast Selection */}
+              <div className="no-print mt-3 pt-2.5 border-t border-slate-200/80 flex flex-col gap-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="flex items-center gap-1 font-bold text-slate-700">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Pintasan Cepat Size & Warna:
+                  </span>
+                  <span className="text-[10px] text-slate-400">klik untuk isi instan</span>
+                </div>
+                
+                {/* Size Chips */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">Size:</span>
+                  {['S', 'M', 'L', 'XL', '2XL', 'FREE SIZE'].map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, size: sz }));
+                        if (errors.size) setErrors(prev => ({ ...prev, size: null }));
+                      }}
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
+                        formData.size === sz
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                      }`}
+                    >
+                      {sz}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Popular Color Chips */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">Color:</span>
+                  {['BLACK', 'WHITE', 'NAVY', 'GREY', 'SAGE', 'BEIGE'].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, color: c }));
+                        if (errors.color) setErrors(prev => ({ ...prev, color: null }));
+                      }}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer ${
+                        formData.color === c
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
             </form>
           </div>
