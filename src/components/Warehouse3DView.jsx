@@ -567,7 +567,6 @@ export const Warehouse3DView = ({ controlsHost }) => {
       {controlsHost && createPortal(
         <div className="inventory-header-filters">
           <div role="group" aria-label="Filter PIC PPIC" className="flex items-center gap-2">
-            <span className="inventory-filter-label">PIC PPIC</span>
             <div className="inventory-filter-group">
               <button onClick={() => setHighlightPpic('ALL')} aria-pressed={highlightPpic === 'ALL'}>
                 Semua
