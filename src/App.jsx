@@ -7,7 +7,6 @@ import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
 import { BoxQrModal } from './components/BoxQrModal';
 import { QuickScannerModal } from './components/QuickScannerModal';
-import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
 import { SupabaseModal } from './components/SupabaseModal';
 import { 
   Box as BoxIcon, 
@@ -19,7 +18,6 @@ import {
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse'
   const [appMode, setAppMode] = useState('3d-warehouse'); // '3d-warehouse', 'manifests'
-  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
 
   const {
     supabaseStatus,
@@ -153,7 +151,7 @@ const AppContent = () => {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {appMode === '3d-warehouse' && (
-          <Warehouse3DView onOpenLabelPrintModal={() => setIsLabelModalOpen(true)} />
+          <Warehouse3DView />
         )}
         {appMode === 'manifests' && <PrintableManifestView />}
       </main>
@@ -166,10 +164,6 @@ const AppContent = () => {
       <ItemModal />
       <BoxQrModal />
       <QuickScannerModal />
-      <BoxLabelPrintModal 
-        isOpen={isLabelModalOpen} 
-        onClose={() => setIsLabelModalOpen(false)} 
-      />
       
       {/* Supabase Cloud Connection & Sync Modal */}
       <SupabaseModal 

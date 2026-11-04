@@ -11,13 +11,12 @@ import {
   Layers, 
   User, 
   Box as BoxIcon, 
-  Printer, 
   Sparkles, 
   Info,
   ChevronRight
 } from 'lucide-react';
 
-export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
+export const Warehouse3DView = () => {
   const containerRef = useRef(null);
   const { 
     racks, 
@@ -534,16 +533,8 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
     <div className="space-y-4">
       
       <div className="inventory-panel px-4 py-3">
-        {/* Camera Quick Buttons & Print All Labels */}
+        {/* Camera Quick Buttons */}
         <div className="flex items-center flex-wrap gap-2 text-xs">
-          <button
-            onClick={() => onOpenLabelPrintModal && onOpenLabelPrintModal()}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Cetak Stiker Label Box</span>
-          </button>
-
           <button
             onClick={() => focusOnRack('ALL')}
             className={`px-3 py-1.5 rounded-lg font-bold transition ${
