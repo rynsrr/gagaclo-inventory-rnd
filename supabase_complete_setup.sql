@@ -1,0 +1,210 @@
+-- ========================================================
+-- GAGACLO INVENTORY & SAMPLE DATABASE SCHEMA (SUPABASE)
+-- R&D Storage Management • 5 Racks • 72 Boxes
+-- Jalankan query ini di SQL Editor dashboard Supabase Anda:
+-- ========================================================
+
+-- 1. Tabel Items (Sampel Barang & Material)
+CREATE TABLE IF NOT EXISTS public.items (
+    id TEXT PRIMARY KEY,
+    sku TEXT,
+    kode TEXT,
+    buyer_no TEXT DEFAULT '-',
+    jenis_sample TEXT DEFAULT 'DEVELOP',
+    style TEXT,
+    sample_no TEXT DEFAULT '',
+    size TEXT,
+    name TEXT,
+    description TEXT,
+    deskripsi TEXT,
+    color TEXT,
+    qty NUMERIC DEFAULT 1,
+    jumlah NUMERIC DEFAULT 1,
+    unit TEXT DEFAULT 'PCS',
+    satuan TEXT DEFAULT 'PCS',
+    box_number INTEGER DEFAULT 1,
+    rack_id INTEGER DEFAULT 1,
+    rack_name TEXT DEFAULT 'RACK 1',
+    pic_name TEXT DEFAULT 'Royan',
+    category TEXT DEFAULT 'SAMPLE',
+    status TEXT DEFAULT 'In Storage',
+    track TEXT DEFAULT '-',
+    place TEXT,
+    date_in TEXT,
+    tanggal TEXT,
+    tags JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Tabel Boxes (Status 72 Kotak & Catatan)
+CREATE TABLE IF NOT EXISTS public.boxes (
+    box_number INTEGER PRIMARY KEY,
+    code TEXT,
+    rack_id INTEGER,
+    rack_name TEXT,
+    category TEXT,
+    pic_name TEXT,
+    notes TEXT DEFAULT '',
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Tabel Transactions (Riwayat Keluar Masuk & Peminjaman)
+CREATE TABLE IF NOT EXISTS public.transactions (
+    id TEXT PRIMARY KEY,
+    item_id TEXT,
+    item_name TEXT,
+    sku TEXT,
+    box_number INTEGER,
+    type TEXT, -- 'IN', 'OUT', 'BORROW', 'RETURN', 'RELOCATE'
+    qty NUMERIC DEFAULT 1,
+    unit TEXT DEFAULT 'PCS',
+    pic_name TEXT,
+    date TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Aktifkan Row Level Security (RLS)
+ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.boxes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+-- Buat Policy Akses Penuh untuk Public / Anon Key
+DROP POLICY IF EXISTS "Public Full Access Items" ON public.items;
+CREATE POLICY "Public Full Access Items" ON public.items FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public Full Access Boxes" ON public.boxes;
+CREATE POLICY "Public Full Access Boxes" ON public.boxes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public Full Access Transactions" ON public.transactions;
+CREATE POLICY "Public Full Access Transactions" ON public.transactions FOR ALL USING (true) WITH CHECK (true);
+
+-- Aktifkan Realtime Replication untuk tabel items dan boxes
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'items'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.items;
+  END IF;
+  
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'boxes'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.boxes;
+  END IF;
+END $$;
+
+
+-- ========================================================
+-- SEED DATA GAGACLO INVENTORY & SAMPLE DATABASE (SUPABASE)
+-- Jalankan query ini di SQL Editor Supabase Corporate Gagaclo
+-- ========================================================
+
+-- 1. INSERT 72 MASTER BOXES
+INSERT INTO public.boxes (box_number, code, rack_id, rack_name, category, pic_name, notes) VALUES
+(1, 'BOX-01', 1, 'RACK 1', 'SAMPLE', 'Royan', ''),
+(2, 'BOX-02', 1, 'RACK 1', 'SAMPLE', 'Royan', ''),
+(3, 'BOX-03', 1, 'RACK 1', 'SAMPLE', 'Royan', ''),
+(4, 'BOX-04', 1, 'RACK 1', 'SAMPLE', 'Cynara', ''),
+(5, 'BOX-05', 1, 'RACK 1', 'SAMPLE', 'Cynara', ''),
+(6, 'BOX-06', 1, 'RACK 1', 'SAMPLE', 'Cynara', ''),
+(7, 'BOX-07', 1, 'RACK 1', 'SAMPLE', 'Ami', ''),
+(8, 'BOX-08', 1, 'RACK 1', 'SAMPLE', 'Ami', ''),
+(9, 'BOX-09', 1, 'RACK 1', 'SAMPLE', 'Ami', ''),
+(10, 'BOX-10', 1, 'RACK 1', 'SAMPLE', 'Ryan', ''),
+(11, 'BOX-11', 1, 'RACK 1', 'SAMPLE', 'Ryan', ''),
+(12, 'BOX-12', 1, 'RACK 1', 'SAMPLE', 'Ryan', ''),
+(13, 'BOX-13', 1, 'RACK 1', 'SAMPLE', 'Hanami', ''),
+(14, 'BOX-14', 1, 'RACK 1', 'SAMPLE', 'Hanami', ''),
+(15, 'BOX-15', 1, 'RACK 1', 'SAMPLE', 'Hanami', ''),
+(16, 'BOX-16', 1, 'RACK 1', 'SAMPLE', 'Royan', ''),
+(17, 'BOX-17', 2, 'RACK 2', 'SAMPLE', 'Royan', ''),
+(18, 'BOX-18', 2, 'RACK 2', 'SAMPLE', 'Royan', ''),
+(19, 'BOX-19', 2, 'RACK 2', 'SAMPLE', 'Royan', ''),
+(20, 'BOX-20', 2, 'RACK 2', 'SAMPLE', 'Royan', ''),
+(21, 'BOX-21', 2, 'RACK 2', 'SAMPLE', 'Cynara', ''),
+(22, 'BOX-22', 2, 'RACK 2', 'SAMPLE', 'Cynara', ''),
+(23, 'BOX-23', 2, 'RACK 2', 'SAMPLE', 'Cynara', ''),
+(24, 'BOX-24', 2, 'RACK 2', 'SAMPLE', 'Cynara', ''),
+(25, 'BOX-25', 2, 'RACK 2', 'SAMPLE', 'Ami', ''),
+(26, 'BOX-26', 2, 'RACK 2', 'SAMPLE', 'Ami', ''),
+(27, 'BOX-27', 2, 'RACK 2', 'SAMPLE', 'Ami', ''),
+(28, 'BOX-28', 2, 'RACK 2', 'SAMPLE', 'Ami', ''),
+(29, 'BOX-29', 2, 'RACK 2', 'SAMPLE', 'Ryan', ''),
+(30, 'BOX-30', 2, 'RACK 2', 'SAMPLE', 'Ryan', ''),
+(31, 'BOX-31', 2, 'RACK 2', 'SAMPLE', 'Ryan', ''),
+(32, 'BOX-32', 2, 'RACK 2', 'SAMPLE', 'Ryan', ''),
+(33, 'BOX-33', 2, 'RACK 2', 'SAMPLE', 'Hanami', ''),
+(34, 'BOX-34', 2, 'RACK 2', 'SAMPLE', 'Hanami', ''),
+(35, 'BOX-35', 2, 'RACK 2', 'SAMPLE', 'Hanami', ''),
+(36, 'BOX-36', 2, 'RACK 2', 'SAMPLE', 'Hanami', ''),
+(37, 'BOX-37', 3, 'RACK 3', 'MATERIAL', 'Royan', ''),
+(38, 'BOX-38', 3, 'RACK 3', 'MATERIAL', 'Royan', ''),
+(39, 'BOX-39', 3, 'RACK 3', 'MATERIAL', 'Cynara', ''),
+(40, 'BOX-40', 3, 'RACK 3', 'MATERIAL', 'Cynara', ''),
+(41, 'BOX-41', 3, 'RACK 3', 'MATERIAL', 'Ami', ''),
+(42, 'BOX-42', 3, 'RACK 3', 'MATERIAL', 'Ami', ''),
+(43, 'BOX-43', 3, 'RACK 3', 'MATERIAL', 'Ryan', ''),
+(44, 'BOX-44', 3, 'RACK 3', 'MATERIAL', 'Ryan', ''),
+(45, 'BOX-45', 3, 'RACK 3', 'MATERIAL', 'Hanami', ''),
+(46, 'BOX-46', 3, 'RACK 3', 'MATERIAL', 'Hanami', ''),
+(47, 'BOX-47', 3, 'RACK 3', 'MATERIAL', 'Royan', ''),
+(48, 'BOX-48', 3, 'RACK 3', 'MATERIAL', 'Cynara', ''),
+(49, 'BOX-49', 4, 'RACK 4', 'MATERIAL', 'Royan', ''),
+(50, 'BOX-50', 4, 'RACK 4', 'MATERIAL', 'Royan', ''),
+(51, 'BOX-51', 4, 'RACK 4', 'MATERIAL', 'Cynara', ''),
+(52, 'BOX-52', 4, 'RACK 4', 'MATERIAL', 'Cynara', ''),
+(53, 'BOX-53', 4, 'RACK 4', 'MATERIAL', 'Ami', ''),
+(54, 'BOX-54', 4, 'RACK 4', 'MATERIAL', 'Ami', ''),
+(55, 'BOX-55', 4, 'RACK 4', 'MATERIAL', 'Ryan', ''),
+(56, 'BOX-56', 4, 'RACK 4', 'MATERIAL', 'Ryan', ''),
+(57, 'BOX-57', 4, 'RACK 4', 'MATERIAL', 'Hanami', ''),
+(58, 'BOX-58', 4, 'RACK 4', 'MATERIAL', 'Hanami', ''),
+(59, 'BOX-59', 4, 'RACK 4', 'MATERIAL', 'Ami', ''),
+(60, 'BOX-60', 4, 'RACK 4', 'MATERIAL', 'Ryan', ''),
+(61, 'BOX-61', 5, 'RACK 5', 'MATERIAL', 'Royan', ''),
+(62, 'BOX-62', 5, 'RACK 5', 'MATERIAL', 'Royan', ''),
+(63, 'BOX-63', 5, 'RACK 5', 'MATERIAL', 'Cynara', ''),
+(64, 'BOX-64', 5, 'RACK 5', 'MATERIAL', 'Cynara', ''),
+(65, 'BOX-65', 5, 'RACK 5', 'MATERIAL', 'Ami', ''),
+(66, 'BOX-66', 5, 'RACK 5', 'MATERIAL', 'Ami', ''),
+(67, 'BOX-67', 5, 'RACK 5', 'MATERIAL', 'Ryan', ''),
+(68, 'BOX-68', 5, 'RACK 5', 'MATERIAL', 'Ryan', ''),
+(69, 'BOX-69', 5, 'RACK 5', 'MATERIAL', 'Hanami', ''),
+(70, 'BOX-70', 5, 'RACK 5', 'MATERIAL', 'Hanami', ''),
+(71, 'BOX-71', 5, 'RACK 5', 'MATERIAL', 'Hanami', ''),
+(72, 'BOX-72', 5, 'RACK 5', 'MATERIAL', 'Royan', '')
+ON CONFLICT (box_number) DO UPDATE SET notes = EXCLUDED.notes;
+
+-- 2. INSERT INITIAL ITEMS / SAMPLE
+INSERT INTO public.items (id, sku, kode, buyer_no, jenis_sample, style, sample_no, size, name, deskripsi, description, color, qty, jumlah, unit, satuan, box_number, rack_id, rack_name, pic_name, category, status, date_in, tanggal, tags) VALUES
+('item-101', 'SMP-2026-001', 'SMP-2026-001', '-', 'DEVELOP', 'Sample Polo Shirt Pique Solid - Navy (Size L)', '', '-', 'Sample Polo Shirt Pique Solid - Navy (Size L)', 'Proto sample for Spring 2027 collection. Pique cotton 24s.', 'Proto sample for Spring 2027 collection. Pique cotton 24s.', '-', 2, 2, 'PCS', 'PCS', 1, 1, 'RACK 1', 'Royan', 'SAMPLE', 'In Storage', '2026-11-01', '2026-11-01', '["Polo","Proto","SS27"]'::jsonb),
+('item-102', 'SMP-2026-002', 'SMP-2026-002', '-', 'DEVELOP', 'Sample Heavyweight Oversize Tee - Vintage Black', '', '-', 'Sample Heavyweight Oversize Tee - Vintage Black', 'Cotton combed 16s 230gsm, wash sample test.', 'Cotton combed 16s 230gsm, wash sample test.', '-', 3, 3, 'PCS', 'PCS', 1, 1, 'RACK 1', 'Royan', 'SAMPLE', 'In Storage', '2026-11-02', '2026-11-02', '["Tee","Wash Test"]'::jsonb),
+('item-103', 'SMP-2026-003', 'SMP-2026-003', '-', 'DEVELOP', 'Sample Cargo Pants Ripstop - Olive Green', '', '-', 'Sample Cargo Pants Ripstop - Olive Green', 'Fitting review with designer team, 6-pocket cargo.', 'Fitting review with designer team, 6-pocket cargo.', '-', 1, 1, 'PCS', 'PCS', 2, 1, 'RACK 1', 'Royan', 'SAMPLE', 'In Review', '2026-10-28', '2026-10-28', '["Bottoms","Fit Review"]'::jsonb),
+('item-104', 'SMP-2026-004', 'SMP-2026-004', '-', 'DEVELOP', 'Sample Knit Cardigan Chunky Wool Blend - Beige', '', '-', 'Sample Knit Cardigan Chunky Wool Blend - Beige', '7-gauge knit sample from vendor Alpha.', '7-gauge knit sample from vendor Alpha.', '-', 2, 2, 'PCS', 'PCS', 4, 1, 'RACK 1', 'Cynara', 'SAMPLE', 'In Storage', '2026-10-30', '2026-10-30', '["Knitwear","Outer"]'::jsonb),
+('item-105', 'SMP-2026-005', 'SMP-2026-005', '-', 'DEVELOP', 'Sample Windbreaker Jacket Water Repellent - Charcoal', '', '-', 'Sample Windbreaker Jacket Water Repellent - Charcoal', 'Taslan micro coated, taped seam prototype.', 'Taslan micro coated, taped seam prototype.', '-', 2, 2, 'PCS', 'PCS', 7, 1, 'RACK 1', 'Ami', 'SAMPLE', 'In Storage', '2026-11-01', '2026-11-01', '["Jacket","Technical"]'::jsonb),
+('item-106', 'SMP-2026-006', 'SMP-2026-006', '-', 'DEVELOP', 'Sample Embroidered Cap 6-Panel Twill - Khaki', '', '-', 'Sample Embroidered Cap 6-Panel Twill - Khaki', 'Direct embroidery 3D front & flat side embroidery.', 'Direct embroidery 3D front & flat side embroidery.', '-', 4, 4, 'PCS', 'PCS', 10, 1, 'RACK 1', 'Ryan', 'SAMPLE', 'In Storage', '2026-10-29', '2026-10-29', '["Headwear","Accessories"]'::jsonb),
+('item-107', 'SMP-2026-007', 'SMP-2026-007', '-', 'DEVELOP', 'Sample Denim Jacket 14oz Selvedge - Indigo Rigid', '', '-', 'Sample Denim Jacket 14oz Selvedge - Indigo Rigid', 'Borrowed by QC team for shrinkage and crocking test.', 'Borrowed by QC team for shrinkage and crocking test.', '-', 1, 1, 'PCS', 'PCS', 13, 1, 'RACK 1', 'Hanami', 'SAMPLE', 'Borrowed', '2026-10-25', '2026-10-25', '["Denim","Outerwear"]'::jsonb),
+('item-108', 'SMP-2026-008', 'SMP-2026-008', '-', 'DEVELOP', 'Sample French Terry Hoodie Zip-Up - Grey Melange', '', '-', 'Sample French Terry Hoodie Zip-Up - Grey Melange', 'French terry 330gsm, double layer hood.', 'French terry 330gsm, double layer hood.', '-', 2, 2, 'PCS', 'PCS', 17, 2, 'RACK 2', 'Royan', 'SAMPLE', 'In Storage', '2026-11-02', '2026-11-02', '["Hoodie","Fleece"]'::jsonb),
+('item-109', 'SMP-2026-009', 'SMP-2026-009', '-', 'DEVELOP', 'Sample Chino Shorts Slim Fit - Navy', '', '-', 'Sample Chino Shorts Slim Fit - Navy', 'Cotton twill stretch 98/2 with custom inner waistband.', 'Cotton twill stretch 98/2 with custom inner waistband.', '-', 3, 3, 'PCS', 'PCS', 21, 2, 'RACK 2', 'Cynara', 'SAMPLE', 'In Storage', '2026-10-31', '2026-10-31', '["Shorts","Bottoms"]'::jsonb),
+('item-110', 'SMP-2026-010', 'SMP-2026-010', '-', 'DEVELOP', 'Sample Rayon Camp Collar Shirt - Botanical Print', '', '-', 'Sample Rayon Camp Collar Shirt - Botanical Print', 'Digital print on Rayon twill 30s. Drape test approved.', 'Digital print on Rayon twill 30s. Drape test approved.', '-', 2, 2, 'PCS', 'PCS', 25, 2, 'RACK 2', 'Ami', 'SAMPLE', 'In Storage', '2026-11-01', '2026-11-01', '["Printed","Resort"]'::jsonb),
+('item-111', 'MAT-2026-001', 'MAT-2026-001', '-', 'DEVELOP', 'Fabric Swatch Card Cotton Combed 24s & 30s (24 Colors)', '', '-', 'Fabric Swatch Card Cotton Combed 24s & 30s (24 Colors)', 'Standard shade library batch Q4-2026 from Mill PT Indo.', 'Standard shade library batch Q4-2026 from Mill PT Indo.', '-', 5, 5, 'CARDS', 'CARDS', 37, 3, 'RACK 3', 'Royan', 'MATERIAL', 'In Storage', '2026-10-20', '2026-10-20', '["Fabric Swatch","Cotton"]'::jsonb),
+('item-112', 'MAT-2026-002', 'MAT-2026-002', '-', 'DEVELOP', 'Rib Collar Knit 1x1 Spandex - Assorted Black & White', '', '-', 'Rib Collar Knit 1x1 Spandex - Assorted Black & White', 'Neckband ribbing material sample for T-shirts.', 'Neckband ribbing material sample for T-shirts.', '-', 8, 8, 'ROLLS', 'ROLLS', 37, 3, 'RACK 3', 'Royan', 'MATERIAL', 'In Storage', '2026-10-22', '2026-10-22', '["Ribbing","Trims"]'::jsonb),
+('item-113', 'MAT-2026-003', 'MAT-2026-003', '-', 'DEVELOP', 'Button Sample Book - Resin & Natural Corozo (18L - 32L)', '', '-', 'Button Sample Book - Resin & Natural Corozo (18L - 32L)', 'Engraved logo samples & matt horn effect.', 'Engraved logo samples & matt horn effect.', '-', 4, 4, 'SETS', 'SETS', 39, 3, 'RACK 3', 'Cynara', 'MATERIAL', 'In Storage', '2026-10-26', '2026-10-26', '["Buttons","Accessories"]'::jsonb),
+('item-114', 'MAT-2026-004', 'MAT-2026-004', '-', 'DEVELOP', 'Lining Fabric Taffeta & Twill Polyester Sample Hanger', '', '-', 'Lining Fabric Taffeta & Twill Polyester Sample Hanger', 'Anti-static coated lining fabric for outerwear.', 'Anti-static coated lining fabric for outerwear.', '-', 6, 6, 'HANGERS', 'HANGERS', 41, 3, 'RACK 3', 'Ami', 'MATERIAL', 'In Storage', '2026-10-27', '2026-10-27', '["Lining","Hanger"]'::jsonb),
+('item-115', 'MAT-2026-005', 'MAT-2026-005', '-', 'DEVELOP', 'YKK Metal Zipper #5 Antique Silver & Gunmetal (15-60cm)', '', '-', 'YKK Metal Zipper #5 Antique Silver & Gunmetal (15-60cm)', 'Development zip samples for jackets & heavy hoodies.', 'Development zip samples for jackets & heavy hoodies.', '-', 25, 25, 'PCS', 'PCS', 49, 4, 'RACK 4', 'Royan', 'MATERIAL', 'In Storage', '2026-10-28', '2026-10-28', '["Zipper","YKK","Trims"]'::jsonb),
+('item-116', 'MAT-2026-006', 'MAT-2026-006', '-', 'DEVELOP', 'Elastic Webbing Jacquard Logo 3.5cm (Assorted colors)', '', '-', 'Elastic Webbing Jacquard Logo 3.5cm (Assorted colors)', 'Custom woven waistband elastic for boxer & sport pants.', 'Custom woven waistband elastic for boxer & sport pants.', '-', 12, 12, 'METERS', 'METERS', 53, 4, 'RACK 4', 'Ami', 'MATERIAL', 'In Storage', '2026-10-29', '2026-10-29', '["Elastic","Trims"]'::jsonb),
+('item-117', 'MAT-2026-007', 'MAT-2026-007', '-', 'DEVELOP', 'Woven Label & Satin Care Label Brand Gagaclo Test Batch', '', '-', 'Woven Label & Satin Care Label Brand Gagaclo Test Batch', 'High-density damask woven neck label + TPU wash care labels.', 'High-density damask woven neck label + TPU wash care labels.', '-', 50, 50, 'PCS', 'PCS', 61, 5, 'RACK 5', 'Royan', 'MATERIAL', 'In Storage', '2026-10-31', '2026-10-31', '["Labels","Branding"]'::jsonb),
+('item-118', 'MAT-2026-008', 'MAT-2026-008', '-', 'DEVELOP', 'Interlining Fusible Non-Woven & Woven (Light to Medium)', '', '-', 'Interlining Fusible Non-Woven & Woven (Light to Medium)', 'Testing shrinkage and adhesion on collar and placket.', 'Testing shrinkage and adhesion on collar and placket.', '-', 10, 10, 'METERS', 'METERS', 69, 5, 'RACK 5', 'Hanami', 'MATERIAL', 'In Storage', '2026-11-01', '2026-11-01', '["Interlining","Testing"]'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+-- 3. INSERT TRANSACTIONS
+INSERT INTO public.transactions (id, item_id, item_name, sku, box_number, type, qty, unit, pic_name, date, notes) VALUES
+('trx-1', 'item-102', 'Sample Heavyweight Oversize Tee - Vintage Black', '', 1, 'IN', 3, 'PCS', 'Royan', '2026-11-02 14:10', 'Initial check-in from sampling workshop'),
+('trx-2', 'item-107', 'Sample Denim Jacket 14oz Selvedge - Indigo Rigid', '', 13, 'BORROW', 1, 'PCS', 'Hanami', '2026-11-02 11:30', 'Shrinkage & crocking test batch A'),
+('trx-3', 'item-117', 'Woven Label & Satin Care Label Brand Gagaclo Test Batch', '', 61, 'IN', 50, 'PCS', 'Royan', '2026-11-01 09:45', 'Received proof test tags')
+ON CONFLICT (id) DO NOTHING;
