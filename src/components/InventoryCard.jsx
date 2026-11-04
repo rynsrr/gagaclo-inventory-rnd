@@ -18,6 +18,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
   const track = item.track || '-';
   const tanggal = item.tanggal || item.dateIn || '-';
   const kode = item.kode || item.sku || '-';
+  const jenisSample = (item.jenisSample || item.sampleType || 'DEVELOP').toUpperCase();
   const deskripsi = item.deskripsi || item.name || item.description || '-';
   const color = item.color || '-';
   const jumlah = item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty ?? '-');
@@ -57,11 +58,31 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
 
           {/* Kode */}
           <tr className="border-b border-black">
-            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="py-[1.5px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Kode
             </td>
-            <td className="py-[2px] px-1.5 font-black align-middle text-black tracking-tight font-mono text-[9.5px]">
+            <td className="py-[1.5px] px-1.5 font-black align-middle text-black tracking-tight font-mono text-[9px]">
               {kode}
+            </td>
+          </tr>
+
+          {/* Jenis Sample (ORI / DEVELOP / PPS) */}
+          <tr className="border-b border-black">
+            <td className="py-[1.5px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+              Jenis Sample
+            </td>
+            <td className="py-[1.5px] px-1.5 align-middle text-black">
+              <div className="flex items-center gap-1.5 font-mono text-[7.5px]">
+                <span className={`px-1.5 py-0 border border-black ${jenisSample === 'ORI' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
+                  {jenisSample === 'ORI' ? '✓ ORI' : 'ORI'}
+                </span>
+                <span className={`px-1.5 py-0 border border-black ${jenisSample === 'DEVELOP' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
+                  {jenisSample === 'DEVELOP' ? '✓ DEVELOP' : 'DEVELOP'}
+                </span>
+                <span className={`px-1.5 py-0 border border-black ${jenisSample === 'PPS' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
+                  {jenisSample === 'PPS' ? '✓ PPS' : 'PPS'}
+                </span>
+              </div>
             </td>
           </tr>
 

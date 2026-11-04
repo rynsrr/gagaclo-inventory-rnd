@@ -61,6 +61,7 @@ export const SimpleInventoryView = () => {
     track: 'DHL : 5475890895',
     tanggal: formatTodayDate(),
     kode: 'SAMPLE-00001',
+    jenisSample: 'DEVELOP',
     style: 'Metal Buckle 50mm',
     sampleNo: 'NA',
     size: '50MM',
@@ -106,6 +107,7 @@ export const SimpleInventoryView = () => {
 
     const itemToSave = {
       ...form,
+      jenisSample: form.jenisSample || 'DEVELOP',
       style: styleTrim,
       sampleNo: sampleNoTrim,
       size: sizeTrim,
@@ -133,6 +135,7 @@ export const SimpleInventoryView = () => {
       track: '',
       tanggal: formatTodayDate(),
       kode: '',
+      jenisSample: 'DEVELOP',
       style: '',
       sampleNo: 'NA',
       size: '',
@@ -377,9 +380,9 @@ export const SimpleInventoryView = () => {
               </div>
             </div>
 
-            {/* Row 2: Kode & Color */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div>
+            {/* Row 2: Kode, Jenis Sample, & Color */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+              <div className="sm:col-span-4">
                 <label className="block font-bold text-slate-700 mb-1">
                   Kode Barang / SKU <span className="text-rose-500">*</span>
                 </label>
@@ -393,7 +396,33 @@ export const SimpleInventoryView = () => {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-4">
+                <label className="block font-bold text-slate-700 mb-1">
+                  Jenis Sample <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-3 gap-1">
+                  {['ORI', 'DEVELOP', 'PPS'].map((type) => {
+                    const isSelected = (form.jenisSample || 'DEVELOP') === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setForm({ ...form, jenisSample: type })}
+                        className={`py-2 rounded-lg text-xs font-black uppercase transition border cursor-pointer ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                        }`}
+                      >
+                        {isSelected && <span className="mr-0.5 text-amber-400">✓</span>}
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="sm:col-span-4">
                 <label className="block font-bold text-slate-700 mb-1">
                   Color (Warna) <span className="text-rose-500">*</span>
                 </label>

@@ -61,6 +61,7 @@ export const ItemModal = () => {
     track: '',
     tanggal: formatTodayDate(),
     kode: '',
+    jenisSample: 'DEVELOP',
     style: '',
     sampleNo: 'NA',
     size: '',
@@ -89,6 +90,7 @@ export const ItemModal = () => {
           track: item.track || '',
           tanggal: item.tanggal || item.dateIn || formatTodayDate(),
           kode: item.kode || item.sku || getNextSampleCode(items),
+          jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
           style: item.style || item.name || item.deskripsi || '',
           sampleNo: item.sampleNo || 'NA',
           size: item.size || '',
@@ -111,6 +113,7 @@ export const ItemModal = () => {
           track: '',
           tanggal: formatTodayDate(),
           kode: getNextSampleCode(items),
+          jenisSample: 'DEVELOP',
           style: '',
           sampleNo: 'NA',
           size: '',
@@ -183,6 +186,7 @@ export const ItemModal = () => {
       track: formData.track.trim() || '-',
       tanggal: formData.tanggal.trim(),
       kode: formData.kode.trim(),
+      jenisSample: formData.jenisSample || 'DEVELOP',
       style: styleTrim,
       sampleNo: sampleNoTrim,
       size: sizeTrim,
@@ -350,6 +354,35 @@ export const ItemModal = () => {
                           <Sparkles className="w-2.5 h-2.5 text-blue-600" />
                           <span>Auto</span>
                         </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Jenis Sample (ORI / DEVELOP / PPS) */}
+                  <tr className="border-b border-black">
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                      Jenis Sample <span className="text-rose-500">*</span>
+                    </td>
+                    <td className="py-0.5 px-1 align-middle">
+                      <div className="flex items-center gap-1.5">
+                        {['ORI', 'DEVELOP', 'PPS'].map((type) => {
+                          const isSelected = (formData.jenisSample || 'DEVELOP') === type;
+                          return (
+                            <button
+                              key={type}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, jenisSample: type })}
+                              className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider transition border cursor-pointer ${
+                                isSelected
+                                  ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                              }`}
+                            >
+                              {isSelected && <span className="mr-0.5 text-amber-300 font-bold">✓</span>}
+                              {type}
+                            </button>
+                          );
+                        })}
                       </div>
                     </td>
                   </tr>
