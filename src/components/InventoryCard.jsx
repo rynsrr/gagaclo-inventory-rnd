@@ -17,6 +17,17 @@ import React from 'react';
 export const InventoryCard = ({ item, isPrintMode = false }) => {
   if (!item) return null;
 
+  const track = item.track || '-';
+  const tanggal = item.tanggal || item.dateIn || '-';
+  const kode = item.kode || item.sku || '-';
+  const deskripsi = item.deskripsi || item.name || item.description || '-';
+  const color = item.color || '-';
+  const jumlah = item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty ?? '-');
+  const satuan = item.satuan || item.unit || 'PCS';
+  const place = item.place || (item.boxNumber ? `BOX ${item.boxNumber}` : '-');
+  const qtyDipakai = item.qtyDipakai || '';
+  const tanggalDipakai = item.tanggalDipakai || '';
+
   return (
     <div 
       className={`bg-white text-black font-sans box-border ${
@@ -33,7 +44,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Track
             </td>
             <td className="py-1.5 px-2.5 font-medium align-middle text-black break-words">
-              {item.track || '-'}
+              {track}
             </td>
           </tr>
 
@@ -43,7 +54,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Tanggal
             </td>
             <td className="py-1.5 px-2.5 font-medium align-middle text-black">
-              {item.tanggal || '-'}
+              {tanggal}
             </td>
           </tr>
 
@@ -53,7 +64,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Kode
             </td>
             <td className="py-1.5 px-2.5 font-black text-sm align-middle text-black tracking-tight font-mono">
-              {item.kode || '-'}
+              {kode}
             </td>
           </tr>
 
@@ -63,7 +74,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Deskripsi
             </td>
             <td className="py-2.5 px-2.5 font-medium align-top text-black leading-snug min-h-[44px]">
-              {item.deskripsi || '-'}
+              {deskripsi}
             </td>
           </tr>
 
@@ -73,7 +84,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Color
             </td>
             <td className="py-1.5 px-2.5 font-medium align-middle text-black">
-              {item.color || '-'}
+              {color}
             </td>
           </tr>
 
@@ -83,7 +94,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Jumlah
             </td>
             <td className="py-1.5 px-2.5 font-bold text-sm align-middle text-black">
-              {item.jumlah ?? '-'}
+              {jumlah}
             </td>
           </tr>
 
@@ -93,7 +104,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Satuan
             </td>
             <td className="py-1.5 px-2.5 font-bold uppercase align-middle text-black">
-              {item.satuan || 'PCS'}
+              {satuan}
             </td>
           </tr>
 
@@ -103,7 +114,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Place
             </td>
             <td className="py-1.5 px-2.5 font-black align-middle text-black uppercase">
-              {item.place || '-'}
+              {place}
             </td>
           </tr>
 
@@ -113,7 +124,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Qty Dipakai
             </td>
             <td className="py-2 px-2.5 font-semibold align-middle text-black">
-              {item.qtyDipakai || ''}
+              {qtyDipakai}
             </td>
           </tr>
 
@@ -123,7 +134,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Tanggal Dipakai
             </td>
             <td className="py-2 px-2.5 font-semibold align-middle text-black">
-              {item.tanggalDipakai || ''}
+              {tanggalDipakai}
             </td>
           </tr>
         </tbody>

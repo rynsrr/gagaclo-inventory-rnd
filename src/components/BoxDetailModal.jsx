@@ -24,6 +24,7 @@ import {
   Printer
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
+import { CardPrintModal } from './CardPrintModal';
 
 export const BoxDetailModal = () => {
   const { 
@@ -49,6 +50,7 @@ export const BoxDetailModal = () => {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showBoxLabelModal, setShowBoxLabelModal] = useState(false);
+  const [cardPrintItems, setCardPrintItems] = useState(null);
 
   const handlePrintLabel = () => {
     setShowBoxLabelModal(true);
@@ -170,13 +172,24 @@ export const BoxDetailModal = () => {
               </span>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center flex-wrap gap-2">
+              {itemsInBox.length > 0 && (
+                <button
+                  onClick={() => setCardPrintItems(itemsInBox)}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-xs transition"
+                  title="Cetak Semua Kartu Fisik di Box Ini"
+                >
+                  <Printer className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Cetak Semua Kartu ({itemsInBox.length})</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
                 className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition"
               >
                 <Plus className="w-4 h-4" />
-                <span>Tambah Item ke Box Ini</span>
+                <span>+ Catat Item ke Box</span>
               </button>
             </div>
           </div>
@@ -205,44 +218,38 @@ export const BoxDetailModal = () => {
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                     
                     {/* Item Details */}
-                    <div className="space-y-1 flex-1">
+                    <div className="space-y-1.5 flex-1">
                       <div className="flex items-center flex-wrap gap-2">
-                        {item.sku && (
-                          <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-                            {item.sku}
+                        {(item.kode || item.sku) && (
+                          <span className="text-xs font-mono font-bold bg-slate-900 text-white px-2 py-0.5 rounded shadow-xs">
+                            {item.kode || item.sku}
                           </span>
                         )}
                         <h4 className="text-sm font-bold text-slate-900">
-                          {item.name}
+                          {item.deskripsi || item.name}
                         </h4>
                         {getStatusBadge(item.status)}
                       </div>
 
-                      {item.description && (
-                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                          {item.description}
-                        </p>
-                      )}
-
-                      <div className="flex items-center flex-wrap gap-3 pt-2 text-xs text-slate-500">
-                        <span className="flex items-center space-x-1">
+                      <div className="flex items-center flex-wrap gap-2.5 pt-1 text-xs text-slate-600">
+                        {item.track && item.track !== '-' && (
+                          <span className="font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                            Track: <strong>{item.track}</strong>
+                          </span>
+                        )}
+                        {item.color && item.color !== '-' && (
+                          <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                            Color: <strong>{item.color}</strong>
+                          </span>
+                        )}
+                        <span className="flex items-center space-x-1 text-slate-500">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>Masuk: {item.dateIn || '-'}</span>
+                          <span>{item.tanggal || item.dateIn || '-'}</span>
                         </span>
-                        <span className="flex items-center space-x-1">
+                        <span className="flex items-center space-x-1 text-slate-500">
                           <User className="w-3.5 h-3.5 text-slate-400" />
                           <span>PIC: {item.picName}</span>
                         </span>
-                        {item.tags && item.tags.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <Tag className="w-3.5 h-3.5 text-slate-400" />
-                            {item.tags.map((t, idx) => (
-                              <span key={idx} className="bg-slate-100 text-slate-600 text-[10px] px-1.5 py-0.2 rounded">
-                                #{t}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -250,11 +257,22 @@ export const BoxDetailModal = () => {
                     <div className="flex md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-2 md:pt-0 gap-2">
                       <div className="text-right">
                         <div className="text-base font-black text-slate-900">
-                          {item.qty} <span className="text-xs font-normal text-slate-500">{item.unit || 'pcs'}</span>
+                          {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
+                          <span className="text-xs font-normal text-slate-500 uppercase">{item.satuan || item.unit || 'PCS'}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-1.5">
+                        {/* Print Card Button */}
+                        <button
+                          onClick={() => setCardPrintItems([item])}
+                          className="flex items-center space-x-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition shadow-2xs"
+                          title="Cetak Kartu Fisik Item Ini"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>Cetak Kartu</span>
+                        </button>
+
                         {/* Quick Toggle Status */}
                         <button
                           onClick={() => {
@@ -379,6 +397,14 @@ export const BoxDetailModal = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Printable Physical Inventory Cards Modal */}
+      {cardPrintItems && (
+        <CardPrintModal 
+          itemsToPrint={cardPrintItems} 
+          onClose={() => setCardPrintItems(null)} 
+        />
       )}
     </div>
   );
