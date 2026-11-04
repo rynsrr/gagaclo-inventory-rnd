@@ -225,8 +225,13 @@ export const BoxDetailModal = () => {
                             {item.kode || item.sku}
                           </span>
                         )}
-                        <h4 className="text-sm font-bold text-slate-900">
-                          {item.deskripsi || item.name}
+                        <h4 className="text-sm font-bold text-slate-900 flex items-center flex-wrap gap-1.5">
+                          <span>{item.style || item.deskripsi || item.name}</span>
+                          {item.size && (
+                            <span className="bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-black px-1.5 py-0.2 rounded uppercase">
+                              Size: {item.size}
+                            </span>
+                          )}
                         </h4>
                         {getStatusBadge(item.status)}
                       </div>

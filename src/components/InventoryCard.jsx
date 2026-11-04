@@ -74,7 +74,23 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               Deskripsi
             </td>
             <td className="py-2.5 px-2.5 font-medium align-top text-black leading-snug min-h-[44px]">
-              {deskripsi}
+              {item.style ? (
+                <div>
+                  <div className="flex items-center flex-wrap gap-1.5 font-bold text-black text-xs">
+                    <span>{item.style}</span>
+                    {item.size && (
+                      <span className="inline-block px-1.5 py-0.2 border border-black text-[10px] font-black uppercase tracking-tight">
+                        Size: {item.size}
+                      </span>
+                    )}
+                  </div>
+                  {item.detail && (
+                    <div className="text-[11px] text-slate-800 mt-0.5 leading-tight">{item.detail}</div>
+                  )}
+                </div>
+              ) : (
+                deskripsi
+              )}
             </td>
           </tr>
 

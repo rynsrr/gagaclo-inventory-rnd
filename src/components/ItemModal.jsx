@@ -59,6 +59,9 @@ export const ItemModal = () => {
     track: '',
     tanggal: formatTodayDate(),
     kode: '',
+    style: '',
+    size: '',
+    detail: '',
     deskripsi: '',
     color: '-',
     jumlah: 1,
@@ -87,6 +90,9 @@ export const ItemModal = () => {
           track: item.track || '',
           tanggal: item.tanggal || item.dateIn || formatTodayDate(),
           kode: item.kode || item.sku || getNextSampleCode(items),
+          style: item.style || item.name || item.deskripsi || '',
+          size: item.size || '',
+          detail: item.detail || '',
           deskripsi: item.deskripsi || item.name || item.description || '',
           color: item.color || '-',
           jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
@@ -98,7 +104,7 @@ export const ItemModal = () => {
           status: item.status || 'In Storage',
         });
       } else {
-        // New item mode: auto-generate sequential code SAMPLE-0001, SAMPLE-0002...
+        // New item mode: auto-generate sequential code SAMPLE-00001, SAMPLE-00002...
         const bNum = targetBoxNum || 1;
         const bObj = boxes.find(b => b.boxNumber === bNum);
         const defaultBoxPlace = bObj 
@@ -109,6 +115,9 @@ export const ItemModal = () => {
           track: '',
           tanggal: formatTodayDate(),
           kode: getNextSampleCode(items),
+          style: '',
+          size: '',
+          detail: '',
           deskripsi: '',
           color: '-',
           jumlah: 1,
@@ -161,7 +170,8 @@ export const ItemModal = () => {
     e.preventDefault();
     const newErrors = {};
     if (!formData.kode.trim()) newErrors.kode = 'Wajib isi Kode barang';
-    if (!formData.deskripsi.trim()) newErrors.deskripsi = 'Wajib isi Deskripsi barang';
+    if (!formData.style.trim()) newErrors.style = 'Wajib isi Nama / Nomer Style';
+    if (!formData.size.trim()) newErrors.size = 'Wajib isi Size';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -171,11 +181,21 @@ export const ItemModal = () => {
     const boxNum = Number(formData.boxNumber) || 1;
     const boxObj = boxes.find(b => b.boxNumber === boxNum);
 
+    const styleTrim = formData.style.trim();
+    const sizeTrim = formData.size.trim().toUpperCase();
+    const detailTrim = (formData.detail || '').trim();
+    const fullDeskripsi = detailTrim 
+      ? `${styleTrim} - Size: ${sizeTrim} (${detailTrim})` 
+      : `${styleTrim} - Size: ${sizeTrim}`;
+
     const payload = {
       track: formData.track.trim() || '-',
       tanggal: formData.tanggal.trim(),
       kode: formData.kode.trim(),
-      deskripsi: formData.deskripsi.trim(),
+      style: styleTrim,
+      size: sizeTrim,
+      detail: detailTrim,
+      deskripsi: fullDeskripsi,
       color: formData.color.trim() || '-',
       jumlah: Number(formData.jumlah) || 1,
       satuan: (formData.satuan || 'PCS').toUpperCase().trim(),
@@ -184,9 +204,9 @@ export const ItemModal = () => {
       tanggalDipakai: formData.tanggalDipakai.trim(),
 
       // System context mappings
-      name: formData.deskripsi.trim(),
+      name: `${styleTrim} (Size: ${sizeTrim})`,
       sku: formData.kode.trim(),
-      description: formData.deskripsi.trim(),
+      description: fullDeskripsi,
       qty: Number(formData.jumlah) || 1,
       unit: (formData.satuan || 'PCS').toUpperCase().trim(),
       boxNumber: boxNum,
@@ -240,10 +260,10 @@ export const ItemModal = () => {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
           
           {/* Validation Alert */}
-          {(errors.kode || errors.deskripsi) && (
+          {(errors.kode || errors.style || errors.size) && (
             <div className="no-print w-full max-w-[420px] mb-3 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-700 text-xs flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-              <span>{errors.kode || errors.deskripsi}</span>
+              <span>{errors.kode || errors.style || errors.size}</span>
             </div>
           )}
 
@@ -340,21 +360,54 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Deskripsi */}
+                  {/* Deskripsi (2 Kolom: Nama/Nomer Style & Size, Wajib Diisi) */}
                   <tr className="border-b border-black">
                     <td className="py-2 px-2.5 font-bold border-r border-black align-top text-black whitespace-nowrap bg-slate-50/70">
-                      Deskripsi <span className="text-rose-500">*</span>
+                      <div>Deskripsi <span className="text-rose-500">*</span></div>
+                      <div className="text-[10px] text-slate-400 font-normal">Style & Size</div>
                     </td>
-                    <td className="p-0 align-top">
-                      <textarea
-                        rows={2}
-                        placeholder="metal buckle 50mm metal buckle-female"
-                        value={formData.deskripsi}
-                        onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
-                        className={`w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none resize-none leading-snug transition bg-transparent ${
-                          errors.deskripsi ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-300'
-                        }`}
-                      />
+                    <td className="p-1.5 align-top">
+                      <div className="space-y-1.5">
+                        {/* 2 Kolom: Nama / Nomer Style & Size */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-1.5">
+                          {/* Kolom 1: Nama / Nomer Style (Wajib) */}
+                          <div className="sm:col-span-8">
+                            <input
+                              type="text"
+                              placeholder="Nama / Nomer Style * (misal: #6613 Ergodyne)"
+                              value={formData.style}
+                              onChange={(e) => setFormData({ ...formData, style: e.target.value })}
+                              className={`w-full py-1.5 px-2 text-xs font-bold text-black border focus:outline-none rounded transition ${
+                                errors.style ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-300 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
+                              }`}
+                            />
+                            {errors.style && <p className="text-rose-500 text-[10px] mt-0.5">{errors.style}</p>}
+                          </div>
+
+                          {/* Kolom 2: Size (Wajib) */}
+                          <div className="sm:col-span-4">
+                            <input
+                              type="text"
+                              placeholder="Size * (L, M, 32...)"
+                              value={formData.size}
+                              onChange={(e) => setFormData({ ...formData, size: e.target.value.toUpperCase() })}
+                              className={`w-full py-1.5 px-2 text-xs font-black uppercase text-black border focus:outline-none rounded transition ${
+                                errors.size ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-300 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
+                              }`}
+                            />
+                            {errors.size && <p className="text-rose-500 text-[10px] mt-0.5">{errors.size}</p>}
+                          </div>
+                        </div>
+
+                        {/* Keterangan detail tambahan (opsional) */}
+                        <input
+                          type="text"
+                          placeholder="Keterangan detail tambahan (opsional: misal Pique 24s / buckle 50mm)"
+                          value={formData.detail}
+                          onChange={(e) => setFormData({ ...formData, detail: e.target.value })}
+                          className="w-full py-1 px-2 text-[11px] text-slate-700 border border-slate-200 focus:outline-none focus:border-blue-500 focus:bg-blue-50/40 rounded transition placeholder:text-slate-300 bg-white"
+                        />
+                      </div>
                     </td>
                   </tr>
 
