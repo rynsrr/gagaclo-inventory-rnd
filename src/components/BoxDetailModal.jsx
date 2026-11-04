@@ -22,7 +22,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Printer,
-  CheckSquare
+  CheckSquare,
+  Search,
+  Table,
+  LayoutGrid
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
@@ -53,6 +56,8 @@ export const BoxDetailModal = () => {
   const [showBoxLabelModal, setShowBoxLabelModal] = useState(false);
   const [cardPrintItems, setCardPrintItems] = useState(null);
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('table'); // 'table' (compact default) or 'card'
 
   const toggleItemSelect = (id) => {
     setSelectedItemIds(prev => {
@@ -85,31 +90,48 @@ export const BoxDetailModal = () => {
   };
 
   const filteredItems = itemsInBox.filter(item => {
-    if (filterStatus === 'ALL') return true;
-    return item.status === filterStatus;
+    if (filterStatus !== 'ALL' && item.status !== filterStatus) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (item.kode || item.sku || '').toLowerCase().includes(q) ||
+      (item.buyerNo || '').toLowerCase().includes(q) ||
+      (item.style || item.deskripsi || item.name || '').toLowerCase().includes(q) ||
+      (item.size || '').toLowerCase().includes(q) ||
+      (item.color || '').toLowerCase().includes(q) ||
+      (item.sampleNo || '').toLowerCase().includes(q)
+    );
   });
 
   const getStatusBadge = (status) => {
     switch (status) {
       case 'In Storage':
-        return <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-          <span>Tersimpan (In Storage)</span>
-        </span>;
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>Tersimpan</span>
+          </span>
+        );
       case 'Borrowed':
-        return <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-          <Clock className="w-3 h-3 text-amber-600" />
-          <span>Dipinjam (Borrowed)</span>
-        </span>;
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span>Dipinjam</span>
+          </span>
+        );
       case 'In Review':
-        return <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
-          <AlertCircle className="w-3 h-3 text-purple-600" />
-          <span>Sedang Review</span>
-        </span>;
+        return (
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+            <span>Review</span>
+          </span>
+        );
       default:
-        return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-          {status}
-        </span>;
+        return (
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+            {status}
+          </span>
+        );
     }
   };
 
@@ -181,16 +203,16 @@ export const BoxDetailModal = () => {
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 flex-1 overflow-y-auto space-y-5">
+        <div className="p-5 flex-1 overflow-y-auto space-y-4">
           
           {/* Action Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center space-x-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center flex-wrap gap-2.5">
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Daftar Barang di Box #{box.boxNumber}
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                  Daftar Barang Box #{box.boxNumber}
                 </h3>
-                <span className="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold">
+                <span className="bg-slate-900 text-white text-xs px-2 py-0.5 rounded-full font-bold">
                   {itemsInBox.length}
                 </span>
               </div>
@@ -210,9 +232,57 @@ export const BoxDetailModal = () => {
                   </span>
                 </label>
               )}
+
+              {/* Quick Search in Box */}
+              {itemsInBox.length > 2 && (
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari kode / style / size..."
+                    className="pl-8 pr-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs w-44 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex items-center flex-wrap gap-2">
+              
+              {/* View Switcher (Table vs Card) */}
+              {itemsInBox.length > 0 && (
+                <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('table')}
+                    className={`flex items-center space-x-1 px-2 py-1 rounded-md font-bold transition cursor-pointer ${
+                      viewMode === 'table'
+                        ? 'bg-white text-blue-700 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="Tampilan Tabel Padat (Muat Banyak)"
+                  >
+                    <Table className="w-3.5 h-3.5" />
+                    <span>Tabel Padat</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('card')}
+                    className={`flex items-center space-x-1 px-2 py-1 rounded-md font-bold transition cursor-pointer ${
+                      viewMode === 'card'
+                        ? 'bg-white text-blue-700 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="Tampilan Kartu"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>Kartu</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Print Selected or All */}
               {itemsInBox.length > 0 && (
                 <button
                   onClick={() => {
@@ -222,7 +292,7 @@ export const BoxDetailModal = () => {
                       setCardPrintItems(itemsInBox);
                     }
                   }}
-                  className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-xs transition cursor-pointer ${
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition cursor-pointer ${
                     selectedItemIds.size > 0
                       ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'
                       : 'bg-slate-900 hover:bg-slate-800 text-white'
@@ -232,7 +302,7 @@ export const BoxDetailModal = () => {
                   <Printer className="w-3.5 h-3.5 text-amber-400" />
                   <span>
                     {selectedItemIds.size > 0
-                      ? `Cetak Kartu Terpilih (${selectedItemIds.size})`
+                      ? `Cetak Terpilih (${selectedItemIds.size})`
                       : `Cetak Semua Kartu (${itemsInBox.length})`}
                   </span>
                 </button>
@@ -240,15 +310,15 @@ export const BoxDetailModal = () => {
 
               <button
                 onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition"
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                <span>+ Catat Item ke Box</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Catat Item ke Box</span>
               </button>
             </div>
           </div>
 
-          {/* Items List */}
+          {/* Items Content */}
           {itemsInBox.length === 0 ? (
             <div className="text-center py-12 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
               <Boxes className="w-10 h-10 text-slate-300 mx-auto mb-2" />
@@ -262,149 +332,254 @@ export const BoxDetailModal = () => {
                 <span>Catat Item Pertama</span>
               </button>
             </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-8 px-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-500 text-xs">
+              <p className="font-semibold text-slate-700">Tidak ada item yang sesuai pencarian "{searchQuery}"</p>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-blue-600 hover:underline font-bold"
+              >
+                Hapus Pencarian
+              </button>
+            </div>
+          ) : viewMode === 'table' ? (
+            /* High-Density Compact Table View (Muat Banyak) */
+            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white">
+              <div className="overflow-x-auto max-h-[55vh] scrollbar-thin">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200">
+                    <tr>
+                      <th className="py-2 px-2.5 w-8 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedItemIds.size === itemsInBox.length && itemsInBox.length > 0}
+                          onChange={handleSelectAll}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                          title="Pilih / Batal Pilih Semua"
+                        />
+                      </th>
+                      <th className="py-2 px-2.5 whitespace-nowrap">Kode / Sample</th>
+                      <th className="py-2 px-2.5">Style & Deskripsi</th>
+                      <th className="py-2 px-2.5 whitespace-nowrap">Size & Warna</th>
+                      <th className="py-2 px-2.5 text-center whitespace-nowrap">Jumlah</th>
+                      <th className="py-2 px-2.5 text-center whitespace-nowrap">Status</th>
+                      <th className="py-2 px-2.5 text-right whitespace-nowrap">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredItems.map((item, idx) => {
+                      const isSelected = selectedItemIds.has(item.id);
+                      return (
+                        <tr
+                          key={item.id}
+                          className={`transition hover:bg-blue-50/60 ${
+                            isSelected 
+                              ? 'bg-blue-50/80 font-medium' 
+                              : (idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40')
+                          }`}
+                        >
+                          {/* Checkbox */}
+                          <td className="py-1.5 px-2.5 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleItemSelect(item.id)}
+                              className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                              title="Centang untuk cetak kartu"
+                            />
+                          </td>
+
+                          {/* Kode, Jenis Sample & Buyer */}
+                          <td className="py-1.5 px-2.5 whitespace-nowrap">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">
+                                {item.kode || item.sku || '-'}
+                              </span>
+                              {item.jenisSample && (
+                                <span className="text-[9px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded">
+                                  {item.jenisSample}
+                                </span>
+                              )}
+                              {item.buyerNo && item.buyerNo !== '-' && (
+                                <span className="text-[10px] text-slate-500 font-mono font-semibold">
+                                  (B:{item.buyerNo})
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Style & Deskripsi */}
+                          <td className="py-1.5 px-2.5 min-w-[200px]">
+                            <div className="font-bold text-slate-900 text-xs line-clamp-1" title={item.style || item.deskripsi || item.name}>
+                              {item.style || item.deskripsi || item.name}
+                            </div>
+                            {item.sampleNo && item.sampleNo !== '' && (
+                              <div className="text-[10px] text-slate-500 font-mono">
+                                Sample No: <strong>{item.sampleNo}</strong>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Size & Warna */}
+                          <td className="py-1.5 px-2.5 whitespace-nowrap">
+                            <div className="flex items-center space-x-1.5 text-xs">
+                              {item.size ? (
+                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1.5 py-0.2 rounded text-[10px] uppercase">
+                                  {item.size}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-[11px]">-</span>
+                              )}
+                              {item.color && item.color !== '-' && (
+                                <span className="text-slate-700 text-xs font-medium">
+                                  {item.color}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Qty & Satuan */}
+                          <td className="py-1.5 px-2.5 text-center whitespace-nowrap font-mono font-black text-slate-900 text-xs">
+                            {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
+                            <span className="text-[10px] font-normal text-slate-500 uppercase">
+                              {item.satuan || item.unit || 'PCS'}
+                            </span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-1.5 px-2.5 text-center whitespace-nowrap">
+                            {getStatusBadge(item.status)}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-1.5 px-2.5 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end space-x-1">
+                              <button
+                                onClick={() => setCardPrintItems([item])}
+                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition"
+                                title="Cetak Kartu Fisik Item Ini"
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
+                                  updateItem(item.id, { status: newStatus });
+                                }}
+                                className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                  item.status === 'In Storage'
+                                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                }`}
+                                title="Ganti Status"
+                              >
+                                {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
+                              </button>
+                              <button
+                                onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
+                                className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                                title="Edit Item"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Hapus "${item.name || item.style || item.kode}" dari Box #${box.boxNumber}?`)) {
+                                    deleteItem(item.id);
+                                  }
+                                }}
+                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition"
+                                title="Hapus Item"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {itemsInBox.map((item) => {
+            /* Card View Alternative */
+            <div className="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
+              {filteredItems.map((item) => {
                 const isSelected = selectedItemIds.has(item.id);
                 return (
                   <div 
                     key={item.id}
-                    className={`rounded-xl border p-4 transition ${
+                    className={`rounded-xl border p-3 transition ${
                       isSelected
-                        ? 'bg-blue-50/50 border-blue-400 shadow-xs ring-1 ring-blue-300'
+                        ? 'bg-blue-50/60 border-blue-400 shadow-xs ring-1 ring-blue-300'
                         : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
                     }`}
                   >
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                      
-                      {/* Checkbox & Item Details */}
-                      <div className="flex items-start space-x-3 flex-1 min-w-0">
-                        <label className="mt-1 cursor-pointer select-none shrink-0">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleItemSelect(item.id)}
-                            className="rounded border-slate-300 text-blue-600 focus:ring-0 w-4 h-4 cursor-pointer"
-                            title="Centang untuk cetak kartu item ini"
-                          />
-                        </label>
-
-                        <div className="space-y-1.5 flex-1 min-w-0">
-                          <div className="flex items-center flex-wrap gap-2">
-                            {(item.kode || item.sku) && (
-                              <span className="text-xs font-mono font-bold bg-slate-900 text-white px-2 py-0.5 rounded shadow-xs">
-                                {item.kode || item.sku}
-                              </span>
-                            )}
-                            {item.buyerNo && item.buyerNo !== '-' && (
-                              <span className="text-[11px] font-mono bg-slate-100 text-slate-800 border border-slate-300 px-1.5 py-0.5 rounded font-bold">
-                                Buyer: {item.buyerNo}
-                              </span>
-                            )}
-                            {item.jenisSample && (
-                              <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded">
-                                {item.jenisSample}
-                              </span>
-                            )}
-                            <h4 className="text-sm font-bold text-slate-900 flex items-center flex-wrap gap-1.5">
-                              <span>{item.style || item.deskripsi || item.name}</span>
-                              {item.size && (
-                                <span className="bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-black px-1.5 py-0.2 rounded uppercase">
-                                  Size: {item.size}
-                                </span>
-                              )}
-                            </h4>
-                            {getStatusBadge(item.status)}
-                          </div>
-
-                          <div className="flex items-center flex-wrap gap-2.5 pt-1 text-xs text-slate-600">
-                            {item.track && item.track !== '-' && (
-                              <span className="font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
-                                Track: <strong>{item.track}</strong>
-                              </span>
-                            )}
-                            {item.color && item.color !== '-' && (
-                              <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
-                                Color: <strong>{item.color}</strong>
-                              </span>
-                            )}
-                            {item.sampleNo && item.sampleNo !== '' && (
-                              <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
-                                Sample No: <strong>{item.sampleNo}</strong>
-                              </span>
-                            )}
-                            <span className="flex items-center space-x-1 text-slate-500">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                              <span>{item.tanggal || item.dateIn || '-'}</span>
-                            </span>
-                            <span className="flex items-center space-x-1 text-slate-500">
-                              <User className="w-3.5 h-3.5 text-slate-400" />
-                              <span>PIC: {item.picName}</span>
-                            </span>
-                          </div>
-                        </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center space-x-2.5 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleItemSelect(item.id)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer shrink-0"
+                          title="Centang untuk cetak kartu"
+                        />
+                        <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-[11px] shrink-0">
+                          {item.kode || item.sku || '-'}
+                        </span>
+                        {item.jenisSample && (
+                          <span className="text-[9px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded shrink-0">
+                            {item.jenisSample}
+                          </span>
+                        )}
+                        <span className="font-bold text-slate-900 text-xs truncate">
+                          {item.style || item.deskripsi || item.name}
+                        </span>
+                        {item.size && (
+                          <span className="bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-black px-1.5 py-0.2 rounded uppercase shrink-0">
+                            Size: {item.size}
+                          </span>
+                        )}
                       </div>
 
-                    {/* Qty & Actions */}
-                    <div className="flex md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-2 md:pt-0 gap-2">
-                      <div className="text-right">
-                        <div className="text-base font-black text-slate-900">
-                          {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
-                          <span className="text-xs font-normal text-slate-500 uppercase">{item.satuan || item.unit || 'PCS'}</span>
+                      <div className="flex items-center justify-between sm:justify-end space-x-2 shrink-0">
+                        <span className="font-mono font-black text-slate-900 text-xs">
+                          {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty} {item.satuan || item.unit || 'PCS'}
+                        </span>
+                        {getStatusBadge(item.status)}
+                        <div className="flex items-center space-x-1 pl-1">
+                          <button
+                            onClick={() => setCardPrintItems([item])}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                            title="Cetak Kartu"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
+                            className="p-1 text-slate-500 hover:bg-slate-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Hapus "${item.name || item.style || item.kode}"?`)) {
+                                deleteItem(item.id);
+                              }
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                      </div>
-
-                      <div className="flex items-center space-x-1.5">
-                        {/* Print Card Button */}
-                        <button
-                          onClick={() => setCardPrintItems([item])}
-                          className="flex items-center space-x-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition shadow-2xs"
-                          title="Cetak Kartu Fisik Item Ini"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                          <span>Cetak Kartu</span>
-                        </button>
-
-                        {/* Quick Toggle Status */}
-                        <button
-                          onClick={() => {
-                            const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
-                            updateItem(item.id, { status: newStatus });
-                          }}
-                          className="px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                          title="Ganti Status Cepat"
-                        >
-                          {item.status === 'In Storage' ? 'Pinjamkan' : 'Kembalikan'}
-                        </button>
-
-                        {/* Edit Button */}
-                        <button
-                          onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
-                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                          title="Edit Item"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-
-                        {/* Delete Button */}
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Hapus "${item.name}" dari Box #${box.boxNumber}?`)) {
-                              deleteItem(item.id);
-                            }
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                          title="Hapus Item"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
-
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           )}
 
