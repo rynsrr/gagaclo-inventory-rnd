@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Timer, X } from 'lucide-react';
 
+const TIMER_PIN = '4695';
 const STORAGE_KEY = 'gagaclo_inventory_timer_deadline';
 
 export function InventoryTimer() {
   const dialogRef = useRef(null);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const [days, setDays] = useState('7');
   const [deadline, setDeadline] = useState(() => Number(localStorage.getItem(STORAGE_KEY)) || 0);
   const [now, setNow] = useState(Date.now);
@@ -28,8 +32,26 @@ export function InventoryTimer() {
     };
   }, [deadline, finished]);
 
+  function unlock(event) {
+    event.preventDefault();
+    if (pin !== TIMER_PIN) {
+      setPinError(true);
+      return;
+    }
+    setPin('');
+    setPinError(false);
+    setUnlocked(true);
+  }
+
+  function lock() {
+    setPin('');
+    setPinError(false);
+    setUnlocked(false);
+  }
+
   function start(event) {
     event.preventDefault();
+    if (!unlocked) return;
     const duration = Number(days);
     if (!Number.isInteger(duration) || duration < 1 || duration > 365) return;
     const startedAt = Date.now();
@@ -41,6 +63,7 @@ export function InventoryTimer() {
   }
 
   function reset() {
+    if (!unlocked) return;
     localStorage.removeItem(STORAGE_KEY);
     setDeadline(0);
   }
@@ -68,6 +91,7 @@ export function InventoryTimer() {
       <span className="sr-only" role="status">{finished ? 'Waktu pengerjaan data habis.' : ''}</span>
       <dialog
         ref={dialogRef}
+        onClose={lock}
         aria-labelledby="inventory-timer-title"
         className="no-print m-auto w-[min(92vw,24rem)] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl backdrop:bg-black/45"
       >
@@ -78,25 +102,40 @@ export function InventoryTimer() {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <form onSubmit={start} className="mt-4 space-y-4">
-          <label className="block text-sm font-semibold">
-            Durasi (hari)
-            <input type="number" min="1" max="365" step="1" required value={days}
-              onChange={event => setDays(event.target.value)}
-              className="mt-1 block w-full rounded-lg border border-slate-200 p-2" />
-          </label>
-          <div className="flex flex-wrap gap-2">
+        {!unlocked ? (
+          <form onSubmit={unlock} className="mt-4 space-y-4">
+            <label className="block text-sm font-semibold">
+              PIN pengaturan
+              <input type="password" inputMode="numeric" maxLength={4} required value={pin}
+                onChange={event => { setPin(event.target.value); setPinError(false); }}
+                className="mt-1 block w-full rounded-lg border border-slate-200 p-2" />
+            </label>
+            {pinError && <p role="alert" className="text-sm text-red-700">PIN salah.</p>}
             <button type="submit" className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">
-              {deadline ? 'Mulai ulang' : 'Mulai'}
+              Buka pengaturan
             </button>
-            {deadline > 0 && (
-              <button type="button" onClick={reset}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold">
-                Reset
+          </form>
+        ) : (
+          <form onSubmit={start} className="mt-4 space-y-4">
+            <label className="block text-sm font-semibold">
+              Durasi (hari)
+              <input type="number" min="1" max="365" step="1" required value={days}
+                onChange={event => setDays(event.target.value)}
+                className="mt-1 block w-full rounded-lg border border-slate-200 p-2" />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button type="submit" className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white">
+                {deadline ? 'Mulai ulang' : 'Mulai'}
               </button>
-            )}
-          </div>
-        </form>
+              {deadline > 0 && (
+                <button type="button" onClick={reset}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold">
+                  Reset
+                </button>
+              )}
+            </div>
+          </form>
+        )}
       </dialog>
     </>
   );
