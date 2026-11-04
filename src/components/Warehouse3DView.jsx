@@ -202,35 +202,41 @@ export const Warehouse3DView = ({ controlsHost }) => {
     blueBackLight.position.set(-25, 20, -20);
     scene.add(blueBackLight);
 
-    // Floor (Polished Concrete with Grid)
+    // Short grass strokes give the floor texture without adding 3D meshes.
+    const grassCanvas = document.createElement('canvas');
+    grassCanvas.width = grassCanvas.height = 256;
+    const grassContext = grassCanvas.getContext('2d');
+    grassContext.fillStyle = '#517b40';
+    grassContext.fillRect(0, 0, 256, 256);
+
+    const grassColors = ['#426536', '#628d49', '#759751', '#8ba55d'];
+    for (const color of grassColors) {
+      grassContext.strokeStyle = color;
+      grassContext.beginPath();
+      for (let blade = 0; blade < 700; blade++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        grassContext.moveTo(x, y);
+        grassContext.lineTo(x + Math.random() * 4 - 2, y - 2 - Math.random() * 6);
+      }
+      grassContext.stroke();
+    }
+
+    const grassTexture = new THREE.CanvasTexture(grassCanvas);
+    grassTexture.colorSpace = THREE.SRGBColorSpace;
+    grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+    grassTexture.repeat.set(24, 24);
+    grassTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
     const floorGeo = new THREE.PlaneGeometry(120, 120);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0xdde3eb,
-      roughness: 0.4,
-      metalness: 0.1,
+      map: grassTexture,
+      roughness: 1,
     });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-
-    // Floor Grid lines
-    const grid = new THREE.GridHelper(100, 50, 0x9aaabd, 0xbec9d6);
-    grid.position.y = 0.02;
-    scene.add(grid);
-
-    // Yellow warehouse aisle markings
-    const lineMat = new THREE.MeshBasicMaterial({ color: 0xeab308 });
-    const lineGeoX = new THREE.PlaneGeometry(80, 0.25);
-    const aisleLine1 = new THREE.Mesh(lineGeoX, lineMat);
-    aisleLine1.rotation.x = -Math.PI / 2;
-    aisleLine1.position.set(0, 0.03, 8);
-    scene.add(aisleLine1);
-
-    const aisleLine2 = new THREE.Mesh(lineGeoX, lineMat);
-    aisleLine2.rotation.x = -Math.PI / 2;
-    aisleLine2.position.set(0, 0.03, -8);
-    scene.add(aisleLine2);
 
     // Build the 5 3D Physical Racks
     // Rack 1: Blue rack (16 boxes)
@@ -524,6 +530,9 @@ export const Warehouse3DView = ({ controlsHost }) => {
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      grassTexture.dispose();
+      floorMat.dispose();
+      floorGeo.dispose();
       renderer.dispose();
     };
   }, [boxes, racks]);
