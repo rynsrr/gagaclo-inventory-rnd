@@ -10,8 +10,50 @@ import {
   MapPin,
   AlertCircle,
   Calendar,
+  Info,
   Sparkles
 } from 'lucide-react';
+
+// Every row on the sample card is mandatory. "NA" is an accepted value when
+// the information genuinely does not exist; "-" and empty text are not.
+const REQUIRED_FIELDS = [
+  { key: 'track', label: 'Track' },
+  { key: 'tanggal', label: 'Tanggal Sample' },
+  { key: 'kode', label: 'Kode' },
+  { key: 'buyerNo', label: 'Buyer No' },
+  { key: 'jenisSample', label: 'Jenis Sample' },
+  { key: 'style', label: 'Nama / No. Style' },
+  { key: 'sampleNo', label: 'Sample No' },
+  { key: 'size', label: 'Size' },
+  { key: 'color', label: 'Color / Warna' },
+  { key: 'jumlah', label: 'Jumlah' },
+  { key: 'satuan', label: 'Satuan' },
+  { key: 'place', label: 'Place' },
+];
+
+const isBlank = (value) => {
+  const text = String(value ?? '').trim();
+  return text === '' || text === '-';
+};
+
+// Normalise the "no information" marker so it is always stored as "NA".
+const clean = (value) => {
+  const text = String(value ?? '').trim();
+  return text.toLowerCase() === 'na' ? 'NA' : text;
+};
+
+const TEXT_KEYS = [
+  'track', 'tanggal', 'kode', 'buyerNo', 'jenisSample', 'style',
+  'sampleNo', 'size', 'color', 'satuan', 'place',
+];
+
+// Legacy / imported records can miss columns. When opening them for edit,
+// pre-fill the gaps with NA so they satisfy the "all columns required" rule.
+const fillBlankWithNA = (data) => {
+  const next = { ...data };
+  TEXT_KEYS.forEach((key) => { if (isBlank(next[key])) next[key] = 'NA'; });
+  return next;
+};
 
 /**
  * Calculates next sequential code: SAMPLE-00001, SAMPLE-00002, etc. (5-digit numbering)
@@ -89,14 +131,14 @@ export const ItemModal = () => {
           ? `BOX ${bObj.boxNumber} (${bObj.rackName} - ${bObj.picName})` 
           : `BOX ${bNum}`;
 
-        setFormData({
+        setFormData(fillBlankWithNA({
           track: item.track || '',
           tanggal: item.tanggal || item.dateIn || formatTodayDate(),
           kode: item.kode || item.sku || getNextSampleCode(items),
           buyerNo: item.buyerNo || item.buyerNumber || '',
           jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
           style: item.style || item.name || item.deskripsi || '',
-          sampleNo: item.sampleNo && item.sampleNo !== 'NA' ? item.sampleNo : '',
+          sampleNo: item.sampleNo || '',
           size: item.size || '',
           color: item.color && item.color !== '-' ? item.color : '',
           jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
@@ -104,7 +146,7 @@ export const ItemModal = () => {
           boxNumber: bNum,
           place: item.place || defaultBoxPlace,
           status: item.status || 'In Storage',
-        });
+        }));
       } else {
         // New item mode: auto-generate sequential code SAMPLE-00001, SAMPLE-00002...
         const bNum = targetBoxNum || 1;
@@ -134,6 +176,25 @@ export const ItemModal = () => {
       setShowPrintModal(false);
     }
   }, [itemModalConfig.isOpen, itemModalConfig.item, itemModalConfig.targetBoxNumber, items]);
+
+  // Clear a field's error as soon as the user fills it (including with "NA").
+  useEffect(() => {
+    setErrors((prev) => {
+      const keys = Object.keys(prev);
+      if (keys.length === 0) return prev;
+      const next = {};
+      let changed = false;
+      for (const key of keys) {
+        if (!prev[key]) continue;
+        const stillBlank = key === 'jumlah'
+          ? !(Number(formData.jumlah) > 0)
+          : isBlank(formData[key]);
+        if (stillBlank) next[key] = prev[key];
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [formData]);
 
   if (!itemModalConfig.isOpen) return null;
 
@@ -167,12 +228,12 @@ export const ItemModal = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.kode.trim()) newErrors.kode = 'Kode Sampel';
-    if (!formData.buyerNo.trim() || formData.buyerNo.trim() === '-') newErrors.buyerNo = 'Buyer No';
-    if (!formData.style.trim()) newErrors.style = 'Nama / No. Style';
-    if (!formData.sampleNo.trim() || formData.sampleNo.trim() === '-') newErrors.sampleNo = 'Sample No';
-    if (!formData.size.trim()) newErrors.size = 'Size';
-    if (!formData.color.trim() || formData.color.trim() === '-') newErrors.color = 'Color / Warna';
+    REQUIRED_FIELDS.forEach(({ key, label }) => {
+      const blank = key === 'jumlah'
+        ? !(Number(formData.jumlah) > 0)
+        : isBlank(formData[key]);
+      if (blank) newErrors[key] = label;
+    });
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -182,46 +243,51 @@ export const ItemModal = () => {
     const boxNum = Number(formData.boxNumber) || 1;
     const boxObj = boxes.find(b => b.boxNumber === boxNum);
 
-    const styleTrim = formData.style.trim();
-    const sampleNoTrim = formData.sampleNo.trim();
-    const buyerNoTrim = formData.buyerNo.trim();
-    const sizeTrim = formData.size.trim().toUpperCase();
-    const colorTrim = formData.color.trim();
-    const fullDeskripsi = sampleNoTrim 
-      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}` 
+    const styleTrim = clean(formData.style);
+    const sampleNoTrim = clean(formData.sampleNo);
+    const buyerNoTrim = clean(formData.buyerNo);
+    const sizeTrim = clean(formData.size).toUpperCase();
+    const colorTrim = clean(formData.color);
+    const trackClean = clean(formData.track);
+    const tanggalClean = clean(formData.tanggal);
+    const kodeClean = clean(formData.kode);
+    const satuanClean = clean(formData.satuan).toUpperCase();
+    const placeClean = clean(formData.place) || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`);
+    const fullDeskripsi = sampleNoTrim
+      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
       : `${styleTrim} - Size: ${sizeTrim}`;
 
     const payload = {
-      track: formData.track.trim() || '-',
-      tanggal: formData.tanggal.trim(),
-      kode: formData.kode.trim(),
+      track: trackClean,
+      tanggal: tanggalClean,
+      kode: kodeClean,
       buyerNo: buyerNoTrim,
-      jenisSample: formData.jenisSample || 'DEVELOP',
+      jenisSample: clean(formData.jenisSample) || 'DEVELOP',
       style: styleTrim,
       sampleNo: sampleNoTrim,
       size: sizeTrim,
       deskripsi: fullDeskripsi,
       color: colorTrim,
       jumlah: Number(formData.jumlah) || 1,
-      satuan: (formData.satuan || 'PCS').toUpperCase().trim(),
-      place: formData.place || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`),
+      satuan: satuanClean,
+      place: placeClean,
 
       // System context mappings
-      name: sampleNoTrim 
-        ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})` 
+      name: sampleNoTrim
+        ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`
         : `${styleTrim} (Size: ${sizeTrim})`,
-      sku: formData.kode.trim(),
+      sku: kodeClean,
       buyerNumber: buyerNoTrim,
       description: fullDeskripsi,
       qty: Number(formData.jumlah) || 1,
-      unit: (formData.satuan || 'PCS').toUpperCase().trim(),
+      unit: satuanClean,
       boxNumber: boxNum,
       rackId: boxObj ? boxObj.rackId : 1,
       rackName: boxObj ? boxObj.rackName : 'RACK 1',
       picName: boxObj ? boxObj.picName : 'Royan',
       category: boxObj ? boxObj.category : 'SAMPLE',
       status: formData.status || 'In Storage',
-      dateIn: formData.tanggal.trim(),
+      dateIn: tanggalClean,
     };
 
     if (isEditing) {
@@ -263,7 +329,18 @@ export const ItemModal = () => {
 
         {/* Modal Body: Direct Interactive Card (Enlarged for Optimal Visibility) */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
-          
+
+          {/* Hint: every column is mandatory, use NA when there is no information */}
+          <div className="no-print w-full max-w-[580px] mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
+            <Info className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" aria-hidden="true" />
+            <p>
+              <strong>Semua kolom wajib diisi.</strong> Jika tidak ada informasi, isi dengan{' '}
+              <span className="rounded border border-amber-300 bg-white px-1 font-mono font-black">NA</span>.
+              {' '}Tanggal Sample diisi tanggal sample (contoh <span className="font-mono">5-Nov-2026</span>) atau{' '}
+              <span className="rounded border border-amber-300 bg-white px-1 font-mono font-black">NA</span>.
+            </p>
+          </div>
+
           {/* Validation Alert */}
           {Object.keys(errors).length > 0 && (
             <div className="no-print w-full max-w-[580px] mb-3 p-3 bg-rose-50 border-2 border-rose-400 rounded-xl text-rose-800 text-xs flex items-start space-x-2.5 shadow-sm animate-fade-in">
@@ -271,8 +348,9 @@ export const ItemModal = () => {
               <div>
                 <p className="font-bold text-rose-900">Kolom Wajib Belum Diisi (*):</p>
                 <p className="font-semibold mt-0.5 text-rose-700">
-                  {Object.values(errors).join(' • ')}
+                  {Object.values(errors).filter(Boolean).join(' • ')}
                 </p>
+                <p className="mt-1 text-rose-700">Jika tidak ada informasi, isi dengan <strong>NA</strong>.</p>
               </div>
             </div>
           )}
@@ -287,36 +365,40 @@ export const ItemModal = () => {
                   {/* Track */}
                   <tr className="border-b-2 border-black">
                     <td className="w-[28%] py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Track
+                      Track <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
                       <SuggestionInput
                         value={formData.track}
                         onChange={(val) => setFormData(prev => ({ ...prev, track: val }))}
                         suggestions={suggestions.track || []}
-                        placeholder="Contoh: DHL : 5475890895"
+                        placeholder="DHL : 5475890895 / NA *"
                         onRemoveOption={(val) => removeSuggestion && removeSuggestion('track', val)}
                         className="w-full"
-                        inputClassName="w-full py-2 px-3 text-xs sm:text-sm font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
-                        title="Pilih tracking dari list atau ketik baru"
+                        inputClassName={`w-full py-2 px-3 text-xs sm:text-sm font-medium text-black focus:outline-none transition font-mono bg-transparent ${
+                          errors.track ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-300'
+                        }`}
+                        title="Wajib diisi. Pilih tracking dari list, ketik baru, atau isi NA jika tidak ada info"
                       />
                     </td>
                   </tr>
 
-                  {/* Tanggal (Klik Kalender ATAU Tulis Manual) */}
+                  {/* Tanggal Sample (Klik Kalender ATAU Tulis Manual / NA) */}
                   <tr className="border-b-2 border-black">
                     <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Tanggal
+                      Tanggal Sample <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
-                      <div className="flex items-center w-full relative">
+                      <div className={`flex items-center w-full relative ${errors.tanggal ? 'bg-rose-50' : ''}`}>
                         <input
                           type="text"
-                          placeholder="4-Nov-2026"
+                          placeholder="5-Nov-2026 / NA *"
                           value={formData.tanggal}
                           onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                          className="flex-1 py-2 px-3 text-xs sm:text-sm font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
-                          title="Tulis manual atau klik ikon kalender"
+                          className={`flex-1 py-2 px-3 text-xs sm:text-sm font-semibold text-black focus:outline-none transition bg-transparent ${
+                            errors.tanggal ? 'placeholder:text-rose-400' : 'focus:bg-blue-50/60'
+                          }`}
+                          title="Tanggal sample wajib diisi. Tulis manual, klik ikon kalender, atau isi NA jika tidak ada info"
                         />
                         {/* Native Calendar Picker Trigger */}
                         <button
@@ -528,31 +610,32 @@ export const ItemModal = () => {
                   {/* Jumlah & Satuan (1 Baris Hemat Tempat) */}
                   <tr className="border-b-2 border-black">
                     <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Jumlah
+                      Jumlah <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
                       <div className="grid grid-cols-2 gap-0 items-center w-full">
-                        <div className="flex items-center min-w-0 border-r-2 border-black px-3 py-1.5">
+                        <div className={`flex items-center min-w-0 border-r-2 border-black px-3 py-1.5 ${errors.jumlah ? 'bg-rose-50' : ''}`}>
                           <input
                             type="number"
                             min="1"
                             value={formData.jumlah}
                             onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
                             className="w-full py-0.5 text-xs sm:text-sm font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent font-mono"
-                            placeholder="Qty"
+                            placeholder="Qty *"
+                            title="Jumlah wajib diisi (minimal 1)"
                           />
                         </div>
-                        <div className="flex items-center min-w-0 px-3 py-1.5">
+                        <div className={`flex items-center min-w-0 px-3 py-1.5 ${errors.satuan ? 'bg-rose-50' : ''}`}>
                           <SuggestionInput
                             value={formData.satuan}
                             onChange={(val) => setFormData(prev => ({ ...prev, satuan: val.toUpperCase() }))}
                             suggestions={suggestions.satuan || []}
-                            placeholder="Satuan (PCS)"
+                            placeholder="Satuan / NA *"
                             uppercase
                             onRemoveOption={(val) => removeSuggestion && removeSuggestion('satuan', val)}
                             className="w-full"
                             inputClassName="w-full py-0.5 text-xs sm:text-sm font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
-                            title="Satuan Unit (Pilih dari list atau ketik baru)"
+                            title="Satuan wajib diisi. Pilih dari list, ketik baru, atau isi NA jika tidak ada info"
                           />
                         </div>
                       </div>
@@ -562,13 +645,16 @@ export const ItemModal = () => {
                   {/* Place */}
                   <tr>
                     <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Place
+                      Place <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
                       <select
                         value={formData.place}
                         onChange={(e) => handleBoxSelect(e.target.value)}
-                        className="w-full py-2 px-3 text-xs sm:text-sm font-black text-black uppercase focus:outline-none focus:bg-blue-50/60 bg-transparent cursor-pointer"
+                        className={`w-full py-2 px-3 text-xs sm:text-sm font-black text-black uppercase focus:outline-none focus:bg-blue-50/60 cursor-pointer ${
+                          errors.place ? 'bg-rose-50' : 'bg-transparent'
+                        }`}
+                        title="Lokasi penyimpanan wajib dipilih"
                       >
                         {!DEFAULT_PLACES.includes(formData.place) && formData.place && (
                           <option value={formData.place}>{formData.place}</option>

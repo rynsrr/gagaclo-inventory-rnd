@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useInventory } from '../context/InventoryContext';
+import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import {
   Archive,
   ClipboardList,
@@ -32,22 +33,22 @@ export function TotalItemsSummaryView() {
         const box = boxRackMap[Number(item.boxNumber)];
         return {
           ...item,
-          track: item.track || '-',
-          tanggal: item.tanggal || item.dateIn || '-',
-          kode: item.kode || item.sku || '-',
-          buyerNo: item.buyerNo || item.buyerNumber || '-',
+          track: item.track || 'NA',
+          tanggal: item.tanggal || item.dateIn || 'NA',
+          kode: item.kode || item.sku || 'NA',
+          buyerNo: item.buyerNo || item.buyerNumber || 'NA',
           jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
-          style: item.style || item.name || '-',
-          sampleNo: item.sampleNo && item.sampleNo !== 'NA' ? item.sampleNo : '-',
-          size: item.size || '-',
-          color: item.color && item.color !== '-' ? item.color : '-',
+          style: item.style || item.name || 'NA',
+          sampleNo: item.sampleNo || 'NA',
+          size: item.size || 'NA',
+          color: item.color && item.color !== '-' ? item.color : 'NA',
           jumlah: Number.isFinite(Number(item.jumlah)) ? Number(item.jumlah) : (Number(item.qty) || 0),
           satuan: (item.satuan || item.unit || 'PCS').toUpperCase(),
-          place: item.place || (box ? `BOX ${box.boxNumber} (${box.rackName} - ${box.picName})` : '-'),
+          place: item.place || (box ? `BOX ${box.boxNumber} (${box.rackName} - ${box.picName})` : 'NA'),
           boxLabel: `BOX ${item.boxNumber}`,
-          rackName: box ? box.rackName : '-',
-          picName: item.picName || (box ? box.picName : '-'),
-          dateIn: item.dateIn || item.tanggal || '-',
+          rackName: box ? box.rackName : 'NA',
+          picName: item.picName || (box ? box.picName : 'NA'),
+          dateIn: item.dateIn || item.tanggal || 'NA',
         };
       })
       .sort((a, b) => Number(b.boxNumber) - Number(a.boxNumber) || (a.style || '').localeCompare(b.style || ''));
@@ -67,7 +68,7 @@ export function TotalItemsSummaryView() {
     );
   }, [allItems, query]);
 
-  const dashClass = (value) => (value && value !== '-' ? 'text-slate-700' : 'text-slate-300');
+  const dashClass = (value) => (value && value !== '-' && value !== 'NA' ? 'text-slate-700' : 'text-slate-400');
 
   const handleExport = () => {
     const rows = filteredItems.map((item, i) => ({
@@ -105,6 +106,9 @@ export function TotalItemsSummaryView() {
           Preview agregat semua sample &amp; material yang tercatat di seluruh 72 box (5 rak).
         </p>
       </div>
+
+      {/* Mention & Rekap Kurang per PIC */}
+      <PpicMissingMentionBar />
 
       {/* Full item list */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -177,11 +181,11 @@ export function TotalItemsSummaryView() {
                     <td className={`px-3 py-2.5 whitespace-nowrap ${dashClass(item.tanggal)}`}>{item.tanggal}</td>
                     <td className="px-3 py-2.5">
                       <div className={`font-mono text-xs font-semibold ${dashClass(item.kode)}`}>{item.kode}</div>
-                      {item.track && item.track !== '-' && (
+                      {item.track && item.track !== 'NA' && (
                         <div className="mt-0.5 font-mono text-[10px] text-slate-400">Track: {item.track}</div>
                       )}
                     </td>
-                    <td className={`px-3 py-2.5 whitespace-nowrap font-mono text-xs ${dashClass(item.buyerNo)}`}>{item.buyerNo}</td>
+                    <td className={`px-3 py-2.5 whitespace-nowrap font-mono text-xs ${dashClass(item.buyerNo)}`}>{item.buyerNo === 'NA' ? 'NA' : item.buyerNo}</td>
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">
                         {item.jenisSample}
@@ -190,9 +194,9 @@ export function TotalItemsSummaryView() {
                     <td className="px-3 py-2.5 max-w-[22rem] break-words">
                       <div className="font-medium text-slate-800">{item.style}</div>
                       <div className="mt-0.5 space-x-2 text-[11px] text-slate-500">
-                        {item.sampleNo && item.sampleNo !== '-' && <span>Sample: <strong className="text-slate-600">{item.sampleNo}</strong></span>}
-                        {item.size && item.size !== '-' && <span>Size: <strong className="text-slate-600">{item.size}</strong></span>}
-                        {item.color && item.color !== '-' && <span className={dashClass(item.color)}>{item.color}</span>}
+                        {item.sampleNo && item.sampleNo !== 'NA' && <span>Sample: <strong className="text-slate-600">{item.sampleNo}</strong></span>}
+                        {item.size && item.size !== 'NA' && <span>Size: <strong className="text-slate-600">{item.size}</strong></span>}
+                        {item.color && item.color !== 'NA' && <span className={dashClass(item.color)}>{item.color}</span>}
                       </div>
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-right font-bold text-slate-900">
@@ -202,7 +206,7 @@ export function TotalItemsSummaryView() {
                       <div className="text-xs font-semibold text-slate-700">{item.boxLabel}</div>
                       <div className="mt-0.5 text-[11px] text-slate-500">
                         {item.rackName}
-                        {item.picName && item.picName !== '-' && ` • ${item.picName}`}
+                        {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
                       </div>
                     </td>
                     <td className="px-3 py-2.5">

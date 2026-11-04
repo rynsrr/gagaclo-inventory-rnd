@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { useInventory } from '../context/InventoryContext';
 import { 
   RotateCcw, 
@@ -675,6 +676,8 @@ export const Warehouse3DView = ({ controlsHost, highlightBoxNumbers = null, onCl
         controlsHost,
       )}
 
+      <PpicMissingMentionBar activePic={highlightPpic} onSelectPic={setHighlightPpic} />
+
       <div role="group" aria-label="Pilihan rak" className="inventory-filter-group w-fit max-w-full flex-wrap">
         <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
           Semua Rak
@@ -714,7 +717,7 @@ export const Warehouse3DView = ({ controlsHost, highlightBoxNumbers = null, onCl
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="warehouse-viewport inventory-panel relative w-full h-[530px] sm:h-[600px] overflow-hidden bg-slate-100">
+      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden bg-slate-100">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
@@ -770,7 +773,7 @@ export const Warehouse3DView = ({ controlsHost, highlightBoxNumbers = null, onCl
         )}
 
         {/* Controls Hint (Bottom Right) */}
-        <div className="absolute bottom-4 right-4 z-10 bg-black/60 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-400 pointer-events-none flex items-center space-x-3">
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-black/60 backdrop-blur-xs px-2.5 py-1.5 rounded-lg border border-white/10 text-[10px] sm:text-[11px] text-slate-300 pointer-events-none flex flex-wrap items-center gap-2">
           <span>🖱️ Putar: Klik Kiri</span>
           <span>🔍 Zoom: Scroll</span>
           <span>✋ Geser: Klik Kanan</span>

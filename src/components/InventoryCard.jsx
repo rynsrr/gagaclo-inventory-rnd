@@ -4,7 +4,7 @@ import React from 'react';
  * Standard KTP Size (ID-1 / ISO 7810: 85.6mm × 54mm)
  * Compact Sample Card with 8 core fields:
  * - Track
- * - Tanggal
+ * - Tanggal Sample
  * - Kode
  * - Deskripsi (Style & Size)
  * - Color
@@ -15,16 +15,30 @@ import React from 'react';
 export const InventoryCard = ({ item, isPrintMode = false }) => {
   if (!item) return null;
 
-  const track = item.track || '-';
-  const tanggal = item.tanggal || item.dateIn || '-';
-  const kode = item.kode || item.sku || '-';
-  const buyerNo = item.buyerNo || item.buyerNumber || '-';
+  // When printing, every blank or "-" field shows "NA" so the card never
+  // has an empty row. On-screen preview keeps "-" for readability.
+  const naOr = (value) => {
+    const text = String(value ?? '').trim();
+    if (text === '' || text === '-') return isPrintMode ? 'NA' : '-';
+    return text;
+  };
+
+  const track = naOr(item.track);
+  const tanggal = naOr(item.tanggal || item.dateIn);
+  const kode = naOr(item.kode || item.sku);
+  const buyerNo = naOr(item.buyerNo || item.buyerNumber);
   const jenisSample = (item.jenisSample || item.sampleType || 'DEVELOP').toUpperCase();
-  const deskripsi = item.deskripsi || item.name || item.description || '-';
-  const color = item.color || '-';
-  const jumlah = item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty ?? '-');
-  const satuan = item.satuan || item.unit || 'PCS';
-  const place = item.place || (item.boxNumber ? `BOX ${item.boxNumber}` : '-');
+  const deskripsi = naOr(item.deskripsi || item.name || item.description);
+  const color = naOr(item.color);
+  const jumlahRaw = item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty;
+  const jumlah = (jumlahRaw === undefined || jumlahRaw === null || jumlahRaw === '' || jumlahRaw === '-')
+    ? (isPrintMode ? 'NA' : '-')
+    : jumlahRaw;
+  const satuan = naOr(item.satuan || item.unit);
+  const place = naOr(item.place || (item.boxNumber ? `BOX ${item.boxNumber}` : null));
+  const styleDisplay = naOr(item.style);
+  const sampleNoDisplay = naOr(item.sampleNo);
+  const sizeDisplay = naOr(item.size);
 
   return (
     <div 
@@ -47,10 +61,10 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             </td>
           </tr>
 
-          {/* Tanggal */}
+          {/* Tanggal Sample */}
           <tr className="border-b border-black">
             <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
-              Tanggal
+              Tanggal Sample
             </td>
             <td className="py-[1px] px-1.5 font-medium align-middle text-black text-[8px] leading-tight">
               {tanggal}
@@ -106,19 +120,15 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
               {item.style ? (
                 <div className="flex flex-col gap-0.5">
                   <span className="font-bold text-[8.5px] leading-tight break-words text-black">
-                    {item.style}
+                    {styleDisplay}
                   </span>
                   <div className="flex items-center gap-1 flex-wrap mt-0.5">
-                    {item.sampleNo && item.sampleNo.trim() && item.sampleNo.trim() !== 'NA' && (
-                      <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                        SMPL: {item.sampleNo}
-                      </span>
-                    )}
-                    {item.size && (
-                      <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                        SZ: {item.size}
-                      </span>
-                    )}
+                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                      SMPL: {sampleNoDisplay}
+                    </span>
+                    <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                      SZ: {sizeDisplay}
+                    </span>
                   </div>
                 </div>
               ) : (
@@ -126,13 +136,14 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   <span className="font-bold text-[8.5px] leading-tight break-words text-black">
                     {deskripsi}
                   </span>
-                  {item.sampleNo && item.sampleNo.trim() && item.sampleNo.trim() !== 'NA' && (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                        SMPL: {item.sampleNo}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                      SMPL: {sampleNoDisplay}
+                    </span>
+                    <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                      SZ: {sizeDisplay}
+                    </span>
+                  </div>
                 </div>
               )}
             </td>

@@ -13,15 +13,17 @@ import {
 import { InventoryCard } from './InventoryCard';
 
 export const CardPrintModal = ({ itemsToPrint, onClose }) => {
-  if (!itemsToPrint || itemsToPrint.length === 0) return null;
+  const safeItems = Array.isArray(itemsToPrint) ? itemsToPrint : [];
 
   // Track checked items (default to all selected)
   const [selectedItemIds, setSelectedItemIds] = useState(() => {
-    return new Set(itemsToPrint.map((item, idx) => item.id || item.kode || `item-${idx}`));
+    return new Set(safeItems.map((item, idx) => item.id || item.kode || `item-${idx}`));
   });
 
   const [showCutGuides, setShowCutGuides] = useState(true);
   const [showChecklistDrawer, setShowChecklistDrawer] = useState(true);
+
+  if (!itemsToPrint || itemsToPrint.length === 0) return null;
 
   // Toggle single item selection
   const toggleItemSelection = (id) => {

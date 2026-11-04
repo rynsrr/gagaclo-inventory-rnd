@@ -395,7 +395,7 @@ function BoxDetail({ box }) {
                                   {item.jenisSample}
                                 </span>
                               )}
-                              {item.buyerNo && item.buyerNo !== '-' && (
+                              {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
                                 <span className="text-[10px] text-slate-500 font-mono font-semibold">
                                   (B:{item.buyerNo})
                                 </span>
@@ -425,7 +425,7 @@ function BoxDetail({ box }) {
                               ) : (
                                 <span className="text-slate-400 text-[11px]">-</span>
                               )}
-                              {item.color && item.color !== '-' && (
+                              {item.color && item.color !== '-' && item.color !== 'NA' && (
                                 <span className="text-slate-700 text-xs font-medium">
                                   {item.color}
                                 </span>
