@@ -21,7 +21,8 @@ import {
   Save,
   ArrowUpRight,
   ArrowDownRight,
-  Printer
+  Printer,
+  CheckSquare
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
@@ -51,6 +52,27 @@ export const BoxDetailModal = () => {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showBoxLabelModal, setShowBoxLabelModal] = useState(false);
   const [cardPrintItems, setCardPrintItems] = useState(null);
+  const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+
+  const toggleItemSelect = (id) => {
+    setSelectedItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItemIds.size === itemsInBox.length) {
+      setSelectedItemIds(new Set());
+    } else {
+      setSelectedItemIds(new Set(itemsInBox.map(i => i.id)));
+    }
+  };
 
   const handlePrintLabel = () => {
     setShowBoxLabelModal(true);
@@ -163,24 +185,56 @@ export const BoxDetailModal = () => {
           
           {/* Action Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-slate-900">
-                Daftar Barang di Box #{box.boxNumber}
-              </h3>
-              <span className="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold">
-                {itemsInBox.length}
-              </span>
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Daftar Barang di Box #{box.boxNumber}
+                </h3>
+                <span className="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold">
+                  {itemsInBox.length}
+                </span>
+              </div>
+
+              {itemsInBox.length > 0 && (
+                <label className="flex items-center space-x-1.5 text-xs text-slate-700 font-bold cursor-pointer select-none bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg border border-slate-300 transition shadow-2xs">
+                  <input
+                    type="checkbox"
+                    checked={selectedItemIds.size === itemsInBox.length && itemsInBox.length > 0}
+                    onChange={handleSelectAll}
+                    className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                  />
+                  <span>
+                    {selectedItemIds.size === itemsInBox.length
+                      ? 'Batal Pilih'
+                      : 'Pilih Semua'}
+                  </span>
+                </label>
+              )}
             </div>
 
             <div className="flex items-center flex-wrap gap-2">
               {itemsInBox.length > 0 && (
                 <button
-                  onClick={() => setCardPrintItems(itemsInBox)}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-xs transition"
-                  title="Cetak Semua Kartu Fisik di Box Ini"
+                  onClick={() => {
+                    if (selectedItemIds.size > 0) {
+                      setCardPrintItems(itemsInBox.filter(i => selectedItemIds.has(i.id)));
+                    } else {
+                      setCardPrintItems(itemsInBox);
+                    }
+                  }}
+                  className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-xs transition cursor-pointer ${
+                    selectedItemIds.size > 0
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'
+                      : 'bg-slate-900 hover:bg-slate-800 text-white'
+                  }`}
+                  title="Cetak Kartu Fisik Item"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Cetak Semua Kartu ({itemsInBox.length})</span>
+                  <span>
+                    {selectedItemIds.size > 0
+                      ? `Cetak Kartu Terpilih (${selectedItemIds.size})`
+                      : `Cetak Semua Kartu (${itemsInBox.length})`}
+                  </span>
                 </button>
               )}
 
@@ -210,53 +264,86 @@ export const BoxDetailModal = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {itemsInBox.map((item) => (
-                <div 
-                  key={item.id}
-                  className="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-300 shadow-2xs hover:shadow-xs transition"
-                >
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                    
-                    {/* Item Details */}
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex items-center flex-wrap gap-2">
-                        {(item.kode || item.sku) && (
-                          <span className="text-xs font-mono font-bold bg-slate-900 text-white px-2 py-0.5 rounded shadow-xs">
-                            {item.kode || item.sku}
-                          </span>
-                        )}
-                        <h4 className="text-sm font-bold text-slate-900 flex items-center flex-wrap gap-1.5">
-                          <span>{item.style || item.deskripsi || item.name}</span>
-                          {item.size && (
-                            <span className="bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-black px-1.5 py-0.2 rounded uppercase">
-                              Size: {item.size}
-                            </span>
-                          )}
-                        </h4>
-                        {getStatusBadge(item.status)}
-                      </div>
+              {itemsInBox.map((item) => {
+                const isSelected = selectedItemIds.has(item.id);
+                return (
+                  <div 
+                    key={item.id}
+                    className={`rounded-xl border p-4 transition ${
+                      isSelected
+                        ? 'bg-blue-50/50 border-blue-400 shadow-xs ring-1 ring-blue-300'
+                        : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                    }`}
+                  >
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                      
+                      {/* Checkbox & Item Details */}
+                      <div className="flex items-start space-x-3 flex-1 min-w-0">
+                        <label className="mt-1 cursor-pointer select-none shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleItemSelect(item.id)}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-0 w-4 h-4 cursor-pointer"
+                            title="Centang untuk cetak kartu item ini"
+                          />
+                        </label>
 
-                      <div className="flex items-center flex-wrap gap-2.5 pt-1 text-xs text-slate-600">
-                        {item.track && item.track !== '-' && (
-                          <span className="font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
-                            Track: <strong>{item.track}</strong>
-                          </span>
-                        )}
-                        {item.color && item.color !== '-' && (
-                          <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
-                            Color: <strong>{item.color}</strong>
-                          </span>
-                        )}
-                        <span className="flex items-center space-x-1 text-slate-500">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{item.tanggal || item.dateIn || '-'}</span>
-                        </span>
-                        <span className="flex items-center space-x-1 text-slate-500">
-                          <User className="w-3.5 h-3.5 text-slate-400" />
-                          <span>PIC: {item.picName}</span>
-                        </span>
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-center flex-wrap gap-2">
+                            {(item.kode || item.sku) && (
+                              <span className="text-xs font-mono font-bold bg-slate-900 text-white px-2 py-0.5 rounded shadow-xs">
+                                {item.kode || item.sku}
+                              </span>
+                            )}
+                            {item.buyerNo && item.buyerNo !== '-' && (
+                              <span className="text-[11px] font-mono bg-slate-100 text-slate-800 border border-slate-300 px-1.5 py-0.5 rounded font-bold">
+                                Buyer: {item.buyerNo}
+                              </span>
+                            )}
+                            {item.jenisSample && (
+                              <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded">
+                                {item.jenisSample}
+                              </span>
+                            )}
+                            <h4 className="text-sm font-bold text-slate-900 flex items-center flex-wrap gap-1.5">
+                              <span>{item.style || item.deskripsi || item.name}</span>
+                              {item.size && (
+                                <span className="bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-black px-1.5 py-0.2 rounded uppercase">
+                                  Size: {item.size}
+                                </span>
+                              )}
+                            </h4>
+                            {getStatusBadge(item.status)}
+                          </div>
+
+                          <div className="flex items-center flex-wrap gap-2.5 pt-1 text-xs text-slate-600">
+                            {item.track && item.track !== '-' && (
+                              <span className="font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                                Track: <strong>{item.track}</strong>
+                              </span>
+                            )}
+                            {item.color && item.color !== '-' && (
+                              <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                                Color: <strong>{item.color}</strong>
+                              </span>
+                            )}
+                            {item.sampleNo && item.sampleNo !== '' && (
+                              <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
+                                Sample No: <strong>{item.sampleNo}</strong>
+                              </span>
+                            )}
+                            <span className="flex items-center space-x-1 text-slate-500">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{item.tanggal || item.dateIn || '-'}</span>
+                            </span>
+                            <span className="flex items-center space-x-1 text-slate-500">
+                              <User className="w-3.5 h-3.5 text-slate-400" />
+                              <span>PIC: {item.picName}</span>
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
                     {/* Qty & Actions */}
                     <div className="flex md:flex-col items-center md:items-end justify-between border-t md:border-t-0 pt-2 md:pt-0 gap-2">
@@ -316,7 +403,8 @@ export const BoxDetailModal = () => {
 
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
 
