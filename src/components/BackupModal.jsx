@@ -1,16 +1,18 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useInventory } from '../context/InventoryContext';
-import { X, HardDriveDownload, Upload, RotateCcw, ShieldAlert, Database, CheckCircle2 } from 'lucide-react';
+import { X, HardDriveDownload, Upload, RotateCcw, ShieldAlert, Database, CheckCircle2, Trash2 } from 'lucide-react';
 
 export const BackupModal = ({ isOpen, onClose }) => {
   const { 
     exportJsonBackup, 
     importJsonBackup, 
     resetToInitialData, 
+    deleteAllItems,
     setIsSupabaseModalOpen,
     supabaseStatus 
   } = useInventory();
   const fileInputRef = useRef(null);
+  const [confirming, setConfirming] = useState(false);
 
   if (!isOpen) return null;
 
@@ -139,6 +141,60 @@ export const BackupModal = ({ isOpen, onClose }) => {
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset ke Konfigurasi Awal</span>
             </button>
+          </div>
+
+          {/* Hapus Semua Item */}
+          <div className="bg-red-50/70 p-4 rounded-xl border border-red-200 space-y-2">
+            <div className="flex items-center space-x-2 font-bold text-red-900">
+              <Trash2 className="w-4 h-4 text-red-600" />
+              <span>Hapus Semua Item Tersimpan</span>
+            </div>
+            <p className="text-red-700 text-[11px] leading-relaxed">
+              Menghapus SELURUH data item/sample secara permanen dari database (Supabase + lokal).
+              Box, rak, dan riwayat transaksi tetap tersimpan. Tindakan ini <strong>TIDAK BISA dibatalkan</strong>.
+            </p>
+            {!confirming ? (
+              <button
+                type="button"
+                onClick={() => setConfirming(true)}
+                className="w-full py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition shadow-xs text-xs flex items-center justify-center space-x-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus Semua Item</span>
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-red-800">
+                  Yakin? Semua item akan hilang permanen.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const count = await deleteAllItems();
+                        setConfirming(false);
+                        onClose();
+                        console.log(`Deleted ${count} items`);
+                      } catch (e) {
+                        alert('Gagal menghapus item: ' + (e?.message || e));
+                        setConfirming(false);
+                      }
+                    }}
+                    className="flex-1 py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg transition shadow-xs text-xs"
+                  >
+                    Ya, Hapus Semua
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(false)}
+                    className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg transition text-xs"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>

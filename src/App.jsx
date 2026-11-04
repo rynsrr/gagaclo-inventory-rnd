@@ -11,12 +11,14 @@ import { QuickScannerModal } from './components/QuickScannerModal';
 import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
+import { BackupModal } from './components/BackupModal';
 import { 
   Box as BoxIcon, 
   Printer, 
   Boxes,
   Database,
-  LayoutDashboard
+  LayoutDashboard,
+  HardDriveDownload
 } from 'lucide-react';
 
 const AppContent = () => {
@@ -29,6 +31,7 @@ const AppContent = () => {
     setIsSupabaseModalOpen
   } = useInventory();
 
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const connected = supabaseStatus.isConnected;
@@ -100,6 +103,18 @@ const AppContent = () => {
               </button>
 
               <InventoryImport />
+
+              {/* Data Management & Backup */}
+              <button
+                type="button"
+                onClick={() => setIsBackupModalOpen(true)}
+                className="flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition border bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
+                aria-label="Buka Manajemen Data & Backup"
+                title="Manajemen Data, Backup & Hapus Item"
+              >
+                <HardDriveDownload className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Data</span>
+              </button>
 
               {/* Mode Switcher Tabs */}
               <div className="inventory-segments flex items-center gap-0.5 p-0.5 rounded-lg text-xs">
@@ -176,6 +191,12 @@ const AppContent = () => {
       <SupabaseModal 
         isOpen={isSupabaseModalOpen} 
         onClose={() => setIsSupabaseModalOpen(false)} 
+      />
+
+      {/* Data Management & Backup Modal */}
+      <BackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
       />
 
     </div>

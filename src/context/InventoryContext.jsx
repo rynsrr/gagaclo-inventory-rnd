@@ -469,6 +469,27 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
+  const deleteAllItems = async () => {
+    const allIds = items.map((i) => i.id);
+
+    // Bulk delete from Supabase (only existing rows)
+    if (supabase) {
+      try {
+        if (allIds.length > 0) {
+          const { error } = await supabase.from('items').delete().in('id', allIds);
+          if (error) throw error;
+        }
+      } catch (err) {
+        console.error('Supabase bulk delete items error:', err);
+        throw err;
+      }
+    }
+
+    // Clear local state (localStorage is cleared by the persistence effect)
+    setItems([]);
+    return allIds.length;
+  };
+
   const addTransaction = async (trxData) => {
     const now = new Date();
     const formattedDate = `${now.toISOString().split('T')[0]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -729,6 +750,7 @@ export const InventoryProvider = ({ children }) => {
     importInventoryItems,
     updateItem,
     deleteItem,
+    deleteAllItems,
     addTransaction,
     updateBoxNotes,
     setBoxFull,
