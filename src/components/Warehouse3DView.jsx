@@ -283,7 +283,8 @@ export const Warehouse3DView = ({ controlsHost }) => {
       });
 
       // 2. Horizontal Beam Shelves
-      for (let r = 0; r <= rows; r++) {
+      const shelfCount = rackConf.rackId === 1 || rackConf.rackId === 2 ? rows : rows + 1;
+      for (let r = 0; r < shelfCount; r++) {
         const sy = 0.2 + r * shelfHeight;
         
         // Front beam
