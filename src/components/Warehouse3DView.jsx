@@ -14,6 +14,7 @@ import {
   Box as BoxIcon, 
   Sparkles, 
   Info,
+  Search,
   ChevronRight
 } from 'lucide-react';
 
@@ -28,7 +29,7 @@ function matchesPic(picName, selectedPic) {
   return String(picName ?? '').trim().toLowerCase() === selectedPic.trim().toLowerCase();
 }
 
-export const Warehouse3DView = ({ controlsHost }) => {
+export const Warehouse3DView = ({ controlsHost, highlightBoxNumbers = null, onClearSearch }) => {
   const containerRef = useRef(null);
   const { 
     racks, 
@@ -47,6 +48,9 @@ export const Warehouse3DView = ({ controlsHost }) => {
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
 
+  // A Set of box numbers matching the sidebar search (null = no active search).
+  const searchActive = highlightBoxNumbers !== null;
+
   const occupancyGroups = [
     { label: 'Tanpa data', color: 'bg-slate-100 text-slate-800', boxes: [] },
     { label: 'Sedang diisi', color: 'bg-amber-100 text-amber-900', boxes: [] },
@@ -55,6 +59,7 @@ export const Warehouse3DView = ({ controlsHost }) => {
   for (const box of boxes) {
     if (activeRackView !== 'ALL' && Number(box.rackId) !== Number(activeRackView)) continue;
     if (highlightPpic !== 'ALL' && !matchesPic(box.picName, highlightPpic)) continue;
+    if (searchActive && !highlightBoxNumbers.has(Number(box.boxNumber))) continue;
     const hasData = getItemsInBox(box.boxNumber).length > 0;
     const group = box.isFull ? 2 : hasData ? 1 : 0;
     occupancyGroups[group].boxes.push(box);
@@ -603,14 +608,16 @@ export const Warehouse3DView = ({ controlsHost }) => {
     };
   }, [boxes, racks, ppicMembers]);
 
-  // Reapply the selection whenever cloud sync rebuilds the scene.
+  // Reapply PIC/search selection whenever filters change or cloud sync rebuilds
+  // the scene. A box stays solid only when it satisfies every active filter.
   useEffect(() => {
-    const filterActive = highlightPpic !== 'ALL';
+    const picFilterActive = highlightPpic !== 'ALL';
 
     for (const mesh of boxMeshesRef.current) {
-      const matches = matchesPic(mesh.userData.picName, highlightPpic);
-      const dimmed = filterActive && !matches;
-      const highlighted = filterActive && matches;
+      const picMatches = !picFilterActive || matchesPic(mesh.userData.picName, highlightPpic);
+      const searchMatches = !searchActive || highlightBoxNumbers.has(Number(mesh.userData.boxNumber));
+      const dimmed = !picMatches || !searchMatches;
+      const highlighted = !dimmed && (picFilterActive || searchActive);
       mesh.castShadow = !dimmed;
 
       for (const material of new Set(mesh.material)) {
@@ -621,7 +628,7 @@ export const Warehouse3DView = ({ controlsHost }) => {
         material.needsUpdate = true;
       }
     }
-  }, [highlightPpic, boxes, racks, ppicMembers]);
+  }, [highlightPpic, highlightBoxNumbers, searchActive, boxes, racks, ppicMembers]);
 
   // Camera presets
   const focusOnRack = (rackId) => {
@@ -711,6 +718,26 @@ export const Warehouse3DView = ({ controlsHost }) => {
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
+
+        {/* Active search indicator (top left) */}
+        {searchActive && (
+          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-blue-200 bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm backdrop-blur-xs">
+            <Search className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {highlightBoxNumbers.size} box cocok &amp; disorot
+            </span>
+            {onClearSearch && (
+              <button
+                type="button"
+                onClick={onClearSearch}
+                className="rounded px-1.5 py-0.5 text-blue-600 underline underline-offset-2 transition hover:bg-blue-50 hover:text-blue-800"
+                title="Hapus pencarian"
+              >
+                Hapus
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Hovered Box HUD Card (Bottom Left) */}
         {hoveredBox && (

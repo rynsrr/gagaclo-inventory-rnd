@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { Warehouse3DView } from './components/Warehouse3DView';
@@ -11,28 +11,41 @@ import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
 import { BoxManageModal } from './components/BoxManageModal';
-import { 
-  Box as BoxIcon, 
+import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
+import {
+  Box as BoxIcon,
   Boxes,
   Database,
   LayoutDashboard,
-  PackagePlus
+  PackagePlus,
 } from 'lucide-react';
 
 const AppContent = () => {
-  // Mode selection: default to '3d-warehouse'
+  // Mode selection: default to '3d-warehouse' (BOX is the main tab)
   const [appMode, setAppMode] = useState('3d-warehouse'); // '3d-warehouse', 'summary'
+  const [searchQuery, setSearchQuery] = useState('');
 
   const {
     supabaseStatus,
     isSupabaseModalOpen,
-    setIsSupabaseModalOpen
+    setIsSupabaseModalOpen,
+    boxes,
+    items,
   } = useInventory();
 
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const connected = supabaseStatus.isConnected;
+
+  // Shared search state: the sidebar panel shows results, the 3D scene highlights
+  // the boxes that contain a match.
+  const searchResults = useMemo(
+    () => computeSearchResults(boxes, items, searchQuery),
+    [boxes, items, searchQuery],
+  );
+  const highlightBoxNumbers = searchResults.active ? searchResults.matchedBoxNumbers : null;
+
   useEffect(() => {
     const client = supabase;
     setDatabaseBytes(null);
@@ -58,14 +71,33 @@ const AppContent = () => {
     ? 'Pemakaian —'
     : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB`;
 
+  const mainTabs = [
+    {
+      id: '3d-warehouse',
+      label: 'BOX',
+      subtitle: 'Rak & box 3D',
+      icon: BoxIcon,
+      count: boxes.length,
+      primary: true,
+    },
+    {
+      id: 'summary',
+      label: 'Ringkasan',
+      subtitle: 'Semua barang',
+      icon: LayoutDashboard,
+      count: items.length,
+      primary: false,
+    },
+  ];
+
   return (
     <div className={`inventory-shell min-h-screen flex flex-col font-sans ${appMode === '3d-warehouse' ? 'warehouse-screen' : ''}`}>
-      
-      {/* Top Navigation Bar */}
+
+      {/* Top Navigation Bar — actions only; main tabs live in the left sidebar */}
       <header className="inventory-header no-print sticky top-0 z-30">
         <div className="inventory-header-scroll">
           <div className="inventory-header-row">
-            
+
             <div className="inventory-header-brand flex shrink-0 items-center gap-2">
               <div className="rounded-lg bg-blue-600 p-1.5 text-white">
                 <Boxes className="h-4 w-4" />
@@ -77,9 +109,9 @@ const AppContent = () => {
               <div className="inventory-header-controls" ref={setWarehouseControlsHost} />
             )}
 
-            {/* Actions & Switcher Tabs */}
+            {/* Actions */}
             <div className="inventory-header-actions flex shrink-0 items-center gap-2">
-              
+
               {/* Supabase Corporate Gagaclo Status Button */}
               <button
                 type="button"
@@ -114,67 +146,81 @@ const AppContent = () => {
                 <span>Kelola</span>
               </button>
 
-              {/* Mode Switcher Tabs */}
-              <div className="inventory-segments flex items-center gap-0.5 p-0.5 rounded-lg text-xs">
-                
-                {/* 3D Visualizer Mode */}
-                <button
-                  onClick={() => setAppMode('3d-warehouse')}
-                  className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md font-semibold transition whitespace-nowrap ${
-                    appMode === '3d-warehouse'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
-                  <span>BOX</span>
-                </button>
-
-                {/* Ringkasan Total Item */}
-                <button
-                  onClick={() => setAppMode('summary')}
-                  className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md font-semibold transition whitespace-nowrap ${
-                    appMode === 'summary'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Ringkasan</span>
-                </button>
-
-              </div>
-
             </div>
 
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="inventory-main no-print flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {appMode === '3d-warehouse' && (
-          <Warehouse3DView controlsHost={warehouseControlsHost} />
-        )}
-        {appMode === 'summary' && <TotalItemsSummaryView />}
-      </main>
+      {/* Left main navigation + page content */}
+      <div className="inventory-body">
+        <aside className="inventory-sidebar no-print" aria-label="Navigasi utama">
+          <nav className="inventory-nav" aria-label="Tab utama">
+            <p className="inventory-sidebar-label">MENU UTAMA</p>
+            {mainTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = appMode === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setAppMode(tab.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`inventory-nav-item ${tab.primary ? 'inventory-nav-item-primary' : ''}`}
+                  title={tab.primary ? 'Tab utama: visualisasi box & rak 3D' : tab.subtitle}
+                >
+                  <span className="inventory-nav-icon">
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="inventory-nav-text">
+                    <strong>{tab.label}</strong>
+                    <small>{tab.subtitle}</small>
+                  </span>
+                  <span className="inventory-nav-count">{tab.count}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="inventory-sidebar-divider" />
+
+          <BoxSearchPanel
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            results={searchResults}
+          />
+
+          <p className="inventory-sidebar-foot">
+            {boxes.length} box • {items.length} item tersimpan
+          </p>
+        </aside>
+
+        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {appMode === '3d-warehouse' && (
+            <Warehouse3DView
+              controlsHost={warehouseControlsHost}
+              highlightBoxNumbers={highlightBoxNumbers}
+              onClearSearch={() => setSearchQuery('')}
+            />
+          )}
+          {appMode === 'summary' && <TotalItemsSummaryView />}
+        </main>
+      </div>
+
       <footer className="no-print mx-auto w-full max-w-7xl shrink-0 px-4 pb-3 sm:px-6 lg:px-8">
         <InventoryTimer />
       </footer>
-
-      {/* Footer */}
-
 
       {/* Floating Modals for interacting with 3D or 2D Boxes */}
       <BoxDetailModal />
       <ItemModal />
       <BoxQrModal />
       <QuickScannerModal />
-      
+
       {/* Supabase Cloud Connection & Sync Modal */}
-      <SupabaseModal 
-        isOpen={isSupabaseModalOpen} 
-        onClose={() => setIsSupabaseModalOpen(false)} 
+      <SupabaseModal
+        isOpen={isSupabaseModalOpen}
+        onClose={() => setIsSupabaseModalOpen(false)}
       />
 
       {/* Box / Rack / People Management Modal */}
