@@ -15,8 +15,6 @@ import {
 export function TotalItemsSummaryView() {
   const { boxes, items, deleteItem, setItemModalConfig } = useInventory();
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [selectedIds, setSelectedIds] = useState(() => new Set());
-  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   // Full item list with rack lookup + search
   const [query, setQuery] = useState('');
@@ -71,45 +69,8 @@ export function TotalItemsSummaryView() {
 
   const dashClass = (value) => (value && value !== '-' ? 'text-slate-700' : 'text-slate-300');
 
-  const itemById = useMemo(() => {
-    const m = {};
-    allItems.forEach((i) => { m[i.id] = i; });
-    return m;
-  }, [allItems]);
-
-  const selectedItems = useMemo(
-    () => [...selectedIds].map((id) => itemById[id]).filter(Boolean),
-    [selectedIds, itemById]
-  );
-  const selectedCount = selectedItems.length;
-
-  const allFilteredSelected =
-    filteredItems.length > 0 && filteredItems.every((i) => selectedIds.has(i.id));
-
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAllFiltered = () => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allFilteredSelected) {
-        filteredItems.forEach((i) => next.delete(i.id));
-      } else {
-        filteredItems.forEach((i) => next.add(i.id));
-      }
-      return next;
-    });
-  };
-
-  const clearSelection = () => setSelectedIds(new Set());
-
-  const buildRows = (list) =>
-    list.map((item, i) => ({
+  const handleExport = () => {
+    const rows = filteredItems.map((item, i) => ({
       No: i + 1,
       Tanggal: item.tanggal,
       Kode: item.kode,
@@ -127,30 +88,10 @@ export function TotalItemsSummaryView() {
       PIC: item.picName,
       Place: item.place,
     }));
-
-  const exportList = (list) => {
-    const ws = XLSX.utils.json_to_sheet(buildRows(list));
+    const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ringkasan Inventory');
     XLSX.writeFile(wb, `GAGACLO_RINGKASAN_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
-
-  const handleExport = () => exportList(filteredItems);
-  const handleExportSelected = () => exportList(selectedItems);
-
-  const handleBulkDelete = async () => {
-    const ids = [...selectedIds];
-    let failed = 0;
-    for (const id of ids) {
-      try {
-        await deleteItem(id);
-      } catch (e) {
-        failed += 1;
-      }
-    }
-    clearSelection();
-    setConfirmBulkDelete(false);
-    if (failed > 0) alert(`${failed} dari ${ids.length} item gagal dihapus.`);
   };
 
   return (
@@ -207,73 +148,10 @@ export function TotalItemsSummaryView() {
           </div>
         </div>
 
-        {selectedCount > 0 && (
-          <div className="mt-3 flex flex-col gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-xs font-bold text-blue-800">{selectedCount} item dipilih</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleExportSelected}
-                className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50"
-                title="Export item terpilih ke Excel"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export Terpilih
-              </button>
-              {confirmBulkDelete ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleBulkDelete}
-                    className="rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
-                    title="Konfirmasi hapus permanen semua terpilih"
-                  >
-                    Ya, Hapus {selectedCount}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmBulkDelete(false)}
-                    className="rounded-lg bg-slate-200 px-2.5 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-300"
-                  >
-                    Batal
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmBulkDelete(true)}
-                  className="flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-100"
-                  title="Hapus semua item terpilih"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Hapus Terpilih
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={clearSelection}
-                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100"
-              >
-                Bersihkan
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-400">
-                <th className="w-8 px-3 py-2 text-center font-semibold">
-                  <input
-                    type="checkbox"
-                    checked={allFilteredSelected}
-                    onChange={toggleSelectAllFiltered}
-                    disabled={filteredItems.length === 0}
-                    className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-blue-600"
-                    aria-label="Pilih semua (sesuai pencarian)"
-                  />
-                </th>
                 <th className="w-8 px-3 py-2 font-semibold">#</th>
                 <th className="whitespace-nowrap px-3 py-2 font-semibold">Tanggal</th>
                 <th className="px-3 py-2 font-semibold">Kode &amp; Track</th>
@@ -288,22 +166,13 @@ export function TotalItemsSummaryView() {
             <tbody>
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-8 text-center text-sm text-slate-400">
+                  <td colSpan={9} className="py-8 text-center text-sm text-slate-400">
                     Tidak ada barang yang cocok dengan pencarian.
                   </td>
                 </tr>
               ) : (
                 filteredItems.map((item, idx) => (
                   <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 align-top">
-                    <td className="w-8 px-3 py-2.5 text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(item.id)}
-                        onChange={() => toggleSelect(item.id)}
-                        className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-blue-600"
-                        aria-label={`Pilih ${item.style || item.kode}`}
-                      />
-                    </td>
                     <td className="px-3 py-2.5 text-slate-400">{idx + 1}</td>
                     <td className={`px-3 py-2.5 whitespace-nowrap ${dashClass(item.tanggal)}`}>{item.tanggal}</td>
                     <td className="px-3 py-2.5">
@@ -354,12 +223,6 @@ export function TotalItemsSummaryView() {
                               onClick={async () => {
                                 try {
                                   await deleteItem(item.id);
-                                  setSelectedIds((prev) => {
-                                    if (!prev.has(item.id)) return prev;
-                                    const next = new Set(prev);
-                                    next.delete(item.id);
-                                    return next;
-                                  });
                                 } catch (e) {
                                   alert('Gagal menghapus item: ' + (e?.message || e));
                                 }
