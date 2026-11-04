@@ -16,6 +16,10 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+function matchesPic(picName, selectedPic) {
+  return String(picName ?? '').trim().toLowerCase() === selectedPic.trim().toLowerCase();
+}
+
 export const Warehouse3DView = () => {
   const containerRef = useRef(null);
   const { 
@@ -40,6 +44,7 @@ export const Warehouse3DView = () => {
   ];
   for (const box of boxes) {
     if (activeRackView !== 'ALL' && box.rackId !== activeRackView) continue;
+    if (highlightPpic !== 'ALL' && !matchesPic(box.picName, highlightPpic)) continue;
     const hasData = getItemsInBox(box.boxNumber).length > 0;
     const group = box.isFull ? 2 : hasData ? 1 : 0;
     occupancyGroups[group].boxes.push(box);
@@ -485,10 +490,9 @@ export const Warehouse3DView = () => {
   // Reapply the selection whenever cloud sync rebuilds the scene.
   useEffect(() => {
     const filterActive = highlightPpic !== 'ALL';
-    const selectedPic = highlightPpic.trim().toLowerCase();
 
     for (const mesh of boxMeshesRef.current) {
-      const matches = String(mesh.userData.picName ?? '').trim().toLowerCase() === selectedPic;
+      const matches = matchesPic(mesh.userData.picName, highlightPpic);
       const dimmed = filterActive && !matches;
       const highlighted = filterActive && matches;
       mesh.castShadow = !dimmed;
