@@ -21,8 +21,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
     return new Set(itemsToPrint.map((item, idx) => item.id || item.kode || `item-${idx}`));
   });
 
-  const isSingleOriginalItem = itemsToPrint.length === 1;
-  const [copiesPerCard, setCopiesPerCard] = useState(isSingleOriginalItem ? 8 : 1);
+  const [copiesPerCard, setCopiesPerCard] = useState(10);
   const [showCutGuides, setShowCutGuides] = useState(true);
   const [showChecklistDrawer, setShowChecklistDrawer] = useState(true);
 
@@ -215,28 +214,6 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
               <span>Salinan Tiap Kartu:</span>
             </span>
             <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-lg border border-slate-700">
-              <button
-                type="button"
-                onClick={() => setCopiesPerCard(1)}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${
-                  copiesPerCard === 1 
-                    ? 'bg-blue-600 text-white shadow-xs' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                1 Salinan
-              </button>
-              <button
-                type="button"
-                onClick={() => setCopiesPerCard(8)}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${
-                  copiesPerCard === 8 
-                    ? 'bg-blue-600 text-white shadow-xs' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                8 Salinan (1 Lembar)
-              </button>
               <button
                 type="button"
                 onClick={() => setCopiesPerCard(10)}
