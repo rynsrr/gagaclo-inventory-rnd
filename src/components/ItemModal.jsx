@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { RACK_GROUPS, DEFAULT_PLACES } from '../data/simpleData';
 import { 
@@ -7,8 +7,32 @@ import {
   Printer, 
   MapPin, 
   FileText,
-  AlertCircle
+  AlertCircle,
+  Calendar,
+  Sparkles
 } from 'lucide-react';
+
+/**
+ * Calculates next sequential code: SAMPLE-0001, SAMPLE-0002, etc.
+ * Increments sequentially based on existing items in storage.
+ */
+export function getNextSampleCode(items = []) {
+  let maxSeq = 0;
+  if (Array.isArray(items)) {
+    items.forEach(item => {
+      const code = String(item.kode || item.sku || '');
+      const match = code.match(/SAMPLE[-_ ]?(\d+)/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
+        }
+      }
+    });
+  }
+  const nextSeq = maxSeq + 1;
+  return `SAMPLE-${String(nextSeq).padStart(4, '0')}`;
+}
 
 export const ItemModal = () => {
   const { 
@@ -16,8 +40,11 @@ export const ItemModal = () => {
     setItemModalConfig, 
     addItem, 
     updateItem, 
-    boxes 
+    boxes,
+    items
   } = useInventory();
+
+  const hiddenDateRef = useRef(null);
 
   const isEditing = Boolean(itemModalConfig.item);
   const targetBoxNum = Number(itemModalConfig.targetBoxNumber) || (itemModalConfig.item ? Number(itemModalConfig.item.boxNumber) : 1);
@@ -59,7 +86,7 @@ export const ItemModal = () => {
         setFormData({
           track: item.track || '',
           tanggal: item.tanggal || item.dateIn || formatTodayDate(),
-          kode: item.kode || item.sku || '',
+          kode: item.kode || item.sku || getNextSampleCode(items),
           deskripsi: item.deskripsi || item.name || item.description || '',
           color: item.color || '-',
           jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
@@ -71,7 +98,7 @@ export const ItemModal = () => {
           status: item.status || 'In Storage',
         });
       } else {
-        // New item mode
+        // New item mode: auto-generate sequential code SAMPLE-0001, SAMPLE-0002...
         const bNum = targetBoxNum || 1;
         const bObj = boxes.find(b => b.boxNumber === bNum);
         const defaultBoxPlace = bObj 
@@ -81,7 +108,7 @@ export const ItemModal = () => {
         setFormData({
           track: '',
           tanggal: formatTodayDate(),
-          kode: '',
+          kode: getNextSampleCode(items),
           deskripsi: '',
           color: '-',
           jumlah: 1,
@@ -95,7 +122,7 @@ export const ItemModal = () => {
       }
       setErrors({});
     }
-  }, [itemModalConfig.isOpen, itemModalConfig.item, itemModalConfig.targetBoxNumber]);
+  }, [itemModalConfig.isOpen, itemModalConfig.item, itemModalConfig.targetBoxNumber, items]);
 
   if (!itemModalConfig.isOpen) return null;
 
@@ -109,6 +136,21 @@ export const ItemModal = () => {
       place: selectedPlaceValue,
       boxNumber: boxNum,
     }));
+  };
+
+  // Handle Date picker selection from calendar popup
+  const handleDatePickerChange = (e) => {
+    const val = e.target.value; // Format: "YYYY-MM-DD"
+    if (!val) return;
+    const parts = val.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const formatted = `${day}-${months[monthIdx]}-${year}`;
+      setFormData(prev => ({ ...prev, tanggal: formatted }));
+    }
   };
 
   const handlePrintCard = () => {
@@ -223,42 +265,78 @@ export const ItemModal = () => {
                         placeholder="Contoh: DHL : 5475890895"
                         value={formData.track}
                         onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono"
+                        className="w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
                       />
                     </td>
                   </tr>
 
-                  {/* Tanggal */}
+                  {/* Tanggal (Klik Kalender ATAU Tulis Manual) */}
                   <tr className="border-b border-black">
                     <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Tanggal
                     </td>
                     <td className="p-0 align-middle">
-                      <input
-                        type="text"
-                        placeholder="17-Jul-2026"
-                        value={formData.tanggal}
-                        onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition"
-                      />
+                      <div className="flex items-center w-full relative">
+                        <input
+                          type="text"
+                          placeholder="Contoh: 4-Nov-2026"
+                          value={formData.tanggal}
+                          onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+                          className="flex-1 py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
+                          title="Tulis manual atau klik ikon kalender di kanan"
+                        />
+                        {/* Native Calendar Picker Trigger */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              hiddenDateRef.current?.showPicker();
+                            } catch (err) {
+                              hiddenDateRef.current?.focus();
+                            }
+                          }}
+                          className="no-print p-1.5 mr-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                          title="Klik untuk buka kalender & pilih tanggal"
+                        >
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <input
+                          ref={hiddenDateRef}
+                          type="date"
+                          onChange={handleDatePickerChange}
+                          className="sr-only"
+                          tabIndex={-1}
+                        />
+                      </div>
                     </td>
                   </tr>
 
-                  {/* Kode */}
+                  {/* Kode (Otomatis SAMPLE-0001, SAMPLE-0002 dst, atau Tulis Manual) */}
                   <tr className="border-b border-black">
                     <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Kode <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
-                      <input
-                        type="text"
-                        placeholder="Contoh: RF08-84"
-                        value={formData.kode}
-                        onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
-                        className={`w-full py-1.5 px-2.5 text-xs font-black text-black font-mono focus:outline-none uppercase transition ${
-                          errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-300'
-                        }`}
-                      />
+                      <div className="flex items-center w-full">
+                        <input
+                          type="text"
+                          placeholder="SAMPLE-0001"
+                          value={formData.kode}
+                          onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
+                          className={`flex-1 py-1.5 px-2.5 text-xs font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
+                            errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, kode: getNextSampleCode(items) }))}
+                          className="no-print mr-1.5 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold rounded border border-blue-200 transition shrink-0 flex items-center space-x-1"
+                          title="Generate nomor urut otomatis berikutnya"
+                        >
+                          <Sparkles className="w-3 h-3 text-blue-600" />
+                          <span>Auto</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
 
@@ -273,7 +351,7 @@ export const ItemModal = () => {
                         placeholder="metal buckle 50mm metal buckle-female"
                         value={formData.deskripsi}
                         onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
-                        className={`w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none resize-none leading-snug transition ${
+                        className={`w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none resize-none leading-snug transition bg-transparent ${
                           errors.deskripsi ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-300'
                         }`}
                       />
@@ -291,7 +369,7 @@ export const ItemModal = () => {
                         placeholder="Contoh: Navy / -"
                         value={formData.color}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300"
+                        className="w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
                       />
                     </td>
                   </tr>
@@ -307,7 +385,7 @@ export const ItemModal = () => {
                         min="1"
                         value={formData.jumlah}
                         onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
-                        className="w-full py-1.5 px-2.5 text-sm font-black text-black focus:outline-none focus:bg-blue-50/60 transition"
+                        className="w-full py-1.5 px-2.5 text-sm font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
                       />
                     </td>
                   </tr>
@@ -323,7 +401,7 @@ export const ItemModal = () => {
                         placeholder="PCS"
                         value={formData.satuan}
                         onChange={(e) => setFormData({ ...formData, satuan: e.target.value.toUpperCase() })}
-                        className="w-full py-1.5 px-2.5 text-xs font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300"
+                        className="w-full py-1.5 px-2.5 text-xs font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
                       />
                     </td>
                   </tr>
@@ -366,7 +444,7 @@ export const ItemModal = () => {
                         placeholder="(Kosongkan jika untuk tulis manual)"
                         value={formData.qtyDipakai}
                         onChange={(e) => setFormData({ ...formData, qtyDipakai: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 placeholder:italic font-mono"
+                        className="w-full py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 placeholder:italic font-mono bg-transparent"
                       />
                     </td>
                   </tr>
@@ -382,7 +460,7 @@ export const ItemModal = () => {
                         placeholder="(Kosongkan jika untuk tulis manual)"
                         value={formData.tanggalDipakai}
                         onChange={(e) => setFormData({ ...formData, tanggalDipakai: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 placeholder:italic"
+                        className="w-full py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 placeholder:italic bg-transparent"
                       />
                     </td>
                   </tr>
