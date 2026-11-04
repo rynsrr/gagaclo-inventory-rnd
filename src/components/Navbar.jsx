@@ -12,7 +12,8 @@ import {
   QrCode,
   HardDriveDownload,
   Upload,
-  Info
+  Info,
+  Database
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 
@@ -23,7 +24,9 @@ export const Navbar = ({ onOpenBackupModal }) => {
     exportToExcel, 
     setItemModalConfig, 
     setQuickScannerOpen,
-    getStats 
+    getStats,
+    supabaseStatus,
+    setIsSupabaseModalOpen
   } = useInventory();
 
   const stats = getStats();
@@ -76,6 +79,25 @@ export const Navbar = ({ onOpenBackupModal }) => {
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span className="hidden sm:inline">Export Excel</span>
+            </button>
+
+            {/* Supabase Cloud Connection Button */}
+            <button
+              onClick={() => setIsSupabaseModalOpen(true)}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition border ${
+                supabaseStatus?.isConnected
+                  ? 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+              }`}
+              title="Koneksi Cloud Supabase Corporate Gagaclo"
+            >
+              <Database className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Supabase</span>
+              {supabaseStatus?.isConnected ? (
+                <span className="text-[10px] bg-emerald-800 text-emerald-200 px-1.5 py-0.2 rounded font-mono">ON</span>
+              ) : (
+                <span className="text-[10px] bg-blue-900/60 text-blue-300 px-1.5 py-0.2 rounded">Setup</span>
+              )}
             </button>
 
             {/* Backup & Reset Settings */}

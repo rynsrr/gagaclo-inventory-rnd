@@ -1,6 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { RACKS_DATA, PPIC_MEMBERS, generateInitialBoxes, INITIAL_ITEMS, INITIAL_TRANSACTIONS } from '../data/initialData';
+import {
+  supabase,
+  getSupabaseConfig,
+  initSupabase,
+  testSupabaseConnection,
+  localItemToDb,
+  dbItemToLocal,
+  localBoxToDb,
+  dbBoxToLocal,
+  localTrxToDb,
+  dbTrxToLocal,
+} from '../lib/supabase';
 
 const InventoryContext = createContext(null);
 
@@ -46,14 +58,24 @@ export const InventoryProvider = ({ children }) => {
   const [manifestPrintRackId, setManifestPrintRackId] = useState(null);
   const [transactionModalConfig, setTransactionModalConfig] = useState({ isOpen: false, item: null, type: 'IN' });
 
+  // Supabase Cloud State
+  const [supabaseConfigState, setSupabaseConfigState] = useState(getSupabaseConfig());
+  const [supabaseStatus, setSupabaseStatus] = useState({
+    isConnected: false,
+    isSyncing: false,
+    lastSync: null,
+    error: null,
+  });
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
+
   // Filter state for general browsing
-  const [activeTab, setActiveTab] = useState('racks'); // 'racks', 'items', 'ppic', 'transactions', 'manifests'
+  const [activeTab, setActiveTab] = useState('racks');
   const [selectedRackFilter, setSelectedRackFilter] = useState('ALL');
   const [selectedPpicFilter, setSelectedPpicFilter] = useState('ALL');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Persist to localStorage on change
+  // Persist to localStorage on change as safety cache
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY + '_boxes', JSON.stringify(boxes));
@@ -64,8 +86,204 @@ export const InventoryProvider = ({ children }) => {
     }
   }, [boxes, items, transactions]);
 
+  // Sync from Supabase down to local state
+  const syncFromSupabase = useCallback(async (clientInstance = supabase) => {
+    const client = clientInstance || supabase;
+    if (!client) {
+      setSupabaseStatus(prev => ({ ...prev, isConnected: false, isSyncing: false }));
+      return { success: false, message: 'Supabase client belum diinisialisasi' };
+    }
+
+    setSupabaseStatus(prev => ({ ...prev, isSyncing: true, error: null }));
+
+    try {
+      // 1. Fetch items
+      const { data: dbItems, error: itemsErr } = await client
+        .from('items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (itemsErr) throw itemsErr;
+
+      // 2. Fetch boxes
+      const { data: dbBoxes, error: boxesErr } = await client
+        .from('boxes')
+        .select('*');
+
+      if (boxesErr) throw boxesErr;
+
+      // 3. Fetch transactions
+      const { data: dbTrx, error: trxErr } = await client
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (trxErr) throw trxErr;
+
+      // Update local state if remote data is found
+      if (dbItems && dbItems.length > 0) {
+        setItems(dbItems.map(dbItemToLocal));
+      }
+
+      if (dbBoxes && dbBoxes.length > 0) {
+        setBoxes(prev => {
+          return prev.map(box => {
+            const remoteBox = dbBoxes.find(b => b.box_number === box.boxNumber);
+            return remoteBox ? dbBoxToLocal(remoteBox, [box]) : box;
+          });
+        });
+      }
+
+      if (dbTrx && dbTrx.length > 0) {
+        setTransactions(dbTrx.map(dbTrxToLocal));
+      }
+
+      const syncTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setSupabaseStatus({
+        isConnected: true,
+        isSyncing: false,
+        lastSync: syncTime,
+        error: null,
+      });
+
+      return {
+        success: true,
+        itemCount: dbItems?.length || 0,
+        boxCount: dbBoxes?.length || 0,
+      };
+    } catch (err) {
+      console.error('Supabase sync error:', err);
+      const errMsg = err.message || 'Gagal menyinkronkan data dengan Supabase';
+      setSupabaseStatus({
+        isConnected: false,
+        isSyncing: false,
+        lastSync: null,
+        error: errMsg,
+      });
+      return { success: false, message: errMsg };
+    }
+  }, []);
+
+  // Upload/Migrate all local state to Supabase
+  const pushLocalToSupabase = async () => {
+    if (!supabase) {
+      alert('Supabase belum terhubung. Silakan isi konfigurasi terlebih dahulu.');
+      return { success: false, message: 'Supabase client tidak tersedia' };
+    }
+
+    setSupabaseStatus(prev => ({ ...prev, isSyncing: true, error: null }));
+
+    try {
+      // 1. Upload Boxes
+      const dbBoxes = boxes.map(localBoxToDb);
+      const { error: boxErr } = await supabase
+        .from('boxes')
+        .upsert(dbBoxes, { onConflict: 'box_number' });
+
+      if (boxErr) throw boxErr;
+
+      // 2. Upload Items
+      const dbItems = items.map(localItemToDb);
+      if (dbItems.length > 0) {
+        const { error: itemErr } = await supabase
+          .from('items')
+          .upsert(dbItems, { onConflict: 'id' });
+
+        if (itemErr) throw itemErr;
+      }
+
+      // 3. Upload Transactions
+      const dbTrx = transactions.map(localTrxToDb);
+      if (dbTrx.length > 0) {
+        const { error: trxErr } = await supabase
+          .from('transactions')
+          .upsert(dbTrx, { onConflict: 'id' });
+
+        if (trxErr) throw trxErr;
+      }
+
+      const syncTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setSupabaseStatus({
+        isConnected: true,
+        isSyncing: false,
+        lastSync: syncTime,
+        error: null,
+      });
+
+      return { success: true, count: dbItems.length };
+    } catch (err) {
+      console.error('Supabase push error:', err);
+      const errMsg = err.message || 'Gagal mengunggah data ke Supabase';
+      setSupabaseStatus(prev => ({ ...prev, isSyncing: false, error: errMsg }));
+      return { success: false, message: errMsg };
+    }
+  };
+
+  // Configure Supabase credentials
+  const saveSupabaseCredentials = async (url, anonKey) => {
+    const client = initSupabase(url, anonKey);
+    const newConfig = getSupabaseConfig();
+    setSupabaseConfigState(newConfig);
+
+    if (client) {
+      const test = await testSupabaseConnection(url, anonKey);
+      if (test.success) {
+        await syncFromSupabase(client);
+        return { success: true, message: 'Berhasil terhubung ke Supabase Corporate Gagaclo!' };
+      } else {
+        setSupabaseStatus(prev => ({ ...prev, isConnected: false, error: test.message }));
+        return { success: false, message: test.message, code: test.code };
+      }
+    } else {
+      setSupabaseStatus({ isConnected: false, isSyncing: false, lastSync: null, error: null });
+      return { success: true, message: 'Koneksi Supabase dinonaktifkan (mode offline lokal aktif).' };
+    }
+  };
+
+  // Initial mount sync & realtime subscriptions
+  useEffect(() => {
+    if (supabaseConfigState.isConfigured && supabase) {
+      syncFromSupabase();
+
+      // Subscribe to Realtime Postgres Changes
+      const channel = supabase
+        .channel('gagaclo_inventory_realtime')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'items' },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const newItem = dbItemToLocal(payload.new);
+              setItems(prev => prev.some(i => i.id === newItem.id) ? prev : [newItem, ...prev]);
+            } else if (payload.eventType === 'UPDATE') {
+              const updated = dbItemToLocal(payload.new);
+              setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+            } else if (payload.eventType === 'DELETE') {
+              setItems(prev => prev.filter(i => i.id !== payload.old.id));
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'boxes' },
+          (payload) => {
+            if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+              const updatedBox = payload.new;
+              setBoxes(prev => prev.map(b => b.boxNumber === updatedBox.box_number ? { ...b, notes: updatedBox.notes } : b));
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [supabaseConfigState.isConfigured, syncFromSupabase]);
+
   // Actions
-  const addItem = (itemData) => {
+  const addItem = async (itemData) => {
     const newItem = {
       ...itemData,
       id: 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
@@ -78,7 +296,7 @@ export const InventoryProvider = ({ children }) => {
 
     // Record initial transaction
     const targetBox = boxes.find(b => b.boxNumber === Number(newItem.boxNumber));
-    addTransaction({
+    const trxData = {
       type: 'IN',
       itemId: newItem.id,
       itemName: newItem.name,
@@ -89,18 +307,30 @@ export const InventoryProvider = ({ children }) => {
       picName: newItem.picName || (targetBox ? targetBox.picName : 'Royan'),
       recipientOrSource: 'Direct Entry / Masuk Baru',
       notes: newItem.description || 'Barang baru ditambahkan ke inventory',
-    });
+    };
+    addTransaction(trxData);
+
+    // Sync to Supabase in background
+    if (supabase) {
+      try {
+        await supabase.from('items').insert([localItemToDb(newItem)]);
+      } catch (err) {
+        console.error('Supabase insert item error:', err);
+      }
+    }
 
     return newItem;
   };
 
-  const updateItem = (itemId, updatedData) => {
+  const updateItem = async (itemId, updatedData) => {
+    let finalItem = null;
+
     setItems((prev) =>
       prev.map((item) => {
         if (item.id === itemId) {
           const oldBox = item.boxNumber;
           const newBox = Number(updatedData.boxNumber);
-          const updated = { ...item, ...updatedData, qty: Number(updatedData.qty) || item.qty };
+          finalItem = { ...item, ...updatedData, qty: Number(updatedData.qty) || item.qty };
 
           // If box changed, log relocate transaction
           if (oldBox !== newBox) {
@@ -112,22 +342,31 @@ export const InventoryProvider = ({ children }) => {
               itemName: item.name,
               boxNumber: newBox,
               rackName: newBoxObj ? newBoxObj.rackName : 'RACK ?',
-              qty: updated.qty,
-              unit: updated.unit,
-              picName: updated.picName,
+              qty: finalItem.qty,
+              unit: finalItem.unit,
+              picName: finalItem.picName,
               recipientOrSource: `Dipindah dari Box ${oldBox} (${oldBoxObj ? oldBoxObj.rackName : ''})`,
               notes: 'Relokasi penempatan box',
             });
           }
 
-          return updated;
+          return finalItem;
         }
         return item;
       })
     );
+
+    // Sync to Supabase in background
+    if (supabase && finalItem) {
+      try {
+        await supabase.from('items').upsert([localItemToDb(finalItem)], { onConflict: 'id' });
+      } catch (err) {
+        console.error('Supabase update item error:', err);
+      }
+    }
   };
 
-  const deleteItem = (itemId) => {
+  const deleteItem = async (itemId) => {
     const itemToDelete = items.find(i => i.id === itemId);
     if (itemToDelete) {
       addTransaction({
@@ -143,10 +382,20 @@ export const InventoryProvider = ({ children }) => {
         notes: 'Item dikeluarkan/dihapus dari catatan box',
       });
     }
+
     setItems((prev) => prev.filter((item) => item.id !== itemId));
+
+    // Sync to Supabase
+    if (supabase) {
+      try {
+        await supabase.from('items').delete().eq('id', itemId);
+      } catch (err) {
+        console.error('Supabase delete item error:', err);
+      }
+    }
   };
 
-  const addTransaction = (trxData) => {
+  const addTransaction = async (trxData) => {
     const now = new Date();
     const formattedDate = `${now.toISOString().split('T')[0]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const newTrx = {
@@ -154,13 +403,35 @@ export const InventoryProvider = ({ children }) => {
       date: formattedDate,
       ...trxData,
     };
+
     setTransactions((prev) => [newTrx, ...prev]);
+
+    // Sync to Supabase
+    if (supabase) {
+      try {
+        await supabase.from('transactions').insert([localTrxToDb(newTrx)]);
+      } catch (err) {
+        console.error('Supabase add transaction error:', err);
+      }
+    }
   };
 
-  const updateBoxNotes = (boxNumber, notes) => {
+  const updateBoxNotes = async (boxNumber, notes) => {
     setBoxes((prev) =>
       prev.map((box) => (box.boxNumber === boxNumber ? { ...box, notes } : box))
     );
+
+    // Sync to Supabase
+    if (supabase) {
+      try {
+        const boxToUpdate = boxes.find(b => b.boxNumber === boxNumber);
+        if (boxToUpdate) {
+          await supabase.from('boxes').upsert([localBoxToDb({ ...boxToUpdate, notes })], { onConflict: 'box_number' });
+        }
+      } catch (err) {
+        console.error('Supabase update box error:', err);
+      }
+    }
   };
 
   const resetToInitialData = () => {
@@ -220,22 +491,27 @@ export const InventoryProvider = ({ children }) => {
       const box = boxes.find(b => b.boxNumber === Number(item.boxNumber));
       return {
         'No': index + 1,
-        'SKU': item.sku || '-',
-        'Nama Barang / Sample': item.name,
+        'SKU / Kode': item.kode || item.sku || '-',
+        'Buyer No': item.buyerNo || '-',
+        'Jenis Sample': item.jenisSample || 'DEVELOP',
+        'Style': item.style || '-',
+        'Sample No': item.sampleNo || '-',
+        'Size': item.size || '-',
+        'Deskripsi': item.name || item.deskripsi || '-',
+        'Warna': item.color || '-',
+        'Qty': item.qty,
+        'Satuan': item.unit || item.satuan || 'PCS',
         'Kategori': item.category,
         'Nomor Box': `BOX ${item.boxNumber}`,
         'Rak': box ? box.rackName : '',
         'Lokasi Rak': box ? box.location : '',
         'PIC PPIC': item.picName,
-        'Qty': item.qty,
-        'Satuan': item.unit || 'pcs',
         'Status': item.status,
         'Tanggal Masuk': item.dateIn,
-        'Keterangan': item.description || '',
       };
     });
     const wsItems = XLSX.utils.json_to_sheet(itemsData);
-    XLSX.utils.book_append_sheet(wb, wsItems, 'Data Inventory Items');
+    XLSX.utils.book_append_sheet(wb, wsItems, 'Data Items & Sample');
 
     // 2. Sheet Box Master (72 Boxes)
     const boxesData = boxes.map((box) => {
@@ -363,6 +639,14 @@ export const InventoryProvider = ({ children }) => {
     exportJsonBackup,
     importJsonBackup,
     exportToExcel,
+    // Supabase Operations & State
+    supabaseStatus,
+    supabaseConfig: supabaseConfigState,
+    isSupabaseModalOpen,
+    setIsSupabaseModalOpen,
+    syncFromSupabase,
+    pushLocalToSupabase,
+    saveSupabaseCredentials,
     // Helpers
     getItemsInBox,
     getBoxDetails,

@@ -1,9 +1,15 @@
 import React, { useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
-import { X, HardDriveDownload, Upload, RotateCcw, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { X, HardDriveDownload, Upload, RotateCcw, ShieldAlert, Database, CheckCircle2 } from 'lucide-react';
 
 export const BackupModal = ({ isOpen, onClose }) => {
-  const { exportJsonBackup, importJsonBackup, resetToInitialData } = useInventory();
+  const { 
+    exportJsonBackup, 
+    importJsonBackup, 
+    resetToInitialData, 
+    setIsSupabaseModalOpen,
+    supabaseStatus 
+  } = useInventory();
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
@@ -41,10 +47,39 @@ export const BackupModal = ({ isOpen, onClose }) => {
         {/* Content */}
         <div className="p-5 space-y-4 text-xs">
           
+          {/* Cloud Supabase Sync */}
+          <div className="bg-blue-50/70 p-4 rounded-xl border border-blue-200 space-y-2">
+            <div className="flex items-center justify-between font-bold text-blue-900">
+              <div className="flex items-center space-x-2">
+                <Database className="w-4 h-4 text-blue-600" />
+                <span>Supabase Corporate Gagaclo</span>
+              </div>
+              {supabaseStatus.isConnected && (
+                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Online</span>
+                </span>
+              )}
+            </div>
+            <p className="text-slate-600 text-[11px] leading-relaxed">
+              Sinkronisasi data otomatis dengan cloud database Supabase resmi Corporate Gagaclo untuk kolaborasi real-time seluruh tim R&D.
+            </p>
+            <button
+              onClick={() => {
+                onClose();
+                setIsSupabaseModalOpen(true);
+              }}
+              className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition shadow-xs text-xs flex items-center justify-center space-x-1.5"
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span>Kelola Koneksi & Sinkronisasi Cloud</span>
+            </button>
+          </div>
+
           {/* Export JSON */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
             <div className="flex items-center space-x-2 font-bold text-slate-900">
-              <HardDriveDownload className="w-4 h-4 text-blue-600" />
+              <HardDriveDownload className="w-4 h-4 text-slate-700" />
               <span>Export File Backup (JSON)</span>
             </div>
             <p className="text-slate-500 text-[11px] leading-relaxed">
@@ -55,7 +90,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
                 exportJsonBackup();
                 onClose();
               }}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition shadow-xs text-xs"
+              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg transition shadow-xs text-xs"
             >
               Unduh Backup JSON
             </button>

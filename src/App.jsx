@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { InventoryProvider } from './context/InventoryContext';
+import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { Warehouse3DView } from './components/Warehouse3DView';
 import { PrintableManifestView } from './components/PrintableManifestView';
 import { BoxDetailModal } from './components/BoxDetailModal';
@@ -7,16 +7,24 @@ import { ItemModal } from './components/ItemModal';
 import { BoxQrModal } from './components/BoxQrModal';
 import { QuickScannerModal } from './components/QuickScannerModal';
 import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
+import { SupabaseModal } from './components/SupabaseModal';
 import { 
   Box as BoxIcon, 
   Printer, 
-  Boxes 
+  Boxes,
+  Database
 } from 'lucide-react';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse'
   const [appMode, setAppMode] = useState('3d-warehouse'); // '3d-warehouse', 'manifests'
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+
+  const {
+    supabaseStatus,
+    isSupabaseModalOpen,
+    setIsSupabaseModalOpen
+  } = useInventory();
 
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
@@ -46,34 +54,72 @@ const AppContent = () => {
               </div>
             </div>
 
-            {/* Mode Switcher Tabs */}
-            <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs overflow-x-auto scrollbar-none">
+            {/* Actions & Switcher Tabs */}
+            <div className="flex items-center flex-wrap gap-2">
               
-              {/* 3D Visualizer Mode */}
+              {/* Supabase Corporate Gagaclo Status Button */}
               <button
-                onClick={() => setAppMode('3d-warehouse')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  appMode === '3d-warehouse'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                type="button"
+                onClick={() => setIsSupabaseModalOpen(true)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm border ${
+                  supabaseStatus.isConnected
+                    ? 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
                 }`}
+                title={
+                  supabaseStatus.isConnected
+                    ? `Supabase Cloud Terhubung • Sinkronisasi Aktif (${supabaseStatus.lastSync || 'Baru saja'})`
+                    : 'Hubungkan ke Cloud Database Supabase Corporate Gagaclo'
+                }
               >
-                <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
-                <span>Ilustrasi 3D Rak & Box</span>
+                {supabaseStatus.isConnected ? (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                )}
+                <Database className="w-3.5 h-3.5 text-sky-400" />
+                <span className="hidden sm:inline">Supabase Gagaclo</span>
+                {supabaseStatus.isConnected ? (
+                  <span className="text-[10px] bg-emerald-800/80 text-emerald-200 px-1.5 py-0.5 rounded font-mono font-bold">
+                    CLOUD SYNC
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-blue-900/60 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-bold">
+                    Hubungkan
+                  </span>
+                )}
               </button>
 
-              {/* Dokumen Manifes */}
-              <button
-                onClick={() => setAppMode('manifests')}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  appMode === 'manifests'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Dokumen Manifes</span>
-              </button>
+              {/* Mode Switcher Tabs */}
+              <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs overflow-x-auto scrollbar-none">
+                
+                {/* 3D Visualizer Mode */}
+                <button
+                  onClick={() => setAppMode('3d-warehouse')}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                    appMode === '3d-warehouse'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Ilustrasi 3D Rak & Box</span>
+                </button>
+
+                {/* Dokumen Manifes */}
+                <button
+                  onClick={() => setAppMode('manifests')}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                    appMode === 'manifests'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Dokumen Manifes</span>
+                </button>
+
+              </div>
 
             </div>
 
@@ -111,6 +157,12 @@ const AppContent = () => {
         onClose={() => setIsLabelModalOpen(false)} 
       />
       
+      {/* Supabase Cloud Connection & Sync Modal */}
+      <SupabaseModal 
+        isOpen={isSupabaseModalOpen} 
+        onClose={() => setIsSupabaseModalOpen(false)} 
+      />
+
     </div>
   );
 };
