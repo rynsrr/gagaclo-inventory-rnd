@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { Warehouse3DView } from './components/Warehouse3DView';
 import { PrintableManifestView } from './components/PrintableManifestView';
@@ -25,6 +26,33 @@ const AppContent = () => {
     isSupabaseModalOpen,
     setIsSupabaseModalOpen
   } = useInventory();
+
+  const [databaseBytes, setDatabaseBytes] = useState(null);
+  const connected = supabaseStatus.isConnected;
+  useEffect(() => {
+    const client = supabase;
+    setDatabaseBytes(null);
+    if (!connected || !client) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const { data, error } = await client.rpc('inventory_database_bytes');
+        if (active) setDatabaseBytes(!error && typeof data === 'number' && data >= 0 ? data : null);
+      } catch {
+        if (active) setDatabaseBytes(null);
+      }
+    };
+    void refresh();
+    const timer = setInterval(refresh, 60_000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [connected]);
+
+  const usageLabel = databaseBytes === null
+    ? 'Pemakaian —'
+    : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB terpakai`;
 
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
@@ -81,7 +109,7 @@ const AppContent = () => {
                 <span className="hidden sm:inline">Supabase Gagaclo</span>
                 {supabaseStatus.isConnected ? (
                   <span className="text-[10px] bg-emerald-800/80 text-emerald-200 px-1.5 py-0.5 rounded font-mono font-bold">
-                    CLOUD SYNC
+                    {usageLabel}
                   </span>
                 ) : (
                   <span className="text-[10px] bg-blue-900/60 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-bold">
