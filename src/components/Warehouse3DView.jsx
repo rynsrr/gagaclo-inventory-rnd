@@ -565,69 +565,38 @@ export const Warehouse3DView = ({ controlsHost }) => {
     <div className="warehouse-layout space-y-4">
       
       {controlsHost && createPortal(
-      <div className="inventory-header-filters">
-        {/* Camera Quick Buttons */}
-        <div role="group" aria-label="Pilihan rak" className="flex items-center gap-1 text-xs">
-          <button
-            onClick={() => focusOnRack('ALL')}
-            aria-pressed={activeRackView === 'ALL'}
-            className={`px-3 py-1.5 rounded-lg font-bold transition ${
-              activeRackView === 'ALL'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            Semua Rak
-          </button>
-          {[1, 2, 3, 4, 5].map((id) => (
-            <button
-              key={id}
-              onClick={() => focusOnRack(id)}
-              aria-pressed={activeRackView === id}
-              className={`px-2.5 py-1.5 rounded-lg font-bold transition ${
-                activeRackView === id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Rak {id}
+        <div className="inventory-header-filters">
+          <div role="group" aria-label="Pilihan rak" className="inventory-filter-group">
+            <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
+              Semua Rak
             </button>
-          ))}
-        </div>
-        <div role="group" aria-label="Filter PIC PPIC" className="flex items-center gap-1.5">
-          <span className="font-bold text-slate-700 text-[11px] block uppercase tracking-wider">
-            PIC PPIC
-          </span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setHighlightPpic('ALL')}
-              aria-pressed={highlightPpic === 'ALL'}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
-                highlightPpic === 'ALL'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Semua
-            </button>
-            {ppicMembers.map((pic) => (
-              <button
-                key={pic.id}
-                onClick={() => setHighlightPpic(highlightPpic === pic.name ? 'ALL' : pic.name)}
-                aria-pressed={highlightPpic === pic.name}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1 ${
-                  highlightPpic === pic.name
-                    ? 'bg-blue-600 text-white ring-2 ring-white/50'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                <span className={`w-2 h-2 rounded-full ${pic.avatarBg}`}></span>
-                <span>{pic.name}</span>
+            {[1, 2, 3, 4, 5].map((id) => (
+              <button key={id} onClick={() => focusOnRack(id)} aria-pressed={activeRackView === id}>
+                Rak {id}
               </button>
             ))}
           </div>
-        </div>
-      </div>, controlsHost)}
+          <div role="group" aria-label="Filter PIC PPIC" className="flex items-center gap-2">
+            <span className="inventory-filter-label">PIC PPIC</span>
+            <div className="inventory-filter-group">
+              <button onClick={() => setHighlightPpic('ALL')} aria-pressed={highlightPpic === 'ALL'}>
+                Semua
+              </button>
+              {ppicMembers.map((pic) => (
+                <button
+                  key={pic.id}
+                  onClick={() => setHighlightPpic(highlightPpic === pic.name ? 'ALL' : pic.name)}
+                  aria-pressed={highlightPpic === pic.name}
+                >
+                  <span className={`h-2 w-2 rounded-full ${pic.avatarBg}`} />
+                  {pic.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>,
+        controlsHost,
+      )}
 
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
         {occupancyGroups.map(group => (

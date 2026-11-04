@@ -61,31 +61,25 @@ const AppContent = () => {
         <div className="inventory-header-scroll">
           <div className="inventory-header-row">
             
-            {/* Logo & Title */}
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="bg-blue-600 p-2 rounded-xl text-white shadow-md">
-                <Boxes className="w-5 h-5" />
+            <div className="inventory-header-brand flex shrink-0 items-center gap-2">
+              <div className="rounded-lg bg-blue-600 p-1.5 text-white">
+                <Boxes className="h-4 w-4" />
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="inventory-brand bg-blue-50 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                    R&D INVENTORY
-                  </span>
-                </div>
-
-              </div>
+              <span className="inventory-brand text-xs font-semibold text-slate-800">R&amp;D Inventory</span>
             </div>
 
-            {appMode === '3d-warehouse' && <div ref={setWarehouseControlsHost} />}
+            {appMode === '3d-warehouse' && (
+              <div className="inventory-header-controls" ref={setWarehouseControlsHost} />
+            )}
 
             {/* Actions & Switcher Tabs */}
-            <div className="ml-auto flex shrink-0 items-center gap-2">
+            <div className="inventory-header-actions flex shrink-0 items-center gap-2">
               
               {/* Supabase Corporate Gagaclo Status Button */}
               <button
                 type="button"
                 onClick={() => setIsSupabaseModalOpen(true)}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm border ${
+                className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition border ${
                   supabaseStatus.isConnected
                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
                     : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -115,12 +109,12 @@ const AppContent = () => {
               </button>
 
               {/* Mode Switcher Tabs */}
-              <div className="inventory-segments flex items-center gap-1 p-1 rounded-xl text-xs overflow-x-auto scrollbar-none">
+              <div className="inventory-segments flex items-center gap-0.5 p-0.5 rounded-lg text-xs">
                 
                 {/* 3D Visualizer Mode */}
                 <button
                   onClick={() => setAppMode('3d-warehouse')}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                  className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md font-semibold transition whitespace-nowrap ${
                     appMode === '3d-warehouse'
                       ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
@@ -133,7 +127,7 @@ const AppContent = () => {
                 {/* Dokumen Manifes */}
                 <button
                   onClick={() => setAppMode('manifests')}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                  className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md font-semibold transition whitespace-nowrap ${
                     appMode === 'manifests'
                       ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
