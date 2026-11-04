@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 /**
- * Calculates next sequential code: SAMPLE-0001, SAMPLE-0002, etc.
+ * Calculates next sequential code: SAMPLE-00001, SAMPLE-00002, etc. (5-digit numbering)
  * Increments sequentially based on existing items in storage.
  */
 export function getNextSampleCode(items = []) {
@@ -31,7 +31,7 @@ export function getNextSampleCode(items = []) {
     });
   }
   const nextSeq = maxSeq + 1;
-  return `SAMPLE-${String(nextSeq).padStart(4, '0')}`;
+  return `SAMPLE-${String(nextSeq).padStart(5, '0')}`;
 }
 
 export const ItemModal = () => {
@@ -311,7 +311,7 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Kode (Otomatis SAMPLE-0001, SAMPLE-0002 dst, atau Tulis Manual) */}
+                  {/* Kode (Otomatis SAMPLE-00001, SAMPLE-00002 dst, atau Tulis Manual) */}
                   <tr className="border-b border-black">
                     <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Kode <span className="text-rose-500">*</span>
@@ -320,7 +320,7 @@ export const ItemModal = () => {
                       <div className="flex items-center w-full">
                         <input
                           type="text"
-                          placeholder="SAMPLE-0001"
+                          placeholder="SAMPLE-00001"
                           value={formData.kode}
                           onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
                           className={`flex-1 py-1.5 px-2.5 text-xs font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
