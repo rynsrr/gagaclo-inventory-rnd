@@ -61,11 +61,12 @@ export const SimpleInventoryView = () => {
     track: 'DHL : 5475890895',
     tanggal: formatTodayDate(),
     kode: 'SAMPLE-00001',
+    buyerNo: '',
     jenisSample: 'DEVELOP',
     style: 'Metal Buckle 50mm',
-    sampleNo: 'NA',
+    sampleNo: '',
     size: '50MM',
-    deskripsi: 'Metal Buckle 50mm - Sample: NA - Size: 50MM',
+    deskripsi: 'Metal Buckle 50mm - Size: 50MM',
     color: 'Silver',
     jumlah: 15,
     satuan: 'PCS',
@@ -98,15 +99,17 @@ export const SimpleInventoryView = () => {
       return;
     }
 
-    const sampleNoTrim = (form.sampleNo || '').trim() || 'NA';
+    const sampleNoTrim = (form.sampleNo || '').trim();
+    const buyerNoTrim = (form.buyerNo || '').trim() || '-';
     const styleTrim = (form.style || form.deskripsi || '').trim();
     const sizeTrim = (form.size || '').trim();
-    const fullDeskripsi = styleTrim 
+    const fullDeskripsi = sampleNoTrim
       ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}` 
-      : form.deskripsi;
+      : `${styleTrim} - Size: ${sizeTrim}`;
 
     const itemToSave = {
       ...form,
+      buyerNo: buyerNoTrim,
       jenisSample: form.jenisSample || 'DEVELOP',
       style: styleTrim,
       sampleNo: sampleNoTrim,
@@ -135,9 +138,10 @@ export const SimpleInventoryView = () => {
       track: '',
       tanggal: formatTodayDate(),
       kode: '',
+      buyerNo: '',
       jenisSample: 'DEVELOP',
       style: '',
-      sampleNo: 'NA',
+      sampleNo: '',
       size: '',
       deskripsi: '',
       color: '',
@@ -380,9 +384,9 @@ export const SimpleInventoryView = () => {
               </div>
             </div>
 
-            {/* Row 2: Kode, Jenis Sample, & Color */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-              <div className="sm:col-span-4">
+            {/* Row 2: Kode, Buyer No, Jenis Sample, & Color */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-3">
                 <label className="block font-bold text-slate-700 mb-1">
                   Kode Barang / SKU <span className="text-rose-500">*</span>
                 </label>
@@ -396,7 +400,20 @@ export const SimpleInventoryView = () => {
                 />
               </div>
 
-              <div className="sm:col-span-4">
+              <div className="sm:col-span-3">
+                <label className="block font-bold text-slate-700 mb-1">
+                  Buyer No (PO / No. Buyer)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: BY-9921"
+                  value={form.buyerNo || ''}
+                  onChange={(e) => setForm({ ...form, buyerNo: e.target.value.toUpperCase() })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-mono font-bold text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="sm:col-span-3">
                 <label className="block font-bold text-slate-700 mb-1">
                   Jenis Sample <span className="text-rose-500">*</span>
                 </label>
@@ -422,7 +439,7 @@ export const SimpleInventoryView = () => {
                 </div>
               </div>
 
-              <div className="sm:col-span-4">
+              <div className="sm:col-span-3">
                 <label className="block font-bold text-slate-700 mb-1">
                   Color (Warna) <span className="text-rose-500">*</span>
                 </label>
@@ -439,7 +456,7 @@ export const SimpleInventoryView = () => {
 
             {/* Row 3: Deskripsi (Nama Style, Sample Number, Size) */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-              <div className="sm:col-span-5">
+              <div className="sm:col-span-6">
                 <label className="block font-bold text-slate-700 mb-1">
                   Nama / No. Style <span className="text-rose-500">*</span>
                 </label>
@@ -448,33 +465,22 @@ export const SimpleInventoryView = () => {
                   required
                   placeholder="Contoh: Metal Buckle 50mm"
                   value={form.style || ''}
-                  onChange={(e) => setForm({ ...form, style: e.target.value, deskripsi: `${e.target.value} - Sample: ${form.sampleNo || 'NA'} - Size: ${form.size || ''}` })}
+                  onChange={(e) => setForm({ ...form, style: e.target.value, deskripsi: form.sampleNo ? `${e.target.value} - Sample: ${form.sampleNo} - Size: ${form.size || ''}` : `${e.target.value} - Size: ${form.size || ''}` })}
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
                 />
               </div>
 
-              <div className="sm:col-span-4">
+              <div className="sm:col-span-3">
                 <label className="block font-bold text-slate-700 mb-1">
-                  Sample Number <span className="text-rose-500">*</span>
+                  Sample Number
                 </label>
-                <div className="flex items-center space-x-1">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Sample No. (NA) *"
-                    value={form.sampleNo || ''}
-                    onChange={(e) => setForm({ ...form, sampleNo: e.target.value.toUpperCase(), deskripsi: `${form.style || ''} - Sample: ${e.target.value.toUpperCase()} - Size: ${form.size || ''}` })}
-                    className="flex-1 text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold uppercase"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, sampleNo: 'NA', deskripsi: `${form.style || ''} - Sample: NA - Size: ${form.size || ''}` })}
-                    className="px-2.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-black transition border border-slate-200"
-                    title="Isi 'NA' jika tidak ada nomor sample"
-                  >
-                    NA
-                  </button>
-                </div>
+                <input
+                  type="text"
+                  placeholder="Contoh: 01 (Opsional)"
+                  value={form.sampleNo || ''}
+                  onChange={(e) => setForm({ ...form, sampleNo: e.target.value.toUpperCase(), deskripsi: e.target.value ? `${form.style || ''} - Sample: ${e.target.value.toUpperCase()} - Size: ${form.size || ''}` : `${form.style || ''} - Size: ${form.size || ''}` })}
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold uppercase"
+                />
               </div>
 
               <div className="sm:col-span-3">
@@ -486,41 +492,42 @@ export const SimpleInventoryView = () => {
                   required
                   placeholder="50MM / L"
                   value={form.size || ''}
-                  onChange={(e) => setForm({ ...form, size: e.target.value.toUpperCase(), deskripsi: `${form.style || ''} - Sample: ${form.sampleNo || 'NA'} - Size: ${e.target.value.toUpperCase()}` })}
+                  onChange={(e) => setForm({ ...form, size: e.target.value.toUpperCase(), deskripsi: form.sampleNo ? `${form.style || ''} - Sample: ${form.sampleNo} - Size: ${e.target.value.toUpperCase()}` : `${form.style || ''} - Size: ${e.target.value.toUpperCase()}` })}
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-black uppercase"
                 />
               </div>
             </div>
 
-            {/* Row 4: Jumlah, Satuan, Place */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              <div>
+            {/* Row 4: Jumlah & Satuan (1 Baris Hemat Tempat) & Place */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+              <div className="sm:col-span-5">
                 <label className="block font-bold text-slate-700 mb-1">
-                  Jumlah (Qty)
+                  Jumlah (Qty) & Satuan <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={form.jumlah}
-                  onChange={(e) => setForm({ ...form, jumlah: Number(e.target.value) || 0 })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-black text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="grid grid-cols-12 gap-1.5">
+                  <div className="col-span-7">
+                    <input
+                      type="number"
+                      min="1"
+                      value={form.jumlah}
+                      onChange={(e) => setForm({ ...form, jumlah: Number(e.target.value) || 0 })}
+                      className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-black text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Qty"
+                    />
+                  </div>
+                  <div className="col-span-5">
+                    <input
+                      type="text"
+                      placeholder="PCS"
+                      value={form.satuan}
+                      onChange={(e) => setForm({ ...form, satuan: e.target.value.toUpperCase() })}
+                      className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Satuan
-                </label>
-                <input
-                  type="text"
-                  placeholder="PCS, ROLL, METER"
-                  value={form.satuan}
-                  onChange={(e) => setForm({ ...form, satuan: e.target.value.toUpperCase() })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
+              <div className="sm:col-span-7">
                 <div className="flex items-center justify-between mb-1">
                   <label className="block font-bold text-slate-700">
                     Place (Lokasi Box Penyimpanan)

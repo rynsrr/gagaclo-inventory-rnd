@@ -61,9 +61,10 @@ export const ItemModal = () => {
     track: '',
     tanggal: formatTodayDate(),
     kode: '',
+    buyerNo: '',
     jenisSample: 'DEVELOP',
     style: '',
-    sampleNo: 'NA',
+    sampleNo: '',
     size: '',
     color: '',
     jumlah: 1,
@@ -90,9 +91,10 @@ export const ItemModal = () => {
           track: item.track || '',
           tanggal: item.tanggal || item.dateIn || formatTodayDate(),
           kode: item.kode || item.sku || getNextSampleCode(items),
+          buyerNo: item.buyerNo || item.buyerNumber || '',
           jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
           style: item.style || item.name || item.deskripsi || '',
-          sampleNo: item.sampleNo || 'NA',
+          sampleNo: item.sampleNo && item.sampleNo !== 'NA' ? item.sampleNo : '',
           size: item.size || '',
           color: item.color && item.color !== '-' ? item.color : '',
           jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
@@ -113,9 +115,10 @@ export const ItemModal = () => {
           track: '',
           tanggal: formatTodayDate(),
           kode: getNextSampleCode(items),
+          buyerNo: '',
           jenisSample: 'DEVELOP',
           style: '',
-          sampleNo: 'NA',
+          sampleNo: '',
           size: '',
           color: '',
           jumlah: 1,
@@ -164,7 +167,6 @@ export const ItemModal = () => {
     const newErrors = {};
     if (!formData.kode.trim()) newErrors.kode = 'Wajib isi Kode barang';
     if (!formData.style.trim()) newErrors.style = 'Wajib isi Nama / Nomer Style';
-    if (!formData.sampleNo.trim()) newErrors.sampleNo = 'Wajib isi Sample Number (ketik NA jika tidak ada)';
     if (!formData.size.trim()) newErrors.size = 'Wajib isi Size';
     if (!formData.color.trim() || formData.color.trim() === '-') newErrors.color = 'Wajib isi Color / Warna';
 
@@ -177,15 +179,19 @@ export const ItemModal = () => {
     const boxObj = boxes.find(b => b.boxNumber === boxNum);
 
     const styleTrim = formData.style.trim();
-    const sampleNoTrim = formData.sampleNo.trim() || 'NA';
+    const sampleNoTrim = formData.sampleNo.trim();
+    const buyerNoTrim = formData.buyerNo.trim() || '-';
     const sizeTrim = formData.size.trim().toUpperCase();
     const colorTrim = formData.color.trim();
-    const fullDeskripsi = `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`;
+    const fullDeskripsi = sampleNoTrim 
+      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}` 
+      : `${styleTrim} - Size: ${sizeTrim}`;
 
     const payload = {
       track: formData.track.trim() || '-',
       tanggal: formData.tanggal.trim(),
       kode: formData.kode.trim(),
+      buyerNo: buyerNoTrim,
       jenisSample: formData.jenisSample || 'DEVELOP',
       style: styleTrim,
       sampleNo: sampleNoTrim,
@@ -197,8 +203,11 @@ export const ItemModal = () => {
       place: formData.place || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`),
 
       // System context mappings
-      name: `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`,
+      name: sampleNoTrim 
+        ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})` 
+        : `${styleTrim} (Size: ${sizeTrim})`,
       sku: formData.kode.trim(),
+      buyerNumber: buyerNoTrim,
       description: fullDeskripsi,
       qty: Number(formData.jumlah) || 1,
       unit: (formData.satuan || 'PCS').toUpperCase().trim(),
@@ -329,31 +338,46 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Kode (Otomatis 5 Digit: SAMPLE-00001, SAMPLE-00002 dst) */}
+                  {/* Kode & Buyer No (1 Baris Samping-Sampingan) */}
                   <tr className="border-b border-black">
                     <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Kode <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
-                      <div className="flex items-center w-full">
-                        <input
-                          type="text"
-                          placeholder="SAMPLE-00001"
-                          value={formData.kode}
-                          onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
-                          className={`flex-1 py-0.5 px-1.5 text-[9.5px] font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
-                            errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60'
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, kode: getNextSampleCode(items) }))}
-                          className="no-print mr-1 px-1.5 py-0.2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[8.5px] font-bold rounded border border-blue-200 transition shrink-0 flex items-center space-x-0.5"
-                          title="Generate nomor urut otomatis berikutnya"
-                        >
-                          <Sparkles className="w-2.5 h-2.5 text-blue-600" />
-                          <span>Auto</span>
-                        </button>
+                      <div className="grid grid-cols-12 gap-0.5 p-0.5 items-center">
+                        {/* Kode Input */}
+                        <div className="col-span-7 flex items-center">
+                          <input
+                            type="text"
+                            placeholder="SAMPLE-00001"
+                            value={formData.kode}
+                            onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
+                            className={`flex-1 py-0.5 px-1 text-[9px] font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
+                              errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, kode: getNextSampleCode(items) }))}
+                            className="no-print mr-0.5 px-1 py-0.2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[7.5px] font-bold rounded border border-blue-200 transition shrink-0 flex items-center"
+                            title="Generate nomor urut otomatis berikutnya"
+                          >
+                            <Sparkles className="w-2 h-2 mr-0.5 text-blue-600" />
+                            <span>Auto</span>
+                          </button>
+                        </div>
+
+                        {/* Buyer No Input */}
+                        <div className="col-span-5 flex items-center pl-1 border-l border-slate-300">
+                          <input
+                            type="text"
+                            placeholder="Buyer No"
+                            value={formData.buyerNo}
+                            onChange={(e) => setFormData({ ...formData, buyerNo: e.target.value.toUpperCase() })}
+                            className="w-full py-0.5 px-1 text-[8.5px] font-bold text-black font-mono focus:outline-none focus:bg-blue-50/60 transition bg-transparent placeholder:text-slate-400"
+                            title="Nomor Buyer / Buyer PO"
+                          />
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -387,7 +411,7 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Deskripsi (3 Kolom: Nama/Nomer Style *, Sample No. *, & Size *) */}
+                  {/* Deskripsi (3 Kolom: Nama/Nomer Style *, Sample No, & Size *) */}
                   <tr className="border-b border-black">
                     <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Deskripsi <span className="text-rose-500">*</span>
@@ -410,32 +434,16 @@ export const ItemModal = () => {
                           />
                         </div>
 
-                        {/* Kolom 2: Sample Number (Wajib, ketik NA jika tidak ada) */}
-                        <div className="col-span-4 relative flex items-center">
+                        {/* Kolom 2: Sample Number (Default Kosong) */}
+                        <div className="col-span-4">
                           <input
                             type="text"
-                            placeholder="Sample No. *"
+                            placeholder="Sample No"
                             value={formData.sampleNo}
-                            onChange={(e) => {
-                              setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() });
-                              if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
-                            }}
-                            className={`w-full py-0.5 pl-1 pr-5 text-[8.5px] font-black uppercase text-black font-mono border focus:outline-none rounded transition ${
-                              errors.sampleNo ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
-                            }`}
-                            title="Sample Number (Wajib diisi, ketik NA jika tidak ada)"
+                            onChange={(e) => setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() })}
+                            className="w-full py-0.5 px-1 text-[8.5px] font-black uppercase text-black font-mono border border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 rounded transition placeholder:text-slate-400"
+                            title="Nomor Sample (Opsional, kosongkan jika tidak ada)"
                           />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormData(prev => ({ ...prev, sampleNo: 'NA' }));
-                              if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
-                            }}
-                            className="no-print absolute right-0.5 text-[7px] font-black px-1 py-0.2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded transition"
-                            title="Klik untuk isi 'NA' jika tidak ada nomor sample"
-                          >
-                            NA
-                          </button>
                         </div>
 
                         {/* Kolom 3: Size (Wajib) */}
@@ -478,35 +486,33 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Jumlah */}
+                  {/* Jumlah & Satuan (1 Baris Hemat Tempat) */}
                   <tr className="border-b border-black">
                     <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Jumlah
                     </td>
                     <td className="p-0 align-middle">
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.jumlah}
-                        onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
-                        className="w-full py-0.5 px-1.5 text-[9.5px] font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
-                      />
-                    </td>
-                  </tr>
-
-                  {/* Satuan */}
-                  <tr className="border-b border-black">
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
-                      Satuan
-                    </td>
-                    <td className="p-0 align-middle">
-                      <input
-                        type="text"
-                        placeholder="PCS"
-                        value={formData.satuan}
-                        onChange={(e) => setFormData({ ...formData, satuan: e.target.value.toUpperCase() })}
-                        className="w-full py-0.5 px-1.5 text-[9px] font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
-                      />
+                      <div className="grid grid-cols-12 gap-0.5 p-0.5 items-center">
+                        <div className="col-span-6">
+                          <input
+                            type="number"
+                            min="1"
+                            value={formData.jumlah}
+                            onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
+                            className="w-full py-0.5 px-1.5 text-[9.5px] font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
+                            placeholder="Qty"
+                          />
+                        </div>
+                        <div className="col-span-6 border-l border-slate-300 pl-1">
+                          <input
+                            type="text"
+                            placeholder="Satuan (PCS)"
+                            value={formData.satuan}
+                            onChange={(e) => setFormData({ ...formData, satuan: e.target.value.toUpperCase() })}
+                            className="w-full py-0.5 px-1 text-[9px] font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
+                          />
+                        </div>
+                      </div>
                     </td>
                   </tr>
 

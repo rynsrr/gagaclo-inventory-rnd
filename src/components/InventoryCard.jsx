@@ -18,6 +18,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
   const track = item.track || '-';
   const tanggal = item.tanggal || item.dateIn || '-';
   const kode = item.kode || item.sku || '-';
+  const buyerNo = item.buyerNo || item.buyerNumber || '-';
   const jenisSample = (item.jenisSample || item.sampleType || 'DEVELOP').toUpperCase();
   const deskripsi = item.deskripsi || item.name || item.description || '-';
   const color = item.color || '-';
@@ -56,13 +57,23 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             </td>
           </tr>
 
-          {/* Kode */}
+          {/* Kode & Buyer No */}
           <tr className="border-b border-black">
             <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Kode
             </td>
-            <td className="py-[1px] px-1.5 font-black align-middle text-black tracking-tight font-mono text-[9px] leading-tight">
-              {kode}
+            <td className="py-[1px] px-1.5 align-middle text-black">
+              <div className="flex items-center justify-between gap-1">
+                <span className="font-black tracking-tight font-mono text-[9px] leading-tight">
+                  {kode}
+                </span>
+                <div className="flex items-center gap-1 shrink-0 font-mono text-[8px]">
+                  <span className="font-bold text-slate-600">Buyer No:</span>
+                  <span className="font-black text-black">
+                    {buyerNo}
+                  </span>
+                </div>
+              </div>
             </td>
           </tr>
 
@@ -98,9 +109,11 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                     {item.style}
                   </span>
                   <div className="flex items-center gap-1 flex-wrap mt-0.5">
-                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                      SMPL: {item.sampleNo || 'NA'}
-                    </span>
+                    {item.sampleNo && item.sampleNo.trim() && item.sampleNo.trim() !== 'NA' && (
+                      <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                        SMPL: {item.sampleNo}
+                      </span>
+                    )}
                     {item.size && (
                       <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
                         SZ: {item.size}
@@ -113,7 +126,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   <span className="font-bold text-[8.5px] leading-tight break-words text-black">
                     {deskripsi}
                   </span>
-                  {item.sampleNo && item.sampleNo !== 'NA' && (
+                  {item.sampleNo && item.sampleNo.trim() && item.sampleNo.trim() !== 'NA' && (
                     <div className="flex items-center gap-1 mt-0.5">
                       <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
                         SMPL: {item.sampleNo}
@@ -135,23 +148,16 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             </td>
           </tr>
 
-          {/* Jumlah */}
+          {/* Jumlah & Satuan (1 Baris Hemat Tempat) */}
           <tr className="border-b border-black">
             <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Jumlah
             </td>
-            <td className="py-[1px] px-1.5 font-black text-[9px] align-middle text-black leading-tight">
-              {jumlah}
-            </td>
-          </tr>
-
-          {/* Satuan */}
-          <tr className="border-b border-black">
-            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
-              Satuan
-            </td>
-            <td className="py-[1px] px-1.5 font-bold uppercase align-middle text-black text-[8px] leading-tight">
-              {satuan}
+            <td className="py-[1px] px-1.5 align-middle text-black leading-tight">
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-[9px]">{jumlah}</span>
+                <span className="font-bold uppercase text-[8px] text-slate-800">{satuan}</span>
+              </div>
             </td>
           </tr>
 
