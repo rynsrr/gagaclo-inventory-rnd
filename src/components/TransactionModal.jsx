@@ -63,7 +63,7 @@ export const TransactionModal = ({ isOpen, onClose }) => {
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
         
         {/* Header */}
-        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <ArrowLeftRight className="w-5 h-5 text-blue-400" />
             <h3 className="text-base font-bold">Catat Mutasi / Peminjaman Barang</h3>

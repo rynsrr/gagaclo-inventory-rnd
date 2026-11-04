@@ -34,7 +34,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
         
         {/* Header */}
-        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
           <h3 className="text-base font-bold">Manajemen Data & Backup</h3>
           <button
             onClick={onClose}

@@ -44,7 +44,7 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
         
         {/* Header (hidden in print) */}
-        <div className="no-print bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+        <div className="no-print inventory-dialog-heading px-6 py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-600 rounded-lg text-white">
               <Printer className="w-5 h-5" />

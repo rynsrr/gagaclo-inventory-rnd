@@ -130,8 +130,8 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b0f19); // Dark modern warehouse navy
-    scene.fog = new THREE.FogExp2(0x0b0f19, 0.012);
+    scene.background = new THREE.Color(0xe9edf3);
+    scene.fog = new THREE.FogExp2(0xe9edf3, 0.007);
     sceneRef.current = scene;
 
     // Camera
@@ -189,7 +189,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
     // Floor (Polished Concrete with Grid)
     const floorGeo = new THREE.PlaneGeometry(120, 120);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x111827,
+      color: 0xdde3eb,
       roughness: 0.4,
       metalness: 0.1,
     });
@@ -199,7 +199,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
     scene.add(floor);
 
     // Floor Grid lines
-    const grid = new THREE.GridHelper(100, 50, 0x3b82f6, 0x1e293b);
+    const grid = new THREE.GridHelper(100, 50, 0x9aaabd, 0xbec9d6);
     grid.position.y = 0.02;
     scene.add(grid);
 
@@ -538,18 +538,18 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
     <div className="space-y-4">
       
       {/* 3D Visualizer Top Header */}
-      <div className="bg-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="inventory-panel p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+            <span className="bg-blue-50 text-blue-800 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
               Interactive 3D Warehouse
             </span>
-            <span className="text-xs text-slate-400">WebGL 3D Engine • Label Box Sesuai Format Asli</span>
+            <span className="text-xs text-slate-600">WebGL 3D Engine • Label Box Sesuai Format Asli</span>
           </div>
-          <h2 className="text-xl font-black tracking-tight mt-1">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-2">
             Visualisasi 3D Rak Fisik & Label Box (1 - 72)
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5">
             Setiap box 3D menampilkan <strong>Label Box resmi</strong> dengan nomor raksasa dan nama PIC PPIC. Klik box untuk melihat isi & print.
           </p>
         </div>
@@ -558,7 +558,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
         <div className="flex items-center flex-wrap gap-2 text-xs">
           <button
             onClick={() => onOpenLabelPrintModal && onOpenLabelPrintModal()}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition shadow-sm"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm"
           >
             <Printer className="w-4 h-4" />
             <span>Cetak Stiker Label Box</span>
@@ -569,7 +569,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
             className={`px-3 py-1.5 rounded-lg font-bold transition ${
               activeRackView === 'ALL'
                 ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             Semua Rak
@@ -581,7 +581,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
               className={`px-2.5 py-1.5 rounded-lg font-bold transition ${
                 activeRackView === id
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               Rak {id}
@@ -592,7 +592,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
             className={`px-2.5 py-1.5 rounded-lg font-bold border transition ${
               isAutoRotate
                 ? 'bg-emerald-600 text-white border-emerald-500'
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
             title="Auto Putar 360°"
           >
@@ -602,7 +602,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
       </div>
 
       {/* Main 3D Canvas Container */}
-      <div className="relative w-full h-[600px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+      <div className="inventory-panel relative w-full h-[530px] sm:h-[600px] overflow-hidden bg-slate-100">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
@@ -611,8 +611,8 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
         <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 max-w-xs">
           
           {/* PPIC Person Highlight Filter */}
-          <div className="bg-slate-900/90 backdrop-blur-md p-3 rounded-xl border border-white/10 text-xs shadow-lg space-y-2">
-            <span className="font-bold text-slate-300 text-[11px] block uppercase tracking-wider">
+          <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-xs shadow-sm space-y-2">
+            <span className="font-bold text-slate-700 text-[11px] block uppercase tracking-wider">
               Highlight PIC PPIC:
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -620,8 +620,8 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
                 onClick={() => setHighlightPpic('ALL')}
                 className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${
                   highlightPpic === 'ALL'
-                    ? 'bg-white text-slate-950'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
                 Semua
@@ -633,7 +633,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
                   className={`px-2 py-0.5 rounded text-[11px] font-bold transition flex items-center space-x-1 ${
                     highlightPpic === pic.name
                       ? 'bg-blue-600 text-white ring-2 ring-white/50'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${pic.avatarBg}`}></span>
@@ -644,12 +644,12 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
           </div>
 
           {/* Category Highlight */}
-          <div className="bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-xl border border-white/10 text-xs shadow-lg flex items-center space-x-2">
-            <span className="text-slate-400 font-bold text-[11px]">Kategori:</span>
+          <div className="bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-sm flex items-center space-x-2">
+            <span className="text-slate-700 font-bold text-[11px]">Kategori:</span>
             <button
               onClick={() => setHighlightCategory('ALL')}
               className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                highlightCategory === 'ALL' ? 'bg-white text-slate-900' : 'text-slate-400'
+                highlightCategory === 'ALL' ? 'bg-blue-600 text-white' : 'text-slate-700'
               }`}
             >
               Semua
@@ -657,7 +657,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
             <button
               onClick={() => setHighlightCategory('SAMPLE')}
               className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                highlightCategory === 'SAMPLE' ? 'bg-amber-400 text-slate-950' : 'text-slate-400'
+                highlightCategory === 'SAMPLE' ? 'bg-amber-400 text-slate-950' : 'text-slate-700'
               }`}
             >
               SAMPLE
@@ -665,7 +665,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
             <button
               onClick={() => setHighlightCategory('MATERIAL')}
               className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                highlightCategory === 'MATERIAL' ? 'bg-emerald-400 text-slate-950' : 'text-slate-400'
+                highlightCategory === 'MATERIAL' ? 'bg-emerald-400 text-slate-950' : 'text-slate-700'
               }`}
             >
               MATERIAL
@@ -681,7 +681,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
               <span className="text-xl font-black text-white">
                 #{hoveredBox.boxNumber}
               </span>
-              <span className="font-mono text-xs text-slate-400">
+              <span className="font-mono text-xs text-slate-600">
                 {hoveredBox.code}
               </span>
               <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${

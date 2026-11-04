@@ -241,7 +241,7 @@ export const ItemModal = () => {
       <div className={`bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-2xl overflow-hidden flex flex-col max-h-[96vh] ${showPrintModal ? 'no-print' : ''}`}>
         
         {/* Modal Header */}
-        <div className="no-print bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
+        <div className="no-print inventory-dialog-heading px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md">
               <FileText className="w-5 h-5" />

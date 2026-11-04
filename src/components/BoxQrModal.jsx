@@ -73,7 +73,7 @@ export const BoxQrModal = () => {
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
         
         {/* Header */}
-        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <h3 className="text-base font-bold">Label & QR Code Box</h3>
             <span className="text-xs bg-blue-600 px-2 py-0.5 rounded font-black">

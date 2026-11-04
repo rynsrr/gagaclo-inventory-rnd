@@ -123,7 +123,7 @@ export const PrintableManifestView = () => {
     <div className="space-y-6">
       
       {/* Control bar */}
-      <div className="no-print bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="no-print inventory-panel p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         
         {/* Toggle Mode */}
         <div className="flex items-center space-x-2">

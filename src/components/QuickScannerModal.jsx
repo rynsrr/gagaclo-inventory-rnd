@@ -49,7 +49,7 @@ export const QuickScannerModal = () => {
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
         {/* Header */}
-        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <QrCode className="w-5 h-5 text-sky-400" />
             <h3 className="text-base font-bold">Lompat Cepat ke Box (1 - 72)</h3>

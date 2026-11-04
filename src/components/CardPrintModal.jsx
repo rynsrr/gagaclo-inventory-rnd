@@ -81,7 +81,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
         
         {/* Top Control Bar (Hidden when printing) */}
-        <div className="no-print bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
+        <div className="no-print inventory-dialog-heading px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-600 rounded-lg text-white">
               <Printer className="w-5 h-5" />

@@ -205,7 +205,7 @@ CREATE POLICY "Public Full Access Transactions" ON public.transactions FOR ALL U
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col">
         
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white p-5 flex items-center justify-between border-b border-slate-800">
+        <div className="inventory-dialog-heading p-5 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
             <div className={`p-2.5 rounded-xl ${supabaseStatus.isConnected ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-blue-600/30 text-blue-400 border border-blue-500/30'}`}>
               <Database className="w-6 h-6" />

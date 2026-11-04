@@ -55,12 +55,12 @@ const AppContent = () => {
     : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB terpakai`;
 
   return (
-    <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
+    <div className="inventory-shell min-h-screen flex flex-col font-sans">
       
       {/* Top Navigation Bar */}
-      <header className="no-print bg-slate-900 text-white shadow-md sticky top-0 z-30 border-b border-slate-800">
+      <header className="inventory-header no-print sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             
             {/* Logo & Title */}
             <div className="flex items-center space-x-3">
@@ -69,14 +69,14 @@ const AppContent = () => {
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg font-black tracking-tight text-white uppercase">
+                  <span className="text-lg font-semibold tracking-tight">
                     GAGACLO
                   </span>
-                  <span className="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                  <span className="bg-blue-50 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
                     R&D INVENTORY
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-600">
                   Visualisasi 3D Gudang, Manajemen Box & Dokumen Manifes
                 </p>
               </div>
@@ -91,8 +91,8 @@ const AppContent = () => {
                 onClick={() => setIsSupabaseModalOpen(true)}
                 className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm border ${
                   supabaseStatus.isConnected
-                    ? 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
                 title={
                   supabaseStatus.isConnected
@@ -108,26 +108,26 @@ const AppContent = () => {
                 <Database className="w-3.5 h-3.5 text-sky-400" />
                 <span className="hidden sm:inline">Supabase Gagaclo</span>
                 {supabaseStatus.isConnected ? (
-                  <span className="text-[10px] bg-emerald-800/80 text-emerald-200 px-1.5 py-0.5 rounded font-mono font-bold">
+                  <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
                     {usageLabel}
                   </span>
                 ) : (
-                  <span className="text-[10px] bg-blue-900/60 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-bold">
+                  <span className="text-[10px] bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded font-bold">
                     Hubungkan
                   </span>
                 )}
               </button>
 
               {/* Mode Switcher Tabs */}
-              <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs overflow-x-auto scrollbar-none">
+              <div className="inventory-segments flex items-center gap-1 p-1 rounded-xl text-xs overflow-x-auto scrollbar-none">
                 
                 {/* 3D Visualizer Mode */}
                 <button
                   onClick={() => setAppMode('3d-warehouse')}
                   className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
                     appMode === '3d-warehouse'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
@@ -139,8 +139,8 @@ const AppContent = () => {
                   onClick={() => setAppMode('manifests')}
                   className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
                     appMode === 'manifests'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <Printer className="w-3.5 h-3.5" />
@@ -164,7 +164,7 @@ const AppContent = () => {
       </main>
 
       {/* Footer */}
-      <footer className="no-print bg-slate-900 text-slate-400 py-5 border-t border-slate-800 text-xs text-center">
+      <footer className="inventory-footer no-print text-slate-600 py-5 border-t border-slate-200 text-xs text-center">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="font-bold text-slate-300">
             GAGACLO • INVENTORY MANAGEMENT RND

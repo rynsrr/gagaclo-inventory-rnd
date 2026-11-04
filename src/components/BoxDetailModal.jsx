@@ -140,7 +140,7 @@ export const BoxDetailModal = () => {
       <div className={`bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal ? 'no-print' : ''}`}>
         
         {/* Header */}
-        <div className="bg-slate-900 text-white p-5 flex items-start justify-between border-b border-slate-800">
+        <div className="inventory-dialog-heading p-5 flex items-start justify-between border-b border-slate-800">
           <div className="flex items-start space-x-3.5">
             <div className="bg-blue-600 text-white text-xl font-black px-3.5 py-2 rounded-xl shadow-inner border border-blue-400/40">
               #{box.boxNumber}
