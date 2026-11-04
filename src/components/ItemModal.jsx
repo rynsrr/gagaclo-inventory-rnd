@@ -166,7 +166,9 @@ export const ItemModal = () => {
     e.preventDefault();
     const newErrors = {};
     if (!formData.kode.trim()) newErrors.kode = 'Wajib isi Kode barang';
+    if (!formData.buyerNo.trim() || formData.buyerNo.trim() === '-') newErrors.buyerNo = 'Wajib isi Buyer No';
     if (!formData.style.trim()) newErrors.style = 'Wajib isi Nama / Nomer Style';
+    if (!formData.sampleNo.trim() || formData.sampleNo.trim() === '-') newErrors.sampleNo = 'Wajib isi Sample No';
     if (!formData.size.trim()) newErrors.size = 'Wajib isi Size';
     if (!formData.color.trim() || formData.color.trim() === '-') newErrors.color = 'Wajib isi Color / Warna';
 
@@ -180,7 +182,7 @@ export const ItemModal = () => {
 
     const styleTrim = formData.style.trim();
     const sampleNoTrim = formData.sampleNo.trim();
-    const buyerNoTrim = formData.buyerNo.trim() || '-';
+    const buyerNoTrim = formData.buyerNo.trim();
     const sizeTrim = formData.size.trim().toUpperCase();
     const colorTrim = formData.color.trim();
     const fullDeskripsi = sampleNoTrim 
@@ -267,10 +269,12 @@ export const ItemModal = () => {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
           
           {/* Validation Alert */}
-          {(errors.kode || errors.style || errors.sampleNo || errors.size || errors.color) && (
-            <div className="no-print w-full max-w-[560px] mb-3 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-700 text-xs flex items-center space-x-2 shadow-xs">
+          {(errors.kode || errors.buyerNo || errors.style || errors.sampleNo || errors.size || errors.color) && (
+            <div className="no-print w-full max-w-[580px] mb-3 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-700 text-xs flex items-center space-x-2 shadow-xs">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-              <span className="font-semibold">{errors.style || errors.sampleNo || errors.size || errors.color || errors.kode}</span>
+              <span className="font-semibold">
+                {errors.buyerNo || errors.sampleNo || errors.kode || errors.style || errors.size || errors.color}
+              </span>
             </div>
           )}
 
@@ -366,16 +370,23 @@ export const ItemModal = () => {
                           </button>
                         </div>
 
-                        {/* Kolom 2: Buyer No (50%) */}
+                        {/* Kolom 2: Buyer No (50% - Wajib Diisi) */}
                         <div className="flex items-center min-w-0 px-3 py-1.5 gap-1.5">
-                          <span className="text-[11px] font-bold text-slate-500 shrink-0 select-none">Buyer:</span>
+                          <span className="text-[11px] font-bold text-slate-700 shrink-0 select-none">
+                            Buyer <span className="text-rose-500">*</span>:
+                          </span>
                           <input
                             type="text"
-                            placeholder="No. Buyer"
+                            placeholder="No. Buyer *"
                             value={formData.buyerNo}
-                            onChange={(e) => setFormData({ ...formData, buyerNo: e.target.value.toUpperCase() })}
-                            className="min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-bold text-black font-mono focus:outline-none focus:bg-blue-50/60 transition bg-transparent placeholder:text-slate-400"
-                            title="Nomor Buyer / Buyer PO"
+                            onChange={(e) => {
+                              setFormData({ ...formData, buyerNo: e.target.value.toUpperCase() });
+                              if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                            }}
+                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-bold text-black font-mono focus:outline-none transition bg-transparent ${
+                              errors.buyerNo ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-400'
+                            }`}
+                            title="Nomor Buyer / Buyer PO (Wajib diisi)"
                           />
                         </div>
                       </div>
@@ -411,7 +422,7 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Deskripsi (3 Kolom: Nama/Nomer Style *, Sample No, & Size *) */}
+                  {/* Deskripsi (3 Kolom: Nama/Nomer Style *, Sample No *, & Size *) */}
                   <tr className="border-b-2 border-black">
                     <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Deskripsi <span className="text-rose-500">*</span>
@@ -434,15 +445,22 @@ export const ItemModal = () => {
                           />
                         </div>
 
-                        {/* Kolom 2: Sample Number (Default Kosong) */}
+                        {/* Kolom 2: Sample Number (Wajib Diisi) */}
                         <div className="col-span-4">
                           <input
                             type="text"
-                            placeholder="SAMPLE NO"
+                            placeholder="SAMPLE NO *"
                             value={formData.sampleNo}
-                            onChange={(e) => setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() })}
-                            className="w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase text-black font-mono border border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 rounded-lg transition placeholder:text-slate-400"
-                            title="Nomor Sample (Opsional, kosongkan jika tidak ada)"
+                            onChange={(e) => {
+                              setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() });
+                              if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
+                            }}
+                            className={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase text-black font-mono border focus:outline-none rounded-lg transition ${
+                              errors.sampleNo 
+                                ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' 
+                                : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
+                            }`}
+                            title="Nomor Sample (Wajib diisi)"
                           />
                         </div>
 
