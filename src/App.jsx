@@ -25,6 +25,7 @@ const AppContent = () => {
     setIsSupabaseModalOpen
   } = useInventory();
 
+  const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const connected = supabaseStatus.isConnected;
   useEffect(() => {
@@ -57,17 +58,17 @@ const AppContent = () => {
       
       {/* Top Navigation Bar */}
       <header className="inventory-header no-print sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="inventory-header-scroll">
+          <div className="inventory-header-row">
             
             {/* Logo & Title */}
-            <div className="flex items-center space-x-3">
+            <div className="flex shrink-0 items-center gap-2">
               <div className="bg-blue-600 p-2 rounded-xl text-white shadow-md">
                 <Boxes className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="bg-blue-50 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                  <span className="inventory-brand bg-blue-50 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
                     R&D INVENTORY
                   </span>
                 </div>
@@ -75,8 +76,10 @@ const AppContent = () => {
               </div>
             </div>
 
+            {appMode === '3d-warehouse' && <div ref={setWarehouseControlsHost} />}
+
             {/* Actions & Switcher Tabs */}
-            <div className="flex items-center flex-wrap gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               
               {/* Supabase Corporate Gagaclo Status Button */}
               <button
@@ -99,7 +102,7 @@ const AppContent = () => {
                   <span className="w-2 h-2 rounded-full bg-slate-500"></span>
                 )}
                 <Database className="w-3.5 h-3.5 text-sky-400" />
-                <span className="hidden sm:inline">Supabase Gagaclo</span>
+                <span className="inventory-database-name">Supabase Gagaclo</span>
                 {supabaseStatus.isConnected ? (
                   <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
                     {usageLabel}
@@ -124,7 +127,7 @@ const AppContent = () => {
                   }`}
                 >
                   <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Ilustrasi 3D Rak & Box</span>
+                  <span><span className="inventory-nav-extra">Ilustrasi </span>3D<span className="inventory-nav-extra"> Rak &amp; Box</span></span>
                 </button>
 
                 {/* Dokumen Manifes */}
@@ -137,7 +140,7 @@ const AppContent = () => {
                   }`}
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>Dokumen Manifes</span>
+                  <span><span className="inventory-nav-extra">Dokumen </span>Manifes</span>
                 </button>
 
               </div>
@@ -151,7 +154,7 @@ const AppContent = () => {
       {/* Main Container */}
       <main className="inventory-main flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {appMode === '3d-warehouse' && (
-          <Warehouse3DView />
+          <Warehouse3DView controlsHost={warehouseControlsHost} />
         )}
         {appMode === 'manifests' && <PrintableManifestView />}
       </main>

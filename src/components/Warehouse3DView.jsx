@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -20,7 +21,7 @@ function matchesPic(picName, selectedPic) {
   return String(picName ?? '').trim().toLowerCase() === selectedPic.trim().toLowerCase();
 }
 
-export const Warehouse3DView = () => {
+export const Warehouse3DView = ({ controlsHost }) => {
   const containerRef = useRef(null);
   const { 
     racks, 
@@ -563,11 +564,13 @@ export const Warehouse3DView = () => {
   return (
     <div className="warehouse-layout space-y-4">
       
-      <div className="inventory-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
+      {controlsHost && createPortal(
+      <div className="inventory-header-filters">
         {/* Camera Quick Buttons */}
-        <div className="flex items-center flex-wrap gap-2 text-xs">
+        <div role="group" aria-label="Pilihan rak" className="flex items-center gap-1 text-xs">
           <button
             onClick={() => focusOnRack('ALL')}
+            aria-pressed={activeRackView === 'ALL'}
             className={`px-3 py-1.5 rounded-lg font-bold transition ${
               activeRackView === 'ALL'
                 ? 'bg-blue-600 text-white shadow-sm'
@@ -580,6 +583,7 @@ export const Warehouse3DView = () => {
             <button
               key={id}
               onClick={() => focusOnRack(id)}
+              aria-pressed={activeRackView === id}
               className={`px-2.5 py-1.5 rounded-lg font-bold transition ${
                 activeRackView === id
                   ? 'bg-blue-600 text-white shadow-sm'
@@ -590,11 +594,11 @@ export const Warehouse3DView = () => {
             </button>
           ))}
         </div>
-        <div role="group" aria-label="Filter PIC PPIC" className="flex flex-wrap items-center gap-2">
+        <div role="group" aria-label="Filter PIC PPIC" className="flex items-center gap-1.5">
           <span className="font-bold text-slate-700 text-[11px] block uppercase tracking-wider">
             PIC PPIC
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex gap-1">
             <button
               onClick={() => setHighlightPpic('ALL')}
               aria-pressed={highlightPpic === 'ALL'}
@@ -623,7 +627,7 @@ export const Warehouse3DView = () => {
             ))}
           </div>
         </div>
-      </div>
+      </div>, controlsHost)}
 
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
         {occupancyGroups.map(group => (
