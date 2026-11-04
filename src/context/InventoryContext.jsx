@@ -290,7 +290,7 @@ export const InventoryProvider = ({ children }) => {
           (payload) => {
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
               const updatedBox = payload.new;
-              setBoxes(prev => prev.map(b => b.boxNumber === updatedBox.box_number ? { ...b, notes: updatedBox.notes } : b));
+              setBoxes(prev => prev.map(b => b.boxNumber === updatedBox.box_number ? dbBoxToLocal(updatedBox, [b]) : b));
             }
           }
         )
@@ -440,6 +440,23 @@ export const InventoryProvider = ({ children }) => {
         console.error('Supabase add transaction error:', err);
       }
     }
+  };
+
+  const setBoxFull = async (boxNumber, isFull) => {
+    const box = boxes.find(entry => entry.boxNumber === boxNumber);
+    if (!box) throw new Error('Box tidak ditemukan.');
+
+    if (supabase) {
+      const { error } = await supabase.from('boxes').upsert({
+        box_number: boxNumber,
+        is_full: isFull,
+      }, { onConflict: 'box_number' });
+      if (error) throw error;
+    }
+
+    setBoxes(previous => previous.map(entry =>
+      entry.boxNumber === boxNumber ? { ...entry, isFull } : entry
+    ));
   };
 
   const updateBoxNotes = async (boxNumber, notes) => {
@@ -665,6 +682,7 @@ export const InventoryProvider = ({ children }) => {
     deleteItem,
     addTransaction,
     updateBoxNotes,
+    setBoxFull,
     resetToInitialData,
     exportJsonBackup,
     importJsonBackup,

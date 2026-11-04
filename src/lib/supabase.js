@@ -172,6 +172,7 @@ export function dbBoxToLocal(db, defaultBoxes = []) {
     category: db.category || defaultBox.category || 'SAMPLE',
     picName: db.pic_name || defaultBox.picName || 'Royan',
     notes: db.notes ?? defaultBox.notes ?? '',
+    isFull: db.is_full === true,
   };
 }
 

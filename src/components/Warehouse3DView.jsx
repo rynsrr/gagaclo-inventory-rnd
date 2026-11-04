@@ -33,6 +33,18 @@ export const Warehouse3DView = () => {
   const [activeRackView, setActiveRackView] = useState('ALL');
   const [webGlError, setWebGlError] = useState(false);
 
+  const occupancyGroups = [
+    { label: 'Tanpa data', color: 'bg-slate-100 text-slate-800', boxes: [] },
+    { label: 'Sedang diisi', color: 'bg-amber-100 text-amber-900', boxes: [] },
+    { label: 'Penuh', color: 'bg-emerald-100 text-emerald-900', boxes: [] },
+  ];
+  for (const box of boxes) {
+    if (activeRackView !== 'ALL' && box.rackId !== activeRackView) continue;
+    const hasData = getItemsInBox(box.boxNumber).length > 0;
+    const group = !hasData ? 0 : box.isFull ? 2 : 1;
+    occupancyGroups[group].boxes.push(box);
+  }
+
   // References for Three.js scene objects
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -557,6 +569,28 @@ export const Warehouse3DView = () => {
           ))}
         </div>
       </div>
+
+      <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
+        {occupancyGroups.map(group => (
+          <div key={group.label} className="inventory-panel p-4">
+            <h2 className="mb-2 flex items-center justify-between text-sm font-semibold">
+              {group.label}
+              <span className={`rounded-full px-2 py-0.5 ${group.color}`}>{group.boxes.length}</span>
+            </h2>
+            <div className="flex max-h-28 flex-wrap gap-1.5 overflow-auto p-1">
+              {group.boxes.map(box => (
+                <button key={box.boxNumber} type="button"
+                  aria-label={`Box ${box.boxNumber}, ${group.label}`}
+                  onClick={() => setSelectedBoxNumber(box.boxNumber)}
+                  className={`rounded-md px-2 py-1 text-xs font-bold hover:ring-1 ${group.color}`}>
+                  {box.boxNumber}
+                </button>
+              ))}
+              {group.boxes.length === 0 && <span className="text-xs text-slate-500">Tidak ada box</span>}
+            </div>
+          </div>
+        ))}
+      </section>
 
       {/* Main 3D Canvas Container */}
       <div className="inventory-panel relative w-full h-[530px] sm:h-[600px] overflow-hidden bg-slate-100">

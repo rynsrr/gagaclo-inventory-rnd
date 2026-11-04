@@ -40,6 +40,7 @@ export const BoxDetailModal = () => {
     setItemModalConfig, 
     setQrModalBox,
     updateBoxNotes,
+    setBoxFull,
     setTransactionModalConfig,
     updateItem
   } = useInventory();
@@ -50,6 +51,19 @@ export const BoxDetailModal = () => {
   if (!box) return null;
 
   const itemsInBox = getItemsInBox(selectedBoxNumber);
+  const [savingFullStatus, setSavingFullStatus] = useState(false);
+  const [fullStatusError, setFullStatusError] = useState('');
+  const toggleFullStatus = async () => {
+    setSavingFullStatus(true);
+    setFullStatusError('');
+    try {
+      await setBoxFull(box.boxNumber, !box.isFull);
+    } catch {
+      setFullStatusError('Status box gagal disimpan. Coba lagi.');
+    } finally {
+      setSavingFullStatus(false);
+    }
+  };
   const [boxNotes, setBoxNotes] = useState(box.notes || '');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -164,7 +178,16 @@ export const BoxDetailModal = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleFullStatus}
+              disabled={savingFullStatus || (!itemsInBox.length && !box.isFull)}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+            >
+              {savingFullStatus ? 'Menyimpan…' : box.isFull ? 'Buka kembali box' : 'Tandai penuh'}
+            </button>
+            {fullStatusError && <span role="alert" className="text-xs text-red-700">{fullStatusError}</span>}
             <button
               onClick={() => setShowBoxLabelModal(true)}
               className="flex items-center space-x-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg shadow-sm transition"
