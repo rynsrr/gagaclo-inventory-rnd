@@ -112,7 +112,7 @@ const AppContent = () => {
                   }`}
                 >
                   <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Rak 3D</span>
+                  <span>BOX</span>
                 </button>
 
                 {/* Ringkasan Total Item */}
