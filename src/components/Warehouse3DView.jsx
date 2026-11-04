@@ -546,7 +546,7 @@ export const Warehouse3DView = () => {
   return (
     <div className="space-y-4">
       
-      <div className="inventory-panel px-4 py-3">
+      <div className="inventory-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
         {/* Camera Quick Buttons */}
         <div className="flex items-center flex-wrap gap-2 text-xs">
           <button
@@ -572,6 +572,39 @@ export const Warehouse3DView = () => {
               Rak {id}
             </button>
           ))}
+        </div>
+        <div role="group" aria-label="Filter PIC PPIC" className="flex flex-wrap items-center gap-2">
+          <span className="font-bold text-slate-700 text-[11px] block uppercase tracking-wider">
+            PIC PPIC
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setHighlightPpic('ALL')}
+              aria-pressed={highlightPpic === 'ALL'}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                highlightPpic === 'ALL'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              Semua
+            </button>
+            {ppicMembers.map((pic) => (
+              <button
+                key={pic.id}
+                onClick={() => setHighlightPpic(highlightPpic === pic.name ? 'ALL' : pic.name)}
+                aria-pressed={highlightPpic === pic.name}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1 ${
+                  highlightPpic === pic.name
+                    ? 'bg-blue-600 text-white ring-2 ring-white/50'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${pic.avatarBg}`}></span>
+                <span>{pic.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -602,46 +635,6 @@ export const Warehouse3DView = () => {
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
-
-        {/* 3D Overlays: Filter Bar on Top Left */}
-        <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 max-w-xs">
-          
-          {/* PPIC Person Highlight Filter */}
-          <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-xs shadow-sm space-y-2">
-            <span className="font-bold text-slate-700 text-[11px] block uppercase tracking-wider">
-              Highlight PIC PPIC:
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => setHighlightPpic('ALL')}
-                aria-pressed={highlightPpic === 'ALL'}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${
-                  highlightPpic === 'ALL'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                Semua
-              </button>
-              {ppicMembers.map((pic) => (
-                <button
-                  key={pic.id}
-                  onClick={() => setHighlightPpic(highlightPpic === pic.name ? 'ALL' : pic.name)}
-                  aria-pressed={highlightPpic === pic.name}
-                  className={`px-2 py-0.5 rounded text-[11px] font-bold transition flex items-center space-x-1 ${
-                    highlightPpic === pic.name
-                      ? 'bg-blue-600 text-white ring-2 ring-white/50'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${pic.avatarBg}`}></span>
-                  <span>{pic.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-        </div>
 
         {/* Hovered Box HUD Card (Bottom Left) */}
         {hoveredBox && (
