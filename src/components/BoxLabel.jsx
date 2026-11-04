@@ -27,7 +27,7 @@ export const BoxLabel = ({ box, isPrintMode = false }) => {
     <div 
       className={`bg-white text-black font-sans box-border text-center flex flex-col border-4 border-black ${
         isPrintMode 
-          ? 'w-full max-w-[460px] aspect-[210/148] p-5 print:w-[210mm] print:h-[148mm] print:max-w-none print:p-8 print:m-0 break-inside-avoid'
+          ? 'w-full max-w-[460px] aspect-[210/148] p-5 print:w-[210mm] print:h-[148mm] print:max-w-none print:p-8 print:m-0 break-inside-avoid print-page-a5-landscape'
           : 'w-full max-w-[460px] aspect-[210/148] p-5 shadow-xl rounded-none'
       }`}
       style={{ boxSizing: 'border-box' }}

@@ -34,7 +34,14 @@
 }
 
 @media print {
+  /* Default: A4 portrait for KTP card sheets and general printing */
   @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  /* Box labels use A5 landscape (210x148mm) — one label per sheet */
+  @page box-label {
     size: A5 landscape;
     margin: 0;
   }
@@ -70,6 +77,11 @@
   .break-inside-avoid {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  /* Box label sheets use A5 landscape with zero margin */
+  .print-page-a5-landscape {
+    page: box-label;
   }
 }
 

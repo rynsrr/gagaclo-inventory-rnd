@@ -34,8 +34,15 @@ export const BoxQrModal = () => {
   const items = getItemsInBox(qrModalBox.boxNumber);
 
   const handlePrint = () => {
-    const printWindow = window.open('', '', 'width=600,height=600');
-    if (!printWindow) return;
+    if (!qrDataUrl) {
+      alert('QR Code masih dibuat, coba lagi dalam 1 detik.');
+      return;
+    }
+    const printWindow = window.open('', '_blank', 'width=600,height=600');
+    if (!printWindow) {
+      alert('Popup diblokir browser. Mohon izinkan popup untuk situs ini agar bisa mencetak label QR.');
+      return;
+    }
     printWindow.document.write(`
       <html>
         <head>
