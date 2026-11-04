@@ -1,18 +1,16 @@
 import React from 'react';
 
 /**
- * Exact replica of the inventory bin card / sample tag uploaded by the user:
- * 
- * | Track           | DHL : 5475890895                     |
- * | Tanggal         | 17-Jul-2026                          |
- * | Kode            | RF08-84                              |
- * | Deskripsi       | metal buckle 50mm metal buckle-female|
- * | Color           | -                                    |
- * | Jumlah          | 15                                   |
- * | Satuan          | PCS                                  |
- * | Place           | SOFI 1                               |
- * | Qty Dipakai     | [dotted line]                        |
- * | Tanggal Dipakai | [dotted line]                        |
+ * Standard KTP Size (ID-1 / ISO 7810: 85.6mm × 54mm)
+ * Compact Sample Card with 8 core fields:
+ * - Track
+ * - Tanggal
+ * - Kode
+ * - Deskripsi (Style & Size)
+ * - Color
+ * - Jumlah
+ * - Satuan
+ * - Place
  */
 export const InventoryCard = ({ item, isPrintMode = false }) => {
   if (!item) return null;
@@ -25,134 +23,109 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
   const jumlah = item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty ?? '-');
   const satuan = item.satuan || item.unit || 'PCS';
   const place = item.place || (item.boxNumber ? `BOX ${item.boxNumber}` : '-');
-  const qtyDipakai = item.qtyDipakai || '';
-  const tanggalDipakai = item.tanggalDipakai || '';
 
   return (
     <div 
-      className={`bg-white text-black font-sans box-border ${
+      className={`bg-white text-black font-sans box-border select-none ${
         isPrintMode 
-          ? 'w-[360px] p-2 break-inside-avoid print:w-[350px] print:p-1' 
-          : 'w-full max-w-[380px] p-3 shadow-md rounded-lg border border-slate-300'
+          ? 'w-[85.6mm] h-[53.98mm] max-h-[53.98mm] p-0 break-inside-avoid print:w-[85.6mm] print:h-[53.98mm] print:break-inside-avoid overflow-hidden flex flex-col justify-between' 
+          : 'w-[85.6mm] min-h-[53.98mm] p-0 shadow-md rounded border border-slate-400 overflow-hidden bg-white'
       }`}
+      style={{ width: isPrintMode ? '85.6mm' : undefined, minWidth: isPrintMode ? '85.6mm' : undefined }}
     >
-      <table className="w-full border-collapse border-2 border-black text-xs text-left">
+      <table className="w-full h-full border-collapse border-[1.5px] border-black text-[9px] leading-[1.15] text-left">
         <tbody>
           {/* Track */}
           <tr className="border-b border-black">
-            <td className="w-[32%] py-1.5 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap">
+            <td className="w-[30%] py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Track
             </td>
-            <td className="py-1.5 px-2.5 font-medium align-middle text-black break-words">
+            <td className="py-[2px] px-1.5 font-medium align-middle text-black truncate font-mono text-[8.5px]">
               {track}
             </td>
           </tr>
 
           {/* Tanggal */}
           <tr className="border-b border-black">
-            <td className="py-1.5 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap">
+            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Tanggal
             </td>
-            <td className="py-1.5 px-2.5 font-medium align-middle text-black">
+            <td className="py-[2px] px-1.5 font-medium align-middle text-black truncate text-[8.5px]">
               {tanggal}
             </td>
           </tr>
 
           {/* Kode */}
           <tr className="border-b border-black">
-            <td className="py-1.5 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap">
+            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Kode
             </td>
-            <td className="py-1.5 px-2.5 font-black text-sm align-middle text-black tracking-tight font-mono">
+            <td className="py-[2px] px-1.5 font-black align-middle text-black tracking-tight font-mono text-[9.5px]">
               {kode}
             </td>
           </tr>
 
-          {/* Deskripsi */}
+          {/* Deskripsi (Nama/Nomer Style & Size) */}
           <tr className="border-b border-black">
-            <td className="py-2.5 px-2.5 font-bold border-r border-black align-top text-black whitespace-nowrap">
+            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Deskripsi
             </td>
-            <td className="py-2.5 px-2.5 font-medium align-top text-black leading-snug min-h-[44px]">
+            <td className="py-[2px] px-1.5 font-medium align-middle text-black leading-tight">
               {item.style ? (
-                <div>
-                  <div className="flex items-center flex-wrap gap-1.5 font-bold text-black text-xs">
-                    <span>{item.style}</span>
-                    {item.size && (
-                      <span className="inline-block px-1.5 py-0.2 border border-black text-[10px] font-black uppercase tracking-tight">
-                        Size: {item.size}
-                      </span>
-                    )}
-                  </div>
-                  {item.detail && (
-                    <div className="text-[11px] text-slate-800 mt-0.5 leading-tight">{item.detail}</div>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="font-bold truncate text-[9px]">{item.style}</span>
+                  {item.size && (
+                    <span className="shrink-0 px-1 py-0 border border-black font-black uppercase text-[8px] bg-slate-50">
+                      SZ: {item.size}
+                    </span>
                   )}
                 </div>
               ) : (
-                deskripsi
+                <span className="truncate block">{deskripsi}</span>
               )}
             </td>
           </tr>
 
           {/* Color */}
           <tr className="border-b border-black">
-            <td className="py-1.5 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap">
+            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Color
             </td>
-            <td className="py-1.5 px-2.5 font-medium align-middle text-black">
+            <td className="py-[2px] px-1.5 font-medium align-middle text-black truncate text-[8.5px]">
               {color}
             </td>
           </tr>
 
           {/* Jumlah */}
           <tr className="border-b border-black">
-            <td className="py-1.5 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap">
+            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Jumlah
             </td>
-            <td className="py-1.5 px-2.5 font-bold text-sm align-middle text-black">
+            <td className="py-[2px] px-1.5 font-black text-[9.5px] align-middle text-black">
               {jumlah}
             </td>
           </tr>
 
           {/* Satuan */}
           <tr className="border-b border-black">
-            <td className="py-1.5 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap">
+            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Satuan
             </td>
-            <td className="py-1.5 px-2.5 font-bold uppercase align-middle text-black">
+            <td className="py-[2px] px-1.5 font-bold uppercase align-middle text-black text-[8.5px]">
               {satuan}
             </td>
           </tr>
 
           {/* Place */}
-          <tr className="border-b border-black">
-            <td className="py-1.5 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap">
+          <tr>
+            <td className="py-[2px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Place
             </td>
-            <td className="py-1.5 px-2.5 font-black align-middle text-black uppercase">
+            <td className="py-[2px] px-1.5 font-black align-middle text-black uppercase text-[8.5px] truncate">
               {place}
             </td>
           </tr>
 
-          {/* Qty Dipakai (italic label, dotted line bottom) */}
-          <tr className="border-b-2 border-dotted border-black">
-            <td className="py-2 px-2.5 font-bold italic border-r border-black align-middle text-black whitespace-nowrap">
-              Qty Dipakai
-            </td>
-            <td className="py-2 px-2.5 font-semibold align-middle text-black">
-              {qtyDipakai}
-            </td>
-          </tr>
-
-          {/* Tanggal Dipakai (italic label, dotted line bottom) */}
-          <tr className="border-b-2 border-dotted border-black">
-            <td className="py-2 px-2.5 font-bold italic border-r border-black align-middle text-black whitespace-nowrap">
-              Tanggal Dipakai
-            </td>
-            <td className="py-2 px-2.5 font-semibold align-middle text-black">
-              {tanggalDipakai}
-            </td>
-          </tr>
         </tbody>
       </table>
     </div>

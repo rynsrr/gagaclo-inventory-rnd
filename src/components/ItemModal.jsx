@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { RACK_GROUPS, DEFAULT_PLACES } from '../data/simpleData';
+import { CardPrintModal } from './CardPrintModal';
 import { 
   X, 
   Save, 
@@ -45,6 +46,7 @@ export const ItemModal = () => {
   } = useInventory();
 
   const hiddenDateRef = useRef(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   const isEditing = Boolean(itemModalConfig.item);
   const targetBoxNum = Number(itemModalConfig.targetBoxNumber) || (itemModalConfig.item ? Number(itemModalConfig.item.boxNumber) : 1);
@@ -61,15 +63,11 @@ export const ItemModal = () => {
     kode: '',
     style: '',
     size: '',
-    detail: '',
-    deskripsi: '',
     color: '-',
     jumlah: 1,
     satuan: 'PCS',
     boxNumber: 1,
     place: '',
-    qtyDipakai: '',
-    tanggalDipakai: '',
     status: 'In Storage',
   });
 
@@ -92,15 +90,11 @@ export const ItemModal = () => {
           kode: item.kode || item.sku || getNextSampleCode(items),
           style: item.style || item.name || item.deskripsi || '',
           size: item.size || '',
-          detail: item.detail || '',
-          deskripsi: item.deskripsi || item.name || item.description || '',
           color: item.color || '-',
           jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
           satuan: item.satuan || item.unit || 'PCS',
           boxNumber: bNum,
           place: item.place || defaultBoxPlace,
-          qtyDipakai: item.qtyDipakai || '',
-          tanggalDipakai: item.tanggalDipakai || '',
           status: item.status || 'In Storage',
         });
       } else {
@@ -117,19 +111,16 @@ export const ItemModal = () => {
           kode: getNextSampleCode(items),
           style: '',
           size: '',
-          detail: '',
-          deskripsi: '',
           color: '-',
           jumlah: 1,
           satuan: 'PCS',
           boxNumber: bNum,
           place: defaultBoxPlace,
-          qtyDipakai: '',
-          tanggalDipakai: '',
           status: 'In Storage',
         });
       }
       setErrors({});
+      setShowPrintModal(false);
     }
   }, [itemModalConfig.isOpen, itemModalConfig.item, itemModalConfig.targetBoxNumber, items]);
 
@@ -162,10 +153,6 @@ export const ItemModal = () => {
     }
   };
 
-  const handlePrintCard = () => {
-    window.print();
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -183,10 +170,7 @@ export const ItemModal = () => {
 
     const styleTrim = formData.style.trim();
     const sizeTrim = formData.size.trim().toUpperCase();
-    const detailTrim = (formData.detail || '').trim();
-    const fullDeskripsi = detailTrim 
-      ? `${styleTrim} - Size: ${sizeTrim} (${detailTrim})` 
-      : `${styleTrim} - Size: ${sizeTrim}`;
+    const fullDeskripsi = `${styleTrim} - Size: ${sizeTrim}`;
 
     const payload = {
       track: formData.track.trim() || '-',
@@ -194,14 +178,11 @@ export const ItemModal = () => {
       kode: formData.kode.trim(),
       style: styleTrim,
       size: sizeTrim,
-      detail: detailTrim,
       deskripsi: fullDeskripsi,
       color: formData.color.trim() || '-',
       jumlah: Number(formData.jumlah) || 1,
       satuan: (formData.satuan || 'PCS').toUpperCase().trim(),
       place: formData.place || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`),
-      qtyDipakai: formData.qtyDipakai.trim(),
-      tanggalDipakai: formData.tanggalDipakai.trim(),
 
       // System context mappings
       name: `${styleTrim} (Size: ${sizeTrim})`,
@@ -230,21 +211,26 @@ export const ItemModal = () => {
   const currentBoxObj = boxes.find(b => b.boxNumber === Number(formData.boxNumber));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-lg overflow-hidden flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
+      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col max-h-[96vh] ${showPrintModal ? 'no-print' : ''}`}>
         
         {/* Modal Header */}
-        <div className="no-print bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
+        <div className="no-print bg-slate-900 text-white px-5 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-2.5">
             <div className="p-1.5 bg-blue-600 rounded-lg text-white">
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-black tracking-tight text-white">
-                {isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Input Langsung Kartu Sampel (Box #${formData.boxNumber})`}
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Ketik langsung pada baris kartu fisik di bawah ini:
+              <div className="flex items-center space-x-1.5">
+                <h3 className="text-xs font-black tracking-tight text-white uppercase">
+                  {isEditing ? `Edit Kartu (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`}
+                </h3>
+                <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
+                  Ukuran KTP (8.5 x 5.4 cm)
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400">
+                Ketik langsung pada baris kartu sampel di bawah ini:
               </p>
             </div>
           </div>
@@ -252,31 +238,31 @@ export const ItemModal = () => {
             onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
             className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body: Direct Interactive Card */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
+        <div className="flex-1 overflow-y-auto p-4 bg-slate-100 flex flex-col items-center justify-center">
           
           {/* Validation Alert */}
           {(errors.kode || errors.style || errors.size) && (
-            <div className="no-print w-full max-w-[420px] mb-3 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-700 text-xs flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-              <span>{errors.kode || errors.style || errors.size}</span>
+            <div className="no-print w-full max-w-[340px] mb-2.5 p-2 bg-rose-50 border border-rose-300 rounded-lg text-rose-700 text-[11px] flex items-center space-x-1.5">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+              <span>{errors.style || errors.size || errors.kode}</span>
             </div>
           )}
 
-          {/* THE PHYSICAL SAMPLE CARD (DIRECT IN-PLACE INPUT) */}
-          <div className="w-full max-w-[420px] bg-white p-2.5 sm:p-3 rounded-xl shadow-lg border border-slate-300 box-border">
+          {/* THE PHYSICAL SAMPLE CARD (EXACT KTP DIMENSIONS 85.6mm x 54mm) */}
+          <div className="w-[85.6mm] max-w-[350px] bg-white p-1.5 rounded-lg shadow-md border border-slate-400 box-border">
             <form onSubmit={handleSubmit} id="direct-card-form">
               
-              <table className="w-full border-collapse border-2 border-black text-xs text-left">
+              <table className="w-full border-collapse border-[1.5px] border-black text-[9.5px] leading-tight text-left">
                 <tbody>
                   
                   {/* Track */}
                   <tr className="border-b border-black">
-                    <td className="w-[32%] py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                    <td className="w-[30%] py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Track
                     </td>
                     <td className="p-0 align-middle">
@@ -285,25 +271,25 @@ export const ItemModal = () => {
                         placeholder="Contoh: DHL : 5475890895"
                         value={formData.track}
                         onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
+                        className="w-full py-0.5 px-1.5 text-[9px] font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
                       />
                     </td>
                   </tr>
 
                   {/* Tanggal (Klik Kalender ATAU Tulis Manual) */}
                   <tr className="border-b border-black">
-                    <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Tanggal
                     </td>
                     <td className="p-0 align-middle">
                       <div className="flex items-center w-full relative">
                         <input
                           type="text"
-                          placeholder="Contoh: 4-Nov-2026"
+                          placeholder="4-Nov-2026"
                           value={formData.tanggal}
                           onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                          className="flex-1 py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
-                          title="Tulis manual atau klik ikon kalender di kanan"
+                          className="flex-1 py-0.5 px-1.5 text-[9px] font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
+                          title="Tulis manual atau klik ikon kalender"
                         />
                         {/* Native Calendar Picker Trigger */}
                         <button
@@ -315,10 +301,10 @@ export const ItemModal = () => {
                               hiddenDateRef.current?.focus();
                             }
                           }}
-                          className="no-print p-1.5 mr-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
-                          title="Klik untuk buka kalender & pilih tanggal"
+                          className="no-print p-0.5 mr-1 text-slate-500 hover:text-blue-600 rounded transition"
+                          title="Pilih tanggal dari kalender"
                         >
-                          <Calendar className="w-4 h-4 text-blue-600" />
+                          <Calendar className="w-3 h-3 text-blue-600" />
                         </button>
                         <input
                           ref={hiddenDateRef}
@@ -331,9 +317,9 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Kode (Otomatis SAMPLE-00001, SAMPLE-00002 dst, atau Tulis Manual) */}
+                  {/* Kode (Otomatis 5 Digit: SAMPLE-00001, SAMPLE-00002 dst) */}
                   <tr className="border-b border-black">
-                    <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Kode <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
@@ -343,77 +329,62 @@ export const ItemModal = () => {
                           placeholder="SAMPLE-00001"
                           value={formData.kode}
                           onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
-                          className={`flex-1 py-1.5 px-2.5 text-xs font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
+                          className={`flex-1 py-0.5 px-1.5 text-[9.5px] font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
                             errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60'
                           }`}
                         />
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, kode: getNextSampleCode(items) }))}
-                          className="no-print mr-1.5 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold rounded border border-blue-200 transition shrink-0 flex items-center space-x-1"
+                          className="no-print mr-1 px-1.5 py-0.2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[8.5px] font-bold rounded border border-blue-200 transition shrink-0 flex items-center space-x-0.5"
                           title="Generate nomor urut otomatis berikutnya"
                         >
-                          <Sparkles className="w-3 h-3 text-blue-600" />
+                          <Sparkles className="w-2.5 h-2.5 text-blue-600" />
                           <span>Auto</span>
                         </button>
                       </div>
                     </td>
                   </tr>
 
-                  {/* Deskripsi (2 Kolom: Nama/Nomer Style & Size, Wajib Diisi) */}
+                  {/* Deskripsi (2 Kolom: Nama/Nomer Style * & Size *) */}
                   <tr className="border-b border-black">
-                    <td className="py-2 px-2.5 font-bold border-r border-black align-top text-black whitespace-nowrap bg-slate-50/70">
-                      <div>Deskripsi <span className="text-rose-500">*</span></div>
-                      <div className="text-[10px] text-slate-400 font-normal">Style & Size</div>
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                      Deskripsi <span className="text-rose-500">*</span>
                     </td>
-                    <td className="p-1.5 align-top">
-                      <div className="space-y-1.5">
-                        {/* 2 Kolom: Nama / Nomer Style & Size */}
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-1.5">
-                          {/* Kolom 1: Nama / Nomer Style (Wajib) */}
-                          <div className="sm:col-span-8">
-                            <input
-                              type="text"
-                              placeholder="Nama / Nomer Style * (misal: #6613 Ergodyne)"
-                              value={formData.style}
-                              onChange={(e) => setFormData({ ...formData, style: e.target.value })}
-                              className={`w-full py-1.5 px-2 text-xs font-bold text-black border focus:outline-none rounded transition ${
-                                errors.style ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-300 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
-                              }`}
-                            />
-                            {errors.style && <p className="text-rose-500 text-[10px] mt-0.5">{errors.style}</p>}
-                          </div>
-
-                          {/* Kolom 2: Size (Wajib) */}
-                          <div className="sm:col-span-4">
-                            <input
-                              type="text"
-                              placeholder="Size * (L, M, 32...)"
-                              value={formData.size}
-                              onChange={(e) => setFormData({ ...formData, size: e.target.value.toUpperCase() })}
-                              className={`w-full py-1.5 px-2 text-xs font-black uppercase text-black border focus:outline-none rounded transition ${
-                                errors.size ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-300 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
-                              }`}
-                            />
-                            {errors.size && <p className="text-rose-500 text-[10px] mt-0.5">{errors.size}</p>}
-                          </div>
+                    <td className="p-0 align-middle">
+                      <div className="grid grid-cols-12 gap-0.5 p-0.5">
+                        {/* Kolom 1: Nama / Nomer Style (Wajib) */}
+                        <div className="col-span-8">
+                          <input
+                            type="text"
+                            placeholder="Nama / No. Style *"
+                            value={formData.style}
+                            onChange={(e) => setFormData({ ...formData, style: e.target.value })}
+                            className={`w-full py-0.5 px-1 text-[9px] font-bold text-black border focus:outline-none rounded transition ${
+                              errors.style ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
+                            }`}
+                          />
                         </div>
 
-                        {/* Keterangan detail tambahan (opsional) */}
-                        <input
-                          type="text"
-                          placeholder="Keterangan detail tambahan (opsional: misal Pique 24s / buckle 50mm)"
-                          value={formData.detail}
-                          onChange={(e) => setFormData({ ...formData, detail: e.target.value })}
-                          className="w-full py-1 px-2 text-[11px] text-slate-700 border border-slate-200 focus:outline-none focus:border-blue-500 focus:bg-blue-50/40 rounded transition placeholder:text-slate-300 bg-white"
-                        />
+                        {/* Kolom 2: Size (Wajib) */}
+                        <div className="col-span-4">
+                          <input
+                            type="text"
+                            placeholder="Size *"
+                            value={formData.size}
+                            onChange={(e) => setFormData({ ...formData, size: e.target.value.toUpperCase() })}
+                            className={`w-full py-0.5 px-1 text-[9px] font-black uppercase text-black border focus:outline-none rounded transition ${
+                              errors.size ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
+                            }`}
+                          />
+                        </div>
                       </div>
                     </td>
                   </tr>
 
                   {/* Color */}
                   <tr className="border-b border-black">
-                    <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Color
                     </td>
                     <td className="p-0 align-middle">
@@ -422,14 +393,14 @@ export const ItemModal = () => {
                         placeholder="Contoh: Navy / -"
                         value={formData.color}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
+                        className="w-full py-0.5 px-1.5 text-[9px] font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
                       />
                     </td>
                   </tr>
 
                   {/* Jumlah */}
                   <tr className="border-b border-black">
-                    <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Jumlah
                     </td>
                     <td className="p-0 align-middle">
@@ -438,14 +409,14 @@ export const ItemModal = () => {
                         min="1"
                         value={formData.jumlah}
                         onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
-                        className="w-full py-1.5 px-2.5 text-sm font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
+                        className="w-full py-0.5 px-1.5 text-[9.5px] font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
                       />
                     </td>
                   </tr>
 
                   {/* Satuan */}
                   <tr className="border-b border-black">
-                    <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Satuan
                     </td>
                     <td className="p-0 align-middle">
@@ -454,21 +425,21 @@ export const ItemModal = () => {
                         placeholder="PCS"
                         value={formData.satuan}
                         onChange={(e) => setFormData({ ...formData, satuan: e.target.value.toUpperCase() })}
-                        className="w-full py-1.5 px-2.5 text-xs font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
+                        className="w-full py-0.5 px-1.5 text-[9px] font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 bg-transparent"
                       />
                     </td>
                   </tr>
 
                   {/* Place */}
-                  <tr className="border-b border-black">
-                    <td className="py-2 px-2.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr>
+                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Place
                     </td>
                     <td className="p-0 align-middle">
                       <select
                         value={formData.place}
                         onChange={(e) => handleBoxSelect(e.target.value)}
-                        className="w-full py-1.5 px-2 text-xs font-black text-black uppercase focus:outline-none focus:bg-blue-50/60 bg-transparent cursor-pointer"
+                        className="w-full py-0.5 px-1 text-[8.5px] font-black text-black uppercase focus:outline-none focus:bg-blue-50/60 bg-transparent cursor-pointer"
                       >
                         {!DEFAULT_PLACES.includes(formData.place) && formData.place && (
                           <option value={formData.place}>{formData.place}</option>
@@ -486,38 +457,6 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Qty Dipakai */}
-                  <tr className="border-b-2 border-dotted border-black">
-                    <td className="py-2 px-2.5 font-bold italic border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
-                      Qty Dipakai
-                    </td>
-                    <td className="p-0 align-middle">
-                      <input
-                        type="text"
-                        placeholder="(Kosongkan jika untuk tulis manual)"
-                        value={formData.qtyDipakai}
-                        onChange={(e) => setFormData({ ...formData, qtyDipakai: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 placeholder:italic font-mono bg-transparent"
-                      />
-                    </td>
-                  </tr>
-
-                  {/* Tanggal Dipakai */}
-                  <tr className="border-b-2 border-dotted border-black">
-                    <td className="py-2 px-2.5 font-bold italic border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
-                      Tanggal Dipakai
-                    </td>
-                    <td className="p-0 align-middle">
-                      <input
-                        type="text"
-                        placeholder="(Kosongkan jika untuk tulis manual)"
-                        value={formData.tanggalDipakai}
-                        onChange={(e) => setFormData({ ...formData, tanggalDipakai: e.target.value })}
-                        className="w-full py-1.5 px-2.5 text-xs font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 placeholder:italic bg-transparent"
-                      />
-                    </td>
-                  </tr>
-
                 </tbody>
               </table>
 
@@ -526,31 +465,31 @@ export const ItemModal = () => {
 
           {/* Subtitle helper */}
           {currentBoxObj && (
-            <p className="no-print text-[11px] text-slate-500 mt-3 flex items-center gap-1 font-medium">
-              <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>Tersimpan di: <strong>{currentBoxObj.rackName}</strong> ({currentBoxObj.rackDescription}) • PIC: <strong>{currentBoxObj.picName}</strong></span>
+            <p className="no-print text-[10px] text-slate-500 mt-2 flex items-center gap-1 font-medium">
+              <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
+              <span>Tersimpan di: <strong>{currentBoxObj.rackName}</strong> • PIC: <strong>{currentBoxObj.picName}</strong></span>
             </p>
           )}
 
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="no-print bg-white px-5 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div className="no-print bg-white px-4 py-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
           <button
             type="button"
-            onClick={handlePrintCard}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-xs"
-            title="Cetak Kartu Fisik Ini ke Printer / PDF"
+            onClick={() => setShowPrintModal(true)}
+            className="flex items-center space-x-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition shadow-xs"
+            title="Cetak Multiple Card Ukuran KTP dalam 1 Lembar A4"
           >
-            <Printer className="w-4 h-4 text-amber-400" />
-            <span>Cetak Kartu Ini</span>
+            <Printer className="w-3.5 h-3.5 text-amber-400" />
+            <span>Cetak A4 (Multi-KTP)</span>
           </button>
 
           <div className="flex items-center space-x-2">
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-              className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold transition"
+              className="px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-bold transition"
             >
               Batal
             </button>
@@ -558,15 +497,23 @@ export const ItemModal = () => {
             <button
               type="submit"
               form="direct-card-form"
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5"
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-black shadow-md transition flex items-center space-x-1"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-3.5 h-3.5" />
               <span>{isEditing ? 'Simpan Perubahan' : 'Simpan ke Box'}</span>
             </button>
           </div>
         </div>
 
       </div>
+
+      {/* Multi-Card A4 Print Modal */}
+      {showPrintModal && (
+        <CardPrintModal 
+          itemsToPrint={[formData]} 
+          onClose={() => setShowPrintModal(false)} 
+        />
+      )}
     </div>
   );
 };

@@ -60,14 +60,12 @@ export const SimpleInventoryView = () => {
     id: null,
     track: 'DHL : 5475890895',
     tanggal: formatTodayDate(),
-    kode: 'RF08-84',
-    deskripsi: 'metal buckle 50mm metal buckle-female',
+    kode: 'SAMPLE-00001',
+    deskripsi: 'metal buckle 50mm - Size: 50MM',
     color: '-',
     jumlah: 15,
     satuan: 'PCS',
     place: 'BOX 1 (RACK 1 - Royan)',
-    qtyDipakai: '',
-    tanggalDipakai: '',
   };
 
   const [form, setForm] = useState(defaultForm);
@@ -122,8 +120,6 @@ export const SimpleInventoryView = () => {
       jumlah: 1,
       satuan: 'PCS',
       place: form.place || 'BOX 1 (RACK 1 - Royan)',
-      qtyDipakai: '',
-      tanggalDipakai: '',
     });
   };
 
@@ -244,8 +240,7 @@ export const SimpleInventoryView = () => {
 
   return (
     <div className="space-y-6">
-      
-      {/* Top Banner / Actions Bar */}
+      <div className={printModalItems ? 'no-print space-y-6' : 'space-y-6'}>
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -465,35 +460,6 @@ export const SimpleInventoryView = () => {
                   <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
                   <span>Ambil tempat langsung dari Box 1 - 72 (Rak 1 - 5)</span>
                 </p>
-              </div>
-            </div>
-
-            {/* Row 5: Optional Qty Dipakai & Tanggal Dipakai */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-slate-100">
-              <div>
-                <label className="block font-bold italic text-slate-600 mb-1">
-                  Qty Dipakai (Opsional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Kosongkan jika kartu untuk tulis manual"
-                  value={form.qtyDipakai}
-                  onChange={(e) => setForm({ ...form, qtyDipakai: e.target.value })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold italic text-slate-600 mb-1">
-                  Tanggal Dipakai (Opsional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Kosongkan jika kartu untuk tulis manual"
-                  value={form.tanggalDipakai}
-                  onChange={(e) => setForm({ ...form, tanggalDipakai: e.target.value })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                />
               </div>
             </div>
 
@@ -754,6 +720,8 @@ export const SimpleInventoryView = () => {
             </button>
           </div>
         </div>
+
+      </div>
 
       </div>
 
