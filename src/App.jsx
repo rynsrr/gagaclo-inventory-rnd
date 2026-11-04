@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { Warehouse3DView } from './components/Warehouse3DView';
 import { PrintableManifestView } from './components/PrintableManifestView';
+import { TotalItemsSummaryView } from './components/TotalItemsSummaryView';
 import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
 import { BoxQrModal } from './components/BoxQrModal';
@@ -14,7 +15,8 @@ import {
   Box as BoxIcon, 
   Printer, 
   Boxes,
-  Database
+  Database,
+  LayoutDashboard
 } from 'lucide-react';
 
 const AppContent = () => {
@@ -128,6 +130,19 @@ const AppContent = () => {
                   <span>Manifes</span>
                 </button>
 
+                {/* Ringkasan Total Item */}
+                <button
+                  onClick={() => setAppMode('summary')}
+                  className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md font-semibold transition whitespace-nowrap ${
+                    appMode === 'summary'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Ringkasan</span>
+                </button>
+
               </div>
 
             </div>
@@ -142,6 +157,7 @@ const AppContent = () => {
           <Warehouse3DView controlsHost={warehouseControlsHost} />
         )}
         {appMode === 'manifests' && <PrintableManifestView />}
+        {appMode === 'summary' && <TotalItemsSummaryView />}
       </main>
       <footer className="no-print mx-auto w-full max-w-7xl shrink-0 px-4 pb-3 sm:px-6 lg:px-8">
         <InventoryTimer />
