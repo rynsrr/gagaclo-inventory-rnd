@@ -566,16 +566,6 @@ export const Warehouse3DView = ({ controlsHost }) => {
       
       {controlsHost && createPortal(
         <div className="inventory-header-filters">
-          <div role="group" aria-label="Pilihan rak" className="inventory-filter-group">
-            <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
-              Semua Rak
-            </button>
-            {[1, 2, 3, 4, 5].map((id) => (
-              <button key={id} onClick={() => focusOnRack(id)} aria-pressed={activeRackView === id}>
-                Rak {id}
-              </button>
-            ))}
-          </div>
           <div role="group" aria-label="Filter PIC PPIC" className="flex items-center gap-2">
             <span className="inventory-filter-label">PIC PPIC</span>
             <div className="inventory-filter-group">
@@ -597,6 +587,17 @@ export const Warehouse3DView = ({ controlsHost }) => {
         </div>,
         controlsHost,
       )}
+
+      <div role="group" aria-label="Pilihan rak" className="inventory-filter-group w-fit max-w-full flex-wrap">
+        <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
+          Semua Rak
+        </button>
+        {[1, 2, 3, 4, 5].map((id) => (
+          <button key={id} onClick={() => focusOnRack(id)} aria-pressed={activeRackView === id}>
+            Rak {id}
+          </button>
+        ))}
+      </div>
 
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
         {occupancyGroups.map(group => (
