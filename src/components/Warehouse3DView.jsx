@@ -600,17 +600,17 @@ export const Warehouse3DView = ({ controlsHost }) => {
 
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
         {occupancyGroups.map(group => (
-          <div key={group.label} className="inventory-panel p-4">
+          <div key={group.label} className="inventory-panel px-3 py-2.5">
             <h2 className="mb-2 flex items-center justify-between text-sm font-semibold">
               {group.label}
               <span className={`rounded-full px-2 py-0.5 ${group.color}`}>{group.boxes.length}</span>
             </h2>
-            <div className="warehouse-box-list flex max-h-28 flex-wrap gap-1.5 overflow-auto p-1">
+            <div className="flex flex-wrap gap-1 p-1">
               {group.boxes.map(box => (
                 <button key={box.boxNumber} type="button"
                   aria-label={`Box ${box.boxNumber}, ${group.label}`}
                   onClick={() => setSelectedBoxNumber(box.boxNumber)}
-                  className={`rounded-md px-2 py-1 text-xs font-bold hover:ring-1 ${group.color}`}>
+                  className={`inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-bold tabular-nums hover:ring-1 ${group.color}`}>
                   {box.boxNumber}
                 </button>
               ))}

@@ -189,7 +189,6 @@
   }
   .warehouse-layout > * { margin-block: 0; }
   .warehouse-layout > .warehouse-viewport { height: 100%; min-height: 0; }
-  .warehouse-box-list { max-height: clamp(36px, 10vh, 84px); }
 }
 
 .warehouse-viewport canvas {
