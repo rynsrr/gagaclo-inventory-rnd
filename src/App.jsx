@@ -51,7 +51,7 @@ const AppContent = () => {
 
   const usageLabel = databaseBytes === null
     ? 'Pemakaian —'
-    : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB terpakai`;
+    : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB`;
 
   return (
     <div className={`inventory-shell min-h-screen flex flex-col font-sans ${appMode === '3d-warehouse' ? 'warehouse-screen' : ''}`}>
@@ -84,28 +84,15 @@ const AppContent = () => {
                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
                     : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
+                aria-label={connected ? `Supabase Gagaclo, ${usageLabel}` : 'Hubungkan Supabase Gagaclo'}
                 title={
                   supabaseStatus.isConnected
                     ? `Supabase Cloud Terhubung • Sinkronisasi Aktif (${supabaseStatus.lastSync || 'Baru saja'})`
                     : 'Hubungkan ke Cloud Database Supabase Corporate Gagaclo'
                 }
               >
-                {supabaseStatus.isConnected ? (
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                ) : (
-                  <span className="w-2 h-2 rounded-full bg-slate-500"></span>
-                )}
-                <Database className="w-3.5 h-3.5 text-sky-400" />
-                <span className="inventory-database-name">Supabase Gagaclo</span>
-                {supabaseStatus.isConnected ? (
-                  <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
-                    {usageLabel}
-                  </span>
-                ) : (
-                  <span className="text-[10px] bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded font-bold">
-                    Hubungkan
-                  </span>
-                )}
+                <Database className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{connected ? usageLabel : 'Hubungkan'}</span>
               </button>
 
               {/* Mode Switcher Tabs */}
@@ -121,7 +108,7 @@ const AppContent = () => {
                   }`}
                 >
                   <BoxIcon className="w-3.5 h-3.5 text-amber-400" />
-                  <span><span className="inventory-nav-extra">Ilustrasi </span>3D<span className="inventory-nav-extra"> Rak &amp; Box</span></span>
+                  <span>Rak 3D</span>
                 </button>
 
                 {/* Dokumen Manifes */}
@@ -134,7 +121,7 @@ const AppContent = () => {
                   }`}
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span><span className="inventory-nav-extra">Dokumen </span>Manifes</span>
+                  <span>Manifes</span>
                 </button>
 
               </div>

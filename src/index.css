@@ -138,10 +138,6 @@
     color: white;
   }
 
-  @media (max-width: 1440px) {
-    .inventory-database-name, .inventory-nav-extra { display: none; }
-  }
-
   @media (max-width: 1180px) {
     .inventory-brand { display: none; }
     .inventory-header-row { padding-inline: 10px; gap: 8px; }
