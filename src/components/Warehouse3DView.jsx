@@ -255,9 +255,14 @@ export const Warehouse3DView = ({ controlsHost }) => {
       const shelfHeight = 1.9;
       const rackDepth = 1.6;
       const totalRackHeight = rows * shelfHeight + 0.5;
+      const hasTopCover = rackConf.rackId !== 1 && rackConf.rackId !== 2;
+      const firstShelfY = 0.2;
+      const pillarHeight = hasTopCover
+        ? totalRackHeight
+        : firstShelfY + (rows - 1) * shelfHeight + 0.08;
 
       // 1. Upright Steel Pillars (4 vertical posts)
-      const pillarGeo = new THREE.BoxGeometry(0.15, totalRackHeight, 0.15);
+      const pillarGeo = new THREE.BoxGeometry(0.15, pillarHeight, 0.15);
       const pillarMat = new THREE.MeshStandardMaterial({
         color: beamColor,
         metalness: 0.6,
@@ -276,16 +281,16 @@ export const Warehouse3DView = ({ controlsHost }) => {
 
       postPositions.forEach(([px, pz]) => {
         const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-        pillar.position.set(rx + px, totalRackHeight / 2, rz + pz);
+        pillar.position.set(rx + px, pillarHeight / 2, rz + pz);
         pillar.castShadow = true;
         pillar.receiveShadow = true;
         scene.add(pillar);
       });
 
       // 2. Horizontal Beam Shelves
-      const shelfCount = rackConf.rackId === 1 || rackConf.rackId === 2 ? rows : rows + 1;
+      const shelfCount = hasTopCover ? rows + 1 : rows;
       for (let r = 0; r < shelfCount; r++) {
-        const sy = 0.2 + r * shelfHeight;
+        const sy = firstShelfY + r * shelfHeight;
         
         // Front beam
         const beamGeo = new THREE.BoxGeometry(rackWidth, 0.12, 0.12);
