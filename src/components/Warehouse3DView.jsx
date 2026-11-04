@@ -482,25 +482,26 @@ export const Warehouse3DView = () => {
     };
   }, [boxes, racks]);
 
-  // Update box visual highlight opacity when filter changes
+  // Reapply the selection whenever cloud sync rebuilds the scene.
   useEffect(() => {
-    boxMeshesRef.current.forEach((mesh) => {
-      const { picName } = mesh.userData;
-      let visibleMatch = true;
+    const filterActive = highlightPpic !== 'ALL';
+    const selectedPic = highlightPpic.trim().toLowerCase();
 
-      if (highlightPpic !== 'ALL' && picName.toLowerCase() !== highlightPpic.toLowerCase()) {
-        visibleMatch = false;
-      }
+    for (const mesh of boxMeshesRef.current) {
+      const matches = String(mesh.userData.picName ?? '').trim().toLowerCase() === selectedPic;
+      const dimmed = filterActive && !matches;
+      const highlighted = filterActive && matches;
+      mesh.castShadow = !dimmed;
 
-      mesh.materials = mesh.material;
-      if (Array.isArray(mesh.material)) {
-        mesh.material.forEach((mat) => {
-          mat.transparent = true;
-          mat.opacity = visibleMatch ? 1.0 : 0.18;
-        });
+      for (const material of new Set(mesh.material)) {
+        material.transparent = dimmed;
+        material.depthWrite = !dimmed;
+        material.opacity = dimmed ? 0.12 : 1;
+        material.color.setHex(highlighted && !material.map ? mesh.userData.baseColor : 0xffffff);
+        material.needsUpdate = true;
       }
-    });
-  }, [highlightPpic]);
+    }
+  }, [highlightPpic, boxes, racks]);
 
   // Camera presets
   const focusOnRack = (rackId) => {
@@ -609,6 +610,7 @@ export const Warehouse3DView = () => {
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setHighlightPpic('ALL')}
+                aria-pressed={highlightPpic === 'ALL'}
                 className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${
                   highlightPpic === 'ALL'
                     ? 'bg-blue-600 text-white'
@@ -621,6 +623,7 @@ export const Warehouse3DView = () => {
                 <button
                   key={pic.id}
                   onClick={() => setHighlightPpic(highlightPpic === pic.name ? 'ALL' : pic.name)}
+                  aria-pressed={highlightPpic === pic.name}
                   className={`px-2 py-0.5 rounded text-[11px] font-bold transition flex items-center space-x-1 ${
                     highlightPpic === pic.name
                       ? 'bg-blue-600 text-white ring-2 ring-white/50'
