@@ -69,16 +69,11 @@ const AppContent = () => {
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg font-semibold tracking-tight">
-                    GAGACLO
-                  </span>
                   <span className="bg-blue-50 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
                     R&D INVENTORY
                   </span>
                 </div>
-                <p className="text-xs text-slate-600">
-                  Visualisasi 3D Gudang, Manajemen Box & Dokumen Manifes
-                </p>
+
               </div>
             </div>
 
@@ -164,16 +159,7 @@ const AppContent = () => {
       </main>
 
       {/* Footer */}
-      <footer className="inventory-footer no-print text-slate-600 py-5 border-t border-slate-200 text-xs text-center">
-        <div className="max-w-7xl mx-auto px-4 space-y-1">
-          <p className="font-bold text-slate-300">
-            GAGACLO • INVENTORY MANAGEMENT RND
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Pencatatan Sampel, Material & Label Box • Dokumen Ref: 20261102
-          </p>
-        </div>
-      </footer>
+
 
       {/* Floating Modals for interacting with 3D or 2D Boxes */}
       <BoxDetailModal />

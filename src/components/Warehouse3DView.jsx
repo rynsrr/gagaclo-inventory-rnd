@@ -30,7 +30,6 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
 
   // Filter / view state
   const [highlightPpic, setHighlightPpic] = useState('ALL');
-  const [highlightCategory, setHighlightCategory] = useState('ALL');
   const [hoveredBox, setHoveredBox] = useState(null);
   const [activeRackView, setActiveRackView] = useState('ALL');
   const [isAutoRotate, setIsAutoRotate] = useState(false);
@@ -478,13 +477,10 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
   // Update box visual highlight opacity when filter changes
   useEffect(() => {
     boxMeshesRef.current.forEach((mesh) => {
-      const { picName, category } = mesh.userData;
+      const { picName } = mesh.userData;
       let visibleMatch = true;
 
       if (highlightPpic !== 'ALL' && picName.toLowerCase() !== highlightPpic.toLowerCase()) {
-        visibleMatch = false;
-      }
-      if (highlightCategory !== 'ALL' && category !== highlightCategory) {
         visibleMatch = false;
       }
 
@@ -496,7 +492,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
         });
       }
     });
-  }, [highlightPpic, highlightCategory]);
+  }, [highlightPpic]);
 
   // Camera presets
   const focusOnRack = (rackId) => {
@@ -537,23 +533,7 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
   return (
     <div className="space-y-4">
       
-      {/* 3D Visualizer Top Header */}
-      <div className="inventory-panel p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="bg-blue-50 text-blue-800 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-              Interactive 3D Warehouse
-            </span>
-            <span className="text-xs text-slate-600">WebGL 3D Engine • Label Box Sesuai Format Asli</span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-2">
-            Visualisasi 3D Rak Fisik & Label Box (1 - 72)
-          </h2>
-          <p className="text-xs text-slate-600 mt-0.5">
-            Setiap box 3D menampilkan <strong>Label Box resmi</strong> dengan nomor raksasa dan nama PIC PPIC. Klik box untuk melihat isi & print.
-          </p>
-        </div>
-
+      <div className="inventory-panel px-4 py-3">
         {/* Camera Quick Buttons & Print All Labels */}
         <div className="flex items-center flex-wrap gap-2 text-xs">
           <button
@@ -641,35 +621,6 @@ export const Warehouse3DView = ({ onOpenLabelPrintModal }) => {
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Category Highlight */}
-          <div className="bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200 text-xs shadow-sm flex items-center space-x-2">
-            <span className="text-slate-700 font-bold text-[11px]">Kategori:</span>
-            <button
-              onClick={() => setHighlightCategory('ALL')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                highlightCategory === 'ALL' ? 'bg-blue-600 text-white' : 'text-slate-700'
-              }`}
-            >
-              Semua
-            </button>
-            <button
-              onClick={() => setHighlightCategory('SAMPLE')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                highlightCategory === 'SAMPLE' ? 'bg-amber-400 text-slate-950' : 'text-slate-700'
-              }`}
-            >
-              SAMPLE
-            </button>
-            <button
-              onClick={() => setHighlightCategory('MATERIAL')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                highlightCategory === 'MATERIAL' ? 'bg-emerald-400 text-slate-950' : 'text-slate-700'
-              }`}
-            >
-              MATERIAL
-            </button>
           </div>
 
         </div>
