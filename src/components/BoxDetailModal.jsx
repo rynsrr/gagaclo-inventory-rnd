@@ -31,25 +31,24 @@ import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
 
 export const BoxDetailModal = () => {
-  const { 
-    selectedBoxNumber, 
-    setSelectedBoxNumber, 
-    getBoxDetails, 
-    getItemsInBox, 
-    deleteItem, 
-    setItemModalConfig, 
+  const { selectedBoxNumber, getBoxDetails } = useInventory();
+  const box = getBoxDetails(selectedBoxNumber);
+  return box ? <BoxDetail key={box.boxNumber} box={box} /> : null;
+};
+
+function BoxDetail({ box }) {
+  const {
+    setSelectedBoxNumber,
+    getItemsInBox,
+    deleteItem,
+    setItemModalConfig,
     setQrModalBox,
     updateBoxNotes,
     setBoxFull,
     setTransactionModalConfig,
-    updateItem
+    updateItem,
   } = useInventory();
-
-  if (selectedBoxNumber === null) return null;
-
-  const box = getBoxDetails(selectedBoxNumber);
-  if (!box) return null;
-
+  const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
   const [savingFullStatus, setSavingFullStatus] = useState(false);
   const [fullStatusError, setFullStatusError] = useState('');
@@ -182,7 +181,7 @@ export const BoxDetailModal = () => {
             <button
               type="button"
               onClick={toggleFullStatus}
-              disabled={savingFullStatus || (!itemsInBox.length && !box.isFull)}
+              disabled={savingFullStatus}
               className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
             >
               {savingFullStatus ? 'Menyimpan…' : box.isFull ? 'Buka kembali box' : 'Tandai penuh'}

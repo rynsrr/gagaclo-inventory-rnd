@@ -41,7 +41,7 @@ export const Warehouse3DView = () => {
   for (const box of boxes) {
     if (activeRackView !== 'ALL' && box.rackId !== activeRackView) continue;
     const hasData = getItemsInBox(box.boxNumber).length > 0;
-    const group = !hasData ? 0 : box.isFull ? 2 : 1;
+    const group = box.isFull ? 2 : hasData ? 1 : 0;
     occupancyGroups[group].boxes.push(box);
   }
 
