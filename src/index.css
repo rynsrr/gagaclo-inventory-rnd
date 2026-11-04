@@ -35,8 +35,8 @@
 
 @media print {
   @page {
-    size: A4 portrait;
-    margin: 8mm 10mm;
+    size: A5 landscape;
+    margin: 0;
   }
 
   * {

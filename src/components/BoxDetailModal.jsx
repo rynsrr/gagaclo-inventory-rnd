@@ -606,7 +606,7 @@ function BoxDetail({ box }) {
       {/* Box Label Print Modal Preview */}
       {showBoxLabelModal && (
         <div className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full flex flex-col items-center animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full max-h-[92vh] overflow-y-auto flex flex-col items-center animate-fade-in">
             <div className="no-print w-full flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
               <h3 className="font-black text-slate-900 text-sm">Preview Label Box #{box.boxNumber}</h3>
               <button onClick={() => setShowBoxLabelModal(false)} className="text-slate-400 hover:text-slate-700">
