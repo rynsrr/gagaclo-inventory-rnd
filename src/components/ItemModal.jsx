@@ -338,43 +338,43 @@ export const ItemModal = () => {
                     </td>
                   </tr>
 
-                  {/* Kode & Buyer No (1 Baris Samping-Sampingan) */}
+                  {/* Kode & Buyer No (1 Baris Rapi, No Overlap) */}
                   <tr className="border-b border-black">
                     <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
                       Kode <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
-                      <div className="grid grid-cols-12 gap-0.5 p-0.5 items-center">
-                        {/* Kode Input */}
-                        <div className="col-span-7 flex items-center">
+                      <div className="grid grid-cols-2 gap-0 items-center w-full">
+                        {/* Kolom 1: Kode Barang (50%) */}
+                        <div className="flex items-center min-w-0 border-r border-black px-1.5 py-0.5">
                           <input
                             type="text"
                             placeholder="SAMPLE-00001"
                             value={formData.kode}
                             onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
-                            className={`flex-1 py-0.5 px-1 text-[9px] font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
+                            className={`min-w-0 flex-1 py-0.5 text-[9px] font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
                               errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60'
                             }`}
                           />
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, kode: getNextSampleCode(items) }))}
-                            className="no-print mr-0.5 px-1 py-0.2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[7.5px] font-bold rounded border border-blue-200 transition shrink-0 flex items-center"
+                            className="no-print shrink-0 p-0.5 ml-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 transition flex items-center justify-center cursor-pointer"
                             title="Generate nomor urut otomatis berikutnya"
                           >
-                            <Sparkles className="w-2 h-2 mr-0.5 text-blue-600" />
-                            <span>Auto</span>
+                            <Sparkles className="w-2.5 h-2.5 text-blue-600" />
                           </button>
                         </div>
 
-                        {/* Buyer No Input */}
-                        <div className="col-span-5 flex items-center pl-1 border-l border-slate-300">
+                        {/* Kolom 2: Buyer No (50%) */}
+                        <div className="flex items-center min-w-0 px-1.5 py-0.5 gap-1">
+                          <span className="text-[7.5px] font-bold text-slate-500 shrink-0 select-none">Buyer:</span>
                           <input
                             type="text"
-                            placeholder="Buyer No"
+                            placeholder="No. Buyer"
                             value={formData.buyerNo}
                             onChange={(e) => setFormData({ ...formData, buyerNo: e.target.value.toUpperCase() })}
-                            className="w-full py-0.5 px-1 text-[8.5px] font-bold text-black font-mono focus:outline-none focus:bg-blue-50/60 transition bg-transparent placeholder:text-slate-400"
+                            className="min-w-0 flex-1 py-0.5 text-[8.5px] font-bold text-black font-mono focus:outline-none focus:bg-blue-50/60 transition bg-transparent placeholder:text-slate-400"
                             title="Nomor Buyer / Buyer PO"
                           />
                         </div>
@@ -492,24 +492,24 @@ export const ItemModal = () => {
                       Jumlah
                     </td>
                     <td className="p-0 align-middle">
-                      <div className="grid grid-cols-12 gap-0.5 p-0.5 items-center">
-                        <div className="col-span-6">
+                      <div className="grid grid-cols-2 gap-0 items-center w-full">
+                        <div className="flex items-center min-w-0 border-r border-black px-1.5 py-0.5">
                           <input
                             type="number"
                             min="1"
                             value={formData.jumlah}
                             onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
-                            className="w-full py-0.5 px-1.5 text-[9.5px] font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
+                            className="w-full py-0.5 text-[9.5px] font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
                             placeholder="Qty"
                           />
                         </div>
-                        <div className="col-span-6 border-l border-slate-300 pl-1">
+                        <div className="flex items-center min-w-0 px-1.5 py-0.5">
                           <input
                             type="text"
                             placeholder="Satuan (PCS)"
                             value={formData.satuan}
                             onChange={(e) => setFormData({ ...formData, satuan: e.target.value.toUpperCase() })}
-                            className="w-full py-0.5 px-1 text-[9px] font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
+                            className="w-full py-0.5 text-[9px] font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
                           />
                         </div>
                       </div>

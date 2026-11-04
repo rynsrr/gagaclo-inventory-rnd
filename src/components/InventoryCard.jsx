@@ -59,17 +59,17 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
 
           {/* Kode & Buyer No */}
           <tr className="border-b border-black">
-            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
+            <td className="w-[28%] py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Kode
             </td>
-            <td className="py-[1px] px-1.5 align-middle text-black">
-              <div className="flex items-center justify-between gap-1">
-                <span className="font-black tracking-tight font-mono text-[9px] leading-tight">
+            <td className="p-0 align-middle text-black">
+              <div className="grid grid-cols-2 gap-0 items-center w-full h-full">
+                <div className="py-[1px] px-1.5 border-r border-black font-black tracking-tight font-mono text-[9px] leading-tight truncate">
                   {kode}
-                </span>
-                <div className="flex items-center gap-1 shrink-0 font-mono text-[8px]">
-                  <span className="font-bold text-slate-600">Buyer No:</span>
-                  <span className="font-black text-black">
+                </div>
+                <div className="py-[1px] px-1.5 flex items-center justify-between font-mono text-[8px] leading-tight truncate">
+                  <span className="font-bold text-slate-600">Buyer:</span>
+                  <span className="font-black text-black ml-1 truncate">
                     {buyerNo}
                   </span>
                 </div>
