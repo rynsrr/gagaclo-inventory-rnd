@@ -233,57 +233,57 @@ export const ItemModal = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
-      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col max-h-[96vh] ${showPrintModal ? 'no-print' : ''}`}>
+      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-2xl overflow-hidden flex flex-col max-h-[96vh] ${showPrintModal ? 'no-print' : ''}`}>
         
         {/* Modal Header */}
-        <div className="no-print bg-slate-900 text-white px-5 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-1.5 bg-blue-600 rounded-lg text-white">
-              <FileText className="w-4 h-4" />
+        <div className="no-print bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md">
+              <FileText className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center space-x-1.5">
-                <h3 className="text-xs font-black tracking-tight text-white uppercase">
-                  {isEditing ? `Edit Kartu (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`}
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-black tracking-tight text-white uppercase">
+                  {isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`}
                 </h3>
-                <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
-                  Ukuran KTP (8.5 x 5.4 cm)
+                <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                  Format KTP (8.5 × 5.4 CM)
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-xs text-slate-400 mt-0.5">
                 Ketik langsung pada baris kartu sampel di bawah ini:
               </p>
             </div>
           </div>
           <button
             onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body: Direct Interactive Card */}
-        <div className="flex-1 overflow-y-auto p-4 bg-slate-100 flex flex-col items-center justify-center">
+        {/* Modal Body: Direct Interactive Card (Enlarged for Optimal Visibility) */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
           
           {/* Validation Alert */}
           {(errors.kode || errors.style || errors.sampleNo || errors.size || errors.color) && (
-            <div className="no-print w-full max-w-[340px] mb-2.5 p-2 bg-rose-50 border border-rose-300 rounded-lg text-rose-700 text-[11px] flex items-center space-x-1.5">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
-              <span>{errors.style || errors.sampleNo || errors.size || errors.color || errors.kode}</span>
+            <div className="no-print w-full max-w-[560px] mb-3 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-700 text-xs flex items-center space-x-2 shadow-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+              <span className="font-semibold">{errors.style || errors.sampleNo || errors.size || errors.color || errors.kode}</span>
             </div>
           )}
 
-          {/* THE PHYSICAL SAMPLE CARD (EXACT KTP DIMENSIONS 85.6mm x 54mm) */}
-          <div className="w-[85.6mm] max-w-[350px] bg-white p-1.5 rounded-lg shadow-md border border-slate-400 box-border">
+          {/* THE PHYSICAL SAMPLE CARD (EXPANDED PREVIEW CONTAINER) */}
+          <div className="w-full max-w-[580px] bg-white p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-300 ring-4 ring-slate-200/60 box-border">
             <form onSubmit={handleSubmit} id="direct-card-form">
               
-              <table className="w-full border-collapse border-[1.5px] border-black text-[9.5px] leading-tight text-left">
+              <table className="w-full border-collapse border-2 border-black text-xs sm:text-sm leading-normal text-left">
                 <tbody>
                   
                   {/* Track */}
-                  <tr className="border-b border-black">
-                    <td className="w-[30%] py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr className="border-b-2 border-black">
+                    <td className="w-[28%] py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Track
                     </td>
                     <td className="p-0 align-middle">
@@ -292,14 +292,14 @@ export const ItemModal = () => {
                         placeholder="Contoh: DHL : 5475890895"
                         value={formData.track}
                         onChange={(e) => setFormData({ ...formData, track: e.target.value })}
-                        className="w-full py-0.5 px-1.5 text-[9px] font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
+                        className="w-full py-2 px-3 text-xs sm:text-sm font-medium text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-300 font-mono bg-transparent"
                       />
                     </td>
                   </tr>
 
                   {/* Tanggal (Klik Kalender ATAU Tulis Manual) */}
-                  <tr className="border-b border-black">
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr className="border-b-2 border-black">
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Tanggal
                     </td>
                     <td className="p-0 align-middle">
@@ -309,7 +309,7 @@ export const ItemModal = () => {
                           placeholder="4-Nov-2026"
                           value={formData.tanggal}
                           onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                          className="flex-1 py-0.5 px-1.5 text-[9px] font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
+                          className="flex-1 py-2 px-3 text-xs sm:text-sm font-semibold text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
                           title="Tulis manual atau klik ikon kalender"
                         />
                         {/* Native Calendar Picker Trigger */}
@@ -322,10 +322,10 @@ export const ItemModal = () => {
                               hiddenDateRef.current?.focus();
                             }
                           }}
-                          className="no-print p-0.5 mr-1 text-slate-500 hover:text-blue-600 rounded transition"
+                          className="no-print p-1.5 mr-2 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
                           title="Pilih tanggal dari kalender"
                         >
-                          <Calendar className="w-3 h-3 text-blue-600" />
+                          <Calendar className="w-4 h-4 text-blue-600" />
                         </button>
                         <input
                           ref={hiddenDateRef}
@@ -339,42 +339,42 @@ export const ItemModal = () => {
                   </tr>
 
                   {/* Kode & Buyer No (1 Baris Rapi, No Overlap) */}
-                  <tr className="border-b border-black">
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr className="border-b-2 border-black">
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Kode <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
                       <div className="grid grid-cols-2 gap-0 items-center w-full">
                         {/* Kolom 1: Kode Barang (50%) */}
-                        <div className="flex items-center min-w-0 border-r border-black px-1.5 py-0.5">
+                        <div className="flex items-center min-w-0 border-r-2 border-black px-3 py-1.5">
                           <input
                             type="text"
                             placeholder="SAMPLE-00001"
                             value={formData.kode}
                             onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
-                            className={`min-w-0 flex-1 py-0.5 text-[9px] font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
+                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
                               errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60'
                             }`}
                           />
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, kode: getNextSampleCode(items) }))}
-                            className="no-print shrink-0 p-0.5 ml-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 transition flex items-center justify-center cursor-pointer"
+                            className="no-print shrink-0 p-1 ml-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition flex items-center justify-center cursor-pointer shadow-2xs"
                             title="Generate nomor urut otomatis berikutnya"
                           >
-                            <Sparkles className="w-2.5 h-2.5 text-blue-600" />
+                            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                           </button>
                         </div>
 
                         {/* Kolom 2: Buyer No (50%) */}
-                        <div className="flex items-center min-w-0 px-1.5 py-0.5 gap-1">
-                          <span className="text-[7.5px] font-bold text-slate-500 shrink-0 select-none">Buyer:</span>
+                        <div className="flex items-center min-w-0 px-3 py-1.5 gap-1.5">
+                          <span className="text-[11px] font-bold text-slate-500 shrink-0 select-none">Buyer:</span>
                           <input
                             type="text"
                             placeholder="No. Buyer"
                             value={formData.buyerNo}
                             onChange={(e) => setFormData({ ...formData, buyerNo: e.target.value.toUpperCase() })}
-                            className="min-w-0 flex-1 py-0.5 text-[8.5px] font-bold text-black font-mono focus:outline-none focus:bg-blue-50/60 transition bg-transparent placeholder:text-slate-400"
+                            className="min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-bold text-black font-mono focus:outline-none focus:bg-blue-50/60 transition bg-transparent placeholder:text-slate-400"
                             title="Nomor Buyer / Buyer PO"
                           />
                         </div>
@@ -383,12 +383,12 @@ export const ItemModal = () => {
                   </tr>
 
                   {/* Jenis Sample (ORI / DEVELOP / PPS) */}
-                  <tr className="border-b border-black">
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr className="border-b-2 border-black">
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Jenis Sample <span className="text-rose-500">*</span>
                     </td>
-                    <td className="py-0.5 px-1 align-middle">
-                      <div className="flex items-center gap-1.5">
+                    <td className="py-1.5 px-3 align-middle">
+                      <div className="flex items-center gap-2">
                         {['ORI', 'DEVELOP', 'PPS'].map((type) => {
                           const isSelected = (formData.jenisSample || 'DEVELOP') === type;
                           return (
@@ -396,13 +396,13 @@ export const ItemModal = () => {
                               key={type}
                               type="button"
                               onClick={() => setFormData({ ...formData, jenisSample: type })}
-                              className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider transition border cursor-pointer ${
+                              className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition border cursor-pointer ${
                                 isSelected
                                   ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
                                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
                               }`}
                             >
-                              {isSelected && <span className="mr-0.5 text-amber-300 font-bold">✓</span>}
+                              {isSelected && <span className="mr-1 text-amber-300 font-bold">✓</span>}
                               {type}
                             </button>
                           );
@@ -412,12 +412,12 @@ export const ItemModal = () => {
                   </tr>
 
                   {/* Deskripsi (3 Kolom: Nama/Nomer Style *, Sample No, & Size *) */}
-                  <tr className="border-b border-black">
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr className="border-b-2 border-black">
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Deskripsi <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
-                      <div className="grid grid-cols-12 gap-0.5 p-0.5">
+                      <div className="grid grid-cols-12 gap-1.5 p-1.5">
                         {/* Kolom 1: Nama / Nomer Style (Wajib) */}
                         <div className="col-span-5">
                           <input
@@ -428,7 +428,7 @@ export const ItemModal = () => {
                               setFormData({ ...formData, style: e.target.value });
                               if (errors.style) setErrors(prev => ({ ...prev, style: null }));
                             }}
-                            className={`w-full py-0.5 px-1 text-[8.5px] font-bold text-black border focus:outline-none rounded transition ${
+                            className={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-bold text-black border focus:outline-none rounded-lg transition ${
                               errors.style ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
                           />
@@ -438,10 +438,10 @@ export const ItemModal = () => {
                         <div className="col-span-4">
                           <input
                             type="text"
-                            placeholder="Sample No"
+                            placeholder="SAMPLE NO"
                             value={formData.sampleNo}
                             onChange={(e) => setFormData({ ...formData, sampleNo: e.target.value.toUpperCase() })}
-                            className="w-full py-0.5 px-1 text-[8.5px] font-black uppercase text-black font-mono border border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 rounded transition placeholder:text-slate-400"
+                            className="w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase text-black font-mono border border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 rounded-lg transition placeholder:text-slate-400"
                             title="Nomor Sample (Opsional, kosongkan jika tidak ada)"
                           />
                         </div>
@@ -450,13 +450,13 @@ export const ItemModal = () => {
                         <div className="col-span-3">
                           <input
                             type="text"
-                            placeholder="Size *"
+                            placeholder="SIZE *"
                             value={formData.size}
                             onChange={(e) => {
                               setFormData({ ...formData, size: e.target.value.toUpperCase() });
                               if (errors.size) setErrors(prev => ({ ...prev, size: null }));
                             }}
-                            className={`w-full py-0.5 px-1 text-[8.5px] font-black uppercase text-black border focus:outline-none rounded transition ${
+                            className={`w-full py-1.5 px-2 text-xs sm:text-sm font-black uppercase text-black border focus:outline-none rounded-lg transition text-center ${
                               errors.size ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
                             }`}
                           />
@@ -466,8 +466,8 @@ export const ItemModal = () => {
                   </tr>
 
                   {/* Color (Wajib Isi) */}
-                  <tr className="border-b border-black">
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr className="border-b-2 border-black">
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Color <span className="text-rose-500">*</span>
                     </td>
                     <td className="p-0 align-middle">
@@ -479,7 +479,7 @@ export const ItemModal = () => {
                           setFormData({ ...formData, color: e.target.value });
                           if (errors.color) setErrors(prev => ({ ...prev, color: null }));
                         }}
-                        className={`w-full py-0.5 px-1.5 text-[9px] font-bold text-black focus:outline-none transition bg-transparent ${
+                        className={`w-full py-2 px-3 text-xs sm:text-sm font-bold text-black focus:outline-none transition bg-transparent ${
                           errors.color ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-400'
                         }`}
                       />
@@ -487,29 +487,29 @@ export const ItemModal = () => {
                   </tr>
 
                   {/* Jumlah & Satuan (1 Baris Hemat Tempat) */}
-                  <tr className="border-b border-black">
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                  <tr className="border-b-2 border-black">
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Jumlah
                     </td>
                     <td className="p-0 align-middle">
                       <div className="grid grid-cols-2 gap-0 items-center w-full">
-                        <div className="flex items-center min-w-0 border-r border-black px-1.5 py-0.5">
+                        <div className="flex items-center min-w-0 border-r-2 border-black px-3 py-1.5">
                           <input
                             type="number"
                             min="1"
                             value={formData.jumlah}
                             onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
-                            className="w-full py-0.5 text-[9.5px] font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent"
+                            className="w-full py-0.5 text-xs sm:text-sm font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent font-mono"
                             placeholder="Qty"
                           />
                         </div>
-                        <div className="flex items-center min-w-0 px-1.5 py-0.5">
+                        <div className="flex items-center min-w-0 px-3 py-1.5">
                           <input
                             type="text"
                             placeholder="Satuan (PCS)"
                             value={formData.satuan}
                             onChange={(e) => setFormData({ ...formData, satuan: e.target.value.toUpperCase() })}
-                            className="w-full py-0.5 text-[9px] font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
+                            className="w-full py-0.5 text-xs sm:text-sm font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
                           />
                         </div>
                       </div>
@@ -518,14 +518,14 @@ export const ItemModal = () => {
 
                   {/* Place */}
                   <tr>
-                    <td className="py-1 px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/70">
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
                       Place
                     </td>
                     <td className="p-0 align-middle">
                       <select
                         value={formData.place}
                         onChange={(e) => handleBoxSelect(e.target.value)}
-                        className="w-full py-0.5 px-1 text-[8.5px] font-black text-black uppercase focus:outline-none focus:bg-blue-50/60 bg-transparent cursor-pointer"
+                        className="w-full py-2 px-3 text-xs sm:text-sm font-black text-black uppercase focus:outline-none focus:bg-blue-50/60 bg-transparent cursor-pointer"
                       >
                         {!DEFAULT_PLACES.includes(formData.place) && formData.place && (
                           <option value={formData.place}>{formData.place}</option>
@@ -551,23 +551,23 @@ export const ItemModal = () => {
 
           {/* Subtitle helper */}
           {currentBoxObj && (
-            <p className="no-print text-[10px] text-slate-500 mt-2 flex items-center gap-1 font-medium">
-              <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
-              <span>Tersimpan di: <strong>{currentBoxObj.rackName}</strong> • PIC: <strong>{currentBoxObj.picName}</strong></span>
+            <p className="no-print text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
+              <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>Tersimpan di: <strong className="text-slate-700">{currentBoxObj.rackName}</strong> • PIC: <strong className="text-slate-700">{currentBoxObj.picName}</strong></span>
             </p>
           )}
 
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="no-print bg-white px-4 py-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div className="no-print bg-white px-5 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setShowPrintModal(true)}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition shadow-xs"
+            className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
             title="Cetak Multiple Card Ukuran KTP dalam 1 Lembar A4"
           >
-            <Printer className="w-3.5 h-3.5 text-amber-400" />
+            <Printer className="w-4 h-4 text-amber-400" />
             <span>Cetak A4 (Multi-KTP)</span>
           </button>
 
@@ -575,7 +575,7 @@ export const ItemModal = () => {
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-              className="px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg text-xs font-bold transition"
+              className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold transition cursor-pointer"
             >
               Batal
             </button>
@@ -583,9 +583,9 @@ export const ItemModal = () => {
             <button
               type="submit"
               form="direct-card-form"
-              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-black shadow-md transition flex items-center space-x-1"
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black shadow-md shadow-blue-900/20 transition flex items-center space-x-1.5 cursor-pointer"
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="w-4 h-4" />
               <span>{isEditing ? 'Simpan Perubahan' : 'Simpan ke Box'}</span>
             </button>
           </div>
