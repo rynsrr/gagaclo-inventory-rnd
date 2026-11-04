@@ -7,6 +7,7 @@ import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
 import { BoxQrModal } from './components/BoxQrModal';
 import { QuickScannerModal } from './components/QuickScannerModal';
+import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
 import { 
@@ -96,6 +97,7 @@ const AppContent = () => {
                 <span>{connected ? usageLabel : 'Hubungkan'}</span>
               </button>
 
+              <InventoryTimer />
               <InventoryImport />
 
               {/* Mode Switcher Tabs */}
