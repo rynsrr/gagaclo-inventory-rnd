@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   X, 
   Printer, 
-  Copy, 
   Scissors, 
   CheckSquare, 
   Square, 
@@ -21,7 +20,6 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
     return new Set(itemsToPrint.map((item, idx) => item.id || item.kode || `item-${idx}`));
   });
 
-  const [copiesPerCard, setCopiesPerCard] = useState(10);
   const [showCutGuides, setShowCutGuides] = useState(true);
   const [showChecklistDrawer, setShowChecklistDrawer] = useState(true);
 
@@ -54,16 +52,11 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
     return selectedItemIds.has(id);
   });
 
-  // Generate flat list of copies to print
-  const cardsToPrint = [];
-  activeItems.forEach((item, itemIdx) => {
-    for (let c = 0; c < copiesPerCard; c++) {
-      cardsToPrint.push({
-        ...item,
-        _printUniqueId: `${item.id || item.kode || itemIdx}-copy-${c}`
-      });
-    }
-  });
+  // One card per selected item (no copies/salinan option — each prints once)
+  const cardsToPrint = activeItems.map((item, itemIdx) => ({
+    ...item,
+    _printUniqueId: `${item.id || item.kode || itemIdx}-card`
+  }));
 
   const totalCards = cardsToPrint.length;
   const estimatedPages = Math.ceil(totalCards / 8); // 8 cards per A4 page
@@ -95,7 +88,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                {activeItems.length} dari {itemsToPrint.length} kartu terpilih × {copiesPerCard} salinan = <strong className="text-white font-bold">{totalCards} kartu dicetak</strong> (± {estimatedPages} lembar A4)
+                {activeItems.length} kartu terpilih = <strong className="text-white font-bold">{totalCards} kartu dicetak</strong> (± {estimatedPages} lembar A4)
               </p>
             </div>
           </div>
@@ -204,43 +197,8 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
           </div>
         )}
 
-        {/* Toolbar: Options for copies & cut guidelines (Hidden when printing) */}
-        <div className="no-print bg-slate-800/90 text-slate-200 px-5 py-2.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 text-xs shrink-0">
-          
-          {/* Quick preset copies */}
-          <div className="flex items-center space-x-2">
-            <span className="text-slate-400 font-medium flex items-center gap-1">
-              <Copy className="w-3.5 h-3.5 text-blue-400" />
-              <span>Salinan Tiap Kartu:</span>
-            </span>
-            <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-lg border border-slate-700">
-              <button
-                type="button"
-                onClick={() => setCopiesPerCard(10)}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${
-                  copiesPerCard === 10 
-                    ? 'bg-blue-600 text-white shadow-xs' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                10 Salinan
-              </button>
-            </div>
-
-            {/* Custom input */}
-            <div className="flex items-center space-x-1 ml-1 text-slate-300">
-              <span>atau:</span>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={copiesPerCard}
-                onChange={(e) => setCopiesPerCard(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-14 bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-center text-xs font-bold text-white focus:outline-none focus:border-blue-500"
-              />
-              <span className="text-slate-400">lembar/kartu</span>
-            </div>
-          </div>
+        {/* Toolbar: Cut guideline toggle (Hidden when printing) */}
+        <div className="no-print bg-slate-800/90 text-slate-200 px-5 py-2.5 flex flex-wrap items-center justify-start gap-3 border-b border-slate-700 text-xs shrink-0">
 
           {/* Cut guide toggle */}
           <label className="flex items-center space-x-2 cursor-pointer select-none">
