@@ -5,13 +5,17 @@ const STORAGE_KEY = 'gagaclo_inventory_timer_deadline';
 
 export function InventoryTimer() {
   const dialogRef = useRef(null);
-  const [minutes, setMinutes] = useState('25');
+  const [days, setDays] = useState('7');
   const [deadline, setDeadline] = useState(() => Number(localStorage.getItem(STORAGE_KEY)) || 0);
   const [now, setNow] = useState(Date.now);
   const remaining = Math.max(0, Math.ceil((deadline - now) / 1000));
   const finished = deadline > 0 && remaining === 0;
-  const display = [Math.floor(remaining / 60), remaining % 60]
-    .map(value => String(value).padStart(2, '0')).join(':');
+  const countdown = [
+    ['Hari', Math.floor(remaining / 86400)],
+    ['Jam', Math.floor(remaining / 3600) % 24],
+    ['Menit', Math.floor(remaining / 60) % 60],
+    ['Detik', remaining % 60],
+  ];
 
   useEffect(() => {
     if (!deadline || finished) return;
@@ -26,10 +30,10 @@ export function InventoryTimer() {
 
   function start(event) {
     event.preventDefault();
-    const duration = Number(minutes);
-    if (!Number.isInteger(duration) || duration < 1 || duration > 180) return;
+    const duration = Number(days);
+    if (!Number.isInteger(duration) || duration < 1 || duration > 365) return;
     const startedAt = Date.now();
-    const end = startedAt + duration * 60_000;
+    const end = startedAt + duration * 86_400_000;
     localStorage.setItem(STORAGE_KEY, String(end));
     setNow(startedAt);
     setDeadline(end);
@@ -43,17 +47,24 @@ export function InventoryTimer() {
 
   return (
     <>
-      <button
-        type="button"
-        aria-haspopup="dialog"
-        onClick={() => dialogRef.current.showModal()}
-        className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold tabular-nums ${finished
-          ? 'border-amber-200 bg-amber-50 text-amber-900'
-          : 'border-slate-200 hover:bg-slate-100'}`}
-      >
-        <Timer className="h-3.5 w-3.5" aria-hidden="true" />
-        {finished ? 'Waktu habis' : deadline ? display : 'Timer'}
-      </button>
+      <section aria-label="Hitung mundur pendataan" className="inventory-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-6">
+        <div>
+          <h2 className="text-sm font-bold">Hitung Mundur Pendataan</h2>
+          <p className="text-xs text-slate-600">{finished ? 'Waktu habis' : deadline ? 'Sisa waktu pendataan' : 'Atur durasi untuk memulai'}</p>
+        </div>
+        <div role="timer" className="flex gap-3 text-center sm:gap-6">
+          {countdown.map(([label, value]) => (
+            <div key={label} className="min-w-10">
+              <div className="text-2xl leading-none font-bold tabular-nums text-blue-700 sm:text-4xl">{String(value).padStart(2, '0')}</div>
+              <div className="mt-1 text-xs text-slate-600">{label}</div>
+            </div>
+          ))}
+        </div>
+        <button type="button" aria-haspopup="dialog" onClick={() => dialogRef.current.showModal()}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-100">
+          <Timer className="h-4 w-4" aria-hidden="true" /> Atur Timer
+        </button>
+      </section>
       <span className="sr-only" role="status">{finished ? 'Waktu pengerjaan data habis.' : ''}</span>
       <dialog
         ref={dialogRef}
@@ -67,16 +78,11 @@ export function InventoryTimer() {
             <X className="h-5 w-5" />
           </button>
         </div>
-        {deadline > 0 && (
-          <p className="mt-3 text-sm font-semibold tabular-nums">
-            {finished ? 'Waktu habis' : `Sisa waktu ${display}`}
-          </p>
-        )}
         <form onSubmit={start} className="mt-4 space-y-4">
           <label className="block text-sm font-semibold">
-            Durasi (menit)
-            <input type="number" min="1" max="180" step="1" required value={minutes}
-              onChange={event => setMinutes(event.target.value)}
+            Durasi (hari)
+            <input type="number" min="1" max="365" step="1" required value={days}
+              onChange={event => setDays(event.target.value)}
               className="mt-1 block w-full rounded-lg border border-slate-200 p-2" />
           </label>
           <div className="flex flex-wrap gap-2">

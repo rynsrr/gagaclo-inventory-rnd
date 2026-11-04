@@ -97,7 +97,6 @@ const AppContent = () => {
                 <span>{connected ? usageLabel : 'Hubungkan'}</span>
               </button>
 
-              <InventoryTimer />
               <InventoryImport />
 
               {/* Mode Switcher Tabs */}
@@ -144,6 +143,9 @@ const AppContent = () => {
         )}
         {appMode === 'manifests' && <PrintableManifestView />}
       </main>
+      <footer className="no-print mx-auto w-full max-w-7xl shrink-0 px-4 pb-3 sm:px-6 lg:px-8">
+        <InventoryTimer />
+      </footer>
 
       {/* Footer */}
 
