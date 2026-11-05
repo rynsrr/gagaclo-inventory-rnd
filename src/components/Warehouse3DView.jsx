@@ -1086,10 +1086,10 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls Hint & Lake Pier Badge (Bottom Right) */}
+        {/* Controls Hint & Meadow Badge (Bottom Right) */}
         <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
-          <span className="text-sky-400 font-bold flex items-center gap-1">
-            <span>🌊</span> Danau 3D Pier
+          <span className="text-emerald-400 font-bold flex items-center gap-1">
+            <span>🌱</span> Padang Rumput 3D
           </span>
           <span className="text-slate-500">|</span>
           <span>🖱️ Putar: Klik Kiri</span>
