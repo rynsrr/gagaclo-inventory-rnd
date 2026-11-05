@@ -1166,44 +1166,22 @@ export const Warehouse3DView = ({
 
         {/* Anjing Penjaga 15-Menit Inactivity Reminder Banner */}
         {dogReminderActive && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-lg w-[92%] sm:w-auto bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-slate-950 p-4 sm:p-5 rounded-3xl shadow-2xl border-2 border-white ring-4 ring-amber-400/60 animate-bounce">
-            <div className="flex items-start gap-3.5">
-              <span className="text-3xl sm:text-4xl select-none">🐶</span>
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-                    15 Menit Tanpa Input
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm font-black text-slate-950 leading-snug">
-                  "Woof woof! 🐾 Hey, please fill data on the box! Jangan lupa lengkapi data item di box ya!"
-                </p>
-                <div className="pt-2 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDogReminderActive(false);
-                      lastInputTimeRef.current = Date.now();
-                      const firstEmpty = boxes.find(b => getItemsInBox(b.boxNumber).length === 0);
-                      if (firstEmpty) {
-                        setSelectedBoxNumber(firstEmpty.boxNumber);
-                      }
-                    }}
-                    className="px-3.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition shadow-md cursor-pointer active:scale-95"
-                  >
-                    Buka Box Kosong 📦
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDogReminderActive(false);
-                      lastInputTimeRef.current = Date.now();
-                    }}
-                    className="px-3.5 py-1.5 bg-white/90 hover:bg-white text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
-                  >
-                    Siap, Terima Kasih! 🐾
-                  </button>
-                </div>
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-slate-950 px-5 py-3.5 rounded-2xl shadow-2xl border-2 border-white ring-4 ring-amber-400/50 animate-bounce">
+            <div className="space-y-2">
+              <p className="text-xs sm:text-sm font-black text-slate-950 leading-snug">
+                "Woof woof! 🐾 Hey, please fill data on the box!"
+              </p>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDogReminderActive(false);
+                    lastInputTimeRef.current = Date.now();
+                  }}
+                  className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition shadow-md cursor-pointer active:scale-95"
+                >
+                  OK, Siap! 🐾
+                </button>
               </div>
             </div>
           </div>
