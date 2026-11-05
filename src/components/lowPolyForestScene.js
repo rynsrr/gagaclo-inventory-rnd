@@ -261,7 +261,124 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(starPoints);
   disposables.push(starGeo, starMat, starPoints);
 
+  // =========================================================================
+  // 7. KUPU-KUPU (BUTTERFLIES) TERBANG RANDOM DI SEKITAR BOX & RAK
+  // =========================================================================
+  const wingGeoL = new THREE.PlaneGeometry(0.18, 0.24);
+  wingGeoL.translate(0.09, 0, 0); // Pivot hinge
+  const wingGeoR = new THREE.PlaneGeometry(0.18, 0.24);
+  wingGeoR.translate(-0.09, 0, 0);
+  const bodyGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.2, 4);
+  const bBodyMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+  disposables.push(wingGeoL, wingGeoR, bodyGeo, bBodyMat);
+
+  const butterflyColors = [0x38bdf8, 0xfbbf24, 0xf43f5e, 0xa855f7, 0x34d399, 0xf97316];
+  const butterflies = [];
+  const butterflyCount = 14;
+
+  for (let i = 0; i < butterflyCount; i++) {
+    const color = butterflyColors[i % butterflyColors.length];
+    const wingMat = new THREE.MeshBasicMaterial({
+      color,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.92,
+    });
+    disposables.push(wingMat);
+
+    const bGroup = new THREE.Group();
+    const wingL = new THREE.Mesh(wingGeoL, wingMat);
+    const wingR = new THREE.Mesh(wingGeoR, wingMat);
+    const body = new THREE.Mesh(bodyGeo, bBodyMat);
+    body.rotation.x = Math.PI / 2;
+
+    bGroup.add(wingL);
+    bGroup.add(wingR);
+    bGroup.add(body);
+
+    const baseX = minX + 2 + Math.random() * (maxX - minX - 4);
+    const baseY = 1.0 + Math.random() * 3.5;
+    const baseZ = (Math.random() - 0.5) * 5.5;
+
+    bGroup.position.set(baseX, baseY, baseZ);
+    scene.add(bGroup);
+    disposables.push(bGroup);
+
+    butterflies.push({
+      group: bGroup,
+      wingL,
+      wingR,
+      baseX,
+      baseY,
+      baseZ,
+      radiusX: 2.2 + Math.random() * 3.5,
+      radiusY: 0.6 + Math.random() * 1.2,
+      radiusZ: 1.5 + Math.random() * 2.5,
+      speed: 0.6 + Math.random() * 0.7,
+      flapSpeed: 14 + Math.random() * 8,
+      phase: Math.random() * Math.PI * 2,
+    });
+  }
+
+  // =========================================================================
+  // 8. KUNANG-KUNANG (FIREFLIES) BERCAHAYA TERBANG DI SEKITAR BOX
+  // =========================================================================
+  const ffCoreGeo = new THREE.SphereGeometry(0.045, 6, 6);
+  const ffHaloGeo = new THREE.SphereGeometry(0.14, 6, 6);
+  disposables.push(ffCoreGeo, ffHaloGeo);
+
+  const fireflies = [];
+  const fireflyCount = 26;
+
+  for (let j = 0; j < fireflyCount; j++) {
+    const ffGroup = new THREE.Group();
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    const haloMat = new THREE.MeshBasicMaterial({
+      color: 0x84cc16,
+      transparent: true,
+      opacity: 0.5,
+    });
+    disposables.push(coreMat, haloMat);
+
+    const core = new THREE.Mesh(ffCoreGeo, coreMat);
+    const halo = new THREE.Mesh(ffHaloGeo, haloMat);
+    ffGroup.add(core);
+    ffGroup.add(halo);
+
+    const baseX = minX + 1 + Math.random() * (maxX - minX - 2);
+    const baseY = 0.5 + Math.random() * 4.2;
+    const baseZ = (Math.random() - 0.5) * 6.5;
+
+    ffGroup.position.set(baseX, baseY, baseZ);
+    scene.add(ffGroup);
+    disposables.push(ffGroup);
+
+    fireflies.push({
+      group: ffGroup,
+      coreMat,
+      halo,
+      haloMat,
+      baseX,
+      baseY,
+      baseZ,
+      radiusX: 1.8 + Math.random() * 3.0,
+      radiusY: 0.8 + Math.random() * 1.4,
+      radiusZ: 1.5 + Math.random() * 2.8,
+      speedX: 0.4 + Math.random() * 0.5,
+      speedY: 0.5 + Math.random() * 0.6,
+      speedZ: 0.35 + Math.random() * 0.45,
+      phaseX: Math.random() * Math.PI * 2,
+      phaseY: Math.random() * Math.PI * 2,
+      phaseZ: Math.random() * Math.PI * 2,
+      blinkSpeed: 2.0 + Math.random() * 3.0,
+      blinkPhase: Math.random() * Math.PI * 2,
+    });
+  }
+
+  let currentIsDark = false;
+
   function applyMode(isDark) {
+    currentIsDark = Boolean(isDark);
     if (isDark) {
       // Midnight Twilight Atmosphere & Dense Fog
       scene.background.setHex(0x060d17);
@@ -322,10 +439,44 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       applyMode(isDark);
     },
     update(elapsed) {
-      // Kerlap-kerlip bintang lembut di malam hari
+      // 1. Kerlap-kerlip bintang lembut di malam hari
       if (starPoints.visible) {
         starMat.opacity = 0.75 + Math.sin(elapsed * 2.8) * 0.2;
       }
+
+      // 2. Kupu-kupu mengepakkan sayap & terbang mengitari box
+      butterflies.forEach((b) => {
+        const flap = Math.sin(elapsed * b.flapSpeed + b.phase) * 0.9;
+        b.wingL.rotation.y = flap;
+        b.wingR.rotation.y = -flap;
+
+        const prevX = b.group.position.x;
+        const prevZ = b.group.position.z;
+
+        const newX = b.baseX + Math.sin(elapsed * b.speed + b.phase) * b.radiusX;
+        const newY = b.baseY + Math.sin(elapsed * b.speed * 2.0 + b.phase) * b.radiusY;
+        const newZ = b.baseZ + Math.cos(elapsed * b.speed + b.phase) * b.radiusZ;
+
+        b.group.position.set(newX, newY, newZ);
+
+        const dx = newX - prevX;
+        const dz = newZ - prevZ;
+        if (Math.abs(dx) > 0.001 || Math.abs(dz) > 0.001) {
+          b.group.rotation.y = Math.atan2(dx, dz);
+        }
+      });
+
+      // 3. Kunang-kunang melayang bercahaya kelap-kelip di sekitar box
+      fireflies.forEach((ff) => {
+        ff.group.position.x = ff.baseX + Math.sin(elapsed * ff.speedX + ff.phaseX) * ff.radiusX;
+        ff.group.position.y = ff.baseY + Math.sin(elapsed * ff.speedY + ff.phaseY) * ff.radiusY;
+        ff.group.position.z = ff.baseZ + Math.cos(elapsed * ff.speedZ + ff.phaseZ) * ff.radiusZ;
+
+        const blink = Math.pow(Math.max(0, Math.sin(elapsed * ff.blinkSpeed + ff.blinkPhase)), 2.0);
+        ff.halo.scale.setScalar(0.7 + blink * 0.9);
+        ff.haloMat.opacity = currentIsDark ? (0.25 + blink * 0.7) : (0.15 + blink * 0.35);
+        ff.coreMat.color.setHex(blink > 0.35 ? 0xfef08a : 0xa3e635);
+      });
     },
     dispose() {
       disposables.forEach((item) => {
