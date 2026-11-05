@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
 import { 
   Plus, 
   Search, 
@@ -227,7 +226,8 @@ export const SimpleInventoryView = () => {
   };
 
   // Export Excel
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
+    const XLSX = await import('xlsx');
     const dataToExport = items.map((item, idx) => ({
       'No': idx + 1,
       'Track': item.track,

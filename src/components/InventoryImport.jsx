@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { Download, Upload, X } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { useInventory } from '../context/InventoryContext';
 import { parseInventoryRows } from '../utils/inventoryExcel';
 
@@ -20,6 +19,7 @@ export function InventoryImport() {
     if (!file) return;
     setBusy(true);
     try {
+      const XLSX = await import('xlsx');
       const workbook = XLSX.read(await file.arrayBuffer(), { cellDates: false });
       const sheet = workbook.Sheets.Data;
       if (!sheet) throw new Error('Lembar Data tidak ditemukan.');

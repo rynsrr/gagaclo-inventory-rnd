@@ -19,7 +19,8 @@ import {
   ChevronRight,
   X,
   Pencil,
-  Package
+  Package,
+  Zap,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose — the original five PPIC colors,
@@ -77,6 +78,36 @@ export const Warehouse3DView = ({
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
+
+  // Mode Ringan / Cepat untuk menghemat daya dan mempercepat performa di laptop/PC kantor
+  const [ecoMode, setEcoMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_3d_ecomode');
+      return saved !== null ? saved === 'true' : false;
+    } catch {
+      return false;
+    }
+  });
+  const ecoModeRef = useRef(ecoMode);
+  const rendererRef = useRef(null);
+
+  useEffect(() => {
+    ecoModeRef.current = ecoMode;
+    if (rendererRef.current) {
+      rendererRef.current.setPixelRatio(ecoMode ? 1.0 : Math.min(window.devicePixelRatio, 1.25));
+      rendererRef.current.shadowMap.enabled = !ecoMode;
+    }
+  }, [ecoMode]);
+
+  const toggleEcoMode = () => {
+    const nextVal = !ecoMode;
+    setEcoMode(nextVal);
+    try {
+      localStorage.setItem('gagaclo_3d_ecomode', String(nextVal));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // A Set of box numbers matching the sidebar search (null = no active search).
   const searchActive = highlightBoxNumbers !== null;
@@ -207,9 +238,10 @@ export const Warehouse3DView = ({
       return;
     }
     renderer.setSize(width, height, false);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setPixelRatio(ecoModeRef.current ? 1.0 : Math.min(window.devicePixelRatio, 1.25));
+    renderer.shadowMap.enabled = !ecoModeRef.current;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
 
     // Orbit Controls
@@ -229,8 +261,8 @@ export const Warehouse3DView = ({
     const dirLight = new THREE.DirectionalLight(0xfff8eb, 1.45);
     dirLight.position.set(24, 35, 22);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
     dirLight.shadow.camera.near = 1;
     dirLight.shadow.camera.far = 120;
     const d = 45;
@@ -485,7 +517,6 @@ export const Warehouse3DView = ({
 
       // Tangkai
       const stem = new THREE.Mesh(flowerStemGeo, stemMat);
-      stem.castShadow = true;
       flowerGroup.add(stem);
 
       // Daun tangkai
@@ -514,7 +545,6 @@ export const Warehouse3DView = ({
         const petal = new THREE.Mesh(flowerPetalGeo, pMat);
         petal.position.set(Math.cos(angle) * 0.12, 0, Math.sin(angle) * 0.12);
         petal.rotation.y = -angle;
-        petal.castShadow = true;
         headGroup.add(petal);
       }
 
@@ -552,17 +582,17 @@ export const Warehouse3DView = ({
     };
 
     // Tanam kelompok bunga estetik di area padang rumput dan tepi pulau
-    plantFlowerCluster(-12, -7, 5.5, 18, 'sakura');    // Kebun sakura di belakang Rak 1-2
-    plantFlowerCluster(6, -8, 6.0, 20, 'daisy');       // Padang daisy di belakang Rak 3
-    plantFlowerCluster(22, -7, 5.5, 18, 'lavender');   // Padang lavender di belakang Rak 4-5
-    plantFlowerCluster(-23, 2, 4.5, 14, 'coral');      // Taman coral di pesisir barat
-    plantFlowerCluster(29, 3, 4.5, 14, 'buttercup');   // Bunga kuning cerah di pesisir timur
-    plantFlowerCluster(-5, 15, 5.0, 15, 'sakura');     // Bunga di pesisir depan (dekat box lantai)
-    plantFlowerCluster(15, 15, 5.5, 16, 'lavender');   // Bunga pesisir tenggara
+    plantFlowerCluster(-12, -7, 5.5, 8, 'sakura');     // Kebun sakura di belakang Rak 1-2
+    plantFlowerCluster(6, -8, 6.0, 9, 'daisy');        // Padang daisy di belakang Rak 3
+    plantFlowerCluster(22, -7, 5.5, 8, 'lavender');    // Padang lavender di belakang Rak 4-5
+    plantFlowerCluster(-23, 2, 4.5, 6, 'coral');       // Taman coral di pesisir barat
+    plantFlowerCluster(29, 3, 4.5, 6, 'buttercup');    // Bunga kuning cerah di pesisir timur
+    plantFlowerCluster(-5, 15, 5.0, 6, 'sakura');      // Bunga di pesisir depan (dekat box lantai)
+    plantFlowerCluster(15, 15, 5.5, 7, 'lavender');    // Bunga pesisir tenggara
 
     // Bunga liar tersebar di sepanjang jalur pantai
-    for (let i = 0; i < 15; i++) {
-      const angle = (i / 15) * Math.PI * 2;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
       const rRatio = 0.82 + Math.random() * 0.1;
       const px = islandCenterX + Math.cos(angle) * (islandRx - 4.5) * rRatio;
       const pz = islandCenterZ + Math.sin(angle) * (islandRz - 4.0) * rRatio;
@@ -590,7 +620,6 @@ export const Warehouse3DView = ({
       pebble.scale.set(sx, sy, sz);
       pebble.position.set(px, 0.05, pz);
       pebble.rotation.y = Math.random() * Math.PI;
-      pebble.castShadow = true;
       pebble.receiveShadow = true;
       islandDecorGroup.add(pebble);
     });
@@ -618,7 +647,6 @@ export const Warehouse3DView = ({
         seg.position.set(currentX, currentY + segHeight / 2, currentZ);
         seg.rotation.z = -0.07 * (i + 1);
         seg.rotation.x = 0.035 * (i + 1);
-        seg.castShadow = true;
         seg.receiveShadow = true;
         palmGroup.add(seg);
 
@@ -639,7 +667,6 @@ export const Warehouse3DView = ({
         const frond = new THREE.Mesh(frondLeafGeo, frondMat);
         frond.rotation.y = angle;
         frond.rotation.x = -0.45;
-        frond.castShadow = true;
         crownGroup.add(frond);
       }
 
@@ -648,7 +675,6 @@ export const Warehouse3DView = ({
         const coconut = new THREE.Mesh(cGeo, coconutMat);
         const cAng = c * (Math.PI * 2 / 3);
         coconut.position.set(Math.cos(cAng) * 0.2, -0.15, Math.sin(cAng) * 0.2);
-        coconut.castShadow = true;
         crownGroup.add(coconut);
       }
 
@@ -924,8 +950,25 @@ export const Warehouse3DView = ({
 
     // Animation Loop
     const clock = new THREE.Clock();
-    const animate = () => {
+    let lastRenderTime = 0;
+    const animate = (timestamp) => {
       animationFrameIdRef.current = requestAnimationFrame(animate);
+
+      // Skip render if tab is in background
+      if (document.hidden) return;
+
+      // Skip render while any modal/dialog is open (ensures 100% lag-free typing & form interaction)
+      if (document.querySelector('[role="dialog"]') || document.querySelector('.inventory-dialog-heading')) {
+        return;
+      }
+
+      // Throttle render rate: ~35 FPS in ecoMode, 60 FPS in normal mode
+      const targetDelta = ecoModeRef.current ? 28 : 16;
+      if (timestamp && timestamp - lastRenderTime < targetDelta) {
+        return;
+      }
+      lastRenderTime = timestamp || 0;
+
       const elapsed = clock.getElapsedTime();
 
       // Animasi aliran ombak air laut & ketinggian air
@@ -942,19 +985,20 @@ export const Warehouse3DView = ({
         foamMat.opacity = 0.42 + Math.sin(elapsed * 2.2) * 0.16;
       }
 
-      // Animasi bunga estetik berayun lembut ditiup angin sepoi pulau
-      for (let i = 0; i < swayingFlowers.length; i++) {
-        const flower = swayingFlowers[i];
-        const { baseRotX, baseRotZ, swaySpeed, swayOffset } = flower.userData;
-        flower.rotation.z = baseRotZ + Math.sin(elapsed * swaySpeed + swayOffset) * 0.07;
-        flower.rotation.x = baseRotX + Math.cos(elapsed * (swaySpeed * 0.85) + swayOffset) * 0.045;
-      }
+      // Animasi bunga estetik (dilewati saat Mode Ringan aktif untuk performa maksimal)
+      if (!ecoModeRef.current) {
+        for (let i = 0; i < swayingFlowers.length; i++) {
+          const flower = swayingFlowers[i];
+          const { baseRotX, baseRotZ, swaySpeed, swayOffset } = flower.userData;
+          flower.rotation.z = baseRotZ + Math.sin(elapsed * swaySpeed + swayOffset) * 0.07;
+          flower.rotation.x = baseRotX + Math.cos(elapsed * (swaySpeed * 0.85) + swayOffset) * 0.045;
+        }
 
-      // Animasi daun kelapa berayun
-      for (let i = 0; i < swayingPalms.length; i++) {
-        const crown = swayingPalms[i];
-        crown.rotation.z = Math.sin(elapsed * 1.1 + crown.userData.offset) * 0.035;
-        crown.rotation.x = Math.cos(elapsed * 0.9 + crown.userData.offset) * 0.025;
+        for (let i = 0; i < swayingPalms.length; i++) {
+          const crown = swayingPalms[i];
+          crown.rotation.z = Math.sin(elapsed * 1.1 + crown.userData.offset) * 0.035;
+          crown.rotation.x = Math.cos(elapsed * 0.9 + crown.userData.offset) * 0.025;
+        }
       }
 
       if (controlsRef.current) {
@@ -1009,6 +1053,7 @@ export const Warehouse3DView = ({
 
     // Cleanup
     return () => {
+      rendererRef.current = null;
       resizeObserver.disconnect();
       fitCameraRef.current = null;
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
@@ -1348,6 +1393,23 @@ export const Warehouse3DView = ({
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
+
+        {/* Mode Ringan / Cepat Toggle (Top Right) */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleEcoMode}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer ${
+              ecoMode
+                ? 'bg-emerald-600/95 hover:bg-emerald-700 text-white border-emerald-400 shadow-emerald-500/20'
+                : 'bg-white/90 hover:bg-white text-slate-700 border-slate-200/90'
+            }`}
+            title={ecoMode ? 'Mode Ringan aktif (super enteng & baterai awet). Klik untuk aktifkan Grafis Penuh.' : 'Klik untuk aktifkan Mode Ringan (sangat ringan untuk laptop/PC kantor).'}
+          >
+            <Zap className={`h-3.5 w-3.5 ${ecoMode ? 'text-yellow-200 fill-yellow-200' : 'text-amber-500'}`} />
+            <span>{ecoMode ? '⚡ Mode Ringan: ON' : '⚡ Mode Ringan'}</span>
+          </button>
+        </div>
 
         {/* Active search indicator (top left) */}
         {searchActive && (

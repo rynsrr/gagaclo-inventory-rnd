@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import * as XLSX from 'xlsx';
 import { useInventory } from '../context/InventoryContext';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import {
@@ -70,7 +69,8 @@ export function TotalItemsSummaryView() {
 
   const dashClass = (value) => (value && value !== '-' && value !== 'NA' ? 'text-slate-700' : 'text-slate-400');
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import('xlsx');
     const rows = filteredItems.map((item, i) => ({
       No: i + 1,
       Tanggal: item.tanggal,

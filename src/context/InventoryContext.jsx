@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import * as XLSX from 'xlsx';
 import { RACKS_DATA, PPIC_MEMBERS, generateInitialBoxes, INITIAL_ITEMS, INITIAL_TRANSACTIONS } from '../data/initialData';
 import {
   supabase,
@@ -1589,8 +1588,9 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  // Export to Excel (.xlsx)
-  const exportToExcel = () => {
+  // Export to Excel (.xlsx) - Lazy loaded for ultra lightweight performance
+  const exportToExcel = async () => {
+    const XLSX = await import('xlsx');
     const wb = XLSX.utils.book_new();
 
     // 1. Sheet Items

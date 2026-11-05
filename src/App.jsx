@@ -1,19 +1,32 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { Warehouse3DView } from './components/Warehouse3DView';
-import { TotalItemsSummaryView } from './components/TotalItemsSummaryView';
 import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
-import { BoxQrModal } from './components/BoxQrModal';
-import { QuickScannerModal } from './components/QuickScannerModal';
 import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
-import { SupabaseModal } from './components/SupabaseModal';
-import { BoxManageModal } from './components/BoxManageModal';
-import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
-import { FeedbackIssuesView } from './components/FeedbackIssuesView';
 import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
+
+// Code-split heavy secondary views & modals for ultra lightweight initial load
+const TotalItemsSummaryView = lazy(() =>
+  import('./components/TotalItemsSummaryView').then((m) => ({ default: m.TotalItemsSummaryView }))
+);
+const FeedbackIssuesView = lazy(() =>
+  import('./components/FeedbackIssuesView').then((m) => ({ default: m.FeedbackIssuesView }))
+);
+const SupabaseModal = lazy(() =>
+  import('./components/SupabaseModal').then((m) => ({ default: m.SupabaseModal }))
+);
+const BoxManageModal = lazy(() =>
+  import('./components/BoxManageModal').then((m) => ({ default: m.BoxManageModal }))
+);
+const BoxQrModal = lazy(() =>
+  import('./components/BoxQrModal').then((m) => ({ default: m.BoxQrModal }))
+);
+const QuickScannerModal = lazy(() =>
+  import('./components/QuickScannerModal').then((m) => ({ default: m.QuickScannerModal }))
+);
 import {
   Box as BoxIcon,
   Boxes,
@@ -240,28 +253,47 @@ const AppContent = () => {
               onClearSearch={() => setSearchQuery('')}
             />
           )}
-          {appMode === 'summary' && <TotalItemsSummaryView />}
-          {appMode === 'issues' && <FeedbackIssuesView />}
+          {appMode === 'summary' && (
+            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Ringkasan Data...</div>}>
+              <TotalItemsSummaryView />
+            </Suspense>
+          )}
+          {appMode === 'issues' && (
+            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Saran &amp; Kendala...</div>}>
+              <FeedbackIssuesView />
+            </Suspense>
+          )}
         </main>
       </div>
 
       {/* Floating Modals for interacting with 3D or 2D Boxes */}
       <BoxDetailModal />
       <ItemModal />
-      <BoxQrModal />
-      <QuickScannerModal />
+
+      <Suspense fallback={null}>
+        <BoxQrModal />
+        <QuickScannerModal />
+      </Suspense>
 
       {/* Supabase Cloud Connection & Sync Modal */}
-      <SupabaseModal
-        isOpen={isSupabaseModalOpen}
-        onClose={() => setIsSupabaseModalOpen(false)}
-      />
+      {isSupabaseModalOpen && (
+        <Suspense fallback={null}>
+          <SupabaseModal
+            isOpen={isSupabaseModalOpen}
+            onClose={() => setIsSupabaseModalOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Box / Rack / People Management Modal */}
-      <BoxManageModal
-        isOpen={isBoxManageOpen}
-        onClose={() => setIsBoxManageOpen(false)}
-      />
+      {isBoxManageOpen && (
+        <Suspense fallback={null}>
+          <BoxManageModal
+            isOpen={isBoxManageOpen}
+            onClose={() => setIsBoxManageOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Global Floating Toast Notification (Multi-user concurrency & auto-sequence alerts) */}
       {systemNotification && (
