@@ -119,86 +119,12 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
     deckGroup.add(plank);
   }
 
-  // Floor outer perimeter border trim
-  const borderMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.8, flatShading: true });
-  const borderGeo = new THREE.BoxGeometry(deckWidth + 0.2, deckHeight + 0.02, 0.12);
-  const borderFront = new THREE.Mesh(borderGeo, borderMat);
-  borderFront.position.set(deckCenterX, deckHeight / 2, deckDepth / 2);
-  deckGroup.add(borderFront);
-  const borderBack = new THREE.Mesh(borderGeo, borderMat);
-  borderBack.position.set(deckCenterX, deckHeight / 2, -deckDepth / 2);
-  deckGroup.add(borderBack);
-
   scene.add(deckGroup);
-  disposables.push(plankGeo, deckMat, borderMat, borderGeo, deckGroup);
-
-  // =========================================================================
-  // 5. ANJING: Maskot Duduk Menemani di Atas Lantai Kayu
-  // =========================================================================
-  const dogMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.7, flatShading: true });
-  const dogCollarMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 });
-  disposables.push(dogMat, dogCollarMat);
-
-  const dogGroup = new THREE.Group();
-  dogGroup.position.set(deckCenterX - 1.2, deckHeight, 2.8);
-
-  // Dog Torso
-  const dogBodyGeo = new THREE.BoxGeometry(0.38, 0.34, 0.6);
-  const dogBody = new THREE.Mesh(dogBodyGeo, dogMat);
-  dogBody.position.y = 0.32;
-  dogBody.castShadow = true;
-  dogGroup.add(dogBody);
-  disposables.push(dogBodyGeo, dogBody);
-
-  // Dog Head
-  const dogHead = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), dogMat);
-  dogHead.position.set(0, 0.48, 0.26);
-  dogGroup.add(dogHead);
-  disposables.push(dogHead);
-
-  // Collar
-  const dogCollar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.3), dogCollarMat);
-  dogCollar.position.set(0, 0.38, 0.24);
-  dogGroup.add(dogCollar);
-  disposables.push(dogCollar);
-
-  // Snout & black nose
-  const dogSnout = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.18), dogMat);
-  dogSnout.position.set(0, 0.44, 0.42);
-  const darkNose = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, 0.06, 0.06),
-    new THREE.MeshStandardMaterial({ color: 0x18181b })
-  );
-  darkNose.position.set(0, 0.48, 0.52);
-  dogGroup.add(dogSnout, darkNose);
-  disposables.push(dogSnout, darkNose);
-
-  // Dog Ears
-  const dogEarGeo = new THREE.ConeGeometry(0.07, 0.18, 4);
-  const dEarL = new THREE.Mesh(dogEarGeo, dogMat);
-  dEarL.position.set(-0.1, 0.58, 0.22);
-  dEarL.rotation.z = -0.2;
-  const dEarR = new THREE.Mesh(dogEarGeo, dogMat);
-  dEarR.position.set(0.1, 0.58, 0.22);
-  dEarR.rotation.z = 0.2;
-  dogGroup.add(dEarL, dEarR);
-  disposables.push(dogEarGeo, dEarL, dEarR);
-
-  // Wagging Tail
-  const dTailGeo = new THREE.CylinderGeometry(0.03, 0.06, 0.32, 4);
-  const dTail = new THREE.Mesh(dTailGeo, dogMat);
-  dTail.position.set(0, 0.4, -0.32);
-  dTail.rotation.x = -0.65;
-  dogGroup.add(dTail);
-  disposables.push(dTailGeo, dTail);
-
-  scene.add(dogGroup);
-  disposables.push(dogGroup);
+  disposables.push(plankGeo, deckMat, deckGroup);
 
   return {
-    update(elapsed) {
-      // Meadow Mascot Dog tail wagging
-      dTail.rotation.y = Math.sin(elapsed * 14) * 0.55;
+    update() {
+      // Scene is static and peaceful
     },
     dispose() {
       disposables.forEach((item) => {
