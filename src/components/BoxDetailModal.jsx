@@ -165,6 +165,11 @@ function BoxDetail({ box }) {
         movingItems.forEach(i => next.delete(i.id));
         return next;
       });
+      showNotification?.(
+        `⚠️ PENGINGAT WAJIB: ${movingItems.length} item berhasil dipindah ke BOX #${destBox.boxNumber}. Harap cetak kartu baru atau tulis Place baru di kartu fisik lama!`,
+        'warning',
+        9000
+      );
       setMovingItems(null);
     } catch (err) {
       console.error('Error saat memindahkan item:', err);

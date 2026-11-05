@@ -8,7 +8,8 @@ import {
   Check, 
   ListFilter,
   Eye,
-  Layers
+  Layers,
+  AlertTriangle
 } from 'lucide-react';
 import { InventoryCard } from './InventoryCard';
 
@@ -117,6 +118,19 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
               <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
+
+        {/* Reminder Wajib Banner in Print Modal */}
+        <div className="no-print bg-amber-50 border-b border-amber-300 px-5 py-2.5 flex items-center justify-between text-xs text-amber-950 font-bold shrink-0">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>PENGINGAT WAJIB:</strong> Tempelkan kartu sampel cetak ini pada fisik barang, ATAU tambahkan keterangan <strong>Kode Sample & Place</strong> di kartu lama jika tidak mencetak kartu baru!
+            </span>
+          </div>
+          <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase shrink-0">
+            Wajib
+          </span>
         </div>
 
         {/* Checklist Selection Drawer (Hidden when printing) */}

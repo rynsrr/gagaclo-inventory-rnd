@@ -14,7 +14,9 @@ import {
   AlertTriangle,
   Calendar,
   Info,
-  Sparkles
+  Sparkles,
+  Edit3,
+  CheckCircle2
 } from 'lucide-react';
 
 // Every row on the sample card is mandatory. "NA" is an accepted value when
@@ -84,6 +86,8 @@ const ItemModalContent = () => {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [savedItemReminder, setSavedItemReminder] = useState(null);
+  const [itemToPrintFromReminder, setItemToPrintFromReminder] = useState(null);
 
   const isDuplicate = Boolean(itemModalConfig.isDuplicate);
   const isEditing = Boolean(itemModalConfig.item && !isDuplicate);
@@ -371,12 +375,27 @@ const ItemModalContent = () => {
     };
 
     try {
+      let savedResult;
       if (isEditing) {
-        await updateItem(itemModalConfig.item.id, payload);
+        savedResult = await updateItem(itemModalConfig.item.id, payload);
       } else {
-        await addItem(payload);
+        savedResult = await addItem(payload);
       }
-      setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
+
+      // Tampilkan reminder wajib: Print Card Sample ATAU Tulis Kode & Place di Kartu Lama
+      setSavedItemReminder({
+        item: savedResult || { ...payload, id: 'temp-' + Date.now() },
+        boxNumber: boxNum,
+        place: placeClean,
+        kode: finalKode,
+        style: styleTrim,
+      });
+
+      showNotification?.(
+        `⚠️ PENGINGAT WAJIB: Item tersimpan! Segera cetak kartu sample baru ATAU tuliskan Kode (${finalKode}) & Place di kartu lama!`,
+        'warning',
+        9000
+      );
     } catch (err) {
       console.error('Error saat menyimpan item:', err);
       setSubmitError(err?.message || 'Gagal menyimpan perubahan. Silakan coba lagi.');
@@ -906,6 +925,38 @@ const ItemModalContent = () => {
             </form>
           </div>
 
+          {/* Reminder Wajib Card (Always visible before saving) */}
+          <div className="no-print w-full max-w-[580px] mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-xl text-amber-950 text-xs shadow-xs">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1.5 bg-amber-500 text-white rounded-lg shrink-0 mt-0.5">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-1 flex-wrap">
+                  <span className="font-black text-amber-950 uppercase tracking-wide">
+                    REMINDER WAJIB BAGIAN SAMPLE:
+                  </span>
+                  <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] font-black rounded uppercase">
+                    WAJIB
+                  </span>
+                </div>
+                <p className="mt-1 text-slate-800 leading-relaxed font-semibold">
+                  Setelah disimpan, Anda <strong>WAJIB</strong> lakukan salah satu:
+                </p>
+                <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                  <div className="p-2 bg-white/95 rounded-lg border border-amber-300 flex items-center gap-1.5 font-bold text-blue-900 shadow-2xs">
+                    <Printer className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>1. Cetak Card Sample Baru (KTP)</span>
+                  </div>
+                  <div className="p-2 bg-white/95 rounded-lg border border-amber-300 flex items-center gap-1.5 font-bold text-amber-950 shadow-2xs">
+                    <Edit3 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>2. ATAU Tulis Kode & Place di Kartu Lama</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Subtitle helper */}
           {currentBoxObj && (
             <p className="no-print text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
@@ -962,11 +1013,111 @@ const ItemModalContent = () => {
 
       </div>
 
+      {/* Modal Pengingat Wajib: Print Card Sample / Update Kartu Lama */}
+      {savedItemReminder && (
+        <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in no-print">
+          <div className="bg-white rounded-2xl shadow-2xl border-2 border-amber-500 w-full max-w-md overflow-hidden flex flex-col p-5 animate-scale-up">
+            
+            {/* Header Icon */}
+            <div className="flex items-center gap-3 border-b border-amber-200 pb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                <AlertTriangle className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
+                  <span>PENGINGAT WAJIB!</span>
+                  <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] font-black rounded uppercase">WAJIB</span>
+                </h3>
+                <p className="text-[11px] font-bold text-amber-700">
+                  Print Kartu Baru atau Update Kartu Lama
+                </p>
+              </div>
+            </div>
+
+            {/* Info Item */}
+            <div className="my-3.5 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-semibold">Kode Sample:</span>
+                <span className="font-mono font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-sm">
+                  {savedItemReminder.kode}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-semibold">Place / Lokasi:</span>
+                <span className="font-bold text-slate-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                  {savedItemReminder.place}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-semibold">Style / Barang:</span>
+                <span className="font-bold text-slate-900 truncate max-w-[200px]" title={savedItemReminder.style}>
+                  {savedItemReminder.style}
+                </span>
+              </div>
+            </div>
+
+            {/* Pesan Instruksi Wajib */}
+            <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-950 text-xs leading-relaxed space-y-1.5">
+              <p className="font-black text-amber-900 flex items-center gap-1">
+                <span>⚠️</span>
+                <span>INSTRUKSI WAJIB BAGIAN GUDANG / R&D:</span>
+              </p>
+              <p className="font-medium text-slate-800 text-[11.5px]">
+                Item telah tersimpan. Anda <strong>WAJIB</strong> lakukan salah satu:
+              </p>
+              <div className="space-y-1.5 text-slate-800 font-semibold text-[11px] pl-1">
+                <div className="flex items-start gap-1.5">
+                  <span className="text-blue-600 font-black">1.</span>
+                  <span><strong>CETAK CARD SAMPLE BARU</strong> (Ukuran KTP) untuk fisik sampel ini, <em>ATAU</em></span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-amber-700 font-black">2.</span>
+                  <span><strong>TULISKAN MANUAL</strong> keterangan <strong>Kode Sample ({savedItemReminder.kode})</strong> dan <strong>Place ({savedItemReminder.place})</strong> pada kartu lama!</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tombol Aksi */}
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setItemToPrintFromReminder(savedItemReminder.item);
+                }}
+                className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-black shadow-md shadow-blue-900/20 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Printer className="w-4 h-4 text-amber-300" />
+                <span>🖨️ Cetak Card Sample Sekarang (Ukuran KTP)</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setSavedItemReminder(null);
+                  setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
+                }}
+                className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold border border-slate-300 transition cursor-pointer text-center"
+              >
+                ✓ Selesai (Sudah Ditulis di Kartu Lama)
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Multi-Card A4 Print Modal */}
-      {showPrintModal && (
+      {(showPrintModal || itemToPrintFromReminder) && (
         <CardPrintModal 
-          itemsToPrint={[formData]} 
-          onClose={() => setShowPrintModal(false)} 
+          itemsToPrint={[itemToPrintFromReminder || formData]} 
+          onClose={() => {
+            setShowPrintModal(false);
+            if (itemToPrintFromReminder) {
+              setItemToPrintFromReminder(null);
+              setSavedItemReminder(null);
+              setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
+            }
+          }} 
         />
       )}
     </div>
