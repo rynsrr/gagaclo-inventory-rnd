@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
-import { RACK_GROUPS, DEFAULT_PLACES } from '../data/simpleData';
 import { CardPrintModal } from './CardPrintModal';
-import { SuggestionInput } from './SuggestionInput';
 import { supabase } from '../lib/supabase';
 import { resolveUniqueCode, getNextSampleCode } from '../utils/sequenceResolver';
 import { 
@@ -169,39 +167,6 @@ const ItemModalContent = () => {
     return resolveUniqueCode(formData.kode, items, currentItemId).finalCode;
   }, [formData.kode, items, currentItemId, existingItemWithSameCode]);
 
-  // Dynamic rack groupings from live `boxes`
-  const dynamicRackGroups = React.useMemo(() => {
-    const validBoxes = [...boxes]
-      .filter((b) => Number(b.boxNumber) < 900000 && Number(b.boxNumber) > 0)
-      .sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
-
-    const groupMap = new Map();
-
-    validBoxes.forEach((b) => {
-      const rackName = b.rackName || (Number(b.rackId) === 0 ? 'LANTAI' : 'RACK 1');
-      if (!groupMap.has(rackName)) {
-        groupMap.set(rackName, []);
-      }
-      const placeVal = `BOX ${b.boxNumber} (${rackName} - ${b.picName || 'Royan'})`;
-      groupMap.get(rackName).push({
-        boxNumber: b.boxNumber,
-        value: placeVal,
-        label: `BOX #${b.boxNumber} — PIC: ${b.picName || 'Royan'}`,
-      });
-    });
-
-    return Array.from(groupMap.entries()).map(([name, bList]) => ({
-      name,
-      boxes: bList,
-    }));
-  }, [boxes]);
-
-  const allKnownPlaces = React.useMemo(() => {
-    const set = new Set();
-    dynamicRackGroups.forEach(rg => rg.boxes.forEach(b => set.add(b.value)));
-    return set;
-  }, [dynamicRackGroups]);
-
   // Clear a field's error as soon as the user fills it (including with "NA").
   useEffect(() => {
     setErrors((prev) => {
@@ -236,6 +201,39 @@ const ItemModalContent = () => {
       boxNumber: boxNum,
     }));
   };
+
+  // Handle Box Number change directly without heavy 72-option select
+  const handleBoxNumberChange = (num) => {
+    const boxNum = Math.max(1, Math.min(72, Number(num) || 1));
+    const targetBox = boxes.find(b => Number(b.boxNumber) === boxNum);
+    const properPlace = targetBox
+      ? `BOX ${targetBox.boxNumber} (${targetBox.rackName || 'LANTAI'} - ${targetBox.picName || 'Royan'})`
+      : `BOX ${boxNum}`;
+    
+    setFormData(prev => ({
+      ...prev,
+      place: properPlace,
+      boxNumber: boxNum,
+    }));
+  };
+
+  // Keyboard shortcut: Ctrl/Cmd + Enter to Save, Escape to close
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        const form = document.getElementById('direct-card-form');
+        if (form && !isSubmitting && !existingItemWithSameCode) {
+          form.requestSubmit();
+        }
+      }
+      if (e.key === 'Escape') {
+        setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isSubmitting, existingItemWithSameCode, setItemModalConfig]);
 
   // Handle Date picker selection from calendar popup
   const handleDatePickerChange = (e) => {
@@ -407,597 +405,578 @@ const ItemModalContent = () => {
   const currentBoxObj = boxes.find(b => Number(b.boxNumber) === Number(formData.boxNumber));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
-      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-2xl overflow-hidden flex flex-col max-h-[96vh] ${showPrintModal ? 'no-print' : ''}`}>
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-fade-in print:p-0 print:bg-transparent">
+      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh] ${showPrintModal ? 'no-print' : ''}`}>
         
-        {/* Modal Header */}
-        <div className="no-print inventory-dialog-heading px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase">
-                  {isDuplicate 
-                    ? `Copy / Duplikat Item (Box #${formData.boxNumber})` 
-                    : (isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`)}
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Ketik langsung pada baris kartu sampel di bawah ini:
-              </p>
+        {/* Modal Header (Compact) */}
+        <div className="no-print inventory-dialog-heading px-4 py-2.5 flex items-center justify-between border-b border-slate-800 bg-slate-900 text-white shrink-0">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-500 text-white text-[10px] font-black shrink-0">
+              KTP
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-xs sm:text-sm font-black tracking-tight uppercase truncate">
+                {isDuplicate 
+                  ? `Copy / Duplikat Item (Box #${formData.boxNumber})` 
+                  : (isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`)}
+              </h3>
             </div>
-          </div>
-          <button
-            onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-            className="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-200 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Error / Warning Alert message */}
-        {submitError && (
-          <div className="mx-4 mt-3 px-3.5 py-2.5 rounded-xl border-2 text-xs font-bold flex items-center gap-2.5 shrink-0 animate-fade-in shadow-xs bg-rose-50 border-rose-400 text-rose-950">
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-            <span className="leading-snug flex-1">{submitError}</span>
-            {existingItemWithSameCode && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFormData(prev => ({ ...prev, kode: autoResolvedCode }));
-                  setSubmitError(null);
-                }}
-                className="no-print shrink-0 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-black rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Pakai Kode {autoResolvedCode}</span>
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Modal Body: Direct Interactive Card (Enlarged for Optimal Visibility) */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
-
-          {/* Hint: every column is mandatory, use NA when there is no information */}
-          <div className="no-print w-full max-w-[580px] mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
-            <Info className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" aria-hidden="true" />
-            <p>
-              <strong>Semua kolom wajib diisi.</strong> Jika tidak ada informasi, isi dengan{' '}
-              <span className="rounded border border-amber-300 bg-white px-1 font-mono font-black">NA</span>.
-              {' '}Tanggal Sample diisi tanggal sample (contoh <span className="font-mono">5-Nov-2026</span>) atau{' '}
-              <span className="rounded border border-amber-300 bg-white px-1 font-mono font-black">NA</span>.
-            </p>
+            <span className="hidden sm:inline-flex items-center text-[11px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-600/50 shrink-0">
+              BOX #{formData.boxNumber} ({currentBoxObj?.rackName || 'LANTAI'} - {currentBoxObj?.picName || 'Royan'})
+            </span>
           </div>
 
-          {/* Validation Alert */}
-          {Object.keys(errors).length > 0 && (
-            <div className="no-print w-full max-w-[580px] mb-3 p-3 bg-rose-50 border-2 border-rose-400 rounded-xl text-rose-800 text-xs flex items-start space-x-2.5 shadow-sm animate-fade-in">
-              <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
-              <div>
-                <p className="font-bold text-rose-900">Kolom Wajib Belum Diisi (*):</p>
-                <p className="font-semibold mt-0.5 text-rose-700">
-                  {Object.values(errors).filter(Boolean).join(' • ')}
-                </p>
-                <p className="mt-1 text-rose-700">Jika tidak ada informasi, isi dengan <strong>NA</strong>.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Notice: Kode Sudah Ada -> TIDAK BISA SIMPAN */}
-          {existingItemWithSameCode && (
-            <div className="no-print w-full max-w-[580px] mb-3 p-3.5 bg-rose-50 border-2 border-rose-500 rounded-xl text-rose-950 text-xs shadow-md animate-fade-in">
-              <div className="flex items-start space-x-2.5">
-                <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5 animate-bounce" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <p className="font-black text-rose-900 text-sm">
-                      ⛔ KODE SUDAH ADA — TIDAK BISA SIMPAN!
-                    </p>
-                    <span className="px-2 py-0.5 text-[10px] font-black bg-rose-600 text-white rounded-full uppercase tracking-wider">
-                      Kode Tidak Boleh Sama
-                    </span>
-                  </div>
-                  <p className="mt-1 text-rose-800 leading-relaxed font-semibold">
-                    Kode <span className="font-mono font-black text-rose-950 bg-rose-200/90 px-1.5 py-0.5 rounded border border-rose-400">{formData.kode}</span> sudah terdaftar di <strong>BOX #{existingItemWithSameCode.boxNumber || '?'}</strong> ({existingItemWithSameCode.style || existingItemWithSameCode.name || 'Barang lain'}). Tombol simpan dinonaktifkan sampai kode diubah.
-                  </p>
-                  <div className="mt-2.5 p-2 bg-white rounded-lg border-2 border-rose-300 flex items-center justify-between gap-2 flex-wrap shadow-2xs">
-                    <div className="text-[11px] text-slate-800 font-semibold">
-                      💡 Kode unik berikutnya yang tersedia: <strong className="font-mono text-xs text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">{autoResolvedCode}</strong>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, kode: autoResolvedCode }));
-                        if (submitError) setSubmitError(null);
-                      }}
-                      className="px-3.5 py-1.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Pakai Kode {autoResolvedCode} ➔</span>
-                    </button>
-                  </div>
-                  <p className="mt-1.5 text-[10px] text-rose-700 italic">
-                    * Klik tombol <strong>"Pakai Kode {autoResolvedCode}"</strong> di atas agar tombol Simpan kembali aktif.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* THE PHYSICAL SAMPLE CARD (EXPANDED PREVIEW CONTAINER) */}
-          <div className="w-full max-w-[580px] bg-white p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-300 ring-4 ring-slate-200/60 box-border">
-            <form onSubmit={handleSubmit} id="direct-card-form">
-              
-              <table className="w-full border-collapse border-2 border-black text-xs sm:text-sm leading-normal text-left">
-                <tbody>
-                  
-                  {/* Track */}
-                  <tr className="border-b-2 border-black">
-                    <td className="w-[28%] py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Track <span className="text-rose-500">*</span>
-                    </td>
-                    <td className="p-0 align-middle">
-                      <SuggestionInput
-                        value={formData.track}
-                        onChange={(val) => setFormData(prev => ({ ...prev, track: val }))}
-                        suggestions={suggestions.track || []}
-                        placeholder="DHL : 5475890895 / NA *"
-                        onRemoveOption={(val) => removeSuggestion && removeSuggestion('track', val)}
-                        className="w-full"
-                        inputClassName={`w-full py-2 px-3 text-xs sm:text-sm font-medium text-black focus:outline-none transition font-mono bg-transparent ${
-                          errors.track ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60 placeholder:text-slate-300'
-                        }`}
-                        title="Wajib diisi. Pilih tracking dari list, ketik baru, atau isi NA jika tidak ada info"
-                      />
-                    </td>
-                  </tr>
-
-                  {/* Tanggal Sample (Klik Kalender ATAU Tulis Manual / NA) */}
-                  <tr className="border-b-2 border-black">
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Tanggal Sample <span className="text-rose-500">*</span>
-                    </td>
-                    <td className="p-0 align-middle">
-                      <div className={`flex items-center w-full relative ${errors.tanggal ? 'bg-rose-50' : ''}`}>
-                        <input
-                          type="text"
-                          placeholder="5-Nov-2026 / NA *"
-                          value={formData.tanggal}
-                          onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                          className={`flex-1 py-2 px-3 text-xs sm:text-sm font-semibold text-black focus:outline-none transition bg-transparent ${
-                            errors.tanggal ? 'placeholder:text-rose-400' : 'focus:bg-blue-50/60'
-                          }`}
-                          title="Tanggal sample wajib diisi. Tulis manual, klik ikon kalender, atau isi NA jika tidak ada info"
-                        />
-                        {/* Native Calendar Picker Trigger */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            try {
-                              hiddenDateRef.current?.showPicker();
-                            } catch (err) {
-                              hiddenDateRef.current?.focus();
-                            }
-                          }}
-                          className="no-print p-1.5 mr-2 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
-                          title="Pilih tanggal dari kalender"
-                        >
-                          <Calendar className="w-4 h-4 text-blue-600" />
-                        </button>
-                        <input
-                          ref={hiddenDateRef}
-                          type="date"
-                          onChange={handleDatePickerChange}
-                          className="sr-only"
-                          tabIndex={-1}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* Kode & Buyer No (1 Baris Rapi, No Overlap) */}
-                  <tr className="border-b-2 border-black">
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Kode <span className="text-rose-500">*</span>
-                    </td>
-                    <td className="p-0 align-middle">
-                      <div className="grid grid-cols-2 gap-0 items-center w-full">
-                        {/* Kolom 1: Kode Barang (50%) */}
-                        <div className={`flex items-center min-w-0 border-r-2 border-black px-3 py-1.5 transition ${
-                          existingItemWithSameCode ? 'bg-amber-50/90' : ''
-                        }`}>
-                          <input
-                            type="text"
-                            placeholder="SAMPLE-00001"
-                            value={formData.kode}
-                            onChange={(e) => {
-                              setFormData({ ...formData, kode: e.target.value.toUpperCase() });
-                              if (submitError) setSubmitError(null);
-                            }}
-                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-black font-mono focus:outline-none uppercase transition bg-transparent ${
-                              existingItemWithSameCode 
-                                ? 'text-amber-900 font-bold' 
-                                : errors.kode ? 'bg-rose-50 placeholder:text-rose-400 text-black' : 'text-black focus:bg-blue-50/60'
-                            }`}
-                          />
-                          {existingItemWithSameCode && (
-                            <span 
-                              className="no-print mr-1 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shrink-0 select-none cursor-help shadow-2xs"
-                              title={`Kode sudah ada di BOX #${existingItemWithSameCode.boxNumber}! Kode tidak boleh sama.`}
-                            >
-                              Sudah Ada
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : getNextSampleCode(items) }));
-                              if (submitError) setSubmitError(null);
-                            }}
-                            className={`no-print shrink-0 p-1 ml-1 rounded-lg border transition flex items-center justify-center cursor-pointer shadow-2xs ${
-                              existingItemWithSameCode
-                                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 animate-pulse'
-                                : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
-                            }`}
-                            title={existingItemWithSameCode ? `Ganti ke kode baru yang unik (${autoResolvedCode})` : "Generate nomor urut otomatis berikutnya"}
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        {/* Kolom 2: Buyer No (50% - Wajib Diisi) */}
-                        <div className={`flex items-center min-w-0 px-2.5 py-1.5 gap-1.5 transition rounded ${
-                          errors.buyerNo ? 'bg-rose-50 ring-2 ring-rose-500' : ''
-                        }`}>
-                          <span className="text-[11px] font-bold text-slate-800 shrink-0 select-none">
-                            Buyer <span className="text-rose-600 font-black">*</span>:
-                          </span>
-                          <SuggestionInput
-                            value={formData.buyerNo}
-                            onChange={(val) => {
-                              setFormData(prev => ({ ...prev, buyerNo: val.toUpperCase() }));
-                              if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
-                            }}
-                            suggestions={suggestions.buyerNo || []}
-                            placeholder="No. Buyer *"
-                            uppercase
-                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('buyerNo', val)}
-                            className="min-w-0 flex-1"
-                            inputClassName={`w-full py-0.5 text-xs sm:text-sm font-bold font-mono focus:outline-none transition bg-transparent ${
-                              errors.buyerNo ? 'text-rose-900 placeholder:text-rose-400' : 'text-black focus:bg-blue-50/60 placeholder:text-slate-400'
-                            }`}
-                            title="Nomor Buyer / Buyer PO (Pilih dari list atau ketik baru)"
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* Jenis Sample (ORI / DEVELOP / PPS) */}
-                  <tr className="border-b-2 border-black">
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80 leading-tight">
-                      <div>Jenis Sample <span className="text-rose-500">*</span></div>
-                      <div className="text-[10px] font-normal text-slate-500 mt-0.5">*(Centang salah satu)</div>
-                    </td>
-                    <td className="py-1.5 px-3 align-middle">
-                      <div className="flex items-center gap-2">
-                        {['ORI', 'DEVELOP', 'PPS'].map((type) => {
-                          const isSelected = (formData.jenisSample || 'DEVELOP') === type;
-                          return (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() => setFormData({ ...formData, jenisSample: type })}
-                              className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition border cursor-pointer ${
-                                isSelected
-                                  ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
-                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
-                              }`}
-                            >
-                              {isSelected && <span className="mr-1 text-amber-300 font-bold">✓</span>}
-                              {type}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* Deskripsi (3 Kolom: Nama/Nomer Style *, Sample No *, & Size *) */}
-                  <tr className="border-b-2 border-black">
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Deskripsi <span className="text-rose-500">*</span>
-                    </td>
-                    <td className="p-0 align-middle">
-                      <div className="grid grid-cols-12 gap-1.5 p-1.5">
-                        {/* Kolom 1: Nama / Nomer Style (Wajib) */}
-                        <div className="col-span-5">
-                          <SuggestionInput
-                            value={formData.style}
-                            onChange={(val) => {
-                              setFormData(prev => ({ ...prev, style: val }));
-                              if (errors.style) setErrors(prev => ({ ...prev, style: null }));
-                            }}
-                            suggestions={suggestions.style || []}
-                            placeholder="Nama/No. Style *"
-                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('style', val)}
-                            className="w-full"
-                            inputClassName={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-bold text-black border focus:outline-none rounded-lg transition ${
-                              errors.style ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
-                            }`}
-                            title="Nama / No. Style (Pilih dari list atau ketik baru)"
-                          />
-                        </div>
-
-                        {/* Kolom 2: Sample Number (Wajib Diisi) */}
-                        <div className="col-span-4">
-                          <SuggestionInput
-                            value={formData.sampleNo}
-                            onChange={(val) => {
-                              setFormData(prev => ({ ...prev, sampleNo: val.toUpperCase() }));
-                              if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
-                            }}
-                            suggestions={suggestions.sampleNo || []}
-                            placeholder="SAMPLE NO *"
-                            uppercase
-                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('sampleNo', val)}
-                            className="w-full"
-                            inputClassName={`w-full py-1.5 px-2.5 text-xs sm:text-sm font-black uppercase font-mono border focus:outline-none rounded-lg transition ${
-                              errors.sampleNo 
-                                ? 'border-rose-500 bg-rose-50 text-rose-900 ring-2 ring-rose-500 placeholder:text-rose-400' 
-                                : 'text-black border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
-                            }`}
-                            title="Nomor Sample (Pilih dari list atau ketik baru)"
-                          />
-                        </div>
-
-                        {/* Kolom 3: Size (Wajib) */}
-                        <div className="col-span-3">
-                          <SuggestionInput
-                            value={formData.size}
-                            onChange={(val) => {
-                              setFormData(prev => ({ ...prev, size: val.toUpperCase() }));
-                              if (errors.size) setErrors(prev => ({ ...prev, size: null }));
-                            }}
-                            suggestions={suggestions.size || []}
-                            placeholder="SIZE *"
-                            uppercase
-                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('size', val)}
-                            className="w-full"
-                            inputClassName={`w-full py-1.5 px-2 text-xs sm:text-sm font-black uppercase text-black border focus:outline-none rounded-lg transition text-center ${
-                              errors.size ? 'border-rose-500 bg-rose-50 placeholder:text-rose-400' : 'border-slate-200 focus:border-blue-500 focus:bg-blue-50/50 placeholder:text-slate-400'
-                            }`}
-                            title="Size (Pilih dari list atau ketik baru)"
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* Color (Wajib Isi) */}
-                  <tr className="border-b-2 border-black">
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Color <span className="text-rose-500">*</span>
-                    </td>
-                    <td className="p-0 align-middle">
-                      <SuggestionInput
-                        value={formData.color}
-                        onChange={(val) => {
-                          setFormData(prev => ({ ...prev, color: val.toUpperCase() }));
-                          if (errors.color) setErrors(prev => ({ ...prev, color: null }));
-                        }}
-                        suggestions={suggestions.color || []}
-                        placeholder="Warna / Color * (Wajib)"
-                        uppercase
-                        onRemoveOption={(val) => removeSuggestion && removeSuggestion('color', val)}
-                        className="w-full"
-                        inputClassName={`w-full py-2 px-3 text-xs sm:text-sm font-bold text-black focus:outline-none transition bg-transparent ${
-                          errors.color ? 'bg-rose-50 placeholder:text-rose-400 ring-2 ring-rose-500' : 'focus:bg-blue-50/60 placeholder:text-slate-400'
-                        }`}
-                        title="Warna / Color (Pilih dari list atau ketik baru)"
-                      />
-                    </td>
-                  </tr>
-
-                  {/* Jumlah & Satuan (1 Baris Hemat Tempat) */}
-                  <tr className="border-b-2 border-black">
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Jumlah <span className="text-rose-500">*</span>
-                    </td>
-                    <td className="p-0 align-middle">
-                      <div className="grid grid-cols-2 gap-0 items-center w-full">
-                        <div className={`flex items-center min-w-0 border-r-2 border-black px-3 py-1.5 ${errors.jumlah ? 'bg-rose-50' : ''}`}>
-                          <input
-                            type="number"
-                            min="1"
-                            value={formData.jumlah}
-                            onChange={(e) => setFormData({ ...formData, jumlah: Number(e.target.value) || 0 })}
-                            className="w-full py-0.5 text-xs sm:text-sm font-black text-black focus:outline-none focus:bg-blue-50/60 transition bg-transparent font-mono"
-                            placeholder="Qty *"
-                            title="Jumlah wajib diisi (minimal 1)"
-                          />
-                        </div>
-                        <div className={`flex items-center min-w-0 px-3 py-1.5 ${errors.satuan ? 'bg-rose-50' : ''}`}>
-                          <SuggestionInput
-                            value={formData.satuan}
-                            onChange={(val) => setFormData(prev => ({ ...prev, satuan: val.toUpperCase() }))}
-                            suggestions={suggestions.satuan || []}
-                            placeholder="Satuan / NA *"
-                            uppercase
-                            onRemoveOption={(val) => removeSuggestion && removeSuggestion('satuan', val)}
-                            className="w-full"
-                            inputClassName="w-full py-0.5 text-xs sm:text-sm font-bold uppercase text-black focus:outline-none focus:bg-blue-50/60 transition placeholder:text-slate-400 bg-transparent"
-                            title="Satuan wajib diisi. Pilih dari list, ketik baru, atau isi NA jika tidak ada info"
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* Place */}
-                  <tr>
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Place <span className="text-rose-500">*</span>
-                    </td>
-                    <td className="p-0 align-middle">
-                      <select
-                        value={formData.place}
-                        onChange={(e) => handleBoxSelect(e.target.value)}
-                        className={`w-full py-2 px-3 text-xs sm:text-sm font-black text-black uppercase focus:outline-none focus:bg-blue-50/60 cursor-pointer ${
-                          errors.place ? 'bg-rose-50' : 'bg-transparent'
-                        }`}
-                        title="Lokasi penyimpanan wajib dipilih"
-                      >
-                        {!allKnownPlaces.has(formData.place) && formData.place && (
-                          <option value={formData.place}>{formData.place}</option>
-                        )}
-                        {dynamicRackGroups.map((rg) => (
-                          <optgroup key={rg.name} label={`=== ${rg.name} ===`}>
-                            {rg.boxes.map((b) => (
-                              <option key={b.value} value={b.value}>
-                                {b.value}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-
-                </tbody>
-              </table>
-
-              {/* Quick Preset Chips for Ultra-Fast Selection */}
-              <div className="no-print mt-3 pt-2.5 border-t border-slate-200/80 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="flex items-center gap-1 font-bold text-slate-700">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    Pintasan Cepat Size & Warna:
-                  </span>
-                  <span className="text-[10px] text-slate-400">klik untuk isi instan</span>
-                </div>
-                
-                {/* Size Chips */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">Size:</span>
-                  {['S', 'M', 'L', 'XL', '2XL', 'FREE SIZE'].map((sz) => (
-                    <button
-                      key={sz}
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, size: sz }));
-                        if (errors.size) setErrors(prev => ({ ...prev, size: null }));
-                      }}
-                      className={`px-2 py-0.5 rounded text-[11px] font-bold border transition cursor-pointer ${
-                        formData.size === sz
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
-                      }`}
-                    >
-                      {sz}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Popular Color Chips */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">Color:</span>
-                  {['BLACK', 'WHITE', 'NAVY', 'GREY', 'SAGE', 'BEIGE'].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, color: c }));
-                        if (errors.color) setErrors(prev => ({ ...prev, color: null }));
-                      }}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer ${
-                        formData.color === c
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </form>
-          </div>
-
-          {/* Reminder Wajib Card (Always visible before saving) */}
-          <div className="no-print w-full max-w-[580px] mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-xl text-amber-950 text-xs shadow-xs">
-            <div className="flex items-start gap-2.5">
-              <div className="p-1.5 bg-amber-500 text-white rounded-lg shrink-0 mt-0.5">
-                <AlertTriangle className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-1 flex-wrap">
-                  <span className="font-black text-amber-950 uppercase tracking-wide">
-                    REMINDER WAJIB BAGIAN SAMPLE:
-                  </span>
-                  <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] font-black rounded uppercase">
-                    WAJIB
-                  </span>
-                </div>
-                <p className="mt-1 text-slate-800 leading-relaxed font-semibold">
-                  Setelah disimpan, Anda <strong>WAJIB</strong> lakukan salah satu:
-                </p>
-                <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
-                  <div className="p-2 bg-white/95 rounded-lg border border-amber-300 flex items-center gap-1.5 font-bold text-blue-900 shadow-2xs">
-                    <Printer className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span>1. Cetak Card Sample Baru (KTP)</span>
-                  </div>
-                  <div className="p-2 bg-white/95 rounded-lg border border-amber-300 flex items-center gap-1.5 font-bold text-amber-950 shadow-2xs">
-                    <Edit3 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>2. ATAU Tulis Kode & Place di Kartu Lama</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Subtitle helper */}
-          {currentBoxObj && (
-            <p className="no-print text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
-              <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>Tersimpan di: <strong className="text-slate-700">{currentBoxObj.rackName}</strong> • PIC: <strong className="text-slate-700">{currentBoxObj.picName}</strong></span>
-            </p>
-          )}
-
-        </div>
-
-        {/* Modal Footer Actions */}
-        <div className="no-print bg-white px-5 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setShowPrintModal(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-            title="Cetak Multiple Card Ukuran KTP dalam 1 Lembar A4"
-          >
-            <Printer className="w-4 h-4 text-amber-400" />
-            <span>Cetak A4 (Multi-KTP)</span>
-          </button>
-
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowPrintModal(true)}
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer shadow-2xs"
+              title="Cetak Multiple Card Ukuran KTP dalam 1 Lembar A4"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Cetak Multi-KTP</span>
+            </button>
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-              className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold transition cursor-pointer"
+              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Top Warning Banner: Duplicate Code Warning OR Mandatory Reminder */}
+        {existingItemWithSameCode ? (
+          <div className="bg-rose-600 text-white px-3.5 py-1.5 text-xs font-bold flex items-center justify-between gap-2 shrink-0 animate-fade-in shadow-sm">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <AlertCircle className="w-4 h-4 text-amber-300 shrink-0 animate-bounce" />
+              <span className="truncate">
+                ⛔ KODE SUDAH ADA di BOX #{existingItemWithSameCode.boxNumber}! Ubah kode agar bisa disimpan.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, kode: autoResolvedCode }));
+                if (submitError) setSubmitError(null);
+              }}
+              className="px-2.5 py-0.5 bg-white hover:bg-amber-100 text-rose-700 text-xs font-black rounded transition shrink-0 shadow-xs flex items-center gap-1 cursor-pointer"
+            >
+              <Sparkles className="w-3 h-3 text-amber-600" />
+              <span>Pakai Kode {autoResolvedCode} ➔</span>
+            </button>
+          </div>
+        ) : submitError ? (
+          <div className="bg-rose-50 border-b border-rose-300 text-rose-900 px-3.5 py-1 text-xs font-bold flex items-center gap-2 shrink-0">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <span className="truncate">{submitError}</span>
+          </div>
+        ) : (
+          <div className="bg-amber-500/10 border-b border-amber-300/60 text-amber-950 px-3 py-1 text-[11px] font-semibold flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>
+                <strong>REMINDER WAJIB:</strong> Setelah simpan, wajib <strong>Print Card Baru (KTP)</strong> ATAU <strong>Tulis Kode & Place di Kartu Lama</strong>.
+              </span>
+            </div>
+            <span className="text-[10px] text-amber-800 font-bold shrink-0 hidden md:inline">
+              *Wajib semua kolom (isi NA jika kosong)
+            </span>
+          </div>
+        )}
+
+        {/* Validation Error Alert (Compact) */}
+        {Object.keys(errors).length > 0 && (
+          <div className="bg-rose-50 border-b border-rose-300 px-3.5 py-1 text-[11px] text-rose-800 flex items-center gap-1.5 shrink-0 font-semibold">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <span>Kolom belum terisi: <strong className="text-rose-900">{Object.values(errors).filter(Boolean).join(', ')}</strong> (isi NA jika tidak ada info)</span>
+          </div>
+        )}
+
+        {/* Form Body: Compact 2/3 Column Card Sub-Layout (Fits 100% on screen, ZERO scroll!) */}
+        <form onSubmit={handleSubmit} id="direct-card-form" className="p-2.5 sm:p-3 bg-slate-100 flex-1 overflow-y-auto">
+          <div className="bg-white border-2 border-black rounded-xl p-2.5 sm:p-3 shadow-sm space-y-1.5 text-xs">
+            
+            {/* BARIS 1: Track & Tanggal Sample */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              {/* Track */}
+              <div className={`border rounded-lg p-1.5 bg-white transition ${
+                errors.track ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Track <span className="text-rose-500">*</span>:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(p => ({ ...p, track: 'NA' }));
+                      if (errors.track) setErrors(prev => ({ ...prev, track: null }));
+                    }}
+                    className="text-[9px] font-black px-1.5 py-0.2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
+                    title="Isi otomatis NA"
+                  >
+                    + NA
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  list="track-datalist"
+                  value={formData.track}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, track: e.target.value }));
+                    if (errors.track) setErrors(prev => ({ ...prev, track: null }));
+                  }}
+                  placeholder="Contoh: DHL : 5475890895 / NA"
+                  className="w-full text-xs font-semibold text-slate-900 focus:outline-none font-mono bg-transparent"
+                />
+                <datalist id="track-datalist">
+                  {(suggestions.track || []).map((t, idx) => (
+                    <option key={`tr-${idx}`} value={t} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Tanggal Sample */}
+              <div className={`border rounded-lg p-1.5 bg-white transition ${
+                errors.tanggal ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Tanggal Sample <span className="text-rose-500">*</span>:
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(p => ({ ...p, tanggal: formatTodayDate() }));
+                        if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
+                      }}
+                      className="text-[9px] font-black px-1.5 py-0.2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 transition cursor-pointer"
+                      title="Isi tanggal hari ini"
+                    >
+                      Hari Ini
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(p => ({ ...p, tanggal: 'NA' }));
+                        if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
+                      }}
+                      className="text-[9px] font-black px-1.5 py-0.2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
+                      title="Isi NA"
+                    >
+                      + NA
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={formData.tanggal}
+                    onChange={(e) => {
+                      setFormData(p => ({ ...p, tanggal: e.target.value }));
+                      if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
+                    }}
+                    placeholder="5-Nov-2026 / NA"
+                    className="w-full text-xs font-semibold text-slate-900 focus:outline-none bg-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try { hiddenDateRef.current?.showPicker(); }
+                      catch { hiddenDateRef.current?.focus(); }
+                    }}
+                    className="p-1 hover:bg-slate-100 rounded text-blue-600 transition cursor-pointer shrink-0"
+                    title="Buka kalender"
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    ref={hiddenDateRef}
+                    type="date"
+                    onChange={handleDatePickerChange}
+                    className="sr-only"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* BARIS 2: Kode Sample, Buyer No, & Place (No Heavy Dropdown!) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
+              {/* Kode */}
+              <div className={`border rounded-lg p-1.5 bg-white transition ${
+                existingItemWithSameCode 
+                  ? 'border-rose-500 bg-rose-50/70 ring-1 ring-rose-400' 
+                  : (errors.kode ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500')
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Kode <span className="text-rose-500">*</span>:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : getNextSampleCode(items) }));
+                      if (submitError) setSubmitError(null);
+                    }}
+                    className="text-[9px] font-black px-1.5 py-0.2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded border border-amber-300 flex items-center gap-0.5 transition cursor-pointer"
+                    title="Generate kode urut otomatis"
+                  >
+                    <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                    <span>Auto</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={formData.kode}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, kode: e.target.value.toUpperCase() }));
+                    if (submitError) setSubmitError(null);
+                    if (errors.kode) setErrors(prev => ({ ...prev, kode: null }));
+                  }}
+                  className={`w-full text-xs font-black font-mono uppercase focus:outline-none bg-transparent ${
+                    existingItemWithSameCode ? 'text-rose-700' : 'text-slate-900'
+                  }`}
+                />
+              </div>
+
+              {/* Buyer No */}
+              <div className={`border rounded-lg p-1.5 bg-white transition ${
+                errors.buyerNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Buyer No <span className="text-rose-500">*</span>:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(p => ({ ...p, buyerNo: 'NA' }));
+                      if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                    }}
+                    className="text-[9px] font-black px-1.5 py-0.2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
+                  >
+                    + NA
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  list="buyer-datalist"
+                  value={formData.buyerNo}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, buyerNo: e.target.value.toUpperCase() }));
+                    if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                  }}
+                  placeholder="Contoh: RSD-250015-2 / NA"
+                  className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent"
+                />
+                <datalist id="buyer-datalist">
+                  {(suggestions.buyerNo || []).map((b, idx) => (
+                    <option key={`by-${idx}`} value={b} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Place (Ringan & Cepat: Box Badge + Stepper / Input, No 72-item select lag!) */}
+              <div className="border border-slate-300 rounded-lg p-1.5 bg-slate-50 flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Place / Lokasi <span className="text-rose-500">*</span>:
+                  </label>
+                  <span className="text-[9px] text-slate-500 font-semibold">Box 1 - 72</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex-1 min-w-0 bg-white px-2 py-0.5 rounded border border-slate-200 font-bold text-[11px] text-slate-800 truncate" title={formData.place}>
+                    BOX #{formData.boxNumber} ({currentBoxObj?.rackName || 'LANTAI'})
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[10px] font-bold text-slate-400">#</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="72"
+                      value={formData.boxNumber}
+                      onChange={(e) => handleBoxNumberChange(e.target.value)}
+                      className="w-12 px-1.5 py-0.5 bg-white border border-slate-300 rounded text-center text-xs font-black font-mono focus:outline-none focus:border-blue-500"
+                      title="Ganti nomor Box (1 - 72)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* BARIS 3: Jenis Sample (Chip Buttons) & Deskripsi / Style */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
+              {/* Jenis Sample Pills */}
+              <div className="md:col-span-4 border border-slate-300 rounded-lg p-1.5 bg-white">
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Jenis Sample <span className="text-rose-500">*</span>:
+                </label>
+                <div className="flex items-center gap-1">
+                  {['DEVELOP', 'PPS', 'ORI'].map((type) => {
+                    const isSelected = (formData.jenisSample || 'DEVELOP') === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, jenisSample: type }))}
+                        className={`flex-1 py-1 rounded-md text-[11px] font-black uppercase tracking-wider transition border cursor-pointer text-center ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                        }`}
+                      >
+                        {isSelected && <span className="text-amber-300 mr-0.5">✓</span>}
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Nama / No. Style */}
+              <div className={`md:col-span-8 border rounded-lg p-1.5 bg-white transition ${
+                errors.style ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              }`}>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
+                  Nama / No. Style <span className="text-rose-500">*</span>:
+                </label>
+                <input
+                  type="text"
+                  list="style-datalist"
+                  value={formData.style}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, style: e.target.value }));
+                    if (errors.style) setErrors(prev => ({ ...prev, style: null }));
+                  }}
+                  placeholder="Contoh: WL920FR / 6435 / NA"
+                  className="w-full text-xs font-bold text-slate-900 focus:outline-none bg-transparent"
+                />
+                <datalist id="style-datalist">
+                  {(suggestions.style || []).map((s, idx) => (
+                    <option key={`st-${idx}`} value={s} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            {/* BARIS 4: Sample No, Size (dengan Preset Chips), & Color (dengan Preset Chips) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5">
+              {/* Sample No */}
+              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
+                errors.sampleNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Sample No <span className="text-rose-500">*</span>:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(p => ({ ...p, sampleNo: 'NA' }));
+                      if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
+                    }}
+                    className="text-[9px] font-black px-1.5 py-0.2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
+                  >
+                    + NA
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  list="sampleno-datalist"
+                  value={formData.sampleNo}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, sampleNo: e.target.value.toUpperCase() }));
+                    if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
+                  }}
+                  placeholder="RSD-250015-2 / NA"
+                  className="w-full text-xs font-mono font-bold uppercase focus:outline-none bg-transparent"
+                />
+                <datalist id="sampleno-datalist">
+                  {(suggestions.sampleNo || []).map((sn, idx) => (
+                    <option key={`sno-${idx}`} value={sn} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Size dengan 1-Click Chips */}
+              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
+                errors.size ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Size <span className="text-rose-500">*</span>:
+                  </label>
+                  <div className="flex items-center gap-0.5">
+                    {['S', 'M', 'L', 'XL', 'FREE', 'NA'].map(sz => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => {
+                          setFormData(p => ({ ...p, size: sz }));
+                          if (errors.size) setErrors(prev => ({ ...prev, size: null }));
+                        }}
+                        className={`px-1 py-0.2 rounded text-[9px] font-bold transition cursor-pointer ${
+                          formData.size === sz ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  list="size-datalist"
+                  value={formData.size}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, size: e.target.value.toUpperCase() }));
+                    if (errors.size) setErrors(prev => ({ ...prev, size: null }));
+                  }}
+                  placeholder="Ketik atau klik chip di atas..."
+                  className="w-full text-xs font-black uppercase focus:outline-none bg-transparent"
+                />
+                <datalist id="size-datalist">
+                  {(suggestions.size || []).map((sz, idx) => (
+                    <option key={`sz-${idx}`} value={sz} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Color dengan 1-Click Chips */}
+              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
+                errors.color ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Color / Warna <span className="text-rose-500">*</span>:
+                  </label>
+                  <div className="flex items-center gap-0.5">
+                    {['BLACK', 'WHITE', 'NAVY', 'GREY', 'NA'].map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => {
+                          setFormData(p => ({ ...p, color: c }));
+                          if (errors.color) setErrors(prev => ({ ...prev, color: null }));
+                        }}
+                        className={`px-1 py-0.2 rounded text-[9px] font-bold transition cursor-pointer ${
+                          formData.color === c ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  list="color-datalist"
+                  value={formData.color}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, color: e.target.value.toUpperCase() }));
+                    if (errors.color) setErrors(prev => ({ ...prev, color: null }));
+                  }}
+                  placeholder="Ketik atau klik chip di atas..."
+                  className="w-full text-xs font-bold uppercase focus:outline-none bg-transparent"
+                />
+                <datalist id="color-datalist">
+                  {(suggestions.color || []).map((c, idx) => (
+                    <option key={`c-${idx}`} value={c} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            {/* BARIS 5: Jumlah (Qty) & Satuan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              {/* Jumlah */}
+              <div className={`border rounded-lg p-1.5 bg-white transition ${
+                errors.jumlah ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              }`}>
+                <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
+                  Jumlah (Qty) <span className="text-rose-500">*</span>:
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.jumlah}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, jumlah: Number(e.target.value) || 0 }));
+                    if (errors.jumlah) setErrors(prev => ({ ...prev, jumlah: null }));
+                  }}
+                  className="w-full text-xs font-black font-mono focus:outline-none bg-transparent"
+                />
+              </div>
+
+              {/* Satuan */}
+              <div className={`border rounded-lg p-1.5 bg-white transition ${
+                errors.satuan ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              }`}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Satuan <span className="text-rose-500">*</span>:
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {['PCS', 'YARD', 'MTR', 'ROLL', 'NA'].map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setFormData(p => ({ ...p, satuan: s }));
+                          if (errors.satuan) setErrors(prev => ({ ...prev, satuan: null }));
+                        }}
+                        className={`px-1.5 py-0.2 rounded text-[9px] font-bold transition cursor-pointer ${
+                          formData.satuan === s ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={formData.satuan}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, satuan: e.target.value.toUpperCase() }));
+                    if (errors.satuan) setErrors(prev => ({ ...prev, satuan: null }));
+                  }}
+                  placeholder="PCS / YARD / MTR / NA"
+                  className="w-full text-xs font-bold uppercase focus:outline-none bg-transparent"
+                />
+              </div>
+            </div>
+
+          </div>
+        </form>
+
+        {/* Modal Footer Actions (Sticky, Always visible) */}
+        <div className="no-print bg-white px-4 py-2 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
+          <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+            💡 Tekan <kbd className="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-300 font-mono text-[10px] text-slate-700 font-bold">Ctrl + Enter</kbd> untuk simpan cepat
+          </span>
+          <div className="flex items-center space-x-2 ml-auto">
+            <button
+              type="button"
+              onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
+              className="px-4 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold transition cursor-pointer"
             >
               Batal
             </button>
-            
             <button
               type="submit"
               form="direct-card-form"
               disabled={isSubmitting || Boolean(existingItemWithSameCode)}
-              className={`px-5 py-2 rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5 ${
+              className={`px-5 py-1.5 rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5 ${
                 existingItemWithSameCode
                   ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed shadow-none'
                   : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 cursor-pointer disabled:opacity-50'
               }`}
-              title={existingItemWithSameCode ? 'Kode sudah ada! Tidak bisa simpan sebelum kode diubah' : 'Simpan item ke box'}
+              title={existingItemWithSameCode ? 'Kode sudah ada! Tidak bisa simpan sebelum kode diubah' : 'Simpan item ke box (Ctrl+Enter)'}
             >
               <Save className="w-4 h-4" />
               <span>

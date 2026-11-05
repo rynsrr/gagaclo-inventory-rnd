@@ -520,11 +520,11 @@ function BoxDetail({ box }) {
           ) : viewMode === 'table' ? (
             /* High-Density Compact Table View (Muat Banyak) */
             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white w-full">
-              <div className="overflow-x-auto max-h-[64vh] scrollbar-thin">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="overflow-x-hidden overflow-y-auto max-h-[66vh] scrollbar-thin w-full">
+                <table className="w-full table-fixed text-left border-collapse text-xs">
                   <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200">
                     <tr>
-                      <th className="py-2.5 px-3 w-10 text-center">
+                      <th className="py-2.5 px-2 w-9 text-center">
                         <input
                           type="checkbox"
                           checked={selectedItemIds.size === itemsInBox.length && itemsInBox.length > 0}
@@ -533,12 +533,12 @@ function BoxDetail({ box }) {
                           title="Pilih / Batal Pilih Semua"
                         />
                       </th>
-                      <th className="py-2.5 px-3 whitespace-nowrap w-[16%]">Kode / Sample</th>
-                      <th className="py-2.5 px-3 min-w-[220px]">Style & Deskripsi</th>
-                      <th className="py-2.5 px-3 whitespace-nowrap w-[15%]">Size & Warna</th>
-                      <th className="py-2.5 px-3 text-center whitespace-nowrap w-[10%]">Jumlah</th>
-                      <th className="py-2.5 px-3 text-center whitespace-nowrap w-[11%]">Status</th>
-                      <th className="py-2.5 px-3 text-right whitespace-nowrap w-[18%]">Aksi</th>
+                      <th className="py-2.5 px-2.5 w-[18%]">Kode / Sample</th>
+                      <th className="py-2.5 px-2.5 w-[32%]">Style &amp; Deskripsi</th>
+                      <th className="py-2.5 px-2 w-[14%]">Size &amp; Warna</th>
+                      <th className="py-2.5 px-1.5 text-center w-[8%]">Jumlah</th>
+                      <th className="py-2.5 px-1 text-center w-[11%]">Status</th>
+                      <th className="py-2.5 px-2 text-right w-[17%]">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -554,7 +554,7 @@ function BoxDetail({ box }) {
                           }`}
                         >
                           {/* Checkbox */}
-                          <td className="py-2 px-3 text-center">
+                          <td className="py-2 px-2 text-center">
                             <input
                               type="checkbox"
                               checked={isSelected}
@@ -565,12 +565,12 @@ function BoxDetail({ box }) {
                           </td>
 
                           {/* Kode, Jenis Sample & Buyer (Dengan Fitur Copy) */}
-                          <td className="py-2 px-3 whitespace-nowrap">
-                            <div className="flex items-center space-x-1.5 group/code">
+                          <td className="py-2 px-2.5 min-w-0">
+                            <div className="flex items-center space-x-1 min-w-0">
                               <button
                                 type="button"
                                 onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
-                                className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 px-2 py-0.5 rounded-md border border-slate-200 text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                                className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 px-1.5 py-0.5 rounded-md border border-slate-200 text-[11px] flex items-center gap-1 transition cursor-pointer shadow-2xs shrink-0"
                                 title="Klik untuk Salin Kode ke Clipboard"
                               >
                                 <span>{item.kode || item.sku || '-'}</span>
@@ -581,42 +581,42 @@ function BoxDetail({ box }) {
                                 )}
                               </button>
                               {item.jenisSample && (
-                                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded">
+                                <span className="text-[9px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded shrink-0">
                                   {item.jenisSample}
                                 </span>
                               )}
                               {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
-                                <span className="text-[10px] text-slate-500 font-mono font-semibold">
-                                  (B:{item.buyerNo})
+                                <span className="text-[10px] text-slate-500 font-mono truncate" title={`Buyer: ${item.buyerNo}`}>
+                                  ({item.buyerNo})
                                 </span>
                               )}
                             </div>
                           </td>
 
                           {/* Style & Deskripsi */}
-                          <td className="py-2 px-3 min-w-[220px]">
-                            <div className="font-bold text-slate-900 text-xs line-clamp-1" title={item.style || item.deskripsi || item.name}>
+                          <td className="py-2 px-2.5 min-w-0">
+                            <div className="font-bold text-slate-900 text-xs truncate" title={item.style || item.deskripsi || item.name}>
                               {item.style || item.deskripsi || item.name}
                             </div>
                             {item.sampleNo && item.sampleNo !== '' && (
-                              <div className="text-[10px] text-slate-500 font-mono">
+                              <div className="text-[10px] text-slate-500 font-mono truncate" title={`Sample No: ${item.sampleNo}`}>
                                 Sample No: <strong>{item.sampleNo}</strong>
                               </div>
                             )}
                           </td>
 
                           {/* Size & Warna */}
-                          <td className="py-2 px-3 whitespace-nowrap">
-                            <div className="flex items-center space-x-1.5 text-xs">
+                          <td className="py-2 px-2 min-w-0">
+                            <div className="flex items-center space-x-1 text-xs truncate">
                               {item.size ? (
-                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px] uppercase">
+                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1 py-0.2 rounded text-[10px] uppercase shrink-0">
                                   {item.size}
                                 </span>
                               ) : (
-                                <span className="text-slate-400 text-[11px]">-</span>
+                                <span className="text-slate-400 text-[10px]">-</span>
                               )}
                               {item.color && item.color !== '-' && item.color !== 'NA' && (
-                                <span className="text-slate-700 text-xs font-medium">
+                                <span className="text-slate-700 text-xs font-medium truncate" title={`Color: ${item.color}`}>
                                   {item.color}
                                 </span>
                               )}
@@ -624,60 +624,64 @@ function BoxDetail({ box }) {
                           </td>
 
                           {/* Qty & Satuan */}
-                          <td className="py-2 px-3 text-center whitespace-nowrap font-mono font-black text-slate-900 text-xs">
+                          <td className="py-2 px-1.5 text-center font-mono font-black text-slate-900 text-xs">
                             {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
-                            <span className="text-[10px] font-normal text-slate-500 uppercase">
+                            <span className="text-[9px] font-normal text-slate-500 uppercase">
                               {item.satuan || item.unit || 'PCS'}
                             </span>
                           </td>
 
                           {/* Status */}
-                          <td className="py-2 px-3 text-center whitespace-nowrap">
+                          <td className="py-2 px-1 text-center">
                             {getStatusBadge(item.status)}
                           </td>
 
                           {/* Actions (Termasuk Fitur Copy / Duplikat Item) */}
-                          <td className="py-2 px-3 text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end space-x-1">
+                          <td className="py-2 px-2 text-right">
+                            <div className="flex items-center justify-end space-x-0.5">
                               <button
                                 type="button"
                                 onClick={() => handleDuplicateItem(item)}
-                                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
-                                title="Copy / Duplikat Item (Buat item baru dengan data sama)"
+                                className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition cursor-pointer"
+                                title="Copy / Duplikat Item (Buat item baru)"
                               >
                                 <Copy className="w-3.5 h-3.5" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => setCardPrintItems([item])}
-                                className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition cursor-pointer"
+                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition cursor-pointer"
                                 title="Cetak Kartu Fisik Item Ini"
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => openMoveModal([item])}
-                                className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
+                                className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
                                 title="Pindah ke Box Lain"
                               >
                                 <ArrowRightLeft className="w-3.5 h-3.5" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => {
                                   const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
                                   updateItem(item.id, { status: newStatus });
                                 }}
-                                className={`px-2 py-1 text-[10px] font-bold rounded-lg transition cursor-pointer ${
+                                className={`px-1.5 py-0.5 text-[9px] font-black rounded transition cursor-pointer ${
                                   item.status === 'In Storage'
                                     ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
                                     : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
                                 }`}
-                                title="Ganti Status"
+                                title="Ganti Status Simpan / Pinjam"
                               >
                                 {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
                               </button>
                               <button
+                                type="button"
                                 onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
-                                className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                                className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
                                 title="Edit Item"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
@@ -918,25 +922,56 @@ function BoxDetail({ box }) {
                 </div>
               </div>
 
-              {/* Destination Box Picker */}
+              {/* Destination Box Picker (Lightweight Alternative, No 71-option select) */}
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  Pilih Box Tujuan (saat ini di Box #{box.boxNumber}):
+                  Nomor Box Tujuan (saat ini di Box #{box.boxNumber}):
                 </label>
-                <select
-                  value={targetBoxNum}
-                  onChange={(e) => setTargetBoxNum(Number(e.target.value))}
-                  className="w-full p-2.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs cursor-pointer"
-                >
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 border border-slate-300 rounded-xl px-3 py-2 bg-white flex-1 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                    <span className="font-black text-slate-500 text-xs">BOX #</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="72"
+                      value={targetBoxNum}
+                      onChange={(e) => setTargetBoxNum(Math.max(1, Math.min(72, Number(e.target.value) || 1)))}
+                      className="w-16 font-mono font-black text-sm text-slate-900 focus:outline-none bg-transparent"
+                    />
+                    {(() => {
+                      const dest = boxes.find(b => Number(b.boxNumber) === Number(targetBoxNum));
+                      return dest ? (
+                        <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 ml-auto truncate">
+                          {dest.rackName || 'LANTAI'} • {dest.picName || 'Royan'}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold text-rose-500 ml-auto">Box #{targetBoxNum}</span>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Quick Box Chips */}
+                <div className="flex items-center gap-1 mt-2 flex-wrap text-[11px]">
+                  <span className="text-slate-400 font-semibold mr-0.5">Pilihan Box:</span>
                   {boxes
-                    .filter((b) => Number(b.boxNumber) < 900000 && Number(b.boxNumber) !== Number(box.boxNumber))
-                    .sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber))
-                    .map((b) => (
-                      <option key={b.boxNumber} value={b.boxNumber}>
-                        BOX #{b.boxNumber} — {b.rackName || 'LANTAI'} (PIC: {b.picName || 'Royan'})
-                      </option>
+                    .filter(b => Number(b.boxNumber) !== Number(box.boxNumber) && Number(b.boxNumber) <= 72)
+                    .slice(0, 10)
+                    .map(b => (
+                      <button
+                        key={b.boxNumber}
+                        type="button"
+                        onClick={() => setTargetBoxNum(b.boxNumber)}
+                        className={`px-2 py-0.5 rounded-md font-bold border transition cursor-pointer ${
+                          targetBoxNum === b.boxNumber
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300'
+                        }`}
+                      >
+                        #{b.boxNumber}
+                      </button>
                     ))}
-                </select>
+                </div>
               </div>
 
               {moveError && (
