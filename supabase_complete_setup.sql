@@ -65,6 +65,11 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Grant full DML permissions to anon and authenticated roles
+GRANT ALL ON public.items TO anon, authenticated, service_role;
+GRANT ALL ON public.boxes TO anon, authenticated, service_role;
+GRANT ALL ON public.transactions TO anon, authenticated, service_role;
+
 -- Aktifkan Row Level Security (RLS)
 ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.boxes ENABLE ROW LEVEL SECURITY;

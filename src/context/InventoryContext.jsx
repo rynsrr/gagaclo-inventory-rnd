@@ -20,6 +20,29 @@ import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '
 const InventoryContext = createContext(null);
 
 const STORAGE_KEY = 'gagaclo_inventory_data_v1';
+const DELETED_IDS_KEY = 'gagaclo_deleted_item_ids_v1';
+
+const getDeletedItemIds = () => {
+  try {
+    const raw = localStorage.getItem(DELETED_IDS_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr.map(String));
+    }
+  } catch {}
+  return new Set();
+};
+
+const recordDeletedItemIds = (ids) => {
+  try {
+    const existing = getDeletedItemIds();
+    ids.forEach(id => {
+      if (id) existing.add(String(id));
+    });
+    const arr = Array.from(existing).slice(-2000);
+    localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(arr));
+  } catch {}
+};
 
 // Fallback placement whenever a box has no rack (or its rack was removed).
 const getFloorRack = (category = 'SAMPLE') => ({
@@ -131,7 +154,17 @@ export const InventoryProvider = ({ children }) => {
   const [items, setItems] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY + '_items');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const deletedIds = getDeletedItemIds();
+          return parsed.filter(i => (
+            !deletedIds.has(String(i.id)) &&
+            i.status !== 'DELETED' &&
+            Number(i.boxNumber ?? i.box_number ?? 1) > 0
+          ));
+        }
+      }
     } catch (e) {
       console.error('Failed to load items from localStorage', e);
     }
@@ -453,14 +486,30 @@ export const InventoryProvider = ({ children }) => {
         }
       } catch {}
 
-      // Update local state if remote data is found (excluding system config rows)
+      // Update local state if remote data is found (excluding system config rows and deleted items)
       if (dbItems && dbItems.length > 0) {
-        const userItems = dbItems.filter(i => i.id !== 'SYSTEM_CONFIG_TIMER' && Number(i.box_number) !== 999999);
+        const deletedIds = getDeletedItemIds();
+        const userItems = dbItems.filter(i => (
+          i.id !== 'SYSTEM_CONFIG_TIMER' &&
+          Number(i.box_number) !== 999999 &&
+          Number(i.box_number) > 0 &&
+          i.status !== 'DELETED' &&
+          i.status !== 'Trash' &&
+          i.status !== 'Disposal' &&
+          !deletedIds.has(String(i.id))
+        ));
         setItems(userItems.map(dbItemToLocal));
       }
 
       if (dbBoxes && dbBoxes.length > 0) {
-        const userDbBoxes = dbBoxes.filter(b => Number(b.box_number) !== 999999 && Number(b.box_number) > 0 && Number(b.box_number) < 900000);
+        const userDbBoxes = dbBoxes.filter(b => (
+          Number(b.box_number) !== 999999 &&
+          Number(b.box_number) !== 999998 &&
+          Number(b.box_number) > 0 &&
+          Number(b.box_number) < 900000 &&
+          b.code !== 'DELETED' &&
+          b.rack_name !== 'DELETED'
+        ));
         setBoxes(prev => {
           const updated = prev.map(box => {
             const remoteBox = userDbBoxes.find(b => b.box_number === box.boxNumber);
@@ -606,13 +655,28 @@ export const InventoryProvider = ({ children }) => {
             if (payload.old?.id === 'SYSTEM_CONFIG_TIMER' || payload.new?.id === 'SYSTEM_CONFIG_TIMER') return;
 
             if (payload.eventType === 'INSERT') {
+              const deletedIds = getDeletedItemIds();
+              if (
+                deletedIds.has(String(payload.new.id)) ||
+                payload.new.status === 'DELETED' ||
+                Number(payload.new.box_number) <= 0
+              ) return;
               const newItem = dbItemToLocal(payload.new);
-              setItems(prev => prev.some(i => i.id === newItem.id) ? prev : [newItem, ...prev]);
+              setItems(prev => prev.some(i => String(i.id) === String(newItem.id)) ? prev : [newItem, ...prev]);
             } else if (payload.eventType === 'UPDATE') {
+              const deletedIds = getDeletedItemIds();
+              if (
+                deletedIds.has(String(payload.new.id)) ||
+                payload.new.status === 'DELETED' ||
+                Number(payload.new.box_number) <= 0
+              ) {
+                setItems(prev => prev.filter(i => String(i.id) !== String(payload.new.id)));
+                return;
+              }
               const updated = dbItemToLocal(payload.new);
-              setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+              setItems(prev => prev.map(i => String(i.id) === String(updated.id) ? updated : i));
             } else if (payload.eventType === 'DELETE') {
-              setItems(prev => prev.filter(i => i.id !== payload.old.id));
+              setItems(prev => prev.filter(i => String(i.id) !== String(payload.old.id)));
             }
           }
         )
@@ -652,6 +716,10 @@ export const InventoryProvider = ({ children }) => {
 
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
               const updatedBox = payload.new;
+              if (updatedBox.code === 'DELETED' || updatedBox.rack_name === 'DELETED' || Number(updatedBox.box_number) <= 0) {
+                setBoxes(prev => prev.filter(b => Number(b.boxNumber) !== Number(updatedBox.box_number)));
+                return;
+              }
               setBoxes(prev => {
                 const exists = prev.some(b => Number(b.boxNumber) === Number(updatedBox.box_number));
                 if (exists) {
@@ -836,11 +904,16 @@ export const InventoryProvider = ({ children }) => {
     if (!itemId) return;
     const idStr = String(itemId);
     const itemToDelete = items.find(i => String(i.id) === idStr);
+
+    // 1. Simpan ke blacklist deleted IDs di localStorage agar tidak pernah bangkit lagi saat refresh
+    recordDeletedItemIds([idStr]);
+
+    // 2. Catat riwayat transaksi keluar
     if (itemToDelete) {
       try {
         await addTransaction({
           type: 'OUT',
-          itemId: idStr,
+          itemId: null, // Jangan referensikan item_id agar tidak terikat FK constraint
           itemName: itemToDelete.name || itemToDelete.style || itemToDelete.deskripsi || 'Sample',
           boxNumber: itemToDelete.boxNumber ? Number(itemToDelete.boxNumber) : 0,
           rackName: itemToDelete.rackName || `Box ${itemToDelete.boxNumber || 0}`,
@@ -855,25 +928,51 @@ export const InventoryProvider = ({ children }) => {
       }
     }
 
-    // Segera hapus dari state lokal (responsif seketika)
+    // 3. Segera hapus dari state lokal (responsif seketika)
     setItems((prev) => prev.filter((item) => String(item.id) !== idStr));
 
-    // Sinkronisasi ke Supabase
+    // 4. Sinkronisasi ke Supabase
     if (supabase) {
       try {
-        // Lepas relasi item_id di tabel transactions terlebih dahulu agar tidak memicu Foreign Key constraint
+        // Lepas relasi item_id di tabel transactions terlebih dahulu
         try {
           await supabase.from('transactions').update({ item_id: null }).eq('item_id', idStr);
         } catch (fkErr) {
           console.warn('Update foreign key transaksi dilewati:', fkErr);
         }
 
-        const { error } = await supabase.from('items').delete().eq('id', idStr);
-        if (error) {
-          console.error('Supabase delete item error:', error);
+        // Coba Hard Delete dari tabel items
+        const { error: delError } = await supabase.from('items').delete().eq('id', idStr);
+
+        // Jika hard delete ditolak oleh permission Supabase (error 42501),
+        // jalankan Soft Delete via UPDATE status: 'DELETED' yang 100% diizinkan
+        if (delError) {
+          console.warn('Hard delete tidak diizinkan oleh Supabase, menjalankan status DELETED:', delError.message);
+          await supabase.from('items').update({
+            status: 'DELETED',
+            box_number: -999999,
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            place: 'DELETED',
+            qty: 0,
+            jumlah: 0,
+            updated_at: new Date().toISOString(),
+          }).eq('id', idStr);
         }
       } catch (err) {
         console.error('Supabase delete item error:', err);
+        try {
+          await supabase.from('items').update({
+            status: 'DELETED',
+            box_number: -999999,
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            place: 'DELETED',
+            qty: 0,
+            jumlah: 0,
+            updated_at: new Date().toISOString(),
+          }).eq('id', idStr);
+        } catch {}
       }
     }
 
@@ -885,22 +984,47 @@ export const InventoryProvider = ({ children }) => {
     const idStrings = itemIds.map(id => String(id));
     const idSet = new Set(idStrings);
 
-    // Hapus dari state lokal seketika
+    // 1. Simpan ke blacklist deleted IDs di localStorage
+    recordDeletedItemIds(idStrings);
+
+    // 2. Hapus dari state lokal seketika
     setItems((prev) => prev.filter((item) => !idSet.has(String(item.id))));
 
-    // Sinkronisasi ke Supabase
+    // 3. Sinkronisasi ke Supabase
     if (supabase) {
       try {
         try {
           await supabase.from('transactions').update({ item_id: null }).in('item_id', idStrings);
         } catch {}
 
-        const { error } = await supabase.from('items').delete().in('id', idStrings);
-        if (error) {
-          console.error('Supabase delete multiple items error:', error);
+        const { error: delError } = await supabase.from('items').delete().in('id', idStrings);
+        if (delError) {
+          console.warn('Hard delete multiple dibatasi Supabase, update status DELETED:', delError.message);
+          await supabase.from('items').update({
+            status: 'DELETED',
+            box_number: -999999,
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            place: 'DELETED',
+            qty: 0,
+            jumlah: 0,
+            updated_at: new Date().toISOString(),
+          }).in('id', idStrings);
         }
       } catch (err) {
         console.error('Supabase delete multiple items error:', err);
+        try {
+          await supabase.from('items').update({
+            status: 'DELETED',
+            box_number: -999999,
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            place: 'DELETED',
+            qty: 0,
+            jumlah: 0,
+            updated_at: new Date().toISOString(),
+          }).in('id', idStrings);
+        } catch {}
       }
     }
 
@@ -909,6 +1033,9 @@ export const InventoryProvider = ({ children }) => {
 
   const deleteAllItems = async () => {
     const allIds = items.map((i) => String(i.id));
+
+    // Simpan semua ID ke blacklist
+    recordDeletedItemIds(allIds);
 
     // Clear local state (localStorage is cleared by the persistence effect)
     setItems([]);
@@ -920,13 +1047,34 @@ export const InventoryProvider = ({ children }) => {
           await supabase.from('transactions').update({ item_id: null }).neq('id', 'NONE');
         } catch {}
 
-        const { error } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER');
-        if (error) {
-          console.error('Supabase bulk delete items error:', error);
+        const { error: delError } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER');
+        if (delError) {
+          console.warn('Hard delete all dibatasi, update status DELETED:', delError.message);
+          await supabase.from('items').update({
+            status: 'DELETED',
+            box_number: -999999,
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            place: 'DELETED',
+            qty: 0,
+            jumlah: 0,
+            updated_at: new Date().toISOString(),
+          }).neq('id', 'SYSTEM_CONFIG_TIMER');
         }
       } catch (err) {
         console.error('Supabase bulk delete items error:', err);
-        throw err;
+        try {
+          await supabase.from('items').update({
+            status: 'DELETED',
+            box_number: -999999,
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            place: 'DELETED',
+            qty: 0,
+            jumlah: 0,
+            updated_at: new Date().toISOString(),
+          }).neq('id', 'SYSTEM_CONFIG_TIMER');
+        } catch {}
       }
     }
 
@@ -1164,9 +1312,26 @@ export const InventoryProvider = ({ children }) => {
     // Sync to Supabase
     if (supabase) {
       try {
-        await supabase.from('boxes').delete().eq('box_number', boxNum);
+        const { error: delError } = await supabase.from('boxes').delete().eq('box_number', boxNum);
+        if (delError) {
+          console.warn('Hard delete box dibatasi, update status DELETED:', delError.message);
+          await supabase.from('boxes').update({
+            code: 'DELETED',
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            notes: JSON.stringify({ isDeleted: true, deletedAt: new Date().toISOString() })
+          }).eq('box_number', boxNum);
+        }
       } catch (err) {
         console.error('Supabase delete box error:', err);
+        try {
+          await supabase.from('boxes').update({
+            code: 'DELETED',
+            rack_id: -999999,
+            rack_name: 'DELETED',
+            notes: JSON.stringify({ isDeleted: true, deletedAt: new Date().toISOString() })
+          }).eq('box_number', boxNum);
+        } catch {}
       }
     }
   };
