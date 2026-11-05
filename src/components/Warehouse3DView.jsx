@@ -892,24 +892,29 @@ export const Warehouse3DView = ({
     <div className="warehouse-layout space-y-4">
       
       {controlsHost && createPortal(
-        <div className="inventory-header-filters">
-          <div role="group" aria-label="Filter PIC PPIC" className="flex items-center gap-2">
-            <div className="inventory-filter-group">
-              <button onClick={() => setHighlightPpic('ALL')} aria-pressed={highlightPpic === 'ALL'}>
-                Semua
-              </button>
+        <div className="inventory-header-filters flex items-center">
+          <label htmlFor="header-pic-select" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all shadow-2xs cursor-pointer ${
+            highlightPpic !== 'ALL'
+              ? 'bg-blue-50/95 border-blue-300 text-blue-900 ring-2 ring-blue-400/20 shadow-xs'
+              : 'bg-white/95 hover:bg-slate-50 border-slate-200 text-slate-700'
+          }`}>
+            <User className={`h-3.5 w-3.5 ${highlightPpic !== 'ALL' ? 'text-blue-600' : 'text-slate-400'}`} aria-hidden="true" />
+            <span className="text-[11px] font-bold text-slate-500">Filter PIC:</span>
+            <select
+              id="header-pic-select"
+              value={highlightPpic}
+              onChange={(e) => setHighlightPpic(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
+              aria-label="Pilih filter PIC"
+            >
+              <option value="ALL">Semua ({ppicMembers.length} Orang)</option>
               {ppicMembers.map((pic) => (
-                <button
-                  key={pic.id}
-                  onClick={() => setHighlightPpic(highlightPpic === pic.name ? 'ALL' : pic.name)}
-                  aria-pressed={highlightPpic === pic.name}
-                >
-                  <span className={`h-2 w-2 rounded-full ${pic.avatarBg}`} />
+                <option key={pic.id} value={pic.name}>
                   {pic.name}
-                </button>
+                </option>
               ))}
-            </div>
-          </div>
+            </select>
+          </label>
         </div>,
         controlsHost,
       )}
