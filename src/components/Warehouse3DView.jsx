@@ -1213,7 +1213,7 @@ export const Warehouse3DView = ({
 
         {/* Hovered Box HUD Card (Bottom Left) */}
         {hoveredBox && (
-          <div className="absolute bottom-5 left-5 z-10 bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none">
+          <div className="absolute bottom-32 left-4 sm:bottom-36 sm:left-4 z-20 bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-black text-white">
                 #{hoveredBox.boxNumber}

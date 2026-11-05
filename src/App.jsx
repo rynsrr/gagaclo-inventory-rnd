@@ -194,10 +194,8 @@ const AppContent = () => {
         </div>
       </header>
 
-      {/* Hitung Mundur Pendataan */}
-      <div className="no-print mx-auto w-full max-w-7xl shrink-0 px-4 pt-3 pb-1 sm:px-6 lg:px-8">
-        <InventoryTimer />
-      </div>
+      {/* Floating Always-On-Top Hitung Mundur Pendataan */}
+      <InventoryTimer />
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">
