@@ -1171,9 +1171,6 @@ export const Warehouse3DView = ({
               <span className="text-3xl sm:text-4xl select-none">🐶</span>
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="font-black text-sm sm:text-base text-slate-900">
-                    Anjing Penjaga Gudang:
-                  </span>
                   <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
                     15 Menit Tanpa Input
                   </span>
