@@ -283,6 +283,20 @@ const ItemModalContent = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    // JIKA KODE SUDAH ADA MAKA TIDAK BISA SIMPAN
+    if (existingItemWithSameCode) {
+      setIsSubmitting(false);
+      setSubmitError(
+        `❌ TIDAK BISA SIMPAN: Kode "${formData.kode}" sudah terdaftar di BOX #${existingItemWithSameCode.boxNumber || '?'} (${existingItemWithSameCode.style || existingItemWithSameCode.name || 'Barang lain'})! Kode tidak boleh sama. Silakan ubah kode menjadi "${autoResolvedCode}" terlebih dahulu.`
+      );
+      showNotification?.(
+        `❌ Tidak bisa simpan! Kode "${formData.kode}" sudah ada di sistem. Ubah kode terlebih dahulu agar bisa disimpan.`,
+        'error',
+        7000
+      );
+      return;
+    }
+
     // Live multi-user sequence collision check right before save
     let activeItems = [...items];
     if (supabase) {
@@ -308,19 +322,16 @@ const ItemModalContent = () => {
     const resolvedCode = resolveUniqueCode(kodeClean, activeItems, currentItemId);
     const finalKode = resolvedCode.finalCode;
 
-    // Jika kode terdeteksi duplikat / sama dengan yang sudah ada di sistem:
-    // JANGAN langsung simpan dan tutup modal!
-    // Ubah kode di form terlebih dahulu agar pengguna bisa melihat perubahannya di kartu fisik, lalu konfirmasi simpan.
+    // JIKA KODE TERNYATA SUDAH DIGUNAKAN DI REMOTE / MULTI-USER -> TIDAK BISA SIMPAN!
     if (resolvedCode.wasAdjusted) {
       setIsSubmitting(false);
-      setFormData(prev => ({ ...prev, kode: finalKode }));
       setSubmitError(
-        `⚠️ Kode "${resolvedCode.originalCode || 'tersebut'}" sudah ada di sistem! Nomor kartu telah otomatis diubah menjadi "${finalKode}". Silakan periksa kartu fisik Anda, lalu klik "Simpan" sekali lagi.`
+        `❌ TIDAK BISA SIMPAN: Kode "${resolvedCode.originalCode || kodeClean}" baru saja disimpan oleh pengguna lain! Kode tidak boleh sama. Silakan ubah ke kode "${resolvedCode.finalCode}" agar bisa disimpan.`
       );
       showNotification?.(
-        `⚠️ Kode tidak boleh sama! Kode "${resolvedCode.originalCode || 'tersebut'}" sudah ada di sistem. Nomor kartu Anda telah otomatis diganti menjadi "${finalKode}". Silakan periksa kartu Anda, lalu klik Simpan lagi.`,
-        'warning',
-        9000
+        `❌ Tidak bisa simpan! Kode "${resolvedCode.originalCode || kodeClean}" sudah ada di sistem. Silakan ganti ke "${resolvedCode.finalCode}".`,
+        'error',
+        8000
       );
       return;
     }
@@ -403,25 +414,20 @@ const ItemModalContent = () => {
 
         {/* Error / Warning Alert message */}
         {submitError && (
-          <div className={`mx-4 mt-3 px-3.5 py-2.5 rounded-xl border-2 text-xs font-bold flex items-center gap-2.5 shrink-0 animate-fade-in shadow-xs ${
-            submitError.includes('⚠️') || submitError.includes('Kode')
-              ? 'bg-amber-50 border-amber-400 text-amber-950'
-              : 'bg-rose-50 border-rose-300 text-rose-800'
-          }`}>
-            {submitError.includes('⚠️') || submitError.includes('Kode') ? (
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 animate-pulse" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-            )}
+          <div className="mx-4 mt-3 px-3.5 py-2.5 rounded-xl border-2 text-xs font-bold flex items-center gap-2.5 shrink-0 animate-fade-in shadow-xs bg-rose-50 border-rose-400 text-rose-950">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
             <span className="leading-snug flex-1">{submitError}</span>
-            {(submitError.includes('⚠️') || submitError.includes('Kode')) && (
+            {existingItemWithSameCode && (
               <button
-                type="submit"
-                form="direct-card-form"
+                type="button"
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, kode: autoResolvedCode }));
+                  setSubmitError(null);
+                }}
                 className="no-print shrink-0 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-black rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1"
               >
-                <span>Simpan Sekarang</span>
-                <span>➔</span>
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Pakai Kode {autoResolvedCode}</span>
               </button>
             )}
           </div>
@@ -455,25 +461,25 @@ const ItemModalContent = () => {
             </div>
           )}
 
-          {/* Notice: Kode Sudah Ada & Otomatis Ubah Kode */}
+          {/* Notice: Kode Sudah Ada -> TIDAK BISA SIMPAN */}
           {existingItemWithSameCode && (
-            <div className="no-print w-full max-w-[580px] mb-3 p-3.5 bg-amber-50 border-2 border-amber-400 rounded-xl text-amber-950 text-xs shadow-md animate-fade-in">
+            <div className="no-print w-full max-w-[580px] mb-3 p-3.5 bg-rose-50 border-2 border-rose-500 rounded-xl text-rose-950 text-xs shadow-md animate-fade-in">
               <div className="flex items-start space-x-2.5">
-                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5 animate-pulse" />
+                <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5 animate-bounce" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <p className="font-extrabold text-amber-900 text-sm">
-                      ⚠️ Notice: Kode Sudah Digunakan! ({formData.kode})
+                    <p className="font-black text-rose-900 text-sm">
+                      ⛔ KODE SUDAH ADA — TIDAK BISA SIMPAN!
                     </p>
-                    <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-200 text-amber-900 rounded-full border border-amber-300">
+                    <span className="px-2 py-0.5 text-[10px] font-black bg-rose-600 text-white rounded-full uppercase tracking-wider">
                       Kode Tidak Boleh Sama
                     </span>
                   </div>
-                  <p className="mt-1 text-amber-800 leading-relaxed">
-                    Kode <span className="font-mono font-bold text-amber-950 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">{formData.kode}</span> sudah dipakai di <strong>BOX #{existingItemWithSameCode.boxNumber || '?'}</strong> ({existingItemWithSameCode.style || existingItemWithSameCode.name || 'Barang lain'}).
+                  <p className="mt-1 text-rose-800 leading-relaxed font-semibold">
+                    Kode <span className="font-mono font-black text-rose-950 bg-rose-200/90 px-1.5 py-0.5 rounded border border-rose-400">{formData.kode}</span> sudah terdaftar di <strong>BOX #{existingItemWithSameCode.boxNumber || '?'}</strong> ({existingItemWithSameCode.style || existingItemWithSameCode.name || 'Barang lain'}). Tombol simpan dinonaktifkan sampai kode diubah.
                   </p>
-                  <div className="mt-2.5 p-2 bg-white/90 rounded-lg border border-amber-300 flex items-center justify-between gap-2 flex-wrap shadow-2xs">
-                    <div className="text-[11px] text-amber-900 font-medium">
+                  <div className="mt-2.5 p-2 bg-white rounded-lg border-2 border-rose-300 flex items-center justify-between gap-2 flex-wrap shadow-2xs">
+                    <div className="text-[11px] text-slate-800 font-semibold">
                       💡 Kode unik berikutnya yang tersedia: <strong className="font-mono text-xs text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">{autoResolvedCode}</strong>
                     </div>
                     <button
@@ -482,14 +488,14 @@ const ItemModalContent = () => {
                         setFormData(prev => ({ ...prev, kode: autoResolvedCode }));
                         if (submitError) setSubmitError(null);
                       }}
-                      className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-1.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Ubah Sekarang ke {autoResolvedCode} ➔</span>
+                      <span>Pakai Kode {autoResolvedCode} ➔</span>
                     </button>
                   </div>
-                  <p className="mt-1.5 text-[10px] text-amber-700 italic">
-                    * Catatan: Karena kode tidak boleh sama, saat Anda klik Simpan, sistem akan terlebih dahulu mengganti kode menjadi <strong>{autoResolvedCode}</strong> di kartu fisik ini sebelum data disimpan.
+                  <p className="mt-1.5 text-[10px] text-rose-700 italic">
+                    * Klik tombol <strong>"Pakai Kode {autoResolvedCode}"</strong> di atas agar tombol Simpan kembali aktif.
                   </p>
                 </div>
               </div>
@@ -931,11 +937,22 @@ const ItemModalContent = () => {
             <button
               type="submit"
               form="direct-card-form"
-              disabled={isSubmitting}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black shadow-md shadow-blue-900/20 transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting || Boolean(existingItemWithSameCode)}
+              className={`px-5 py-2 rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5 ${
+                existingItemWithSameCode
+                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed shadow-none'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 cursor-pointer disabled:opacity-50'
+              }`}
+              title={existingItemWithSameCode ? 'Kode sudah ada! Tidak bisa simpan sebelum kode diubah' : 'Simpan item ke box'}
             >
               <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box')}</span>
+              <span>
+                {isSubmitting 
+                  ? 'Menyimpan...' 
+                  : existingItemWithSameCode 
+                    ? 'Tidak Bisa Simpan (Kode Kembar)' 
+                    : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box')}
+              </span>
             </button>
           </div>
         </div>
