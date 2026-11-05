@@ -113,11 +113,17 @@ const AppContent = () => {
         <div className="inventory-header-scroll">
           <div className="inventory-header-row">
 
-            <div className="inventory-header-brand flex shrink-0 items-center gap-2">
-              <div className="rounded-lg bg-blue-600 p-1.5 text-white">
+            <div className="inventory-header-brand flex shrink-0 items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white shadow-md shadow-blue-500/25 ring-1 ring-white/30">
                 <Boxes className="h-4 w-4" />
               </div>
-              <span className="inventory-brand text-xs font-semibold text-slate-800">R&amp;D Inventory</span>
+              <div className="flex flex-col">
+                <span className="inventory-brand text-xs font-black tracking-tight text-slate-900 flex items-center gap-1.5">
+                  GAGACLO <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">R&amp;D</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.2 rounded-full">v2.0</span>
+                </span>
+                <span className="inventory-brand text-[10px] font-medium text-slate-500 -mt-0.5">Inventory &amp; Sample Studio</span>
+              </div>
             </div>
 
             {appMode === '3d-warehouse' && (
@@ -131,10 +137,10 @@ const AppContent = () => {
               <button
                 type="button"
                 onClick={() => setIsSupabaseModalOpen(true)}
-                className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border ${
                   supabaseStatus.isConnected
-                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
-                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                    ? 'bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border-emerald-200/90 hover:shadow-xs hover:-translate-y-0.5'
+                    : 'bg-white/90 hover:bg-slate-100/90 text-slate-700 border-slate-200 hover:shadow-xs hover:-translate-y-0.5'
                 }`}
                 aria-label={connected ? `Supabase Gagaclo, ${usageLabel}` : 'Hubungkan Supabase Gagaclo'}
                 title={
@@ -143,8 +149,12 @@ const AppContent = () => {
                     : 'Hubungkan ke Cloud Database Supabase Corporate Gagaclo'
                 }
               >
+                <span className="relative flex h-2 w-2">
+                  {connected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${connected ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                </span>
                 <Database className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>{connected ? usageLabel : 'Hubungkan'}</span>
+                <span>{connected ? usageLabel : 'Hubungkan Cloud'}</span>
               </button>
 
               <InventoryImport />
@@ -153,12 +163,12 @@ const AppContent = () => {
               <button
                 type="button"
                 onClick={() => setIsBoxManageOpen(true)}
-                className="flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition border bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-white/90 hover:bg-slate-100/90 text-slate-700 border-slate-200 hover:shadow-xs hover:-translate-y-0.5"
                 aria-label="Kelola Box, Rak & Orang"
                 title="Tambah Box, atur Rak/Lantai, kelola data Orang (PIC)"
               >
-                <PackagePlus className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Kelola</span>
+                <PackagePlus className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
+                <span>Kelola Box &amp; Rak</span>
               </button>
 
             </div>

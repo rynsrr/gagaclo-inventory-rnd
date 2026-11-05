@@ -111,12 +111,12 @@ export function TotalItemsSummaryView() {
       <PpicMissingMentionBar />
 
       {/* Full item list */}
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="inventory-panel p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <List className="h-4 w-4 text-slate-500" aria-hidden="true" />
-            Daftar Semua Barang Tersimpan
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
+          <h2 className="flex items-center gap-2 text-sm font-black text-slate-800 tracking-tight">
+            <List className="h-4 w-4 text-blue-600" aria-hidden="true" />
+            <span>Daftar Semua Barang Tersimpan</span>
+            <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-bold text-blue-700 shadow-2xs">
               {filteredItems.length} / {allItems.length}
             </span>
           </h2>
@@ -128,26 +128,26 @@ export function TotalItemsSummaryView() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Cari kode, buyer, style, warna, box, rak, PIC..."
-                className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/80 py-2.5 pl-9 pr-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
               />
             </div>
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: null })}
-              className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100 whitespace-nowrap"
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/90 px-3.5 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100 shadow-2xs hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
               title="Tambah item / sample baru"
             >
               <Plus className="h-4 w-4" />
-              Tambah Item
+              <span>Tambah Item</span>
             </button>
             <button
               type="button"
               onClick={handleExport}
-              className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 whitespace-nowrap"
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3.5 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 shadow-2xs hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
               title="Export daftar ini (sesuai pencarian) ke Excel (.xlsx)"
             >
               <Download className="h-4 w-4" />
-              Export Excel
+              <span>Export Excel</span>
             </button>
           </div>
         </div>

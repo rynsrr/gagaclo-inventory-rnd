@@ -111,7 +111,7 @@ export function BoxSearchPanel({ query, onQueryChange, results }) {
       </label>
 
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
         <input
           id="inventory-global-search"
           ref={inputRef}
@@ -121,7 +121,7 @@ export function BoxSearchPanel({ query, onQueryChange, results }) {
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder="Cari box atau barang..."
           autoComplete="off"
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-8 pr-8 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+          className="w-full rounded-xl border border-slate-200/90 bg-slate-50/80 py-2.5 pl-9 pr-8 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
         />
         {active && (
           <button
@@ -129,7 +129,7 @@ export function BoxSearchPanel({ query, onQueryChange, results }) {
             onClick={() => { onQueryChange(''); inputRef.current?.focus(); }}
             aria-label="Hapus pencarian"
             title="Hapus pencarian"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -137,33 +137,33 @@ export function BoxSearchPanel({ query, onQueryChange, results }) {
       </div>
 
       {!active ? (
-        <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
-          Cari nomor box, kode sample, buyer, style, warna, PIC, atau rak. Tekan{' '}
-          <kbd className="rounded border border-slate-200 bg-white px-1 font-sans">Ctrl</kbd> +{' '}
-          <kbd className="rounded border border-slate-200 bg-white px-1 font-sans">K</kbd> untuk fokus cepat.
+        <p className="mt-2 text-[10px] leading-relaxed text-slate-400 font-medium">
+          Cari nomor box, kode, style, PIC, atau rak. Tekan{' '}
+          <kbd className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-sans font-bold text-slate-600 shadow-2xs">Ctrl</kbd> +{' '}
+          <kbd className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-sans font-bold text-slate-600 shadow-2xs">K</kbd> untuk fokus cepat.
         </p>
       ) : (
         <div className="inventory-search-results mt-2 space-y-2">
-          <div className="flex items-center justify-between gap-2 rounded-lg bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-700">
-            <span>{matchedBoxNumbers.size} box cocok & disorot</span>
+          <div className="flex items-center justify-between gap-2 rounded-xl bg-blue-50/90 border border-blue-200/90 px-2.5 py-1.5 text-[11px] font-bold text-blue-700 shadow-2xs">
+            <span>{matchedBoxNumbers.size} box cocok &amp; disorot</span>
             <button
               type="button"
               onClick={() => onQueryChange('')}
-              className="shrink-0 text-blue-600 underline underline-offset-2 hover:text-blue-800"
+              className="shrink-0 text-blue-600 underline underline-offset-2 hover:text-blue-800 font-semibold"
             >
               Reset
             </button>
           </div>
 
           {matchedBoxNumbers.size === 0 && (
-            <p className="rounded-lg border border-dashed border-slate-200 px-2 py-3 text-center text-[11px] text-slate-400">
+            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-center text-[11px] text-slate-400 bg-slate-50/50">
               Tidak ada box atau barang yang cocok.
             </p>
           )}
 
           {boxMatches.length > 0 && (
             <div>
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Box ({boxMatches.length})
               </p>
               <div className="space-y-1">
@@ -172,21 +172,21 @@ export function BoxSearchPanel({ query, onQueryChange, results }) {
                     key={`box-${box.boxNumber}`}
                     type="button"
                     onClick={() => openBox(box.boxNumber)}
-                    className="flex w-full items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-left transition hover:border-blue-200 hover:bg-blue-50"
+                    className="flex w-full items-center gap-2 rounded-xl border border-transparent p-2 text-left transition hover:border-blue-200 hover:bg-blue-50/80 active:scale-98"
                     title={`Buka detail Box #${box.boxNumber}`}
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 font-black text-[10px] shadow-2xs">
                       <BoxIcon className="h-3.5 w-3.5" aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-xs font-bold text-slate-800">
                         BOX #{box.boxNumber}
                       </span>
-                      <span className="block truncate text-[10px] text-slate-500">
+                      <span className="block truncate text-[10px] text-slate-500 font-medium">
                         {box.rackName || 'LANTAI'} • {box.picName || '-'}
                       </span>
                     </span>
-                    <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
                       {getItemsInBox(box.boxNumber).length}
                     </span>
                   </button>

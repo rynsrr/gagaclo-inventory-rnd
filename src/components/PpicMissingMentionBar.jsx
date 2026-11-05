@@ -95,26 +95,26 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact 
   };
 
   return (
-    <div className="inventory-panel p-3.5 sm:p-4 space-y-3 border border-slate-200/90 shadow-xs bg-white rounded-2xl">
+    <div className="inventory-panel p-4 sm:p-5 space-y-3.5 border border-slate-200/80 shadow-2xs bg-white/95 backdrop-blur-md rounded-2xl">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-100 text-blue-700 rounded-lg shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shadow-2xs shrink-0">
             <Users className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xs sm:text-sm font-bold text-slate-900">
-                Mention &amp; Rekap Kurang per PIC
+              <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+                Rekap Kurang &amp; Mention PIC
               </h2>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                totalKurang > 0 ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800'
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${
+                totalKurang > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               }`}>
                 {totalKurang > 0 ? `Total Kurang: ${totalKurang} Box` : 'Semua Box Terisi! 🎉'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">
-              Cek kekurangan box tiap PIC dan salin pesan mention untuk grup chat PPIC.
+            <p className="text-[11px] text-slate-500 font-medium">
+              Pantau progres pengisian box masing-masing PIC dan salin teks rekap otomatis untuk grup chat.
             </p>
           </div>
         </div>
@@ -124,10 +124,10 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact 
           <button
             type="button"
             onClick={handleCopyMentionText}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs border ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs border ${
               copied
                 ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-200'
-                : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
+                : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900 hover:shadow-xs hover:-translate-y-0.5 active:scale-95'
             }`}
             title="Salin pesan mention teks untuk WhatsApp/Telegram grup PPIC"
           >

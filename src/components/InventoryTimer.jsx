@@ -77,37 +77,65 @@ export function InventoryTimer() {
 
   return (
     <>
-      <section aria-label="Hitung mundur pendataan" className="inventory-panel flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-slate-800">Hitung Mundur Pendataan</h2>
-            <span
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200"
-              title="Tersinkronisasi otomatis di semua browser & perangkat tim"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Sinkron Tim</span>
+      <section 
+        aria-label="Hitung mundur pendataan" 
+        className="inventory-panel relative overflow-hidden flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-3.5 sm:px-7 bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(37,99,235,0.06)] rounded-2xl transition-all"
+      >
+        {/* Subtle ambient gradient accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 opacity-80" />
+
+        <div className="min-w-fit">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/80 shadow-2xs">
+              <Timer className="h-4 w-4" aria-hidden="true" />
             </span>
-          </div>
-          <p className="text-xs text-slate-600">
-            {finished ? 'Waktu habis' : deadline ? 'Sisa waktu pengerjaan (tersinkronisasi)' : 'Atur durasi untuk memulai'}
-          </p>
-        </div>
-        <div role="timer" className="flex gap-3 text-center sm:gap-6">
-          {countdown.map(([label, value]) => (
-            <div key={label} className="min-w-10">
-              <div className="text-2xl leading-none font-bold tabular-nums text-blue-700 sm:text-4xl">{String(value).padStart(2, '0')}</div>
-              <div className="mt-1 text-xs text-slate-600">{label}</div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-black tracking-tight text-slate-900">Hitung Mundur Pendataan</h2>
+                <span
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs"
+                  title="Tersinkronisasi otomatis di semua browser & perangkat tim"
+                >
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  </span>
+                  <span>Cloud Sync</span>
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-500">
+                {finished ? '⚠️ Waktu pendataan telah berakhir' : deadline ? 'Sisa waktu pengerjaan tersinkronisasi real-time' : 'Durasi hitung mundur belum diatur'}
+              </p>
             </div>
+          </div>
+        </div>
+
+        {/* Digital Counter Blocks */}
+        <div role="timer" className="flex items-center gap-1.5 sm:gap-2.5">
+          {countdown.map(([label, value], idx) => (
+            <React.Fragment key={label}>
+              <div className="flex flex-col items-center justify-center min-w-[50px] sm:min-w-[60px] px-2.5 py-1.5 rounded-xl bg-slate-50/90 border border-slate-200/80 shadow-2xs">
+                <div className="text-xl sm:text-2xl font-black tabular-nums tracking-tight bg-gradient-to-br from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                  {String(value).padStart(2, '0')}
+                </div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 -mt-0.5">
+                  {label}
+                </div>
+              </div>
+              {idx < countdown.length - 1 && (
+                <span className="text-slate-300 font-black text-sm -mt-2 select-none">:</span>
+              )}
+            </React.Fragment>
           ))}
         </div>
+
         <button
           type="button"
           aria-haspopup="dialog"
           onClick={() => dialogRef.current?.showModal()}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:bg-slate-100 transition shadow-xs"
+          className="flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 transition-all shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:scale-95"
         >
-          <Timer className="h-4 w-4" aria-hidden="true" />
+          <Timer className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
           <span>Atur Timer</span>
         </button>
       </section>

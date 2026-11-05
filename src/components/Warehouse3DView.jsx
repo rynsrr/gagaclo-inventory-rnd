@@ -1131,19 +1131,21 @@ export const Warehouse3DView = ({
       )}
 
       {/* Pencarian Cepat di Halaman Depan */}
-      <section className="inventory-panel p-3.5 sm:p-4 bg-white shadow-xs" aria-label="Pencarian halaman depan">
+      <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md shadow-sm border border-slate-200/80 rounded-2xl" aria-label="Pencarian halaman depan">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
-          <label htmlFor="frontpage-search" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-            <Search className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
-            <span>Pencarian Cepat Box &amp; Barang</span>
+          <label htmlFor="frontpage-search" className="text-xs font-black text-slate-800 flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+              <Search className="h-3 w-3" aria-hidden="true" />
+            </span>
+            <span>Pencarian Pintar Box &amp; Barang</span>
           </label>
-          <span className="text-[11px] text-slate-400">
-            Cari nomor box, kode sampel, buyer, style, warna, PIC, atau rak (Tekan <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-sans text-[10px]">Ctrl+K</kbd>)
+          <span className="text-[11px] font-medium text-slate-400">
+            Tekan <kbd className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-sans text-[10px] text-slate-600 shadow-2xs font-bold">Ctrl + K</kbd> untuk cari cepat
           </span>
         </div>
 
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input
             id="frontpage-search"
             ref={searchInputRef}
@@ -1151,9 +1153,9 @@ export const Warehouse3DView = ({
             inputMode="search"
             value={searchQuery}
             onChange={(e) => onSearchQueryChange?.(e.target.value)}
-            placeholder="Ketik untuk mencari: contoh #25, SMP-001, Kemeja, Royan, Uniqlo, Cotton, RACK 1..."
+            placeholder="Cari nomor box, kode sampel, buyer, style, warna, PIC, atau rak..."
             autoComplete="off"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-9 pr-9 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition shadow-inner"
+            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/70 py-2.5 pl-10 pr-9 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
           />
           {searchQuery && (
             <button
@@ -1171,11 +1173,28 @@ export const Warehouse3DView = ({
           )}
         </div>
 
+        {/* Quick Suggestion Pills when not searching */}
+        {!searchQuery && (
+          <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
+            <span className="text-slate-400 font-medium">Saran cepat:</span>
+            {['#1', '#17', 'LANTAI', 'DEVELOP', 'SAMPLE'].map((sug) => (
+              <button
+                key={sug}
+                type="button"
+                onClick={() => onSearchQueryChange?.(sug)}
+                className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition font-medium border border-slate-200/60 shadow-2xs"
+              >
+                {sug}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Live Search Results on Front Page */}
         {searchResults?.active && (
           <div className="mt-3 pt-3 border-t border-slate-100 space-y-3 animate-fade-in">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50/90 px-3 py-1 rounded-xl border border-blue-200 shadow-2xs">
                 <Sparkles className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
                 <span>
                   {searchResults.matchedBoxNumbers.size} box cocok ditemukan &amp; disorot di rak 3D
@@ -1184,7 +1203,7 @@ export const Warehouse3DView = ({
               <button
                 type="button"
                 onClick={onClearSearch}
-                className="text-xs text-slate-500 hover:text-rose-600 underline font-medium"
+                className="text-xs text-slate-500 hover:text-rose-600 underline font-semibold transition"
               >
                 Reset Pencarian
               </button>
@@ -1202,7 +1221,7 @@ export const Warehouse3DView = ({
                       key={`front-box-${box.boxNumber}`}
                       type="button"
                       onClick={() => setSelectedBoxNumber(box.boxNumber)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition shadow-xs"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition shadow-2xs hover:-translate-y-0.5 active:scale-95"
                       title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName})`}
                     >
                       <BoxIcon className="h-3 w-3 text-amber-600" aria-hidden="true" />
@@ -1224,7 +1243,7 @@ export const Warehouse3DView = ({
                   {searchResults.itemMatches.slice(0, 10).map((item, idx) => (
                     <div
                       key={item.id || `front-item-${idx}`}
-                      className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 hover:bg-blue-50/70 border border-slate-200 transition text-xs group"
+                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50/90 hover:bg-blue-50/80 border border-slate-200/80 transition-all text-xs group shadow-2xs"
                     >
                       <button
                         type="button"
@@ -1270,7 +1289,7 @@ export const Warehouse3DView = ({
             )}
 
             {searchResults.matchedBoxNumbers.size === 0 && (
-              <p className="text-center py-2.5 text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl">
+              <p className="text-center py-3 text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                 Tidak ada box atau sampel yang cocok dengan kata kunci <strong>"{searchQuery}"</strong>.
               </p>
             )}
@@ -1280,46 +1299,52 @@ export const Warehouse3DView = ({
 
       <PpicMissingMentionBar activePic={highlightPpic} onSelectPic={setHighlightPpic} />
 
-      <div role="group" aria-label="Pilihan rak" className="inventory-filter-group w-fit max-w-full flex-wrap">
-        <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
-          Semua Rak
-        </button>
-        {racks.filter((r) => Number(r.id) !== 0).map((r) => (
-          <button key={r.id} onClick={() => focusOnRack(r.id)} aria-pressed={activeRackView === r.id}>
-            {r.name}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mr-1">
+          <Layers className="h-3.5 w-3.5 text-blue-600" />
+          <span>Fokus Rak:</span>
+        </span>
+        <div role="group" aria-label="Pilihan rak" className="inventory-filter-group w-fit max-w-full flex-wrap shadow-2xs">
+          <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
+            Semua Rak
           </button>
-        ))}
-        {boxes.some((b) => Number(b.rackId) === 0) && (
-          <button onClick={() => focusOnRack(0)} aria-pressed={activeRackView === 0}>
-            Lantai ({boxes.filter((b) => Number(b.rackId) === 0).length})
-          </button>
-        )}
+          {racks.filter((r) => Number(r.id) !== 0).map((r) => (
+            <button key={r.id} onClick={() => focusOnRack(r.id)} aria-pressed={activeRackView === r.id}>
+              {r.name}
+            </button>
+          ))}
+          {boxes.some((b) => Number(b.rackId) === 0) && (
+            <button onClick={() => focusOnRack(0)} aria-pressed={activeRackView === 0}>
+              Lantai ({boxes.filter((b) => Number(b.rackId) === 0).length})
+            </button>
+          )}
+        </div>
       </div>
 
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
         {occupancyGroups.map(group => (
-          <div key={group.label} className="inventory-panel px-3 py-2.5">
-            <h2 className="mb-2 flex items-center justify-between text-sm font-semibold">
-              {group.label}
-              <span className={`rounded-full px-2 py-0.5 ${group.color}`}>{group.boxes.length}</span>
+          <div key={group.label} className="inventory-panel px-4 py-3 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all">
+            <h2 className="mb-2 flex items-center justify-between text-xs font-bold text-slate-700">
+              <span>{group.label}</span>
+              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black shadow-2xs ${group.color}`}>{group.boxes.length} Box</span>
             </h2>
-            <div className="flex flex-wrap gap-1 p-1">
+            <div className="flex flex-wrap gap-1 p-0.5 max-h-24 overflow-y-auto">
               {group.boxes.map(box => (
                 <button key={box.boxNumber} type="button"
                   aria-label={`Box ${box.boxNumber}, ${group.label}`}
                   onClick={() => setSelectedBoxNumber(box.boxNumber)}
-                  className={`inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1 text-xs font-bold tabular-nums hover:ring-1 ${group.color}`}>
+                  className={`inline-flex h-6 min-w-6 items-center justify-center rounded-lg px-1.5 text-xs font-black tabular-nums transition-all shadow-2xs hover:scale-105 hover:ring-2 hover:ring-blue-400 active:scale-95 ${group.color}`}>
                   {box.boxNumber}
                 </button>
               ))}
-              {group.boxes.length === 0 && <span className="text-xs text-slate-500">Tidak ada box</span>}
+              {group.boxes.length === 0 && <span className="text-xs text-slate-400 italic py-1">Tidak ada box</span>}
             </div>
           </div>
         ))}
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden bg-gradient-to-b from-sky-300 via-sky-100 to-cyan-50">
+      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-gradient-to-b from-sky-300 via-sky-100 to-cyan-50">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
