@@ -124,10 +124,10 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   </span>
                   <div className="flex items-center gap-1 flex-wrap mt-0.5">
                     <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                      SMPL: {sampleNoDisplay}
+                      SAMPLE: {sampleNoDisplay}
                     </span>
                     <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                      SZ: {sizeDisplay}
+                      SIZE: {sizeDisplay}
                     </span>
                   </div>
                 </div>
@@ -138,10 +138,10 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   </span>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                      SMPL: {sampleNoDisplay}
+                      SAMPLE: {sampleNoDisplay}
                     </span>
                     <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                      SZ: {sizeDisplay}
+                      SIZE: {sizeDisplay}
                     </span>
                   </div>
                 </div>
