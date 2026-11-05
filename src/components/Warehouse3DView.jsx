@@ -104,6 +104,7 @@ export const Warehouse3DView = ({
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
+  const [isVestPreviewOpen, setIsVestPreviewOpen] = useState(false);
   const rendererRef = useRef(null);
 
   // A Set of box numbers matching the sidebar search (null = no active search).
@@ -1022,6 +1023,19 @@ export const Warehouse3DView = ({
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
 
+        {/* 3D Vest Preview Button (Top Right) */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsVestPreviewOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer bg-amber-500/90 hover:bg-amber-600 text-white border-amber-300 shadow-amber-500/20 active:scale-95"
+            title="Klik untuk membuka preview 3D Safety Vest"
+          >
+            <span>🦺</span>
+            <span>3D Vest Preview</span>
+          </button>
+        </div>
+
         {/* Active search indicator (top left) */}
         {searchActive && (
           <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-blue-200 bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm backdrop-blur-xs">
@@ -1072,10 +1086,10 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls Hint & Disney Forest Badge (Bottom Right) */}
+        {/* Controls Hint & Lake Pier Badge (Bottom Right) */}
         <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
-          <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <span>🌲</span> Disney Forest 3D
+          <span className="text-sky-400 font-bold flex items-center gap-1">
+            <span>🌊</span> Danau 3D Pier
           </span>
           <span className="text-slate-500">|</span>
           <span>🖱️ Putar: Klik Kiri</span>
@@ -1084,6 +1098,66 @@ export const Warehouse3DView = ({
           <span className="text-slate-600">•</span>
           <span>✋ Geser: Klik Kanan</span>
         </div>
+
+        {/* 3D Vest Preview Lightbox Modal */}
+        {isVestPreviewOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-sm animate-fade-in"
+            onClick={() => setIsVestPreviewOpen(false)}
+          >
+            <div
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-emerald-500/10">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl">🦺</span>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
+                      3D High-Visibility Safety Vest
+                    </h3>
+                    <p className="text-xs text-slate-500">Standar Proyek K3 - GAGACLO RND</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsVestPreviewOpen(false)}
+                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Image Preview */}
+              <div className="p-4 bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+                <img
+                  src="/images/vest-preview.jpg"
+                  alt="3D Safety Vest Render"
+                  className="w-full h-auto max-h-[320px] object-contain rounded-2xl shadow-md border border-slate-100"
+                />
+              </div>
+
+              {/* Features & Description */}
+              <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-orange-100 text-orange-800 border border-orange-200">
+                    Neon Orange & Lime
+                  </span>
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-slate-200 text-slate-800 border border-slate-300">
+                    Dual Reflective Tape
+                  </span>
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-blue-100 text-blue-800 border border-blue-200">
+                    Utility Pockets &amp; ID Badge
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Rompi ini juga telah dihadirkan dalam bentuk <strong>model 3D fisik yang berputar</strong> di display stand dermaga dan dipakai oleh pekerja proyek di scene 3D danau.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
 

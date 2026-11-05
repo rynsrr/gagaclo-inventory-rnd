@@ -474,6 +474,105 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
   scene.add(dogGroup);
   disposables.push(dogGroup);
 
+  // =========================================================================
+  // 9. 3D SAFETY VEST DISPLAY STAND (Mannequin Display on the Dock)
+  // =========================================================================
+  const vestStandGroup = new THREE.Group();
+  vestStandGroup.position.set(deckCenterX - 0.2, deckHeight, halfD - 1.2);
+
+  // Chrome / Matte Black Pedestal
+  const baseStandGeo = new THREE.CylinderGeometry(0.32, 0.36, 0.06, 16);
+  const baseStandMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.4, metalness: 0.8 });
+  const baseStand = new THREE.Mesh(baseStandGeo, baseStandMat);
+  baseStand.position.y = 0.03;
+  baseStand.castShadow = true;
+  vestStandGroup.add(baseStand);
+
+  const poleGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.85, 12);
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.2, metalness: 0.9 });
+  const pole = new THREE.Mesh(poleGeo, poleMat);
+  pole.position.y = 0.46;
+  pole.castShadow = true;
+  vestStandGroup.add(pole);
+
+  // Studio Mannequin Torso
+  const mannequinMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5 });
+  const mTorsoGeo = new THREE.BoxGeometry(0.48, 0.68, 0.26);
+  const mTorso = new THREE.Mesh(mTorsoGeo, mannequinMat);
+  mTorso.position.y = 1.15;
+  mTorso.castShadow = true;
+  vestStandGroup.add(mTorso);
+
+  // 3D Hi-Vis Safety Vest Outer Layers:
+  // Lower Body: Fluorescent Neon Orange
+  const vestOrangeMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.45, flatShading: true });
+  const vLowerGeo = new THREE.BoxGeometry(0.52, 0.38, 0.3);
+  const vLower = new THREE.Mesh(vLowerGeo, vestOrangeMat);
+  vLower.position.y = 1.02;
+  vLower.castShadow = true;
+  vestStandGroup.add(vLower);
+
+  // Upper Chest & Shoulders: Fluorescent Neon Lime-Yellow
+  const vestLimeMat = new THREE.MeshStandardMaterial({ color: 0x84cc16, roughness: 0.45, flatShading: true });
+  const vUpperGeo = new THREE.BoxGeometry(0.52, 0.32, 0.3);
+  const vUpper = new THREE.Mesh(vUpperGeo, vestLimeMat);
+  vUpper.position.y = 1.34;
+  vUpper.castShadow = true;
+  vestStandGroup.add(vUpper);
+
+  // Reflective Silver Safety Stripes (Horizontal & Vertical)
+  const vStripeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.15, metalness: 0.9 });
+
+  // Waist horizontal stripe
+  const vStripe1 = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
+  vStripe1.position.y = 0.98;
+  // Chest horizontal stripe
+  const vStripe2 = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
+  vStripe2.position.y = 1.22;
+
+  // Left and Right Vertical Shoulder reflective suspenders
+  const vStripeL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
+  vStripeL.position.set(-0.16, 1.35, 0);
+  const vStripeR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
+  vStripeR.position.set(0.16, 1.35, 0);
+  vestStandGroup.add(vStripe1, vStripe2, vStripeL, vStripeR);
+
+  // Heavy duty black zipper line down the front
+  const zipper = new THREE.Mesh(
+    new THREE.BoxGeometry(0.03, 0.68, 0.33),
+    new THREE.MeshStandardMaterial({ color: 0x0f172a })
+  );
+  zipper.position.set(0, 1.18, 0);
+  vestStandGroup.add(zipper);
+
+  // ID Card Badge on upper chest
+  const badgeHolder = new THREE.Mesh(
+    new THREE.BoxGeometry(0.12, 0.16, 0.04),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
+  );
+  badgeHolder.position.set(-0.15, 1.32, 0.18);
+  vestStandGroup.add(badgeHolder);
+
+  // Utility flap pockets
+  const pocketGeo = new THREE.BoxGeometry(0.16, 0.14, 0.05);
+  const pocketL = new THREE.Mesh(pocketGeo, vestOrangeMat);
+  pocketL.position.set(-0.15, 0.96, 0.18);
+  const pocketR = new THREE.Mesh(pocketGeo, vestOrangeMat);
+  pocketR.position.set(0.15, 0.96, 0.18);
+  vestStandGroup.add(pocketL, pocketR);
+
+  scene.add(vestStandGroup);
+  disposables.push(
+    vestStandGroup,
+    baseStandGeo, baseStandMat, baseStand,
+    poleGeo, poleMat, pole,
+    mTorsoGeo, mannequinMat, mTorso,
+    vestOrangeMat, vLowerGeo, vLower,
+    vestLimeMat, vUpperGeo, vUpper,
+    vStripeMat, vStripe1, vStripe2, vStripeL, vStripeR,
+    zipper, badgeHolder, pocketGeo, pocketL, pocketR
+  );
+
   return {
     update(elapsed) {
       // 1. Shimmering Lake Surface Wave Animation
@@ -508,6 +607,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
 
       // 5. Dock Mascot Dog tail wagging
       dTail.rotation.y = Math.sin(elapsed * 14) * 0.55;
+
+      // 6. 3D Safety Vest Display Stand gentle rotation showcase
+      vestStandGroup.rotation.y = elapsed * 0.35;
     },
     dispose() {
       disposables.forEach((item) => {
