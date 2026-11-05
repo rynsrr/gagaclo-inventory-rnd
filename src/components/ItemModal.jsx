@@ -78,6 +78,12 @@ export function getNextSampleCode(items = []) {
 }
 
 export const ItemModal = () => {
+  const { itemModalConfig } = useInventory();
+  if (!itemModalConfig?.isOpen) return null;
+  return <ItemModalContent key={itemModalConfig.item?.id || itemModalConfig.targetBoxNumber || 'new'} />;
+};
+
+const ItemModalContent = () => {
   const { 
     itemModalConfig, 
     setItemModalConfig, 
@@ -91,6 +97,8 @@ export const ItemModal = () => {
 
   const hiddenDateRef = useRef(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const isEditing = Boolean(itemModalConfig.item);
   const targetBoxNum = Number(itemModalConfig.targetBoxNumber) || (itemModalConfig.item ? Number(itemModalConfig.item.boxNumber) : 1);
@@ -101,81 +109,91 @@ export const ItemModal = () => {
     return `${now.getDate()}-${months[now.getMonth()]}-${now.getFullYear()}`;
   }
 
-  const [formData, setFormData] = useState({
-    track: '',
-    tanggal: formatTodayDate(),
-    kode: '',
-    buyerNo: '',
-    jenisSample: 'DEVELOP',
-    style: '',
-    sampleNo: '',
-    size: '',
-    color: '',
-    jumlah: 1,
-    satuan: 'PCS',
-    boxNumber: 1,
-    place: '',
-    status: 'In Storage',
+  const [formData, setFormData] = useState(() => {
+    if (itemModalConfig.item) {
+      const item = itemModalConfig.item;
+      const bNum = Number(item.boxNumber) || targetBoxNum;
+      const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
+      const defaultBoxPlace = bObj 
+        ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
+        : `BOX ${bNum}`;
+
+      return fillBlankWithNA({
+        track: item.track || '',
+        tanggal: item.tanggal || item.dateIn || formatTodayDate(),
+        kode: item.kode || item.sku || getNextSampleCode(items),
+        buyerNo: item.buyerNo || item.buyerNumber || '',
+        jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
+        style: item.style || item.name || item.deskripsi || '',
+        sampleNo: item.sampleNo || '',
+        size: item.size || '',
+        color: item.color && item.color !== '-' ? item.color : '',
+        jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
+        satuan: item.satuan || item.unit || 'PCS',
+        boxNumber: bNum,
+        place: item.place || defaultBoxPlace,
+        status: item.status || 'In Storage',
+      });
+    } else {
+      const bNum = targetBoxNum || 1;
+      const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
+      const defaultBoxPlace = bObj 
+        ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
+        : `BOX ${bNum}`;
+
+      return {
+        track: '',
+        tanggal: formatTodayDate(),
+        kode: getNextSampleCode(items),
+        buyerNo: '',
+        jenisSample: 'DEVELOP',
+        style: '',
+        sampleNo: '',
+        size: '',
+        color: '',
+        jumlah: 1,
+        satuan: 'PCS',
+        boxNumber: bNum,
+        place: defaultBoxPlace,
+        status: 'In Storage',
+      };
+    }
   });
 
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    if (itemModalConfig.isOpen) {
-      if (itemModalConfig.item) {
-        // Edit mode
-        const item = itemModalConfig.item;
-        const bNum = Number(item.boxNumber) || targetBoxNum;
-        const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
-        const defaultBoxPlace = bObj 
-          ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
-          : `BOX ${bNum}`;
+  // Dynamic rack groupings from live `boxes`
+  const dynamicRackGroups = React.useMemo(() => {
+    const validBoxes = [...boxes]
+      .filter((b) => Number(b.boxNumber) < 900000 && Number(b.boxNumber) > 0)
+      .sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
 
-        setFormData(fillBlankWithNA({
-          track: item.track || '',
-          tanggal: item.tanggal || item.dateIn || formatTodayDate(),
-          kode: item.kode || item.sku || getNextSampleCode(items),
-          buyerNo: item.buyerNo || item.buyerNumber || '',
-          jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
-          style: item.style || item.name || item.deskripsi || '',
-          sampleNo: item.sampleNo || '',
-          size: item.size || '',
-          color: item.color && item.color !== '-' ? item.color : '',
-          jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
-          satuan: item.satuan || item.unit || 'PCS',
-          boxNumber: bNum,
-          place: item.place || defaultBoxPlace,
-          status: item.status || 'In Storage',
-        }));
-      } else {
-        // New item mode: auto-generate sequential code SAMPLE-00001, SAMPLE-00002...
-        const bNum = targetBoxNum || 1;
-        const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
-        const defaultBoxPlace = bObj 
-          ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
-          : `BOX ${bNum}`;
+    const groupMap = new Map();
 
-        setFormData({
-          track: '',
-          tanggal: formatTodayDate(),
-          kode: getNextSampleCode(items),
-          buyerNo: '',
-          jenisSample: 'DEVELOP',
-          style: '',
-          sampleNo: '',
-          size: '',
-          color: '',
-          jumlah: 1,
-          satuan: 'PCS',
-          boxNumber: bNum,
-          place: defaultBoxPlace,
-          status: 'In Storage',
-        });
+    validBoxes.forEach((b) => {
+      const rackName = b.rackName || (Number(b.rackId) === 0 ? 'LANTAI' : 'RACK 1');
+      if (!groupMap.has(rackName)) {
+        groupMap.set(rackName, []);
       }
-      setErrors({});
-      setShowPrintModal(false);
-    }
-  }, [itemModalConfig.isOpen, itemModalConfig.item, itemModalConfig.targetBoxNumber, items]);
+      const placeVal = `BOX ${b.boxNumber} (${rackName} - ${b.picName || 'Royan'})`;
+      groupMap.get(rackName).push({
+        boxNumber: b.boxNumber,
+        value: placeVal,
+        label: `BOX #${b.boxNumber} — PIC: ${b.picName || 'Royan'}`,
+      });
+    });
+
+    return Array.from(groupMap.entries()).map(([name, bList]) => ({
+      name,
+      boxes: bList,
+    }));
+  }, [boxes]);
+
+  const allKnownPlaces = React.useMemo(() => {
+    const set = new Set();
+    dynamicRackGroups.forEach(rg => rg.boxes.forEach(b => set.add(b.value)));
+    return set;
+  }, [dynamicRackGroups]);
 
   // Clear a field's error as soon as the user fills it (including with "NA").
   useEffect(() => {
@@ -195,8 +213,6 @@ export const ItemModal = () => {
       return changed ? next : prev;
     });
   }, [formData]);
-
-  if (!itemModalConfig.isOpen) return null;
 
   // Handle box selection change
   const handleBoxSelect = (selectedPlaceValue) => {
@@ -228,9 +244,6 @@ export const ItemModal = () => {
       setFormData(prev => ({ ...prev, tanggal: formatted }));
     }
   };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -315,39 +328,6 @@ export const ItemModal = () => {
   };
 
   const currentBoxObj = boxes.find(b => Number(b.boxNumber) === Number(formData.boxNumber));
-
-  // Dynamic rack groupings from live `boxes`
-  const dynamicRackGroups = React.useMemo(() => {
-    const validBoxes = [...boxes]
-      .filter((b) => Number(b.boxNumber) < 900000 && Number(b.boxNumber) > 0)
-      .sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
-
-    const groupMap = new Map();
-
-    validBoxes.forEach((b) => {
-      const rackName = b.rackName || (Number(b.rackId) === 0 ? 'LANTAI' : 'RACK 1');
-      if (!groupMap.has(rackName)) {
-        groupMap.set(rackName, []);
-      }
-      const placeVal = `BOX ${b.boxNumber} (${rackName} - ${b.picName || 'Royan'})`;
-      groupMap.get(rackName).push({
-        boxNumber: b.boxNumber,
-        value: placeVal,
-        label: `BOX #${b.boxNumber} — PIC: ${b.picName || 'Royan'}`,
-      });
-    });
-
-    return Array.from(groupMap.entries()).map(([name, bList]) => ({
-      name,
-      boxes: bList,
-    }));
-  }, [boxes]);
-
-  const allKnownPlaces = React.useMemo(() => {
-    const set = new Set();
-    dynamicRackGroups.forEach(rg => rg.boxes.forEach(b => set.add(b.value)));
-    return set;
-  }, [dynamicRackGroups]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
