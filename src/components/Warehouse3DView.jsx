@@ -1137,16 +1137,20 @@ export const Warehouse3DView = ({
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
 
-        {/* Controls (Top Right): Mode Gelap & Panggil Anjing Penjaga */}
+        {/* Controls (Top Right): Fit View Face Side & Mode Gelap */}
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
           <button
             type="button"
-            onClick={triggerDogReminder}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 bg-amber-500/90 hover:bg-amber-600 text-white border-amber-300 shadow-amber-500/20"
-            title="Klik untuk menyorot kamera ke anjing penjaga & menampilkan pesan pengingat 15 menit"
+            onClick={() => fitCameraRef.current?.(true)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
+              isDarkMode
+                ? 'bg-slate-900/90 text-blue-300 border-blue-400/40 hover:bg-slate-800'
+                : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10'
+            }`}
+            title="Posisikan kamera tepat lurus menghadap depan rak (Fit View Face Side)"
           >
-            <span>🐶</span>
-            <span className="hidden sm:inline">Panggil Anjing</span>
+            <Maximize2 className="h-3.5 w-3.5 text-blue-500" />
+            <span>Fit View Face Side</span>
           </button>
 
           <button
