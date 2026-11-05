@@ -20,8 +20,7 @@ import {
   ChevronRight, 
   X, 
   Pencil, 
-  Package, 
-  Zap,
+  Package,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose — the original five PPIC colors,
@@ -105,36 +104,7 @@ export const Warehouse3DView = ({
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
-
-  // Mode Ringan / Cepat untuk menghemat daya dan mempercepat performa di laptop/PC kantor
-  const [ecoMode, setEcoMode] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gagaclo_3d_ecomode');
-      return saved !== null ? saved === 'true' : false;
-    } catch {
-      return false;
-    }
-  });
-  const ecoModeRef = useRef(ecoMode);
   const rendererRef = useRef(null);
-
-  useEffect(() => {
-    ecoModeRef.current = ecoMode;
-    if (rendererRef.current) {
-      rendererRef.current.setPixelRatio(ecoMode ? 1.0 : Math.min(window.devicePixelRatio, 1.25));
-      rendererRef.current.shadowMap.enabled = !ecoMode;
-    }
-  }, [ecoMode]);
-
-  const toggleEcoMode = () => {
-    const nextVal = !ecoMode;
-    setEcoMode(nextVal);
-    try {
-      localStorage.setItem('gagaclo_3d_ecomode', String(nextVal));
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   // A Set of box numbers matching the sidebar search (null = no active search).
   const searchActive = highlightBoxNumbers !== null;
@@ -291,8 +261,8 @@ export const Warehouse3DView = ({
       return;
     }
     renderer.setSize(width, height, false);
-    renderer.setPixelRatio(ecoModeRef.current ? 1.0 : Math.min(window.devicePixelRatio, 1.25));
-    renderer.shadowMap.enabled = !ecoModeRef.current;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
@@ -354,7 +324,6 @@ export const Warehouse3DView = ({
       scene,
       minX,
       maxX,
-      ecoModeRef,
     });
 
     const boxMeshes = [];
@@ -640,13 +609,6 @@ export const Warehouse3DView = ({
       if (document.querySelector('[role="dialog"]') || document.querySelector('.inventory-dialog-heading')) {
         return;
       }
-
-      // Throttle render rate: ~35 FPS in ecoMode, 60 FPS in normal mode
-      const targetDelta = ecoModeRef.current ? 28 : 16;
-      if (timestamp && timestamp - lastRenderTime < targetDelta) {
-        return;
-      }
-      lastRenderTime = timestamp || 0;
 
       const elapsed = clock.getElapsedTime();
       forest?.update(elapsed);
@@ -1059,23 +1021,6 @@ export const Warehouse3DView = ({
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
-
-        {/* Mode Ringan / Cepat Toggle (Top Right) */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleEcoMode}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer ${
-              ecoMode
-                ? 'bg-emerald-600/95 hover:bg-emerald-700 text-white border-emerald-400 shadow-emerald-500/20'
-                : 'bg-white/90 hover:bg-white text-slate-700 border-slate-200/90'
-            }`}
-            title={ecoMode ? 'Mode Ringan aktif (super enteng & baterai awet). Klik untuk aktifkan Grafis Penuh.' : 'Klik untuk aktifkan Mode Ringan (sangat ringan untuk laptop/PC kantor).'}
-          >
-            <Zap className={`h-3.5 w-3.5 ${ecoMode ? 'text-yellow-200 fill-yellow-200' : 'text-amber-500'}`} />
-            <span>{ecoMode ? '⚡ Mode Ringan: ON' : '⚡ Mode Ringan'}</span>
-          </button>
-        </div>
 
         {/* Active search indicator (top left) */}
         {searchActive && (
