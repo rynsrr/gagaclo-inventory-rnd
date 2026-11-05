@@ -186,103 +186,135 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
   disposables.push(skinMat);
 
   // =========================================================================
-  // 5. 3D SAFETY VEST DISPLAY STAND (Rotating Display on the Meadow Floor)
+  // 5. DUA 3D SAFETY VEST DISPLAY STANDS DI DEKAT RAK
+  // Vest 1: High-Visibility Vest 1 (Neon Lime-Yellow)
+  // Vest 2: Construction Vest Reflective (Safety Orange)
   // =========================================================================
-  const vestStandGroup = new THREE.Group();
-  vestStandGroup.position.set(deckCenterX - 0.2, deckHeight, 2.8);
+  const createVestDisplayStand = ({ x, z, bodyColor, isTwoTone = false, topColor = 0x84cc16, title }) => {
+    const group = new THREE.Group();
+    group.position.set(x, deckHeight, z);
 
-  // Chrome / Matte Black Pedestal
-  const baseStandGeo = new THREE.CylinderGeometry(0.32, 0.36, 0.06, 16);
-  const baseStandMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.4, metalness: 0.8 });
-  const baseStand = new THREE.Mesh(baseStandGeo, baseStandMat);
-  baseStand.position.y = 0.03;
-  baseStand.castShadow = true;
-  vestStandGroup.add(baseStand);
+    // Matte dark pedestal base
+    const baseGeo = new THREE.CylinderGeometry(0.32, 0.36, 0.06, 16);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.4, metalness: 0.8 });
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.position.y = 0.03;
+    base.castShadow = true;
+    group.add(base);
 
-  const poleGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.85, 12);
-  const poleMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.2, metalness: 0.9 });
-  const pole = new THREE.Mesh(poleGeo, poleMat);
-  pole.position.y = 0.46;
-  pole.castShadow = true;
-  vestStandGroup.add(pole);
+    // Chrome pole
+    const poleGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.85, 12);
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.2, metalness: 0.9 });
+    const pole = new THREE.Mesh(poleGeo, poleMat);
+    pole.position.y = 0.46;
+    pole.castShadow = true;
+    group.add(pole);
 
-  // Studio Mannequin Torso
-  const mannequinMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5 });
-  const mTorsoGeo = new THREE.BoxGeometry(0.48, 0.68, 0.26);
-  const mTorso = new THREE.Mesh(mTorsoGeo, mannequinMat);
-  mTorso.position.y = 1.15;
-  mTorso.castShadow = true;
-  vestStandGroup.add(mTorso);
+    // Mannequin Torso
+    const mTorsoGeo = new THREE.BoxGeometry(0.48, 0.68, 0.26);
+    const mannequinMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5 });
+    const mTorso = new THREE.Mesh(mTorsoGeo, mannequinMat);
+    mTorso.position.y = 1.15;
+    mTorso.castShadow = true;
+    group.add(mTorso);
 
-  // 3D Hi-Vis Safety Vest Outer Layers:
-  // Lower Body: Fluorescent Neon Orange
-  const vestOrangeMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.45, flatShading: true });
-  const vLowerGeo = new THREE.BoxGeometry(0.52, 0.38, 0.3);
-  const vLower = new THREE.Mesh(vLowerGeo, vestOrangeMat);
-  vLower.position.y = 1.02;
-  vLower.castShadow = true;
-  vestStandGroup.add(vLower);
+    // Vest Body
+    const vestMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.45, flatShading: true });
+    
+    if (isTwoTone) {
+      // Lower body orange
+      const vLowerGeo = new THREE.BoxGeometry(0.52, 0.38, 0.3);
+      const vLower = new THREE.Mesh(vLowerGeo, vestMat);
+      vLower.position.y = 1.02;
+      vLower.castShadow = true;
+      group.add(vLower);
 
-  // Upper Chest & Shoulders: Fluorescent Neon Lime-Yellow
-  const vestLimeMat = new THREE.MeshStandardMaterial({ color: 0x84cc16, roughness: 0.45, flatShading: true });
-  const vUpperGeo = new THREE.BoxGeometry(0.52, 0.32, 0.3);
-  const vUpper = new THREE.Mesh(vUpperGeo, vestLimeMat);
-  vUpper.position.y = 1.34;
-  vUpper.castShadow = true;
-  vestStandGroup.add(vUpper);
+      // Upper shoulders lime
+      const limeMat = new THREE.MeshStandardMaterial({ color: topColor, roughness: 0.45, flatShading: true });
+      const vUpperGeo = new THREE.BoxGeometry(0.52, 0.32, 0.3);
+      const vUpper = new THREE.Mesh(vUpperGeo, limeMat);
+      vUpper.position.y = 1.34;
+      vUpper.castShadow = true;
+      group.add(vUpper);
+      disposables.push(vLowerGeo, vLower, limeMat, vUpperGeo, vUpper);
+    } else {
+      const vestGeo = new THREE.BoxGeometry(0.52, 0.68, 0.3);
+      const vestMesh = new THREE.Mesh(vestGeo, vestMat);
+      vestMesh.position.y = 1.15;
+      vestMesh.castShadow = true;
+      group.add(vestMesh);
+      disposables.push(vestGeo, vestMesh);
+    }
 
-  // Reflective Silver Safety Stripes (Horizontal & Vertical)
-  const vStripeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.15, metalness: 0.9 });
+    // Reflective Silver Safety Stripes
+    const vStripeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.15, metalness: 0.9 });
 
-  // Waist horizontal stripe
-  const vStripe1 = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
-  vStripe1.position.y = 0.98;
-  // Chest horizontal stripe
-  const vStripe2 = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
-  vStripe2.position.y = 1.22;
+    // Waist stripe
+    const sWaist = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
+    sWaist.position.y = 0.98;
+    // Chest stripe
+    const sChest = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
+    sChest.position.y = 1.22;
+    // Left & Right shoulder vertical stripes
+    const sL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
+    sL.position.set(-0.16, 1.34, 0);
+    const sR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
+    sR.position.set(0.16, 1.34, 0);
+    group.add(sWaist, sChest, sL, sR);
 
-  // Left and Right Vertical Shoulder reflective suspenders
-  const vStripeL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
-  vStripeL.position.set(-0.16, 1.35, 0);
-  const vStripeR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
-  vStripeR.position.set(0.16, 1.35, 0);
-  vestStandGroup.add(vStripe1, vStripe2, vStripeL, vStripeR);
+    // Front black zipper
+    const zipper = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.68, 0.33), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+    zipper.position.set(0, 1.15, 0);
+    group.add(zipper);
 
-  // Heavy duty black zipper line down the front
-  const zipper = new THREE.Mesh(
-    new THREE.BoxGeometry(0.03, 0.68, 0.33),
-    new THREE.MeshStandardMaterial({ color: 0x0f172a })
-  );
-  zipper.position.set(0, 1.18, 0);
-  vestStandGroup.add(zipper);
+    // Utility flap pockets on lower torso
+    const pocketGeo = new THREE.BoxGeometry(0.16, 0.14, 0.04);
+    const pL = new THREE.Mesh(pocketGeo, vestMat);
+    pL.position.set(-0.15, 0.96, 0.17);
+    const pR = new THREE.Mesh(pocketGeo, vestMat);
+    pR.position.set(0.15, 0.96, 0.17);
+    group.add(pL, pR);
 
-  // ID Card Badge on upper chest
-  const badgeHolder = new THREE.Mesh(
-    new THREE.BoxGeometry(0.12, 0.16, 0.04),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
-  );
-  badgeHolder.position.set(-0.15, 1.32, 0.18);
-  vestStandGroup.add(badgeHolder);
+    // ID Badge on chest
+    const badge = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.15, 0.04), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
+    badge.position.set(-0.15, 1.3, 0.18);
+    group.add(badge);
 
-  // Utility flap pockets
-  const pocketGeo = new THREE.BoxGeometry(0.16, 0.14, 0.05);
-  const pocketL = new THREE.Mesh(pocketGeo, vestOrangeMat);
-  pocketL.position.set(-0.15, 0.96, 0.18);
-  const pocketR = new THREE.Mesh(pocketGeo, vestOrangeMat);
-  pocketR.position.set(0.15, 0.96, 0.18);
-  vestStandGroup.add(pocketL, pocketR);
+    // Title label signplate at base of pedestal
+    const plateGeo = new THREE.BoxGeometry(0.48, 0.08, 0.02);
+    const plateMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.6, roughness: 0.3 });
+    const plate = new THREE.Mesh(plateGeo, plateMat);
+    plate.position.set(0, 0.08, 0.28);
+    plate.rotation.x = -0.35;
+    group.add(plate);
 
-  scene.add(vestStandGroup);
-  disposables.push(
-    vestStandGroup,
-    baseStandGeo, baseStandMat, baseStand,
-    poleGeo, poleMat, pole,
-    mTorsoGeo, mannequinMat, mTorso,
-    vestOrangeMat, vLowerGeo, vLower,
-    vestLimeMat, vUpperGeo, vUpper,
-    vStripeMat, vStripe1, vStripe2, vStripeL, vStripeR,
-    zipper, badgeHolder, pocketGeo, pocketL, pocketR
-  );
+    scene.add(group);
+    disposables.push(
+      group, baseGeo, baseMat, poleGeo, poleMat, mTorsoGeo, mannequinMat, vestMat,
+      vStripeMat, sWaist, sChest, sL, sR, zipper, pocketGeo, pL, pR, badge, plateGeo, plateMat, plate
+    );
+
+    return group;
+  };
+
+  // Stand 1: High-Visibility Vest 1 (Neon Lime-Yellow) dekat rak sisi kiri
+  const vestStand1 = createVestDisplayStand({
+    x: deckCenterX - 2.8,
+    z: 2.4,
+    bodyColor: 0x84cc16, // Fluorescent Lime-Yellow
+    isTwoTone: false,
+    title: "High-Visibility Vest 1"
+  });
+
+  // Stand 2: Construction Vest Reflective (Safety Orange) dekat rak sisi kanan
+  const vestStand2 = createVestDisplayStand({
+    x: deckCenterX + 2.8,
+    z: 2.4,
+    bodyColor: 0xf97316, // Fluorescent Safety Orange
+    isTwoTone: true,
+    topColor: 0xa3e635,
+    title: "Construction Vest Reflective"
+  });
 
   // =========================================================================
   // 6. PEKERJA PROYEK: Memakai Rompi Hi-Vis di Atas Lantai Padang Rumput
@@ -508,8 +540,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
 
   return {
     update(elapsed) {
-      // 1. 3D Safety Vest Display Stand gentle rotation showcase
-      vestStandGroup.rotation.y = elapsed * 0.35;
+      // 1. Dual 3D Safety Vest Display Stands gentle rotation showcase near racks
+      vestStand1.rotation.y = elapsed * 0.35;
+      vestStand2.rotation.y = elapsed * 0.35 + Math.PI;
 
       // 2. Worker subtle checking posture
       wHead.rotation.y = Math.sin(elapsed * 0.8) * 0.22;

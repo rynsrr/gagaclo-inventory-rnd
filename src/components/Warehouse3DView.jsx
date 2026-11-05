@@ -1139,21 +1139,39 @@ export const Warehouse3DView = ({
               </div>
 
               {/* Features & Description */}
-              <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 space-y-2">
+              <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-3">
                 <div className="flex flex-wrap gap-1.5">
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-orange-100 text-orange-800 border border-orange-200">
-                    Neon Orange & Lime
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-lime-100 text-lime-900 border border-lime-300">
+                    Vest 1: Neon Lime-Yellow
                   </span>
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-slate-200 text-slate-800 border border-slate-300">
-                    Dual Reflective Tape
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-orange-100 text-orange-900 border border-orange-300">
+                    Vest 2: Reflective Orange
                   </span>
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-blue-100 text-blue-800 border border-blue-200">
-                    Utility Pockets &amp; ID Badge
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-blue-100 text-blue-900 border border-blue-200">
+                    Dual Rotating Stands Dekat Rak
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Rompi ini juga telah dihadirkan dalam bentuk <strong>model 3D fisik yang berputar</strong> di display stand dermaga dan dipakai oleh pekerja proyek di scene 3D danau.
+                  Kedua rompi ini telah dipasang pada <strong>2 display stand manekin berputar 360°</strong> tepat di lantai depan deretan rak gudang.
                 </p>
+                <div className="pt-1 flex flex-col gap-1 text-[11px]">
+                  <a
+                    href="https://sketchfab.com/3d-models/high-visibilty-vest-1-5a75d007bcb64ad29a326669d67a30dc"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    🔗 High-Visibilty Vest 1 (Sketchfab)
+                  </a>
+                  <a
+                    href="https://sketchfab.com/3d-models/construction-vest-reflective-2b7bbac008fb43cea9c494d0c16316d1"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    🔗 Construction Vest Reflective (Sketchfab)
+                  </a>
+                </div>
               </div>
             </div>
           </div>
