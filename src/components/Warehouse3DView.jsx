@@ -290,7 +290,7 @@ export const Warehouse3DView = ({
     // is placed further to the right with a standard 4x3 shelf layout.
     const presetPositions = {
       1: { x: -16, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
-      2: { x: -6,  cols: 4, rows: 5, beamColor: 0xe2e8f0 },
+      2: { x: -5.5, cols: 5, rows: 4, beamColor: 0xe2e8f0 },
       3: { x: 6,   cols: 4, rows: 3, beamColor: 0xe2e8f0 },
       4: { x: 15,  cols: 4, rows: 3, beamColor: 0xe2e8f0 },
       5: { x: 24,  cols: 4, rows: 3, beamColor: 0xe2e8f0 },
@@ -553,6 +553,13 @@ export const Warehouse3DView = ({
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let currentHoveredMesh = null;
+    let pointerDownPos = { x: 0, y: 0 };
+    let lastClickTime = 0;
+    let lastClickedBoxNumber = null;
+
+    const onPointerDown = (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    };
 
     const onPointerMove = (e) => {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -580,6 +587,54 @@ export const Warehouse3DView = ({
     };
 
     const onClick = (e) => {
+      // Abaikan jika pointer bergeser > 6px (pengguna sedang drag/rotate kamera 3D)
+      const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (dist > 6) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(boxMeshesRef.current);
+
+      if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        const boxNum = hit.userData.boxNumber;
+        const now = Date.now();
+
+        // Cek jika pengguna mengklik 2 kali berturut-turut pada box yang sama (< 450ms)
+        if (lastClickedBoxNumber === boxNum && (now - lastClickTime) < 450) {
+          // Klik 2 kali: Buka popup jendela detail box
+          setSelectedBoxNumber(boxNum);
+          lastClickTime = 0;
+          lastClickedBoxNumber = null;
+        } else {
+          // Klik 1 kali: Fokuskan kamera mendekat ke box tanpa membuka popup
+          lastClickTime = now;
+          lastClickedBoxNumber = boxNum;
+
+          flyControlsTargetRef.current = new THREE.Vector3(
+            hit.userData.initialX,
+            hit.userData.initialY + 0.1,
+            hit.userData.initialZ
+          );
+          flyCameraTargetRef.current = new THREE.Vector3(
+            hit.userData.initialX,
+            hit.userData.initialY + 0.35,
+            hit.userData.initialZ + 3.4
+          );
+        }
+      } else {
+        lastClickTime = 0;
+        lastClickedBoxNumber = null;
+      }
+    };
+
+    const onDblClick = (e) => {
+      const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (dist > 6) return;
+
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -593,8 +648,10 @@ export const Warehouse3DView = ({
       }
     };
 
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
     renderer.domElement.addEventListener('pointermove', onPointerMove);
     renderer.domElement.addEventListener('click', onClick);
+    renderer.domElement.addEventListener('dblclick', onDblClick);
 
     // Animation Loop
     const clock = new THREE.Clock();
@@ -724,8 +781,10 @@ export const Warehouse3DView = ({
       rendererRef.current = null;
       resizeObserver.disconnect();
       fitCameraRef.current = null;
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('click', onClick);
+      renderer.domElement.removeEventListener('dblclick', onDblClick);
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -1066,7 +1125,7 @@ export const Warehouse3DView = ({
             </div>
 
             <div className="mt-2.5 pt-2 border-t border-slate-700/80 text-[11px] text-blue-400 font-bold flex items-center space-x-1">
-              <span>Klik box ini untuk melihat isi & print kartu</span>
+              <span>Klik 1x fokus • Klik 2x buka popup jendela</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -1078,6 +1137,8 @@ export const Warehouse3DView = ({
             <span>🌱</span> Padang Rumput 3D
           </span>
           <span className="text-slate-500">|</span>
+          <span className="text-amber-300 font-bold">🖱️ Klik 2x: Buka Popup</span>
+          <span className="text-slate-600">•</span>
           <span>🖱️ Putar: Klik Kiri</span>
           <span className="text-slate-600">•</span>
           <span>🔍 Zoom: Scroll</span>
