@@ -2,7 +2,6 @@ import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { buildRealisticGarden } from './realisticGardenScene';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { useInventory } from '../context/InventoryContext';
 import { 
@@ -22,9 +21,6 @@ import {
   Pencil, 
   Package, 
   Zap,
-  Sun,
-  Sunset,
-  Moon,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose — the original five PPIC colors,
@@ -58,24 +54,6 @@ export const Warehouse3DView = ({
     setSelectedBoxNumber,
     setItemModalConfig
   } = useInventory();
-
-  // Garden lighting theme: DAY (Siang), SUNSET (Senja), NIGHT (Malam)
-  const [gardenTheme, setGardenTheme] = useState(() => {
-    try {
-      return localStorage.getItem('gagaclo_garden_theme') || 'DAY';
-    } catch {
-      return 'DAY';
-    }
-  });
-  const gardenRef = useRef(null);
-
-  const handleSelectGardenTheme = (theme) => {
-    setGardenTheme(theme);
-    try {
-      localStorage.setItem('gagaclo_garden_theme', theme);
-    } catch {}
-    gardenRef.current?.setTheme(theme);
-  };
 
   // Cinematic fly-to-box interpolation targets
   const flyCameraTargetRef = useRef(null);
@@ -292,10 +270,10 @@ export const Warehouse3DView = ({
     const width = container.clientWidth;
     const height = container.clientHeight || 580;
 
-    // Scene - Tropical Island Ocean Atmosphere
+    // Scene - Clean Studio / Warehouse Environment
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xbbe8f8);
-    scene.fog = new THREE.FogExp2(0xbbe8f8, 0.0055);
+    scene.background = new THREE.Color(0xf1f5f9);
+    scene.fog = new THREE.Fog(0xf1f5f9, 40, 110);
     sceneRef.current = scene;
 
     // Camera
@@ -336,7 +314,29 @@ export const Warehouse3DView = ({
     });
     controlsRef.current = controls;
 
-    // (Realistic garden lighting is initialized in buildRealisticGarden)
+    // Clean Studio / Warehouse Lighting (zero clutter, crystal clear boxes)
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.95);
+    hemiLight.position.set(0, 50, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.25);
+    dirLight.position.set(22, 38, 25);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 100;
+    const d = 42;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    dirLight.shadow.bias = -0.0005;
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0xe2e8f0, 0.45);
+    fillLight.position.set(-22, 20, -18);
+    scene.add(fillLight);
 
     // Build the 3D Physical Racks from current rack data.
     // Racks 1-5 keep their original warehouse layout; any newly added rack
@@ -368,20 +368,36 @@ export const Warehouse3DView = ({
       conf.rows = Math.max(conf.rows, Math.ceil(count / conf.cols));
     });
 
-    // --- REALISTIC BOTANICAL ZEN GARDEN ENVIRONMENT ---
+    // Clean Warehouse Floor (Sleek light gray epoxy / studio base)
+    const floorGeo = new THREE.PlaneGeometry(160, 160);
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      roughness: 0.85,
+      metalness: 0.05,
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.01;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Demarcated Rack Zone Pad (Clean grey floor pad under racks)
     const allRackX = rackPositions.map((r) => r.x);
     const minX = allRackX.length > 0 ? Math.min(...allRackX) - 4 : -20;
     const maxX = allRackX.length > 0 ? Math.max(...allRackX) + 4 : 28;
-
-    const garden = buildRealisticGarden({
-      scene,
-      minX,
-      maxX,
-      renderer,
-      ecoModeRef,
-      initialTheme: gardenTheme,
+    const padCenterX = (minX + maxX) / 2;
+    const padWidth = (maxX - minX) + 6;
+    const padDepth = 6.5;
+    const padGeo = new THREE.BoxGeometry(padWidth, 0.03, padDepth);
+    const padMat = new THREE.MeshStandardMaterial({
+      color: 0xcbd5e1,
+      roughness: 0.7,
+      metalness: 0.08,
     });
-    gardenRef.current = garden;
+    const pad = new THREE.Mesh(padGeo, padMat);
+    pad.position.set(padCenterX, 0.015, 0);
+    pad.receiveShadow = true;
+    scene.add(pad);
 
     const boxMeshes = [];
 
@@ -674,11 +690,6 @@ export const Warehouse3DView = ({
       }
       lastRenderTime = timestamp || 0;
 
-      const elapsed = clock.getElapsedTime();
-
-      // Update gentle organic wind sway on garden foliage & fireflies
-      garden?.update(elapsed);
-
       // 1. Cinematic camera flight interpolation
       if (flyCameraTargetRef.current && flyControlsTargetRef.current && !isUserInteractingRef.current) {
         camera.position.lerp(flyCameraTargetRef.current, 0.08);
@@ -797,7 +808,6 @@ export const Warehouse3DView = ({
         container.removeChild(renderer.domElement);
       }
 
-      garden?.dispose();
       renderer.dispose();
     };
   }, [boxes, racks, ppicMembers]);
@@ -1083,66 +1093,13 @@ export const Warehouse3DView = ({
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className={`warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 transition-colors duration-700 ${
-        gardenTheme === 'NIGHT'
-          ? 'bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900'
-          : gardenTheme === 'SUNSET'
-          ? 'bg-gradient-to-b from-orange-400 via-amber-200 to-stone-800'
-          : 'bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-50'
-      }`}>
+      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-slate-100/90">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
 
-        {/* 3D Scene HUD Controls (Top Right): Theme Switcher & Eco Mode */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2 flex-wrap justify-end">
-          {/* Day / Sunset / Night Segmented Control */}
-          <div className="inline-flex items-center rounded-xl bg-slate-900/80 backdrop-blur-md p-1 border border-white/20 shadow-md">
-            <button
-              type="button"
-              onClick={() => handleSelectGardenTheme('DAY')}
-              aria-pressed={gardenTheme === 'DAY'}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                gardenTheme === 'DAY'
-                  ? 'bg-amber-400 text-slate-950 shadow-xs'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              title="Suasana Taman Siang (Lush Sunlight)"
-            >
-              <Sun className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Siang</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectGardenTheme('SUNSET')}
-              aria-pressed={gardenTheme === 'SUNSET'}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                gardenTheme === 'SUNSET'
-                  ? 'bg-orange-500 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              title="Suasana Taman Senja (Golden Sunset)"
-            >
-              <Sunset className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Senja</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectGardenTheme('NIGHT')}
-              aria-pressed={gardenTheme === 'NIGHT'}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                gardenTheme === 'NIGHT'
-                  ? 'bg-indigo-500 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              title="Suasana Taman Malam (Zen Stone Lantern & Moonlight)"
-            >
-              <Moon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Malam</span>
-            </button>
-          </div>
-
-          {/* Mode Ringan / Cepat Toggle */}
+        {/* Mode Ringan / Cepat Toggle (Top Right) */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
           <button
             type="button"
             onClick={toggleEcoMode}
@@ -1154,7 +1111,7 @@ export const Warehouse3DView = ({
             title={ecoMode ? 'Mode Ringan aktif (super enteng & baterai awet). Klik untuk aktifkan Grafis Penuh.' : 'Klik untuk aktifkan Mode Ringan (sangat ringan untuk laptop/PC kantor).'}
           >
             <Zap className={`h-3.5 w-3.5 ${ecoMode ? 'text-yellow-200 fill-yellow-200' : 'text-amber-500'}`} />
-            <span className="hidden sm:inline">{ecoMode ? '⚡ Ringan: ON' : '⚡ Ringan'}</span>
+            <span>{ecoMode ? '⚡ Mode Ringan: ON' : '⚡ Mode Ringan'}</span>
           </button>
         </div>
 
@@ -1208,14 +1165,12 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls Hint & Garden Badge (Bottom Right) */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-lg">
-          <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <span>🌿</span> Zen Garden R&amp;D
-          </span>
-          <span className="text-slate-500">|</span>
+        {/* Controls Hint (Bottom Right) */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-300 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
           <span>🖱️ Putar: Klik Kiri</span>
+          <span className="text-slate-600">•</span>
           <span>🔍 Zoom: Scroll</span>
+          <span className="text-slate-600">•</span>
           <span>✋ Geser: Klik Kanan</span>
         </div>
 
