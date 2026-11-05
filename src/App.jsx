@@ -143,6 +143,36 @@ const AppContent = () => {
               </div>
             </div>
 
+            {/* Top Navigation Tabs */}
+            <nav className="flex items-center gap-1.5 mx-1 sm:mx-3" aria-label="Menu navigasi utama">
+              {mainTabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = appMode === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setAppMode(tab.id)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20 scale-[1.02]'
+                        : 'bg-white/90 hover:bg-slate-100 text-slate-700 border-slate-200/90 hover:-translate-y-0.5'
+                    }`}
+                    title={tab.subtitle}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} aria-hidden="true" />
+                    <span>{tab.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                      isActive ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600 border border-slate-200/80'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+
             {appMode === '3d-warehouse' && (
               <div className="inventory-header-controls" ref={setWarehouseControlsHost} />
             )}
@@ -199,48 +229,7 @@ const AppContent = () => {
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">
-        <aside className="inventory-sidebar no-print" aria-label="Navigasi utama">
-          <nav className="inventory-nav" aria-label="Tab utama">
-            <p className="inventory-sidebar-label">MENU UTAMA</p>
-            {mainTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = appMode === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setAppMode(tab.id)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`inventory-nav-item ${tab.primary ? 'inventory-nav-item-primary' : ''}`}
-                  title={tab.primary ? 'Tab utama: visualisasi box & rak 3D' : tab.subtitle}
-                >
-                  <span className="inventory-nav-icon">
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <span className="inventory-nav-text">
-                    <strong>{tab.label}</strong>
-                    <small>{tab.subtitle}</small>
-                  </span>
-                  <span className="inventory-nav-count">{tab.count}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="inventory-sidebar-divider" />
-
-          <BoxSearchPanel
-            query={searchQuery}
-            onQueryChange={setSearchQuery}
-            results={searchResults}
-          />
-
-          <p className="inventory-sidebar-foot">
-            {boxes.length} box • {items.length} item tersimpan
-          </p>
-        </aside>
-
-        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 py-5">
           {appMode === '3d-warehouse' && (
             <Warehouse3DView
               controlsHost={warehouseControlsHost}
