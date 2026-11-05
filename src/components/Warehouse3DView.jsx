@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { buildLowPolyForestScene } from './lowPolyForestScene';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { useInventory } from '../context/InventoryContext';
@@ -21,6 +22,7 @@ import {
   X, 
   Pencil, 
   Package,
+  Upload,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose — the original five PPIC colors,
@@ -105,7 +107,62 @@ export const Warehouse3DView = ({
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
   const [isVestPreviewOpen, setIsVestPreviewOpen] = useState(false);
+  const [importedModelName, setImportedModelName] = useState(null);
+  const importedModelRef = useRef(null);
   const rendererRef = useRef(null);
+
+  const handleImport3DFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !sceneRef.current) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      const loader = new GLTFLoader();
+      loader.parse(buffer, '', (gltf) => {
+        // Hapus model kustom sebelumnya jika ada
+        if (importedModelRef.current && sceneRef.current) {
+          sceneRef.current.remove(importedModelRef.current);
+        }
+
+        const model = gltf.scene;
+
+        // Normalisasi ukuran sesuai skala manusia (~0.85m tinggi rompi)
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim > 0.001) {
+          if (maxDim > 5 || maxDim < 0.2) {
+            const scaleFactor = 0.85 / maxDim;
+            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+          }
+        }
+
+        // Aktifkan bayangan
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        // Letakkan tepat di depan deretan rak gudang
+        model.position.set(0, 0.1, 2.2);
+        sceneRef.current.add(model);
+        importedModelRef.current = model;
+        setImportedModelName(file.name);
+        setIsVestPreviewOpen(false);
+
+        // Arahkan kamera otomatis memfokuskan ke model 3D yang baru diimpor
+        if (cameraRef.current && controlsRef.current) {
+          flyCameraTargetRef.current = new THREE.Vector3(0, 1.8, 5.2);
+          flyControlsTargetRef.current = new THREE.Vector3(0, 0.9, 2.2);
+        }
+      });
+    } catch (err) {
+      console.error('Failed to import 3D file:', err);
+      alert('Gagal membaca file 3D. Pastikan format file adalah .glb atau .gltf asli.');
+    }
+  };
 
   // A Set of box numbers matching the sidebar search (null = no active search).
   const searchActive = highlightBoxNumbers !== null;
@@ -1036,6 +1093,14 @@ export const Warehouse3DView = ({
           </button>
         </div>
 
+        {/* Custom 3D Model Active Badge */}
+        {importedModelName && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-emerald-900/90 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg border border-emerald-400/50 backdrop-blur-md animate-fade-in pointer-events-none">
+            <span>📦 Model 3D Asli Aktif:</span>
+            <span className="text-emerald-300 font-mono">{importedModelName}</span>
+          </div>
+        )}
+
         {/* Active search indicator (top left) */}
         {searchActive && (
           <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-blue-200 bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm backdrop-blur-xs">
@@ -1136,6 +1201,34 @@ export const Warehouse3DView = ({
                   alt="3D Safety Vest Render"
                   className="w-full h-auto max-h-[320px] object-contain rounded-2xl shadow-md border border-slate-100"
                 />
+              </div>
+
+              {/* Direct 3D Model File (.glb / .gltf) Importer */}
+              <div className="px-5 py-3.5 bg-amber-50/90 border-t border-amber-200/80">
+                <label className="flex items-center justify-between cursor-pointer p-2.5 bg-white rounded-2xl border border-amber-300 shadow-sm hover:border-amber-400 hover:shadow transition-all group">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-amber-500 text-white rounded-xl shadow-xs group-hover:bg-amber-600 transition-colors">
+                      <Upload className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">
+                        {importedModelName ? `Aktif: ${importedModelName}` : 'Impor File 3D (.glb / .gltf)'}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        Bentuk &amp; mesh asli 100% terjaga di dekat rak
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                    Pilih File
+                  </span>
+                  <input
+                    type="file"
+                    accept=".glb,.gltf"
+                    onChange={handleImport3DFile}
+                    className="hidden"
+                  />
+                </label>
               </div>
 
               {/* Features & Description */}
