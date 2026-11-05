@@ -1,24 +1,20 @@
 import * as THREE from 'three';
 
 /**
- * Builds a vibrant, fresh Low Poly 3D Meadow environment with a central floor platform.
- * ("Lantai di Tengah Padang Rumput")
+ * Builds a clean, minimalist 3D Meadow environment ("Lantai Kayu di Tengah Padang Rumput").
  * Features:
- * - Vast, rolling green meadow grassland (padang rumput) under a sunny sky
- * - Honey-colored timber plank floor platform for the warehouse boxes
- * - Stepping stones path & colorful wildflowers in the green grass
- * - 3D Safety Vest rotating mannequin display stand on the floor
- * - Project worker wearing a hi-vis neon orange safety vest & yellow hardhat
- * - Person wearing a warming thermal balaclava & puffer jacket
- * - Friendly golden mascot dog sitting happily on the floor
+ * - Fresh, lush green meadow grassland (padang rumput) with laser-flat ground under the floor
+ * - Solid honey-colored timber plank floor platform for the warehouse racks and boxes
+ * - Cute golden mascot dog sitting comfortably on the wooden floor
+ * - Pure and clean: no human characters, no display mannequins, unobstructed 360° view
  * - 100% Three.js native procedural geometry running at 60 FPS
  */
 export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
   const disposables = [];
 
-  // 1. Atmosphere: Cheerful Meadow Sky & Soft Fresh Horizon Fog
+  // 1. Atmosphere: Cheerful Sunny Sky & Soft Horizon Mist
   scene.background = new THREE.Color(0xbbf7d0); // Fresh mint-sky green
-  scene.fog = new THREE.Fog(0xbbf7d0, 30, 115);
+  scene.fog = new THREE.Fog(0xbbf7d0, 32, 115);
 
   // 2. Sunny Daylight & Warm Meadow Ambient Lighting
   const hemiLight = new THREE.HemisphereLight(0xfef9c3, 0x166534, 0.95);
@@ -49,18 +45,42 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
   scene.add(fillLight);
   disposables.push(fillLight);
 
-  // 3. Vast Rolling Green Grassland ("Padang Rumput Hijau yang Luas")
+  // 3. Vast Green Grassland with Laser-Flat Ground Under the Floor
   const groundGeo = new THREE.PlaneGeometry(160, 160, 32, 32);
   const posAttr = groundGeo.attributes.position;
-  // Gentle organic hillock undulation around the clearing
+
+  // Deck dimensions
+  const deckCenterX = (minX + maxX) / 2;
+  const deckWidth = (maxX - minX) + 8.5;
+  const deckDepth = 8.0;
+  const deckHeight = 0.08;
+
+  // Ground undulation: STRICTLY 0 (completely flat) underneath and around the wooden floor!
   for (let i = 0; i < posAttr.count; i++) {
     const vx = posAttr.getX(i);
     const vy = posAttr.getY(i);
-    const distFromCenter = Math.sqrt(vx * vx + vy * vy);
-    // Keep floor clearing flat in the center
-    if (distFromCenter > 16) {
-      const bump = Math.sin(vx * 0.12) * Math.cos(vy * 0.12) * 1.35 + Math.sin(vx * 0.24) * 0.45;
-      posAttr.setZ(i, bump);
+    // When plane is rotated by -PI/2 around X:
+    // world X = vx, world Z = -vy
+    const worldX = vx;
+    const worldZ = -vy;
+
+    // Check distance to the deck bounds with a generous margin of 6 meters
+    const isInsideDeckArea =
+      worldX >= deckCenterX - deckWidth / 2 - 6 &&
+      worldX <= deckCenterX + deckWidth / 2 + 6 &&
+      worldZ >= -deckDepth / 2 - 6 &&
+      worldZ <= deckDepth / 2 + 6;
+
+    if (isInsideDeckArea) {
+      posAttr.setZ(i, 0); // Completely flat ground under and around the wooden floor
+    } else {
+      const distFromCenter = Math.sqrt(worldX * worldX + worldZ * worldZ);
+      if (distFromCenter > 24) {
+        const bump = Math.sin(worldX * 0.1) * Math.cos(worldZ * 0.1) * 1.2;
+        posAttr.setZ(i, bump);
+      } else {
+        posAttr.setZ(i, 0);
+      }
     }
   }
   groundGeo.computeVertexNormals();
@@ -73,17 +93,12 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
   });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.02;
+  ground.position.y = 0; // Exactly level with 0
   ground.receiveShadow = true;
   scene.add(ground);
   disposables.push(groundGeo, groundMat, ground);
 
-  // 4. Solid Floor in the Middle of the Meadow ("Lantai di Tengah Padang Rumput")
-  const deckCenterX = (minX + maxX) / 2;
-  const deckWidth = (maxX - minX) + 8.5;
-  const deckDepth = 8.0;
-  const deckHeight = 0.1;
-
+  // 4. Solid Wooden Timber Floor in the Middle of the Meadow ("Lantai Kayu")
   const deckMat = new THREE.MeshStandardMaterial({
     color: 0xc47b38, // Warm honey oak timber planks
     roughness: 0.75,
@@ -106,384 +121,26 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
 
   // Floor outer perimeter border trim
   const borderMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.8, flatShading: true });
-  const borderFrontGeo = new THREE.BoxGeometry(deckWidth + 0.2, deckHeight + 0.02, 0.12);
-  const borderFront = new THREE.Mesh(borderFrontGeo, borderMat);
+  const borderGeo = new THREE.BoxGeometry(deckWidth + 0.2, deckHeight + 0.02, 0.12);
+  const borderFront = new THREE.Mesh(borderGeo, borderMat);
   borderFront.position.set(deckCenterX, deckHeight / 2, deckDepth / 2);
   deckGroup.add(borderFront);
-  const borderBack = new THREE.Mesh(borderFrontGeo, borderMat);
+  const borderBack = new THREE.Mesh(borderGeo, borderMat);
   borderBack.position.set(deckCenterX, deckHeight / 2, -deckDepth / 2);
   deckGroup.add(borderBack);
 
   scene.add(deckGroup);
-  disposables.push(plankGeo, deckMat, borderMat, borderFrontGeo, deckGroup);
-
-  // Stepping stones path across the meadow leading up to the floor
-  const stoneMat = new THREE.MeshStandardMaterial({
-    color: 0x94a3b8,
-    roughness: 0.82,
-    flatShading: true,
-  });
-  const stoneGeo = new THREE.CylinderGeometry(0.55, 0.7, 0.05, 6);
-  disposables.push(stoneGeo, stoneMat);
-
-  const stonePath = [
-    { x: deckCenterX - 3.2, z: 5.2 },
-    { x: deckCenterX - 1.8, z: 6.4 },
-    { x: deckCenterX - 0.2, z: 7.6 },
-    { x: deckCenterX + 1.4, z: 8.8 },
-    { x: deckCenterX + 3.0, z: 10.0 },
-  ];
-  stonePath.forEach(({ x, z }) => {
-    const stone = new THREE.Mesh(stoneGeo, stoneMat);
-    stone.position.set(x, 0.02, z);
-    stone.rotation.y = Math.random() * Math.PI;
-    stone.receiveShadow = true;
-    scene.add(stone);
-    disposables.push(stone);
-  });
-
-  // Tiny Stylized Wildflowers in the Meadow (Kuning, Pink, Biru)
-  const flowerStemMat = new THREE.MeshStandardMaterial({ color: 0x15803d, flatShading: true });
-  const flowerPetalMats = [
-    new THREE.MeshStandardMaterial({ color: 0xfacc15, flatShading: true }), // Yellow
-    new THREE.MeshStandardMaterial({ color: 0xf472b6, flatShading: true }), // Pink
-    new THREE.MeshStandardMaterial({ color: 0x60a5fa, flatShading: true }), // Sky Blue
-  ];
-  disposables.push(flowerStemMat, ...flowerPetalMats);
-
-  const flowerPositions = [
-    { x: minX - 2.5, z: 4.8, color: 0 },
-    { x: minX - 3.8, z: 5.5, color: 1 },
-    { x: minX - 1.5, z: 6.2, color: 2 },
-    { x: maxX + 2.2, z: 4.8, color: 1 },
-    { x: maxX + 3.6, z: 5.5, color: 0 },
-    { x: maxX + 2.5, z: 6.5, color: 2 },
-    { x: deckCenterX - 5.5, z: 5.8, color: 0 },
-    { x: deckCenterX + 5.5, z: 5.6, color: 1 },
-  ];
-  flowerPositions.forEach(({ x, z, color }) => {
-    const fl = new THREE.Group();
-    const stemGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.45, 4);
-    const stem = new THREE.Mesh(stemGeo, flowerStemMat);
-    stem.position.y = 0.22;
-    fl.add(stem);
-    disposables.push(stemGeo, stem);
-
-    const petalGeo = new THREE.DodecahedronGeometry(0.16, 0);
-    const petal = new THREE.Mesh(petalGeo, flowerPetalMats[color % flowerPetalMats.length]);
-    petal.position.y = 0.48;
-    petal.castShadow = true;
-    fl.add(petal);
-    disposables.push(petalGeo, petal);
-
-    fl.position.set(x, 0, z);
-    scene.add(fl);
-    disposables.push(fl);
-  });
-
-  // Shared skin tone material for human characters
-  const skinMat = new THREE.MeshStandardMaterial({ color: 0xf5cfb3, roughness: 0.65, flatShading: true });
-  disposables.push(skinMat);
+  disposables.push(plankGeo, deckMat, borderMat, borderGeo, deckGroup);
 
   // =========================================================================
-  // 5. DUA 3D SAFETY VEST DISPLAY STANDS DI DEKAT RAK
-  // Vest 1: High-Visibility Vest 1 (Neon Lime-Yellow)
-  // Vest 2: Construction Vest Reflective (Safety Orange)
-  // =========================================================================
-  const createVestDisplayStand = ({ x, z, bodyColor, isTwoTone = false, topColor = 0x84cc16, title }) => {
-    const group = new THREE.Group();
-    group.position.set(x, deckHeight, z);
-
-    // Matte dark pedestal base
-    const baseGeo = new THREE.CylinderGeometry(0.32, 0.36, 0.06, 16);
-    const baseMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.4, metalness: 0.8 });
-    const base = new THREE.Mesh(baseGeo, baseMat);
-    base.position.y = 0.03;
-    base.castShadow = true;
-    group.add(base);
-
-    // Chrome pole
-    const poleGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.85, 12);
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.2, metalness: 0.9 });
-    const pole = new THREE.Mesh(poleGeo, poleMat);
-    pole.position.y = 0.46;
-    pole.castShadow = true;
-    group.add(pole);
-
-    // Mannequin Torso
-    const mTorsoGeo = new THREE.BoxGeometry(0.48, 0.68, 0.26);
-    const mannequinMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5 });
-    const mTorso = new THREE.Mesh(mTorsoGeo, mannequinMat);
-    mTorso.position.y = 1.15;
-    mTorso.castShadow = true;
-    group.add(mTorso);
-
-    // Vest Body
-    const vestMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.45, flatShading: true });
-    
-    if (isTwoTone) {
-      // Lower body orange
-      const vLowerGeo = new THREE.BoxGeometry(0.52, 0.38, 0.3);
-      const vLower = new THREE.Mesh(vLowerGeo, vestMat);
-      vLower.position.y = 1.02;
-      vLower.castShadow = true;
-      group.add(vLower);
-
-      // Upper shoulders lime
-      const limeMat = new THREE.MeshStandardMaterial({ color: topColor, roughness: 0.45, flatShading: true });
-      const vUpperGeo = new THREE.BoxGeometry(0.52, 0.32, 0.3);
-      const vUpper = new THREE.Mesh(vUpperGeo, limeMat);
-      vUpper.position.y = 1.34;
-      vUpper.castShadow = true;
-      group.add(vUpper);
-      disposables.push(vLowerGeo, vLower, limeMat, vUpperGeo, vUpper);
-    } else {
-      const vestGeo = new THREE.BoxGeometry(0.52, 0.68, 0.3);
-      const vestMesh = new THREE.Mesh(vestGeo, vestMat);
-      vestMesh.position.y = 1.15;
-      vestMesh.castShadow = true;
-      group.add(vestMesh);
-      disposables.push(vestGeo, vestMesh);
-    }
-
-    // Reflective Silver Safety Stripes
-    const vStripeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.15, metalness: 0.9 });
-
-    // Waist stripe
-    const sWaist = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
-    sWaist.position.y = 0.98;
-    // Chest stripe
-    const sChest = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.07, 0.32), vStripeMat);
-    sChest.position.y = 1.22;
-    // Left & Right shoulder vertical stripes
-    const sL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
-    sL.position.set(-0.16, 1.34, 0);
-    const sR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.36, 0.32), vStripeMat);
-    sR.position.set(0.16, 1.34, 0);
-    group.add(sWaist, sChest, sL, sR);
-
-    // Front black zipper
-    const zipper = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.68, 0.33), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
-    zipper.position.set(0, 1.15, 0);
-    group.add(zipper);
-
-    // Utility flap pockets on lower torso
-    const pocketGeo = new THREE.BoxGeometry(0.16, 0.14, 0.04);
-    const pL = new THREE.Mesh(pocketGeo, vestMat);
-    pL.position.set(-0.15, 0.96, 0.17);
-    const pR = new THREE.Mesh(pocketGeo, vestMat);
-    pR.position.set(0.15, 0.96, 0.17);
-    group.add(pL, pR);
-
-    // ID Badge on chest
-    const badge = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.15, 0.04), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
-    badge.position.set(-0.15, 1.3, 0.18);
-    group.add(badge);
-
-    // Title label signplate at base of pedestal
-    const plateGeo = new THREE.BoxGeometry(0.48, 0.08, 0.02);
-    const plateMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.6, roughness: 0.3 });
-    const plate = new THREE.Mesh(plateGeo, plateMat);
-    plate.position.set(0, 0.08, 0.28);
-    plate.rotation.x = -0.35;
-    group.add(plate);
-
-    scene.add(group);
-    disposables.push(
-      group, baseGeo, baseMat, poleGeo, poleMat, mTorsoGeo, mannequinMat, vestMat,
-      vStripeMat, sWaist, sChest, sL, sR, zipper, pocketGeo, pL, pR, badge, plateGeo, plateMat, plate
-    );
-
-    return group;
-  };
-
-  // Stand 1: High-Visibility Vest 1 (Neon Lime-Yellow) dekat rak sisi kiri
-  const vestStand1 = createVestDisplayStand({
-    x: deckCenterX - 2.8,
-    z: 2.4,
-    bodyColor: 0x84cc16, // Fluorescent Lime-Yellow
-    isTwoTone: false,
-    title: "High-Visibility Vest 1"
-  });
-
-  // Stand 2: Construction Vest Reflective (Safety Orange) dekat rak sisi kanan
-  const vestStand2 = createVestDisplayStand({
-    x: deckCenterX + 2.8,
-    z: 2.4,
-    bodyColor: 0xf97316, // Fluorescent Safety Orange
-    isTwoTone: true,
-    topColor: 0xa3e635,
-    title: "Construction Vest Reflective"
-  });
-
-  // =========================================================================
-  // 6. PEKERJA PROYEK: Memakai Rompi Hi-Vis di Atas Lantai Padang Rumput
-  // =========================================================================
-  const workerGroup = new THREE.Group();
-  workerGroup.position.set(deckCenterX + 4.5, deckHeight, 3.2);
-
-  // Construction Yellow Safety Hardhat (Helm Proyek Kuning)
-  const helmetMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.35, flatShading: true });
-  const helmetGeo = new THREE.SphereGeometry(0.24, 8, 8, 0, Math.PI * 2, 0, Math.PI / 1.7);
-  const helmet = new THREE.Mesh(helmetGeo, helmetMat);
-  helmet.position.set(0, 1.82, 0);
-
-  const brimGeo = new THREE.CylinderGeometry(0.28, 0.3, 0.04, 12);
-  const brim = new THREE.Mesh(brimGeo, helmetMat);
-  brim.position.set(0, 1.72, 0);
-  workerGroup.add(helmet, brim);
-  disposables.push(helmetMat, helmetGeo, helmet, brimGeo, brim);
-
-  // Worker Head
-  const wHeadGeo = new THREE.BoxGeometry(0.28, 0.3, 0.26);
-  const wHead = new THREE.Mesh(wHeadGeo, skinMat);
-  wHead.position.set(0, 1.62, 0);
-  workerGroup.add(wHead);
-  disposables.push(wHeadGeo, wHead);
-
-  // Fluorescent Hi-Vis Neon Orange Vest (Rompi Hi-Vis Proyek)
-  const hiVisMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.5, flatShading: true });
-  const wTorsoGeo = new THREE.BoxGeometry(0.52, 0.65, 0.32);
-  const wTorso = new THREE.Mesh(wTorsoGeo, hiVisMat);
-  wTorso.position.set(0, 1.18, 0);
-  wTorso.castShadow = true;
-  workerGroup.add(wTorso);
-  disposables.push(hiVisMat, wTorsoGeo, wTorso);
-
-  // Reflective Silver Safety Tape Stripes
-  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.85 });
-  const stripe1Geo = new THREE.BoxGeometry(0.54, 0.08, 0.34);
-  const stripe1 = new THREE.Mesh(stripe1Geo, stripeMat);
-  stripe1.position.set(0, 1.15, 0);
-
-  const stripe2Geo = new THREE.BoxGeometry(0.54, 0.08, 0.34);
-  const stripe2 = new THREE.Mesh(stripe2Geo, stripeMat);
-  stripe2.position.set(0, 1.34, 0);
-  workerGroup.add(stripe1, stripe2);
-  disposables.push(stripeMat, stripe1Geo, stripe1, stripe2Geo, stripe2);
-
-  // Arms in work sleeves
-  const sleeveMat = new THREE.MeshStandardMaterial({ color: 0xea580c, roughness: 0.7, flatShading: true });
-  const wArmGeo = new THREE.BoxGeometry(0.14, 0.55, 0.16);
-  const wArmL = new THREE.Mesh(wArmGeo, sleeveMat);
-  wArmL.position.set(-0.33, 1.18, 0.08);
-  wArmL.rotation.x = -0.3;
-  const wArmR = new THREE.Mesh(wArmGeo, sleeveMat);
-  wArmR.position.set(0.33, 1.18, 0.08);
-  wArmR.rotation.x = -0.4;
-  workerGroup.add(wArmL, wArmR);
-  disposables.push(sleeveMat, wArmGeo, wArmL, wArmR);
-
-  // Inspection Clipboard with Checklist
-  const clipMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
-  const clipGeo = new THREE.BoxGeometry(0.24, 0.34, 0.04);
-  const clipboard = new THREE.Mesh(clipGeo, clipMat);
-  clipboard.position.set(0.22, 1.12, 0.28);
-  clipboard.rotation.set(-0.4, 0.25, 0);
-  workerGroup.add(clipboard);
-  disposables.push(clipMat, clipGeo, clipboard);
-
-  // Dark Blue Work Jeans
-  const jeansMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.8, flatShading: true });
-  const bootMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.7, flatShading: true });
-  const legGeo = new THREE.BoxGeometry(0.18, 0.82, 0.2);
-  const wLegL = new THREE.Mesh(legGeo, jeansMat);
-  wLegL.position.set(-0.16, 0.45, 0);
-  wLegL.castShadow = true;
-  const wLegR = new THREE.Mesh(legGeo, jeansMat);
-  wLegR.position.set(0.16, 0.45, 0);
-  wLegR.castShadow = true;
-  workerGroup.add(wLegL, wLegR);
-  disposables.push(jeansMat, legGeo, wLegL, wLegR);
-
-  // Heavy Work Boots
-  const bootGeo = new THREE.BoxGeometry(0.2, 0.16, 0.28);
-  const wBootL = new THREE.Mesh(bootGeo, bootMat);
-  wBootL.position.set(-0.16, 0.08, 0.04);
-  const wBootR = new THREE.Mesh(bootGeo, bootMat);
-  wBootR.position.set(0.16, 0.08, 0.04);
-  workerGroup.add(wBootL, wBootR);
-  disposables.push(bootMat, bootGeo, wBootL, wBootR);
-
-  scene.add(workerGroup);
-  disposables.push(workerGroup);
-
-  // =========================================================================
-  // 7. ORANG MEMAKAI WARMING BALACLAVA DI ATAS LANTAI
-  // =========================================================================
-  const balaGroup = new THREE.Group();
-  balaGroup.position.set(deckCenterX - 4.2, deckHeight, 3.2);
-
-  // Thermal Warming Balaclava
-  const balaMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9, flatShading: true });
-  const balaHeadGeo = new THREE.BoxGeometry(0.34, 0.38, 0.32);
-  const balaHead = new THREE.Mesh(balaHeadGeo, balaMat);
-  balaHead.position.set(0, 1.62, 0);
-  balaHead.castShadow = true;
-  balaGroup.add(balaHead);
-  disposables.push(balaMat, balaHeadGeo, balaHead);
-
-  // Icy-Blue Thermal Ski/Tactical Visor Slit
-  const visorMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.15, metalness: 0.9 });
-  const visorGeo = new THREE.BoxGeometry(0.24, 0.08, 0.04);
-  const visor = new THREE.Mesh(visorGeo, visorMat);
-  visor.position.set(0, 1.65, 0.16);
-  balaGroup.add(visor);
-  disposables.push(visorMat, visorGeo, visor);
-
-  // Winter Puffer Jacket
-  const pufferMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7, flatShading: true });
-  const bTorsoGeo = new THREE.BoxGeometry(0.56, 0.68, 0.36);
-  const bTorso = new THREE.Mesh(bTorsoGeo, pufferMat);
-  bTorso.position.set(0, 1.16, 0);
-  bTorso.castShadow = true;
-  balaGroup.add(bTorso);
-  disposables.push(pufferMat, bTorsoGeo, bTorso);
-
-  // Jacket Sleeves with Hands in Warm Pockets
-  const bArmGeo = new THREE.BoxGeometry(0.16, 0.58, 0.18);
-  const bArmL = new THREE.Mesh(bArmGeo, pufferMat);
-  bArmL.position.set(-0.35, 1.12, 0.05);
-  bArmL.rotation.z = 0.12;
-  bArmL.rotation.x = -0.15;
-  const bArmR = new THREE.Mesh(bArmGeo, pufferMat);
-  bArmR.position.set(0.35, 1.12, 0.05);
-  bArmR.rotation.z = -0.12;
-  bArmR.rotation.x = -0.15;
-  balaGroup.add(bArmL, bArmR);
-  disposables.push(bArmGeo, bArmL, bArmR);
-
-  // Dark Thermal Cargo Trousers
-  const bPantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, flatShading: true });
-  const bLegL = new THREE.Mesh(legGeo, bPantsMat);
-  bLegL.position.set(-0.16, 0.45, 0);
-  bLegL.castShadow = true;
-  const bLegR = new THREE.Mesh(legGeo, bPantsMat);
-  bLegR.position.set(0.16, 0.45, 0);
-  bLegR.castShadow = true;
-  balaGroup.add(bLegL, bLegR);
-  disposables.push(bPantsMat, bLegL, bLegR);
-
-  // Insulated Winter Boots
-  const bBootL = new THREE.Mesh(bootGeo, balaMat);
-  bBootL.position.set(-0.16, 0.08, 0.04);
-  const bBootR = new THREE.Mesh(bootGeo, balaMat);
-  bBootR.position.set(0.16, 0.08, 0.04);
-  balaGroup.add(bBootL, bBootR);
-  disposables.push(bBootL, bBootR);
-
-  scene.add(balaGroup);
-  disposables.push(balaGroup);
-
-  // =========================================================================
-  // 8. ANJING MASKOT PADANG RUMPUT: Duduk Menemani di Atas Lantai
+  // 5. ANJING: Maskot Duduk Menemani di Atas Lantai Kayu
   // =========================================================================
   const dogMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.7, flatShading: true });
   const dogCollarMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 });
   disposables.push(dogMat, dogCollarMat);
 
   const dogGroup = new THREE.Group();
-  dogGroup.position.set(deckCenterX - 2.2, deckHeight, 3.5);
+  dogGroup.position.set(deckCenterX - 1.2, deckHeight, 2.8);
 
   // Dog Torso
   const dogBodyGeo = new THREE.BoxGeometry(0.38, 0.34, 0.6);
@@ -540,18 +197,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
 
   return {
     update(elapsed) {
-      // 1. Dual 3D Safety Vest Display Stands gentle rotation showcase near racks
-      vestStand1.rotation.y = elapsed * 0.35;
-      vestStand2.rotation.y = elapsed * 0.35 + Math.PI;
-
-      // 2. Worker subtle checking posture
-      wHead.rotation.y = Math.sin(elapsed * 0.8) * 0.22;
-      clipboard.rotation.z = Math.sin(elapsed * 1.2) * 0.05;
-
-      // 3. Balaclava Person subtle idle breathing
-      bTorso.scale.y = 1.0 + Math.sin(elapsed * 1.5) * 0.015;
-
-      // 4. Meadow Mascot Dog tail wagging
+      // Meadow Mascot Dog tail wagging
       dTail.rotation.y = Math.sin(elapsed * 14) * 0.55;
     },
     dispose() {

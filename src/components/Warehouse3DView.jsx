@@ -2,7 +2,6 @@ import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { buildLowPolyForestScene } from './lowPolyForestScene';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { useInventory } from '../context/InventoryContext';
@@ -22,7 +21,6 @@ import {
   X, 
   Pencil, 
   Package,
-  Upload,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose — the original five PPIC colors,
@@ -106,63 +104,7 @@ export const Warehouse3DView = ({
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
-  const [isVestPreviewOpen, setIsVestPreviewOpen] = useState(false);
-  const [importedModelName, setImportedModelName] = useState(null);
-  const importedModelRef = useRef(null);
   const rendererRef = useRef(null);
-
-  const handleImport3DFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !sceneRef.current) return;
-    try {
-      const buffer = await file.arrayBuffer();
-      const loader = new GLTFLoader();
-      loader.parse(buffer, '', (gltf) => {
-        // Hapus model kustom sebelumnya jika ada
-        if (importedModelRef.current && sceneRef.current) {
-          sceneRef.current.remove(importedModelRef.current);
-        }
-
-        const model = gltf.scene;
-
-        // Normalisasi ukuran sesuai skala manusia (~0.85m tinggi rompi)
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        const maxDim = Math.max(size.x, size.y, size.z);
-        if (maxDim > 0.001) {
-          if (maxDim > 5 || maxDim < 0.2) {
-            const scaleFactor = 0.85 / maxDim;
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-          }
-        }
-
-        // Aktifkan bayangan
-        model.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-
-        // Letakkan tepat di depan deretan rak gudang
-        model.position.set(0, 0.1, 2.2);
-        sceneRef.current.add(model);
-        importedModelRef.current = model;
-        setImportedModelName(file.name);
-        setIsVestPreviewOpen(false);
-
-        // Arahkan kamera otomatis memfokuskan ke model 3D yang baru diimpor
-        if (cameraRef.current && controlsRef.current) {
-          flyCameraTargetRef.current = new THREE.Vector3(0, 1.8, 5.2);
-          flyControlsTargetRef.current = new THREE.Vector3(0, 0.9, 2.2);
-        }
-      });
-    } catch (err) {
-      console.error('Failed to import 3D file:', err);
-      alert('Gagal membaca file 3D. Pastikan format file adalah .glb atau .gltf asli.');
-    }
-  };
 
   // A Set of box numbers matching the sidebar search (null = no active search).
   const searchActive = highlightBoxNumbers !== null;
@@ -1080,27 +1022,6 @@ export const Warehouse3DView = ({
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
 
-        {/* 3D Vest Preview Button (Top Right) */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsVestPreviewOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer bg-amber-500/90 hover:bg-amber-600 text-white border-amber-300 shadow-amber-500/20 active:scale-95"
-            title="Klik untuk membuka preview 3D Safety Vest"
-          >
-            <span>🦺</span>
-            <span>3D Vest Preview</span>
-          </button>
-        </div>
-
-        {/* Custom 3D Model Active Badge */}
-        {importedModelName && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-emerald-900/90 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg border border-emerald-400/50 backdrop-blur-md animate-fade-in pointer-events-none">
-            <span>📦 Model 3D Asli Aktif:</span>
-            <span className="text-emerald-300 font-mono">{importedModelName}</span>
-          </div>
-        )}
-
         {/* Active search indicator (top left) */}
         {searchActive && (
           <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-blue-200 bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm backdrop-blur-xs">
@@ -1163,112 +1084,6 @@ export const Warehouse3DView = ({
           <span className="text-slate-600">•</span>
           <span>✋ Geser: Klik Kanan</span>
         </div>
-
-        {/* 3D Vest Preview Lightbox Modal */}
-        {isVestPreviewOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-sm animate-fade-in"
-            onClick={() => setIsVestPreviewOpen(false)}
-          >
-            <div
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-emerald-500/10">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">🦺</span>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">
-                      3D High-Visibility Safety Vest
-                    </h3>
-                    <p className="text-xs text-slate-500">Standar Proyek K3 - GAGACLO RND</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsVestPreviewOpen(false)}
-                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Image Preview */}
-              <div className="p-4 bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-                <img
-                  src="/images/vest-preview.jpg"
-                  alt="3D Safety Vest Render"
-                  className="w-full h-auto max-h-[320px] object-contain rounded-2xl shadow-md border border-slate-100"
-                />
-              </div>
-
-              {/* Direct 3D Model File (.glb / .gltf) Importer */}
-              <div className="px-5 py-3.5 bg-amber-50/90 border-t border-amber-200/80">
-                <label className="flex items-center justify-between cursor-pointer p-2.5 bg-white rounded-2xl border border-amber-300 shadow-sm hover:border-amber-400 hover:shadow transition-all group">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-amber-500 text-white rounded-xl shadow-xs group-hover:bg-amber-600 transition-colors">
-                      <Upload className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">
-                        {importedModelName ? `Aktif: ${importedModelName}` : 'Impor File 3D (.glb / .gltf)'}
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        Bentuk &amp; mesh asli 100% terjaga di dekat rak
-                      </p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
-                    Pilih File
-                  </span>
-                  <input
-                    type="file"
-                    accept=".glb,.gltf"
-                    onChange={handleImport3DFile}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              {/* Features & Description */}
-              <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-3">
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-lime-100 text-lime-900 border border-lime-300">
-                    Vest 1: Neon Lime-Yellow
-                  </span>
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-orange-100 text-orange-900 border border-orange-300">
-                    Vest 2: Reflective Orange
-                  </span>
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-blue-100 text-blue-900 border border-blue-200">
-                    Dual Rotating Stands Dekat Rak
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Kedua rompi ini telah dipasang pada <strong>2 display stand manekin berputar 360°</strong> tepat di lantai depan deretan rak gudang.
-                </p>
-                <div className="pt-1 flex flex-col gap-1 text-[11px]">
-                  <a
-                    href="https://sketchfab.com/3d-models/high-visibilty-vest-1-5a75d007bcb64ad29a326669d67a30dc"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 hover:underline flex items-center gap-1 font-semibold"
-                  >
-                    🔗 High-Visibilty Vest 1 (Sketchfab)
-                  </a>
-                  <a
-                    href="https://sketchfab.com/3d-models/construction-vest-reflective-2b7bbac008fb43cea9c494d0c16316d1"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 hover:underline flex items-center gap-1 font-semibold"
-                  >
-                    🔗 Construction Vest Reflective (Sketchfab)
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
 
