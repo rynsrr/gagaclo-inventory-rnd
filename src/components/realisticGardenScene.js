@@ -105,27 +105,95 @@ function createTimberDeckTexture(renderer) {
   return texture;
 }
 
+const THEMES = {
+  DAY: {
+    background: 0xaad3f5,
+    fogColor: 0xc4e0f7,
+    fogDensity: 0.0065,
+    hemiSky: 0xe0f2fe,
+    hemiGround: 0x4d7c3b,
+    hemiIntensity: 0.85,
+    sunColor: 0xfffaed,
+    sunIntensity: 1.45,
+    sunPos: [25, 36, 20],
+    fillColor: 0x7dd3fc,
+    fillIntensity: 0.35,
+    lanternIntensity: 0.2,
+    lanternDist: 6,
+    chamberEmissive: 0x000000,
+    chamberIntensity: 0.0,
+    accentIntensity: 0.0,
+    firefliesVisible: false,
+  },
+  SUNSET: {
+    background: 0xfda058, // Warm dusk golden apricot
+    fogColor: 0xfeb786,
+    fogDensity: 0.007,
+    hemiSky: 0xfed7aa,
+    hemiGround: 0x78350f,
+    hemiIntensity: 0.78,
+    sunColor: 0xff7e39, // Deep warm golden amber
+    sunIntensity: 1.85,
+    sunPos: [42, 13, 18], // Low dramatic evening sun
+    fillColor: 0xa855f7, // Twilight violet bounce
+    fillIntensity: 0.35,
+    lanternIntensity: 1.6,
+    lanternDist: 10,
+    chamberEmissive: 0xf59e0b,
+    chamberIntensity: 0.65,
+    accentIntensity: 0.45,
+    firefliesVisible: true,
+  },
+  NIGHT: {
+    background: 0x090d1a, // Midnight dark indigo
+    fogColor: 0x0f172a,
+    fogDensity: 0.0085,
+    hemiSky: 0x1e1b4b,
+    hemiGround: 0x064e3b,
+    hemiIntensity: 0.35,
+    sunColor: 0x93c5fd, // Cool silver moonlight
+    sunIntensity: 0.45,
+    sunPos: [-20, 32, -12],
+    fillColor: 0x312e81,
+    fillIntensity: 0.28,
+    lanternIntensity: 3.6, // Bright warm Japanese stone lantern beacon
+    lanternDist: 18,
+    chamberEmissive: 0xfef08a,
+    chamberIntensity: 1.25,
+    accentIntensity: 0.95, // Warm deck perimeter uplights
+    firefliesVisible: true,
+  },
+};
+
 /**
  * Builds the complete realistic botanical garden environment around the racks
  */
-export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, ecoModeRef }) {
+export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, ecoModeRef, initialTheme = 'DAY' }) {
   const disposables = [];
   const swayingTops = [];
   const swayingShrubs = [];
+  const deckAccentLights = [];
+  const fireflies = [];
 
   // 1. Atmosphere: Sky, Fog & Natural Sun Lighting
-  scene.background = new THREE.Color(0xaad3f5);
-  scene.fog = new THREE.FogExp2(0xc4e0f7, 0.0065);
+  const currentThemeConf = THEMES[initialTheme] || THEMES.DAY;
+
+  scene.background = new THREE.Color(currentThemeConf.background);
+  scene.fog = new THREE.FogExp2(currentThemeConf.fogColor, currentThemeConf.fogDensity);
 
   // Soft natural hemisphere lighting (blue sky bounce + green lawn bounce)
-  const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x4d7c3b, 0.85);
+  const hemiLight = new THREE.HemisphereLight(
+    currentThemeConf.hemiSky, 
+    currentThemeConf.hemiGround, 
+    currentThemeConf.hemiIntensity
+  );
   hemiLight.position.set(0, 50, 0);
   scene.add(hemiLight);
   disposables.push(hemiLight);
 
-  // Warm directional sunlight
-  const sunLight = new THREE.DirectionalLight(0xfffaed, 1.45);
-  sunLight.position.set(25, 36, 20);
+  // Warm directional sunlight / moonlight
+  const sunLight = new THREE.DirectionalLight(currentThemeConf.sunColor, currentThemeConf.sunIntensity);
+  sunLight.position.set(...currentThemeConf.sunPos);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.width = 1024;
   sunLight.shadow.mapSize.height = 1024;
@@ -140,8 +208,8 @@ export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, e
   scene.add(sunLight);
   disposables.push(sunLight);
 
-  // Soft sky blue ambient fill
-  const fillLight = new THREE.DirectionalLight(0x7dd3fc, 0.35);
+  // Soft ambient fill light
+  const fillLight = new THREE.DirectionalLight(currentThemeConf.fillColor, currentThemeConf.fillIntensity);
   fillLight.position.set(-25, 20, -18);
   scene.add(fillLight);
   disposables.push(fillLight);
@@ -384,8 +452,8 @@ export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, e
   const lChamberGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.35, 6);
   const lChamberMat = new THREE.MeshStandardMaterial({
     color: 0xfef08a,
-    emissive: 0xfef08a,
-    emissiveIntensity: 0.6,
+    emissive: currentThemeConf.chamberEmissive,
+    emissiveIntensity: currentThemeConf.chamberIntensity,
   });
   const lChamber = new THREE.Mesh(lChamberGeo, lChamberMat);
   lChamber.position.y = 1.48;
@@ -398,7 +466,11 @@ export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, e
   lanternGroup.add(lRoof);
 
   // Warm gentle glow
-  const lanternLight = new THREE.PointLight(0xfef08a, 0.8, 6);
+  const lanternLight = new THREE.PointLight(
+    0xfef08a,
+    currentThemeConf.lanternIntensity,
+    currentThemeConf.lanternDist
+  );
   lanternLight.position.set(0, 1.5, 0);
   lanternGroup.add(lanternLight);
 
@@ -407,7 +479,22 @@ export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, e
   scene.add(lanternGroup);
   disposables.push(lBaseGeo, lPostGeo, lShelfGeo, lChamberGeo, lChamberMat, lRoofGeo, lanternLight, lanternGroup);
 
-  // 9. Flower Shrub Clumps (Azaleas)
+  // 9. Warm Perimeter Deck Uplights (activated in sunset & night)
+  const accentXList = [
+    deckCenterX - deckWidth * 0.38,
+    deckCenterX - deckWidth * 0.14,
+    deckCenterX + deckWidth * 0.14,
+    deckCenterX + deckWidth * 0.38,
+  ];
+  accentXList.forEach((ax) => {
+    const pLight = new THREE.PointLight(0xffeedb, currentThemeConf.accentIntensity, 7.5);
+    pLight.position.set(ax, 0.25, deckDepth / 2 - 0.2);
+    scene.add(pLight);
+    deckAccentLights.push(pLight);
+    disposables.push(pLight);
+  });
+
+  // 10. Flower Shrub Clumps (Azaleas)
   const bushFoliageMat = new THREE.MeshStandardMaterial({ color: 0x275323, roughness: 0.9 });
   const flowerMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.8 });
   disposables.push(bushFoliageMat, flowerMat);
@@ -447,7 +534,70 @@ export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, e
     }
   });
 
+  // 11. Gentle Garden Fireflies (active in Sunset & Night)
+  const fireflyGeo = new THREE.SphereGeometry(0.045, 4, 4);
+  const fireflyMat = new THREE.MeshBasicMaterial({
+    color: 0xfef08a,
+    transparent: true,
+    opacity: currentThemeConf.firefliesVisible ? 0.85 : 0.0,
+  });
+  disposables.push(fireflyGeo, fireflyMat);
+
+  for (let k = 0; k < 18; k++) {
+    const ff = new THREE.Mesh(fireflyGeo, fireflyMat);
+    const baseX = minX + Math.random() * (maxX - minX + 8);
+    const baseY = 0.4 + Math.random() * 1.6;
+    const baseZ = 2.5 + Math.random() * 8.0;
+    ff.position.set(baseX, baseY, baseZ);
+    ff.userData = {
+      basePos: new THREE.Vector3(baseX, baseY, baseZ),
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.8 + Math.random() * 0.8,
+    };
+    scene.add(ff);
+    fireflies.push(ff);
+    disposables.push(ff);
+  }
+
+  let activeTheme = initialTheme;
+
   return {
+    setTheme(themeName) {
+      activeTheme = themeName;
+      const conf = THEMES[themeName] || THEMES.DAY;
+
+      scene.background.setHex(conf.background);
+      if (scene.fog) {
+        scene.fog.color.setHex(conf.fogColor);
+        scene.fog.density = conf.fogDensity;
+      }
+
+      hemiLight.color.setHex(conf.hemiSky);
+      hemiLight.groundColor.setHex(conf.hemiGround);
+      hemiLight.intensity = conf.hemiIntensity;
+
+      sunLight.color.setHex(conf.sunColor);
+      sunLight.intensity = conf.sunIntensity;
+      sunLight.position.set(...conf.sunPos);
+
+      fillLight.color.setHex(conf.fillColor);
+      fillLight.intensity = conf.fillIntensity;
+
+      lanternLight.intensity = conf.lanternIntensity;
+      lanternLight.distance = conf.lanternDist;
+
+      lChamberMat.emissive.setHex(conf.chamberEmissive);
+      lChamberMat.emissiveIntensity = conf.chamberIntensity;
+
+      deckAccentLights.forEach((light) => {
+        light.intensity = conf.accentIntensity;
+      });
+
+      fireflyMat.opacity = conf.firefliesVisible ? 0.85 : 0.0;
+    },
+    getTheme() {
+      return activeTheme;
+    },
     update(elapsed) {
       if (ecoModeRef && ecoModeRef.current) return;
       for (let i = 0; i < swayingTops.length; i++) {
@@ -459,6 +609,16 @@ export function buildRealisticGarden({ scene, minX = -18, maxX = 26, renderer, e
         const shrub = swayingShrubs[j];
         const { swaySpeed, swayOffset } = shrub.userData;
         shrub.rotation.z = Math.sin(elapsed * swaySpeed + swayOffset) * 0.02;
+      }
+      // Animate fireflies softly
+      if (THEMES[activeTheme]?.firefliesVisible) {
+        for (let f = 0; f < fireflies.length; f++) {
+          const ff = fireflies[f];
+          const { speed, phase, basePos } = ff.userData;
+          ff.position.x = basePos.x + Math.sin(elapsed * speed + phase) * 0.7;
+          ff.position.y = basePos.y + Math.cos(elapsed * speed * 1.4 + phase) * 0.35;
+          ff.position.z = basePos.z + Math.sin(elapsed * speed * 0.9 + phase * 1.5) * 0.7;
+        }
       }
     },
     dispose() {

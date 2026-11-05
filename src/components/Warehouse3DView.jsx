@@ -15,13 +15,16 @@ import {
   User, 
   Box as BoxIcon, 
   Sparkles, 
-  Info,
-  Search,
-  ChevronRight,
-  X,
-  Pencil,
-  Package,
+  Info, 
+  Search, 
+  ChevronRight, 
+  X, 
+  Pencil, 
+  Package, 
   Zap,
+  Sun,
+  Sunset,
+  Moon,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose — the original five PPIC colors,
@@ -51,9 +54,53 @@ export const Warehouse3DView = ({
     items, 
     ppicMembers, 
     getItemsInBox, 
+    selectedBoxNumber,
     setSelectedBoxNumber,
     setItemModalConfig
   } = useInventory();
+
+  // Garden lighting theme: DAY (Siang), SUNSET (Senja), NIGHT (Malam)
+  const [gardenTheme, setGardenTheme] = useState(() => {
+    try {
+      return localStorage.getItem('gagaclo_garden_theme') || 'DAY';
+    } catch {
+      return 'DAY';
+    }
+  });
+  const gardenRef = useRef(null);
+
+  const handleSelectGardenTheme = (theme) => {
+    setGardenTheme(theme);
+    try {
+      localStorage.setItem('gagaclo_garden_theme', theme);
+    } catch {}
+    gardenRef.current?.setTheme(theme);
+  };
+
+  // Cinematic fly-to-box interpolation targets
+  const flyCameraTargetRef = useRef(null);
+  const flyControlsTargetRef = useRef(null);
+  const isUserInteractingRef = useRef(false);
+  const selectedBoxNumberRef = useRef(selectedBoxNumber);
+
+  useEffect(() => {
+    selectedBoxNumberRef.current = selectedBoxNumber;
+    if (selectedBoxNumber !== null && boxMeshesRef.current.length > 0) {
+      const mesh = boxMeshesRef.current.find(m => Number(m.userData.boxNumber) === Number(selectedBoxNumber));
+      if (mesh) {
+        flyControlsTargetRef.current = new THREE.Vector3(
+          mesh.userData.initialX,
+          mesh.userData.initialY + 0.1,
+          mesh.userData.initialZ
+        );
+        flyCameraTargetRef.current = new THREE.Vector3(
+          mesh.userData.initialX,
+          mesh.userData.initialY + 0.35,
+          mesh.userData.initialZ + 3.4
+        );
+      }
+    }
+  }, [selectedBoxNumber]);
 
   // Ctrl/Cmd + K shortcut for quick search focus
   useEffect(() => {
@@ -152,7 +199,7 @@ export const Warehouse3DView = ({
    * Rack & Location Subtitle
    * Footer: INVENTORY MANAGEMENT RND
    */
-  const createBoxFaceTexture = (boxNumber, picName, category, rackName, rackDescription) => {
+  const createBoxFaceTexture = (boxNumber, picName, category, rackName, rackDescription, itemCount = 0, isFull = false) => {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 384; // 4:3 aspect ratio
@@ -167,16 +214,42 @@ export const Warehouse3DView = ({
     ctx.lineWidth = 14;
     ctx.strokeRect(7, 7, 498, 370);
 
-    // 3. Header: SAMPLE BOX or MATERIAL BOX
+    // 3. Header: SAMPLE BOX or MATERIAL BOX (left-aligned)
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 36px system-ui, sans-serif';
-    ctx.textAlign = 'center';
+    ctx.font = 'bold 30px system-ui, sans-serif';
+    ctx.textAlign = 'left';
     const headerTitle = category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX';
-    ctx.fillText(headerTitle, 256, 52);
+    ctx.fillText(headerTitle, 26, 48);
+
+    // Occupancy Status Pill at top-right of label
+    let badgeBg = '#64748b';
+    let badgeText = 'KOSONG';
+    if (isFull) {
+      badgeBg = '#059669';
+      badgeText = 'PENUH';
+    } else if (itemCount > 0) {
+      badgeBg = '#d97706';
+      badgeText = `${itemCount} ITEM`;
+    }
+
+    ctx.fillStyle = badgeBg;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(330, 18, 154, 38, 8);
+      ctx.fill();
+    } else {
+      ctx.fillRect(330, 18, 154, 38);
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 17px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(badgeText, 407, 43);
 
     // 4. Giant Box Number
     ctx.fillStyle = '#000000';
     ctx.font = '900 150px system-ui, sans-serif';
+    ctx.textAlign = 'center';
     ctx.fillText(String(boxNumber), 256, 205);
 
     // 5. Black Divider Line
@@ -249,10 +322,18 @@ export const Warehouse3DView = ({
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2.05; // Keep camera above water level
+    controls.maxPolarAngle = Math.PI / 2.05; // Keep camera above ground level
     controls.minDistance = 6;
     controls.maxDistance = 85;
     controls.target.set(0, 4, 0);
+    controls.addEventListener('start', () => {
+      isUserInteractingRef.current = true;
+      flyCameraTargetRef.current = null;
+      flyControlsTargetRef.current = null;
+    });
+    controls.addEventListener('end', () => {
+      isUserInteractingRef.current = false;
+    });
     controlsRef.current = controls;
 
     // (Realistic garden lighting is initialized in buildRealisticGarden)
@@ -298,7 +379,9 @@ export const Warehouse3DView = ({
       maxX,
       renderer,
       ecoModeRef,
+      initialTheme: gardenTheme,
     });
+    gardenRef.current = garden;
 
     const boxMeshes = [];
 
@@ -408,13 +491,16 @@ export const Warehouse3DView = ({
         // Box geometry: 1.35m wide, 0.75m high, 1.1m deep
         const boxGeo = new THREE.BoxGeometry(1.35, 0.75, 1.1);
 
-        // Exact front label texture matching user uploaded image
+        // Exact front label texture matching user uploaded image with status indicator
+        const boxItems = getItemsInBox(boxObj.boxNumber);
         const frontTexture = createBoxFaceTexture(
           boxObj.boxNumber, 
           boxObj.picName, 
           boxObj.category,
           boxObj.rackName,
-          boxObj.rackDescription
+          boxObj.rackDescription,
+          boxItems.length,
+          boxObj.isFull
         );
         const baseColor = ppicColorMap[boxObj.picName] || 0x3b82f6;
 
@@ -428,6 +514,8 @@ export const Warehouse3DView = ({
           map: frontTexture,
           roughness: 0.3,
           metalness: 0.05,
+          emissive: new THREE.Color(0x000000),
+          emissiveIntensity: 0,
         });
 
         // Materials: [right, left, top, bottom, front, back]
@@ -454,7 +542,9 @@ export const Warehouse3DView = ({
           category: boxObj.category,
           picName: boxObj.picName,
           baseColor: baseColor,
+          initialX: bx,
           initialY: by,
+          initialZ: bz,
         };
 
         scene.add(boxMesh);
@@ -473,17 +563,26 @@ export const Warehouse3DView = ({
       const fy = 0.4; // sits on the floor
       const fz = 5 + rowIdx * 2.0;
 
+      const floorItems = getItemsInBox(boxObj.boxNumber);
       const boxGeo = new THREE.BoxGeometry(1.35, 0.75, 1.1);
       const frontTexture = createBoxFaceTexture(
         boxObj.boxNumber,
         boxObj.picName,
         boxObj.category,
         boxObj.rackName,
-        boxObj.rackDescription
+        boxObj.rackDescription,
+        floorItems.length,
+        boxObj.isFull
       );
       const baseColor = ppicColorMap[boxObj.picName] || 0x3b82f6;
       const sideMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0.05 });
-      const frontMat = new THREE.MeshStandardMaterial({ map: frontTexture, roughness: 0.3, metalness: 0.05 });
+      const frontMat = new THREE.MeshStandardMaterial({
+        map: frontTexture,
+        roughness: 0.3,
+        metalness: 0.05,
+        emissive: new THREE.Color(0x000000),
+        emissiveIntensity: 0,
+      });
 
       const boxMesh = new THREE.Mesh(boxGeo, [sideMat, sideMat, sideMat, sideMat, frontMat, sideMat]);
       boxMesh.position.set(fx, fy, fz);
@@ -497,7 +596,9 @@ export const Warehouse3DView = ({
         category: boxObj.category,
         picName: boxObj.picName,
         baseColor: baseColor,
+        initialX: fx,
         initialY: fy,
+        initialZ: fz,
       };
       scene.add(boxMesh);
       boxMeshes.push(boxMesh);
@@ -521,19 +622,13 @@ export const Warehouse3DView = ({
       if (intersects.length > 0) {
         const hit = intersects[0].object;
         if (currentHoveredMesh !== hit) {
-          if (currentHoveredMesh) {
-            currentHoveredMesh.position.y = currentHoveredMesh.userData.initialY;
-          }
           currentHoveredMesh = hit;
-          currentHoveredMesh.position.y = currentHoveredMesh.userData.initialY + 0.12;
-
           const boxData = boxes.find(b => b.boxNumber === hit.userData.boxNumber);
           setHoveredBox(boxData);
           renderer.domElement.style.cursor = 'pointer';
         }
       } else {
         if (currentHoveredMesh) {
-          currentHoveredMesh.position.y = currentHoveredMesh.userData.initialY;
           currentHoveredMesh = null;
           setHoveredBox(null);
           renderer.domElement.style.cursor = 'default';
@@ -581,8 +676,58 @@ export const Warehouse3DView = ({
 
       const elapsed = clock.getElapsedTime();
 
-      // Update gentle organic wind sway on garden foliage
+      // Update gentle organic wind sway on garden foliage & fireflies
       garden?.update(elapsed);
+
+      // 1. Cinematic camera flight interpolation
+      if (flyCameraTargetRef.current && flyControlsTargetRef.current && !isUserInteractingRef.current) {
+        camera.position.lerp(flyCameraTargetRef.current, 0.08);
+        controls.target.lerp(flyControlsTargetRef.current, 0.08);
+        if (
+          camera.position.distanceTo(flyCameraTargetRef.current) < 0.03 &&
+          controls.target.distanceTo(flyControlsTargetRef.current) < 0.03
+        ) {
+          flyCameraTargetRef.current = null;
+          flyControlsTargetRef.current = null;
+        }
+      }
+
+      // 2. Tactile box drawer slide-out animation (smooth physical spring lerp)
+      const curSelectedNum = selectedBoxNumberRef.current;
+      for (let i = 0; i < boxMeshesRef.current.length; i++) {
+        const mesh = boxMeshesRef.current[i];
+        const isSelected = curSelectedNum !== null && Number(curSelectedNum) === Number(mesh.userData.boxNumber);
+        const isHovered = currentHoveredMesh === mesh;
+
+        let targetZ = mesh.userData.initialZ;
+        let targetY = mesh.userData.initialY;
+
+        if (isSelected) {
+          targetZ += 0.42; // Smooth drawer slide-out
+          targetY += 0.08;
+        } else if (isHovered) {
+          targetZ += 0.28; // Tactile pull-out on hover
+          targetY += 0.04;
+        }
+
+        mesh.position.z += (targetZ - mesh.position.z) * 0.18;
+        mesh.position.y += (targetY - mesh.position.y) * 0.18;
+
+        // Subtle emissive glow on front label face
+        if (mesh.material && mesh.material[4]) {
+          const frontMat = mesh.material[4];
+          if (isSelected) {
+            frontMat.emissive.setHex(0x38bdf8);
+            frontMat.emissiveIntensity = 0.35;
+          } else if (isHovered) {
+            frontMat.emissive.setHex(0x60a5fa);
+            frontMat.emissiveIntensity = 0.2;
+          } else {
+            frontMat.emissive.setHex(0x000000);
+            frontMat.emissiveIntensity = 0;
+          }
+        }
+      }
 
       if (controlsRef.current) {
         controlsRef.current.update();
@@ -591,7 +736,7 @@ export const Warehouse3DView = ({
     };
     animate();
 
-    const fitFrontView = () => {
+    const fitFrontView = (smooth = true) => {
       const bounds = new THREE.Box3();
       for (const mesh of boxMeshes) {
         if (activeRackRef.current === 'ALL' || Number(mesh.userData.rackId) === Number(activeRackRef.current)) {
@@ -616,9 +761,15 @@ export const Warehouse3DView = ({
       controls.maxDistance = Math.max(75, distance * 1.5);
       camera.far = Math.max(200, distance * 3);
       camera.updateProjectionMatrix();
-      controls.target.copy(center);
-      camera.position.set(center.x, center.y, center.z + distance);
-      controls.update();
+
+      if (smooth) {
+        flyControlsTargetRef.current = center.clone();
+        flyCameraTargetRef.current = new THREE.Vector3(center.x, center.y, center.z + distance);
+      } else {
+        controls.target.copy(center);
+        camera.position.set(center.x, center.y, center.z + distance);
+        controls.update();
+      }
     };
     fitCameraRef.current = fitFrontView;
 
@@ -628,7 +779,7 @@ export const Warehouse3DView = ({
       if (!newWidth || !newHeight) return;
       camera.aspect = newWidth / newHeight;
       renderer.setSize(newWidth, newHeight, false);
-      fitFrontView();
+      fitFrontView(false);
     };
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);
@@ -932,13 +1083,66 @@ export const Warehouse3DView = ({
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-gradient-to-b from-sky-300 via-sky-100 to-cyan-50">
+      <div className={`warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 transition-colors duration-700 ${
+        gardenTheme === 'NIGHT'
+          ? 'bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900'
+          : gardenTheme === 'SUNSET'
+          ? 'bg-gradient-to-b from-orange-400 via-amber-200 to-stone-800'
+          : 'bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-50'
+      }`}>
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
 
-        {/* Mode Ringan / Cepat Toggle (Top Right) */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+        {/* 3D Scene HUD Controls (Top Right): Theme Switcher & Eco Mode */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2 flex-wrap justify-end">
+          {/* Day / Sunset / Night Segmented Control */}
+          <div className="inline-flex items-center rounded-xl bg-slate-900/80 backdrop-blur-md p-1 border border-white/20 shadow-md">
+            <button
+              type="button"
+              onClick={() => handleSelectGardenTheme('DAY')}
+              aria-pressed={gardenTheme === 'DAY'}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                gardenTheme === 'DAY'
+                  ? 'bg-amber-400 text-slate-950 shadow-xs'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+              title="Suasana Taman Siang (Lush Sunlight)"
+            >
+              <Sun className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Siang</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectGardenTheme('SUNSET')}
+              aria-pressed={gardenTheme === 'SUNSET'}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                gardenTheme === 'SUNSET'
+                  ? 'bg-orange-500 text-white shadow-xs'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+              title="Suasana Taman Senja (Golden Sunset)"
+            >
+              <Sunset className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Senja</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectGardenTheme('NIGHT')}
+              aria-pressed={gardenTheme === 'NIGHT'}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                gardenTheme === 'NIGHT'
+                  ? 'bg-indigo-500 text-white shadow-xs'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+              title="Suasana Taman Malam (Zen Stone Lantern & Moonlight)"
+            >
+              <Moon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Malam</span>
+            </button>
+          </div>
+
+          {/* Mode Ringan / Cepat Toggle */}
           <button
             type="button"
             onClick={toggleEcoMode}
@@ -950,7 +1154,7 @@ export const Warehouse3DView = ({
             title={ecoMode ? 'Mode Ringan aktif (super enteng & baterai awet). Klik untuk aktifkan Grafis Penuh.' : 'Klik untuk aktifkan Mode Ringan (sangat ringan untuk laptop/PC kantor).'}
           >
             <Zap className={`h-3.5 w-3.5 ${ecoMode ? 'text-yellow-200 fill-yellow-200' : 'text-amber-500'}`} />
-            <span>{ecoMode ? '⚡ Mode Ringan: ON' : '⚡ Mode Ringan'}</span>
+            <span className="hidden sm:inline">{ecoMode ? '⚡ Ringan: ON' : '⚡ Ringan'}</span>
           </button>
         </div>
 
@@ -981,7 +1185,7 @@ export const Warehouse3DView = ({
               <span className="text-xl font-black text-white">
                 #{hoveredBox.boxNumber}
               </span>
-              <span className="font-mono text-xs text-slate-600">
+              <span className="font-mono text-xs text-slate-400">
                 {hoveredBox.code}
               </span>
               <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
@@ -1004,11 +1208,12 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls Hint & Island Badge (Bottom Right) */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-black/60 backdrop-blur-xs px-2.5 py-1.5 rounded-lg border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2">
-          <span className="text-cyan-300 font-medium">🏝️ Pulau Laut</span>
-          <span className="text-pink-300 font-medium">🌸 Bunga Estetik</span>
-          <span className="text-slate-400">|</span>
+        {/* Controls Hint & Garden Badge (Bottom Right) */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-lg">
+          <span className="text-emerald-400 font-bold flex items-center gap-1">
+            <span>🌿</span> Zen Garden R&amp;D
+          </span>
+          <span className="text-slate-500">|</span>
           <span>🖱️ Putar: Klik Kiri</span>
           <span>🔍 Zoom: Scroll</span>
           <span>✋ Geser: Klik Kanan</span>
