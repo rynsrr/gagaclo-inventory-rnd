@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { buildSpringMeadowEnvironment } from './springMeadowEnvironment';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { useInventory } from '../context/InventoryContext';
 import { 
@@ -314,30 +315,6 @@ export const Warehouse3DView = ({
     });
     controlsRef.current = controls;
 
-    // Clean Studio / Warehouse Lighting (zero clutter, crystal clear boxes)
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.95);
-    hemiLight.position.set(0, 50, 0);
-    scene.add(hemiLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.25);
-    dirLight.position.set(22, 38, 25);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 100;
-    const d = 42;
-    dirLight.shadow.camera.left = -d;
-    dirLight.shadow.camera.right = d;
-    dirLight.shadow.camera.top = d;
-    dirLight.shadow.camera.bottom = -d;
-    dirLight.shadow.bias = -0.0005;
-    scene.add(dirLight);
-
-    const fillLight = new THREE.DirectionalLight(0xe2e8f0, 0.45);
-    fillLight.position.set(-22, 20, -18);
-    scene.add(fillLight);
-
     // Build the 3D Physical Racks from current rack data.
     // Racks 1-5 keep their original warehouse layout; any newly added rack
     // is placed further to the right with a standard 4x3 shelf layout.
@@ -368,36 +345,17 @@ export const Warehouse3DView = ({
       conf.rows = Math.max(conf.rows, Math.ceil(count / conf.cols));
     });
 
-    // Clean Warehouse Floor (Sleek light gray epoxy / studio base)
-    const floorGeo = new THREE.PlaneGeometry(160, 160);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0xe2e8f0,
-      roughness: 0.85,
-      metalness: 0.05,
-    });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.01;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Demarcated Rack Zone Pad (Clean grey floor pad under racks)
+    // --- SPRING MEADOW 3D ENVIRONMENT (Real 3D Models from Internet) ---
     const allRackX = rackPositions.map((r) => r.x);
     const minX = allRackX.length > 0 ? Math.min(...allRackX) - 4 : -20;
     const maxX = allRackX.length > 0 ? Math.max(...allRackX) + 4 : 28;
-    const padCenterX = (minX + maxX) / 2;
-    const padWidth = (maxX - minX) + 6;
-    const padDepth = 6.5;
-    const padGeo = new THREE.BoxGeometry(padWidth, 0.03, padDepth);
-    const padMat = new THREE.MeshStandardMaterial({
-      color: 0xcbd5e1,
-      roughness: 0.7,
-      metalness: 0.08,
+
+    const meadow = buildSpringMeadowEnvironment({
+      scene,
+      minX,
+      maxX,
+      ecoModeRef,
     });
-    const pad = new THREE.Mesh(padGeo, padMat);
-    pad.position.set(padCenterX, 0.015, 0);
-    pad.receiveShadow = true;
-    scene.add(pad);
 
     const boxMeshes = [];
 
@@ -808,6 +766,7 @@ export const Warehouse3DView = ({
         container.removeChild(renderer.domElement);
       }
 
+      meadow?.dispose();
       renderer.dispose();
     };
   }, [boxes, racks, ppicMembers]);
@@ -1093,7 +1052,7 @@ export const Warehouse3DView = ({
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-slate-100/90">
+      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-50">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
@@ -1165,8 +1124,12 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls Hint (Bottom Right) */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-300 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
+        {/* Controls Hint & Spring Meadow Badge (Bottom Right) */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
+          <span className="text-pink-300 font-bold flex items-center gap-1">
+            <span>🌸</span> Spring Meadow
+          </span>
+          <span className="text-slate-500">|</span>
           <span>🖱️ Putar: Klik Kiri</span>
           <span className="text-slate-600">•</span>
           <span>🔍 Zoom: Scroll</span>
