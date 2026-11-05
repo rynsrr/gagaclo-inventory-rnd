@@ -405,12 +405,16 @@ export const ItemsListView = () => {
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => {
-                              if (window.confirm(`Hapus "${item.name}"?`)) {
-                                deleteItem(item.id);
+                            onClick={async () => {
+                              if (window.confirm(`Hapus "${item.name || item.style || item.kode}"?`)) {
+                                try {
+                                  await deleteItem(item.id);
+                                } catch (err) {
+                                  console.error('Delete item error:', err);
+                                }
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                             title="Hapus"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

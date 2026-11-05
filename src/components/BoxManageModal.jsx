@@ -174,13 +174,13 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
     setBusy(true);
     try {
       if (confirmDelete.type === 'box') {
-        await deleteBox(confirmDelete.id);
+        await deleteBox(confirmDelete.id, { moveItemsToFloor: true });
         flash('ok', `Box #${confirmDelete.id} berhasil dihapus.`);
       } else if (confirmDelete.type === 'person') {
-        deletePpicMember(confirmDelete.id);
+        deletePpicMember(confirmDelete.id, { reassignToDefault: true });
         flash('ok', `${confirmDelete.label} berhasil dihapus.`);
       } else if (confirmDelete.type === 'rack') {
-        deleteRack(confirmDelete.id);
+        await deleteRack(confirmDelete.id, { moveBoxesToFloor: true });
         flash('ok', `${confirmDelete.label} berhasil dihapus.`);
       }
       setConfirmDelete(null);
@@ -632,9 +632,27 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
         {/* Delete confirm bar */}
         {confirmDelete && (
           <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2.5 shrink-0">
-            <span className="text-xs font-bold text-rose-800">
-              Hapus {confirmDelete.label}?
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-rose-800">
+                Hapus {confirmDelete.label}?
+              </span>
+              {confirmDelete.type === 'box' && (() => {
+                const count = items.filter(i => Number(i.boxNumber) === Number(confirmDelete.id)).length;
+                return count > 0 ? (
+                  <span className="text-[10px] text-rose-600 font-semibold">
+                    ({count} item di dalamnya otomatis dipindahkan ke Lantai)
+                  </span>
+                ) : null;
+              })()}
+              {confirmDelete.type === 'rack' && (() => {
+                const count = boxes.filter(b => Number(b.rackId) === Number(confirmDelete.id)).length;
+                return count > 0 ? (
+                  <span className="text-[10px] text-rose-600 font-semibold">
+                    ({count} box di dalamnya otomatis dipindahkan ke Lantai)
+                  </span>
+                ) : null;
+              })()}
+            </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"

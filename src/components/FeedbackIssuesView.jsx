@@ -589,12 +589,16 @@ export const FeedbackIssuesView = () => {
 
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (window.confirm(`Hapus laporan "${issue.title}"?`)) {
-                          deleteIssue(issue.id);
+                          try {
+                            await deleteIssue(issue.id);
+                          } catch (err) {
+                            console.error('Delete issue error:', err);
+                          }
                         }
                       }}
-                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                       title="Hapus Laporan"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

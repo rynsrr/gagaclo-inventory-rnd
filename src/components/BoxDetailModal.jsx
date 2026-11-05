@@ -39,6 +39,7 @@ function BoxDetail({ box }) {
     setSelectedBoxNumber,
     getItemsInBox,
     deleteItem,
+    deleteMultipleItems,
     setItemModalConfig,
     setQrModalBox,
     updateBoxNotes,
@@ -76,6 +77,11 @@ function BoxDetail({ box }) {
   const [targetBoxNum, setTargetBoxNum] = useState(1);
   const [isMoving, setIsMoving] = useState(false);
   const [moveError, setMoveError] = useState(null);
+
+  // Delete Item(s) Dialog state
+  const [itemToDelete, setItemToDelete] = useState(null); // single item object OR array of items
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   const openMoveModal = (itemsToMove) => {
     setMoveError(null);
@@ -115,6 +121,36 @@ function BoxDetail({ box }) {
       setMoveError(err?.message || 'Gagal memindahkan item.');
     } finally {
       setIsMoving(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      if (Array.isArray(itemToDelete)) {
+        const ids = itemToDelete.map(i => i.id);
+        await deleteMultipleItems(ids);
+        setSelectedItemIds(prev => {
+          const next = new Set(prev);
+          ids.forEach(id => next.delete(id));
+          return next;
+        });
+      } else {
+        await deleteItem(itemToDelete.id);
+        setSelectedItemIds(prev => {
+          const next = new Set(prev);
+          next.delete(itemToDelete.id);
+          return next;
+        });
+      }
+      setItemToDelete(null);
+    } catch (err) {
+      console.error('Error saat menghapus item:', err);
+      setDeleteError(err?.message || 'Gagal menghapus item.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -363,6 +399,22 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
+              {/* Bulk Delete Items */}
+              {selectedItemIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setItemToDelete(itemsInBox.filter(i => selectedItemIds.has(i.id)));
+                  }}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                  title="Hapus semua item yang dicentang dari box ini"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Hapus Terpilih ({selectedItemIds.size})</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
                 className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
@@ -545,12 +597,12 @@ function BoxDetail({ box }) {
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => {
-                                  if (window.confirm(`Hapus "${item.name || item.style || item.kode}" dari Box #${box.boxNumber}?`)) {
-                                    deleteItem(item.id);
-                                  }
+                                  setDeleteError(null);
+                                  setItemToDelete(item);
                                 }}
-                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition"
+                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
                                 title="Hapus Item"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -633,12 +685,12 @@ function BoxDetail({ box }) {
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
-                              if (window.confirm(`Hapus "${item.name || item.style || item.kode}"?`)) {
-                                deleteItem(item.id);
-                              }
+                              setDeleteError(null);
+                              setItemToDelete(item);
                             }}
-                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
                             title="Hapus"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -807,6 +859,58 @@ function BoxDetail({ box }) {
                 >
                   <ArrowRightLeft className="w-3.5 h-3.5" />
                   <span>{isMoving ? 'Memindahkan...' : 'Pindahkan Sekarang'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Item Confirmation Modal */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-[75] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in no-print">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-sm w-full overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 text-center">
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-black text-slate-900">
+                {Array.isArray(itemToDelete) ? `Hapus ${itemToDelete.length} Item?` : 'Hapus Item Ini?'}
+              </h3>
+              <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                {Array.isArray(itemToDelete) ? (
+                  <span>
+                    Item yang Anda centang akan dikeluarkan secara permanen dari <strong>Box #{box.boxNumber}</strong>.
+                  </span>
+                ) : (
+                  <span>
+                    Yakin ingin menghapus <strong>"{itemToDelete.name || itemToDelete.style || itemToDelete.kode}"</strong> dari <strong>Box #{box.boxNumber}</strong>?
+                  </span>
+                )}
+              </p>
+
+              {deleteError && (
+                <div className="mt-3 p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="mt-5 flex gap-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => { setItemToDelete(null); setDeleteError(null); }}
+                  className="flex-1 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1"
+                >
+                  {isDeleting ? <span>Menghapus...</span> : <span>Ya, Hapus</span>}
                 </button>
               </div>
             </div>

@@ -330,15 +330,19 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const deleteIssue = async (issueId) => {
+    if (!issueId) return;
+    const idStr = String(issueId);
     setIssues((prev) => {
-      const next = prev.filter((iss) => iss.id !== issueId);
+      const next = prev.filter((iss) => String(iss.id) !== idStr);
       syncIssuesToRemote(next);
       return next;
     });
     if (supabase) {
       try {
-        await supabase.from('issues').delete().eq('id', issueId);
-      } catch {}
+        await supabase.from('issues').delete().eq('id', idStr);
+      } catch (err) {
+        console.warn('Supabase delete issue error:', err);
+      }
     }
   };
 
@@ -829,43 +833,96 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const deleteItem = async (itemId) => {
-    const itemToDelete = items.find(i => i.id === itemId);
+    if (!itemId) return;
+    const idStr = String(itemId);
+    const itemToDelete = items.find(i => String(i.id) === idStr);
     if (itemToDelete) {
-      addTransaction({
-        type: 'OUT',
-        itemId: itemToDelete.id,
-        itemName: itemToDelete.name,
-        boxNumber: itemToDelete.boxNumber,
-        rackName: `Box ${itemToDelete.boxNumber}`,
-        qty: itemToDelete.qty,
-        unit: itemToDelete.unit,
-        picName: itemToDelete.picName,
-        recipientOrSource: 'Dihapus dari Sistem / Disposal',
-        notes: 'Item dikeluarkan/dihapus dari catatan box',
-      });
+      try {
+        await addTransaction({
+          type: 'OUT',
+          itemId: idStr,
+          itemName: itemToDelete.name || itemToDelete.style || itemToDelete.deskripsi || 'Sample',
+          boxNumber: itemToDelete.boxNumber ? Number(itemToDelete.boxNumber) : 0,
+          rackName: itemToDelete.rackName || `Box ${itemToDelete.boxNumber || 0}`,
+          qty: Number(itemToDelete.qty || itemToDelete.jumlah) || 1,
+          unit: itemToDelete.unit || itemToDelete.satuan || 'PCS',
+          picName: itemToDelete.picName || 'Royan',
+          recipientOrSource: 'Dihapus dari Sistem / Disposal',
+          notes: 'Item dikeluarkan/dihapus dari catatan box',
+        });
+      } catch (err) {
+        console.warn('Gagal mencatat transaksi hapus:', err);
+      }
     }
 
-    setItems((prev) => prev.filter((item) => item.id !== itemId));
+    // Segera hapus dari state lokal (responsif seketika)
+    setItems((prev) => prev.filter((item) => String(item.id) !== idStr));
 
-    // Sync to Supabase
+    // Sinkronisasi ke Supabase
     if (supabase) {
       try {
-        await supabase.from('items').delete().eq('id', itemId);
+        // Lepas relasi item_id di tabel transactions terlebih dahulu agar tidak memicu Foreign Key constraint
+        try {
+          await supabase.from('transactions').update({ item_id: null }).eq('item_id', idStr);
+        } catch (fkErr) {
+          console.warn('Update foreign key transaksi dilewati:', fkErr);
+        }
+
+        const { error } = await supabase.from('items').delete().eq('id', idStr);
+        if (error) {
+          console.error('Supabase delete item error:', error);
+        }
       } catch (err) {
         console.error('Supabase delete item error:', err);
       }
     }
+
+    return true;
+  };
+
+  const deleteMultipleItems = async (itemIds) => {
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) return 0;
+    const idStrings = itemIds.map(id => String(id));
+    const idSet = new Set(idStrings);
+
+    // Hapus dari state lokal seketika
+    setItems((prev) => prev.filter((item) => !idSet.has(String(item.id))));
+
+    // Sinkronisasi ke Supabase
+    if (supabase) {
+      try {
+        try {
+          await supabase.from('transactions').update({ item_id: null }).in('item_id', idStrings);
+        } catch {}
+
+        const { error } = await supabase.from('items').delete().in('id', idStrings);
+        if (error) {
+          console.error('Supabase delete multiple items error:', error);
+        }
+      } catch (err) {
+        console.error('Supabase delete multiple items error:', err);
+      }
+    }
+
+    return idStrings.length;
   };
 
   const deleteAllItems = async () => {
-    const allIds = items.map((i) => i.id);
+    const allIds = items.map((i) => String(i.id));
 
-    // Bulk delete from Supabase (only existing rows)
+    // Clear local state (localStorage is cleared by the persistence effect)
+    setItems([]);
+
+    // Bulk delete from Supabase
     if (supabase) {
       try {
-        if (allIds.length > 0) {
-          const { error } = await supabase.from('items').delete().in('id', allIds);
-          if (error) throw error;
+        try {
+          await supabase.from('transactions').update({ item_id: null }).neq('id', 'NONE');
+        } catch {}
+
+        const { error } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER');
+        if (error) {
+          console.error('Supabase bulk delete items error:', error);
         }
       } catch (err) {
         console.error('Supabase bulk delete items error:', err);
@@ -873,8 +930,6 @@ export const InventoryProvider = ({ children }) => {
       }
     }
 
-    // Clear local state (localStorage is cleared by the persistence effect)
-    setItems([]);
     return allIds.length;
   };
 
@@ -1070,19 +1125,46 @@ export const InventoryProvider = ({ children }) => {
     return updatedBox;
   };
 
-  const deleteBox = async (boxNumber) => {
-    // Don't delete if box has items
-    const itemsInBox = items.filter(i => Number(i.boxNumber) === Number(boxNumber));
+  const deleteBox = async (boxNumber, options = { moveItemsToFloor: true }) => {
+    const boxNum = Number(boxNumber);
+    // Don't crash if box has items: relocate items to LANTAI if allowed
+    const itemsInBox = items.filter(i => Number(i.boxNumber) === boxNum);
     if (itemsInBox.length > 0) {
-      throw new Error(`Box #${boxNumber} masih berisi ${itemsInBox.length} item. Kosongkan dulu sebelum dihapus.`);
+      if (options?.moveItemsToFloor !== false) {
+        setItems(prev => prev.map(item => {
+          if (Number(item.boxNumber) === boxNum) {
+            return {
+              ...item,
+              boxNumber: 0,
+              rackId: 0,
+              rackName: 'LANTAI',
+              place: 'LANTAI',
+            };
+          }
+          return item;
+        }));
+
+        if (supabase) {
+          try {
+            await supabase
+              .from('items')
+              .update({ box_number: 0, rack_id: 0, rack_name: 'LANTAI', place: 'LANTAI' })
+              .eq('box_number', boxNum);
+          } catch (err) {
+            console.error('Supabase move items to floor error:', err);
+          }
+        }
+      } else {
+        throw new Error(`Box #${boxNum} masih berisi ${itemsInBox.length} item. Kosongkan dulu sebelum dihapus.`);
+      }
     }
 
-    setBoxes(prev => prev.filter(b => Number(b.boxNumber) !== Number(boxNumber)));
+    setBoxes(prev => prev.filter(b => Number(b.boxNumber) !== boxNum));
 
     // Sync to Supabase
     if (supabase) {
       try {
-        await supabase.from('boxes').delete().eq('box_number', boxNumber);
+        await supabase.from('boxes').delete().eq('box_number', boxNum);
       } catch (err) {
         console.error('Supabase delete box error:', err);
       }
@@ -1116,13 +1198,33 @@ export const InventoryProvider = ({ children }) => {
     return newRack;
   };
 
-  const deleteRack = (id) => {
+  const deleteRack = async (id, options = { moveBoxesToFloor: true }) => {
     const target = racks.find(r => r.id === id || Number(r.id) === Number(id));
-    const rackBoxes = boxes.filter(b => Number(b.rackId) === Number(target?.id ?? id));
+    const targetId = Number(target?.id ?? id);
+    const rackBoxes = boxes.filter(b => Number(b.rackId) === targetId);
+
     if (rackBoxes.length > 0) {
-      throw new Error(`${rackBoxes.length} box masih ada di rak ini. Pindahkan ke rak lain / Lantai dulu.`);
+      if (options?.moveBoxesToFloor !== false) {
+        setBoxes(prev => prev.map(b => {
+          if (Number(b.rackId) === targetId) {
+            return { ...b, rackId: 0, rackName: 'LANTAI' };
+          }
+          return b;
+        }));
+
+        if (supabase) {
+          try {
+            await supabase.from('boxes').update({ rack_id: 0, rack_name: 'LANTAI' }).eq('rack_id', targetId);
+          } catch (err) {
+            console.error('Supabase move boxes to floor error:', err);
+          }
+        }
+      } else {
+        throw new Error(`${rackBoxes.length} box masih ada di rak ini. Pindahkan ke rak lain / Lantai dulu.`);
+      }
     }
-    setRacks(prev => prev.filter(r => String(r.id) !== String(target?.id ?? id)));
+
+    setRacks(prev => prev.filter(r => Number(r.id) !== targetId));
   };
 
   // --- PPIC Member Management ---
@@ -1198,14 +1300,28 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  const deletePpicMember = (id) => {
+  const deletePpicMember = (id, options = { reassignToDefault: true }) => {
     const member = ppicMembers.find(p => String(p.id) === String(id));
     if (!member) throw new Error('Data orang tidak ditemukan.');
     const assignedBoxes = boxes.filter(b =>
       String(b.ppicId ?? '') === String(member.id) || b.picName === member.name
     );
     if (assignedBoxes.length > 0) {
-      throw new Error(`${assignedBoxes.length} box masih ditugaskan ke orang ini. Reassign box dulu.`);
+      if (options?.reassignToDefault !== false) {
+        const fallbackPic = ppicMembers.find(p => String(p.id) !== String(member.id)) || { id: 'ppic-1', ppicNumber: 1, name: 'Royan' };
+        setBoxes(prev => prev.map(b => (
+          (String(b.ppicId ?? '') === String(member.id) || b.picName === member.name)
+            ? { ...b, picName: fallbackPic.name, ppicId: fallbackPic.id, ppicNumber: fallbackPic.ppicNumber }
+            : b
+        )));
+        if (supabase) {
+          try {
+            supabase.from('boxes').update({ pic_name: fallbackPic.name }).eq('pic_name', member.name);
+          } catch {}
+        }
+      } else {
+        throw new Error(`${assignedBoxes.length} box masih ditugaskan ke orang ini. Reassign box dulu.`);
+      }
     }
     setPpicMembers(prev => prev.filter(p => String(p.id) !== String(member.id)));
   };
@@ -1420,6 +1536,7 @@ export const InventoryProvider = ({ children }) => {
     importInventoryItems,
     updateItem,
     deleteItem,
+    deleteMultipleItems,
     deleteAllItems,
     addTransaction,
     updateBoxNotes,

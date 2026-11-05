@@ -220,7 +220,7 @@ export function TotalItemsSummaryView() {
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        {confirmDeleteId === item.id ? (
+                        {String(confirmDeleteId) === String(item.id) ? (
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
@@ -228,11 +228,12 @@ export function TotalItemsSummaryView() {
                                 try {
                                   await deleteItem(item.id);
                                 } catch (e) {
-                                  alert('Gagal menghapus item: ' + (e?.message || e));
+                                  console.error('Delete item error:', e);
+                                } finally {
+                                  setConfirmDeleteId(null);
                                 }
-                                setConfirmDeleteId(null);
                               }}
-                              className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-bold transition hover:bg-red-700"
+                              className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-bold transition hover:bg-red-700 cursor-pointer"
                               title="Konfirmasi hapus permanen"
                             >
                               Hapus?
@@ -240,7 +241,7 @@ export function TotalItemsSummaryView() {
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteId(null)}
-                              className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold transition hover:bg-slate-200"
+                              className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold transition hover:bg-slate-200 cursor-pointer"
                               title="Batal"
                             >
                               Batal
@@ -250,7 +251,7 @@ export function TotalItemsSummaryView() {
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(item.id)}
-                            className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100"
+                            className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
                             title="Hapus item ini"
                             aria-label={`Hapus ${item.style || item.kode}`}
                           >
