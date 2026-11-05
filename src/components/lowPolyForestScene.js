@@ -375,6 +375,193 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
     });
   }
 
+  // =========================================================================
+  // 9. ANJING PENJAGA BERJALAN RANDOM (WAJAH LUCU, PUPPY EYES & PATROLI RAK)
+  // =========================================================================
+  const dogGroup = new THREE.Group();
+  dogGroup.position.set(deckCenterX, deckHeight, 2.5);
+
+  const dogFurMat = new THREE.MeshStandardMaterial({
+    color: 0xf59e0b, // Golden honey fur
+    roughness: 0.65,
+    flatShading: true,
+  });
+  const dogWhiteFurMat = new THREE.MeshStandardMaterial({
+    color: 0xffedd5, // Creamy muzzle and chest patch
+    roughness: 0.65,
+    flatShading: true,
+  });
+  const dogDarkMat = new THREE.MeshStandardMaterial({
+    color: 0x18181b, // Glossy button nose and pupils
+    roughness: 0.25,
+  });
+  const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const tongueMat = new THREE.MeshStandardMaterial({
+    color: 0xf472b6, // Cute pink tongue
+    roughness: 0.4,
+  });
+  const collarMat = new THREE.MeshStandardMaterial({
+    color: 0xef4444, // Red collar
+    roughness: 0.5,
+  });
+  const bellMat = new THREE.MeshStandardMaterial({
+    color: 0xfbbf24, // Golden bell tag
+    metalness: 0.8,
+    roughness: 0.2,
+  });
+  disposables.push(dogFurMat, dogWhiteFurMat, dogDarkMat, eyeWhiteMat, tongueMat, collarMat, bellMat);
+
+  // 1. Torso
+  const dogBodyGeo = new THREE.BoxGeometry(0.44, 0.38, 0.65);
+  const dogBody = new THREE.Mesh(dogBodyGeo, dogFurMat);
+  dogBody.position.y = 0.38;
+  dogBody.castShadow = true;
+  dogGroup.add(dogBody);
+  disposables.push(dogBodyGeo, dogBody);
+
+  // Cute white chest patch
+  const chestGeo = new THREE.BoxGeometry(0.3, 0.26, 0.12);
+  const dogChest = new THREE.Mesh(chestGeo, dogWhiteFurMat);
+  dogChest.position.set(0, 0.38, 0.29);
+  dogGroup.add(dogChest);
+  disposables.push(chestGeo, dogChest);
+
+  // 2. Head with Cute Expressive Face
+  const headGroup = new THREE.Group();
+  headGroup.position.set(0, 0.56, 0.35);
+
+  const dogHeadGeo = new THREE.BoxGeometry(0.36, 0.34, 0.34);
+  const dogHead = new THREE.Mesh(dogHeadGeo, dogFurMat);
+  headGroup.add(dogHead);
+  disposables.push(dogHeadGeo, dogHead);
+
+  // Muzzle (moncong lucu)
+  const muzzleGeo = new THREE.BoxGeometry(0.24, 0.18, 0.22);
+  const dogMuzzle = new THREE.Mesh(muzzleGeo, dogWhiteFurMat);
+  dogMuzzle.position.set(0, -0.06, 0.22);
+  headGroup.add(dogMuzzle);
+  disposables.push(muzzleGeo, dogMuzzle);
+
+  // Button nose
+  const noseGeo = new THREE.BoxGeometry(0.08, 0.07, 0.06);
+  const dogNose = new THREE.Mesh(noseGeo, dogDarkMat);
+  dogNose.position.set(0, -0.01, 0.34);
+  headGroup.add(dogNose);
+  disposables.push(noseGeo, dogNose);
+
+  // Big cute sparkling puppy eyes (Mata anjing lucu berbinar)
+  const eyeBallGeo = new THREE.SphereGeometry(0.065, 8, 8);
+  const sparkleGeo = new THREE.SphereGeometry(0.024, 6, 6);
+  disposables.push(eyeBallGeo, sparkleGeo);
+
+  // Left Eye
+  const eyeL = new THREE.Mesh(eyeBallGeo, dogDarkMat);
+  eyeL.position.set(-0.11, 0.05, 0.17);
+  const sparkleL = new THREE.Mesh(sparkleGeo, eyeWhiteMat);
+  sparkleL.position.set(-0.02, 0.02, 0.05);
+  eyeL.add(sparkleL);
+  headGroup.add(eyeL);
+
+  // Right Eye
+  const eyeR = new THREE.Mesh(eyeBallGeo, dogDarkMat);
+  eyeR.position.set(0.11, 0.05, 0.17);
+  const sparkleR = new THREE.Mesh(sparkleGeo, eyeWhiteMat);
+  sparkleR.position.set(-0.02, 0.02, 0.05);
+  eyeR.add(sparkleR);
+  headGroup.add(eyeR);
+
+  // Playful pink tongue (lidah menjulur gemas)
+  const tongueGeo = new THREE.BoxGeometry(0.1, 0.04, 0.14);
+  const dogTongue = new THREE.Mesh(tongueGeo, tongueMat);
+  dogTongue.position.set(0.02, -0.14, 0.28);
+  dogTongue.rotation.x = 0.2;
+  headGroup.add(dogTongue);
+  disposables.push(tongueGeo, dogTongue);
+
+  // Cute Floppy Ears (Telinga anjing lucu yang berayun)
+  const earGeo = new THREE.BoxGeometry(0.09, 0.22, 0.12);
+  disposables.push(earGeo);
+
+  const earL = new THREE.Mesh(earGeo, dogFurMat);
+  earL.position.set(-0.19, 0.12, 0.02);
+  earL.rotation.z = 0.35;
+  earL.rotation.x = -0.1;
+  headGroup.add(earL);
+
+  const earR = new THREE.Mesh(earGeo, dogFurMat);
+  earR.position.set(0.19, 0.12, 0.02);
+  earR.rotation.z = -0.35;
+  earR.rotation.x = -0.1;
+  headGroup.add(earR);
+
+  dogGroup.add(headGroup);
+
+  // 3. Collar with Bell Tag
+  const collarGeo = new THREE.BoxGeometry(0.38, 0.06, 0.38);
+  const dogCollar = new THREE.Mesh(collarGeo, collarMat);
+  dogCollar.position.set(0, 0.44, 0.3);
+  dogGroup.add(dogCollar);
+  disposables.push(collarGeo, dogCollar);
+
+  const bellGeo = new THREE.SphereGeometry(0.04, 6, 6);
+  const dogBell = new THREE.Mesh(bellGeo, bellMat);
+  dogBell.position.set(0, 0.41, 0.49);
+  dogGroup.add(dogBell);
+  disposables.push(bellGeo, dogBell);
+
+  // 4. Tail (Ekor bergoyang riang)
+  const tailGeo = new THREE.CylinderGeometry(0.03, 0.06, 0.34, 4);
+  const dogTail = new THREE.Mesh(tailGeo, dogFurMat);
+  dogTail.position.set(0, 0.44, -0.34);
+  dogTail.rotation.x = -0.7;
+  dogGroup.add(dogTail);
+  disposables.push(tailGeo, dogTail);
+
+  // 5. Four Walking Legs (4 Kaki Berjalan Berayun)
+  const legGeo = new THREE.BoxGeometry(0.12, 0.28, 0.13);
+  disposables.push(legGeo);
+
+  const legFL = new THREE.Mesh(legGeo, dogFurMat);
+  legFL.position.set(-0.16, 0.14, 0.22);
+  legFL.castShadow = true;
+  dogGroup.add(legFL);
+
+  const legFR = new THREE.Mesh(legGeo, dogFurMat);
+  legFR.position.set(0.16, 0.14, 0.22);
+  legFR.castShadow = true;
+  dogGroup.add(legFR);
+
+  const legBL = new THREE.Mesh(legGeo, dogFurMat);
+  legBL.position.set(-0.16, 0.14, -0.22);
+  legBL.castShadow = true;
+  dogGroup.add(legBL);
+
+  const legBR = new THREE.Mesh(legGeo, dogFurMat);
+  legBR.position.set(0.16, 0.14, -0.22);
+  legBR.castShadow = true;
+  dogGroup.add(legBR);
+
+  scene.add(dogGroup);
+  disposables.push(dogGroup);
+
+  // Wandering AI State around Racks
+  const dogAI = {
+    targetX: deckCenterX - 4,
+    targetZ: 2.2,
+    speed: 1.15,
+    isWalking: true,
+    pauseUntil: 0,
+    walkCycle: 0,
+    currentAngle: 0,
+  };
+
+  function pickNextDogWaypoint(now) {
+    // Patrol along front and between racks on the wooden floor
+    dogAI.targetX = minX + 3 + Math.random() * (maxX - minX - 6);
+    dogAI.targetZ = 1.4 + Math.random() * 1.8;
+    dogAI.isWalking = true;
+  }
+
   let currentIsDark = false;
 
   function applyMode(isDark) {
@@ -477,6 +664,59 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
         ff.haloMat.opacity = currentIsDark ? (0.25 + blink * 0.7) : (0.15 + blink * 0.35);
         ff.coreMat.color.setHex(blink > 0.35 ? 0xfef08a : 0xa3e635);
       });
+
+      // 4. Anjing Penjaga Berjalan Random & Berpatroli di Sekitar Rak
+      dogTail.rotation.y = Math.sin(elapsed * 14) * 0.6;
+      dogTongue.position.y = -0.14 + Math.sin(elapsed * 8) * 0.015;
+      earL.rotation.x = -0.1 + Math.sin(elapsed * 8) * 0.08;
+      earR.rotation.x = -0.1 + Math.cos(elapsed * 8) * 0.08;
+
+      const curX = dogGroup.position.x;
+      const curZ = dogGroup.position.z;
+      const distToTarget = Math.hypot(dogAI.targetX - curX, dogAI.targetZ - curZ);
+
+      if (distToTarget < 0.4) {
+        if (dogAI.isWalking) {
+          dogAI.isWalking = false;
+          dogAI.pauseUntil = elapsed + (2.5 + Math.random() * 2.5); // istirahat sejenak 2.5 - 5 detik
+        } else if (elapsed > dogAI.pauseUntil) {
+          pickNextDogWaypoint(elapsed);
+        }
+        legFL.rotation.x *= 0.85;
+        legFR.rotation.x *= 0.85;
+        legBL.rotation.x *= 0.85;
+        legBR.rotation.x *= 0.85;
+        dogBody.position.y = 0.38;
+        headGroup.rotation.y = Math.sin(elapsed * 2) * 0.22; // tengok kanan-kiri lucu
+      } else {
+        dogAI.isWalking = true;
+        const targetAngle = Math.atan2(dogAI.targetX - curX, dogAI.targetZ - curZ);
+
+        let diff = targetAngle - dogAI.currentAngle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        dogAI.currentAngle += diff * 0.12;
+        dogGroup.rotation.y = dogAI.currentAngle;
+
+        const stepSpeed = 0.024;
+        dogGroup.position.x += Math.sin(dogAI.currentAngle) * stepSpeed;
+        dogGroup.position.z += Math.cos(dogAI.currentAngle) * stepSpeed;
+
+        dogAI.walkCycle += 0.22;
+        legFL.rotation.x = Math.sin(dogAI.walkCycle) * 0.45;
+        legFR.rotation.x = -Math.sin(dogAI.walkCycle) * 0.45;
+        legBL.rotation.x = -Math.sin(dogAI.walkCycle) * 0.45;
+        legBR.rotation.x = Math.sin(dogAI.walkCycle) * 0.45;
+        dogBody.position.y = 0.38 + Math.abs(Math.sin(dogAI.walkCycle * 2)) * 0.03;
+        headGroup.rotation.y = Math.sin(dogAI.walkCycle) * 0.08;
+      }
+    },
+    getDogPosition() {
+      return {
+        x: dogGroup.position.x,
+        y: dogGroup.position.y,
+        z: dogGroup.position.z,
+      };
     },
     dispose() {
       disposables.forEach((item) => {

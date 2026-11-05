@@ -105,6 +105,8 @@ export const Warehouse3DView = ({
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [dogReminderActive, setDogReminderActive] = useState(false);
+  const lastInputTimeRef = useRef(Date.now());
   const forestRef = useRef(null);
   const rendererRef = useRef(null);
 
@@ -806,6 +808,45 @@ export const Warehouse3DView = ({
     }
   }, [isDarkMode]);
 
+  // Pantau aktivitas input data untuk pengingat 15 menit dari anjing penjaga
+  useEffect(() => {
+    lastInputTimeRef.current = Date.now();
+    setDogReminderActive(false);
+  }, [items]);
+
+  useEffect(() => {
+    const markActivity = () => {
+      lastInputTimeRef.current = Date.now();
+    };
+    window.addEventListener('input', markActivity);
+    window.addEventListener('change', markActivity);
+    return () => {
+      window.removeEventListener('input', markActivity);
+      window.removeEventListener('change', markActivity);
+    };
+  }, []);
+
+  const triggerDogReminder = () => {
+    setDogReminderActive(true);
+    const dogPos = forestRef.current?.getDogPosition?.();
+    if (dogPos) {
+      flyControlsTargetRef.current = new THREE.Vector3(dogPos.x, dogPos.y + 0.45, dogPos.z);
+      flyCameraTargetRef.current = new THREE.Vector3(dogPos.x, dogPos.y + 1.1, dogPos.z + 2.4);
+    }
+  };
+
+  useEffect(() => {
+    const IDLE_LIMIT_MS = 15 * 60 * 1000; // 15 menit batas inaktivitas input data
+    const interval = setInterval(() => {
+      if (document.hidden) return;
+      const elapsed = Date.now() - lastInputTimeRef.current;
+      if (elapsed >= IDLE_LIMIT_MS && !dogReminderActive) {
+        triggerDogReminder();
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [dogReminderActive]);
+
   // Reapply PIC/search selection whenever filters change or cloud sync rebuilds
   // the scene. A box stays solid only when it satisfies every active filter.
   useEffect(() => {
@@ -1096,8 +1137,18 @@ export const Warehouse3DView = ({
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
 
-        {/* Day / Night Mode Gelap Switch (Top Right) */}
+        {/* Controls (Top Right): Mode Gelap & Panggil Anjing Penjaga */}
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={triggerDogReminder}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 bg-amber-500/90 hover:bg-amber-600 text-white border-amber-300 shadow-amber-500/20"
+            title="Klik untuk menyorot kamera ke anjing penjaga & menampilkan pesan pengingat 15 menit"
+          >
+            <span>🐶</span>
+            <span className="hidden sm:inline">Panggil Anjing</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setIsDarkMode(prev => !prev)}
@@ -1112,6 +1163,54 @@ export const Warehouse3DView = ({
             <span>{isDarkMode ? 'Mode Gelap: Lampu Nyala' : 'Mode Terang'}</span>
           </button>
         </div>
+
+        {/* Anjing Penjaga 15-Menit Inactivity Reminder Banner */}
+        {dogReminderActive && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-lg w-[92%] sm:w-auto bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-slate-950 p-4 sm:p-5 rounded-3xl shadow-2xl border-2 border-white ring-4 ring-amber-400/60 animate-bounce">
+            <div className="flex items-start gap-3.5">
+              <span className="text-3xl sm:text-4xl select-none">🐶</span>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-sm sm:text-base text-slate-900">
+                    Anjing Penjaga Gudang:
+                  </span>
+                  <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                    15 Menit Tanpa Input
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm font-black text-slate-950 leading-snug">
+                  "Woof woof! 🐾 Hey, please fill data on the box! Jangan lupa lengkapi data item di box ya!"
+                </p>
+                <div className="pt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDogReminderActive(false);
+                      lastInputTimeRef.current = Date.now();
+                      const firstEmpty = boxes.find(b => getItemsInBox(b.boxNumber).length === 0);
+                      if (firstEmpty) {
+                        setSelectedBoxNumber(firstEmpty.boxNumber);
+                      }
+                    }}
+                    className="px-3.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition shadow-md cursor-pointer active:scale-95"
+                  >
+                    Buka Box Kosong 📦
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDogReminderActive(false);
+                      lastInputTimeRef.current = Date.now();
+                    }}
+                    className="px-3.5 py-1.5 bg-white/90 hover:bg-white text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95"
+                  >
+                    Siap, Terima Kasih! 🐾
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Active search indicator (top left) */}
         {searchActive && (
