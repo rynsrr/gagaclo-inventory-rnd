@@ -23,10 +23,13 @@ import {
   CheckSquare,
   Search,
   Table,
-  LayoutGrid
+  LayoutGrid,
+  Copy,
+  Check
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
+import { getNextSampleCode } from '../utils/sequenceResolver';
 
 export const BoxDetailModal = () => {
   const { selectedBoxNumber, getBoxDetails } = useInventory();
@@ -47,9 +50,56 @@ function BoxDetail({ box }) {
     setTransactionModalConfig,
     updateItem,
     boxes,
+    items,
+    showNotification,
   } = useInventory();
   const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleCopyCode = (e, code, id) => {
+    e?.stopPropagation();
+    if (!code || code === '-') return;
+    try {
+      navigator.clipboard.writeText(code);
+      setCopiedId(id);
+      showNotification?.(`📋 Kode "${code}" berhasil disalin!`, 'info', 2000);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      showNotification?.(`Kode: ${code}`, 'info', 3000);
+    }
+  };
+
+  const handleDuplicateItem = (itemToCopy) => {
+    const nextCode = getNextSampleCode(items);
+    setItemModalConfig({
+      isOpen: true,
+      item: {
+        ...itemToCopy,
+        id: undefined,
+        kode: nextCode,
+        sku: nextCode,
+      },
+      targetBoxNumber: box.boxNumber,
+      isDuplicate: true,
+    });
+    showNotification?.(`📋 Data item disalin! Kode baru: ${nextCode}`, 'info', 3500);
+  };
+
+  const handleCopySelectedInfo = () => {
+    const selected = itemsInBox.filter(i => selectedItemIds.has(i.id));
+    if (selected.length === 0) return;
+    const textLines = selected.map((i, idx) => 
+      `${idx + 1}. [${i.kode || i.sku || '-'}] ${i.style || i.deskripsi || i.name || 'Sample'} | Sample No: ${i.sampleNo || '-'} | Size: ${i.size || '-'} | Color: ${i.color || '-'} | Qty: ${i.jumlah || i.qty || 1} ${i.satuan || i.unit || 'PCS'}`
+    ).join('\n');
+
+    try {
+      navigator.clipboard.writeText(textLines);
+      showNotification?.(`📋 ${selected.length} data item berhasil disalin ke clipboard!`, 'info', 3000);
+    } catch {
+      showNotification?.(`Gagal menyalin ke clipboard`, 'error', 3000);
+    }
+  };
   const [savingFullStatus, setSavingFullStatus] = useState(false);
   const [fullStatusError, setFullStatusError] = useState('');
   const toggleFullStatus = async () => {
@@ -231,8 +281,8 @@ function BoxDetail({ box }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
-      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal ? 'no-print' : ''}`}>
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-1 sm:p-3 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
+      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal ? 'no-print' : ''}`}>
         
         {/* Header */}
         <div className="inventory-dialog-heading p-5 flex items-start justify-between border-b border-slate-800">
@@ -399,6 +449,19 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
+              {/* Bulk Copy Info */}
+              {selectedItemIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={handleCopySelectedInfo}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold border border-slate-300 shadow-2xs transition cursor-pointer"
+                  title="Salin ringkasan data item yang dicentang ke clipboard"
+                >
+                  <Copy className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Copy Data ({selectedItemIds.size})</span>
+                </button>
+              )}
+
               {/* Bulk Delete Items */}
               {selectedItemIds.size > 0 && (
                 <button
@@ -451,12 +514,12 @@ function BoxDetail({ box }) {
             </div>
           ) : viewMode === 'table' ? (
             /* High-Density Compact Table View (Muat Banyak) */
-            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white">
-              <div className="overflow-x-auto max-h-[55vh] scrollbar-thin">
+            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white w-full">
+              <div className="overflow-x-auto max-h-[64vh] scrollbar-thin">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200">
                     <tr>
-                      <th className="py-2 px-2.5 w-8 text-center">
+                      <th className="py-2.5 px-3 w-10 text-center">
                         <input
                           type="checkbox"
                           checked={selectedItemIds.size === itemsInBox.length && itemsInBox.length > 0}
@@ -465,12 +528,12 @@ function BoxDetail({ box }) {
                           title="Pilih / Batal Pilih Semua"
                         />
                       </th>
-                      <th className="py-2 px-2.5 whitespace-nowrap">Kode / Sample</th>
-                      <th className="py-2 px-2.5">Style & Deskripsi</th>
-                      <th className="py-2 px-2.5 whitespace-nowrap">Size & Warna</th>
-                      <th className="py-2 px-2.5 text-center whitespace-nowrap">Jumlah</th>
-                      <th className="py-2 px-2.5 text-center whitespace-nowrap">Status</th>
-                      <th className="py-2 px-2.5 text-right whitespace-nowrap">Aksi</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap w-[16%]">Kode / Sample</th>
+                      <th className="py-2.5 px-3 min-w-[220px]">Style & Deskripsi</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap w-[15%]">Size & Warna</th>
+                      <th className="py-2.5 px-3 text-center whitespace-nowrap w-[10%]">Jumlah</th>
+                      <th className="py-2.5 px-3 text-center whitespace-nowrap w-[11%]">Status</th>
+                      <th className="py-2.5 px-3 text-right whitespace-nowrap w-[18%]">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -486,7 +549,7 @@ function BoxDetail({ box }) {
                           }`}
                         >
                           {/* Checkbox */}
-                          <td className="py-1.5 px-2.5 text-center">
+                          <td className="py-2 px-3 text-center">
                             <input
                               type="checkbox"
                               checked={isSelected}
@@ -496,14 +559,24 @@ function BoxDetail({ box }) {
                             />
                           </td>
 
-                          {/* Kode, Jenis Sample & Buyer */}
-                          <td className="py-1.5 px-2.5 whitespace-nowrap">
-                            <div className="flex items-center space-x-1.5">
-                              <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">
-                                {item.kode || item.sku || '-'}
-                              </span>
+                          {/* Kode, Jenis Sample & Buyer (Dengan Fitur Copy) */}
+                          <td className="py-2 px-3 whitespace-nowrap">
+                            <div className="flex items-center space-x-1.5 group/code">
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
+                                className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 px-2 py-0.5 rounded-md border border-slate-200 text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                                title="Klik untuk Salin Kode ke Clipboard"
+                              >
+                                <span>{item.kode || item.sku || '-'}</span>
+                                {copiedId === item.id ? (
+                                  <Check className="w-3 h-3 text-emerald-600 animate-pulse" />
+                                ) : (
+                                  <Copy className="w-3 h-3 text-slate-400 group-hover/code:text-blue-600 transition" />
+                                )}
+                              </button>
                               {item.jenisSample && (
-                                <span className="text-[9px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded">
+                                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded">
                                   {item.jenisSample}
                                 </span>
                               )}
@@ -516,7 +589,7 @@ function BoxDetail({ box }) {
                           </td>
 
                           {/* Style & Deskripsi */}
-                          <td className="py-1.5 px-2.5 min-w-[200px]">
+                          <td className="py-2 px-3 min-w-[220px]">
                             <div className="font-bold text-slate-900 text-xs line-clamp-1" title={item.style || item.deskripsi || item.name}>
                               {item.style || item.deskripsi || item.name}
                             </div>
@@ -528,10 +601,10 @@ function BoxDetail({ box }) {
                           </td>
 
                           {/* Size & Warna */}
-                          <td className="py-1.5 px-2.5 whitespace-nowrap">
+                          <td className="py-2 px-3 whitespace-nowrap">
                             <div className="flex items-center space-x-1.5 text-xs">
                               {item.size ? (
-                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1.5 py-0.2 rounded text-[10px] uppercase">
+                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded text-[10px] uppercase">
                                   {item.size}
                                 </span>
                               ) : (
@@ -546,7 +619,7 @@ function BoxDetail({ box }) {
                           </td>
 
                           {/* Qty & Satuan */}
-                          <td className="py-1.5 px-2.5 text-center whitespace-nowrap font-mono font-black text-slate-900 text-xs">
+                          <td className="py-2 px-3 text-center whitespace-nowrap font-mono font-black text-slate-900 text-xs">
                             {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
                             <span className="text-[10px] font-normal text-slate-500 uppercase">
                               {item.satuan || item.unit || 'PCS'}
@@ -554,23 +627,31 @@ function BoxDetail({ box }) {
                           </td>
 
                           {/* Status */}
-                          <td className="py-1.5 px-2.5 text-center whitespace-nowrap">
+                          <td className="py-2 px-3 text-center whitespace-nowrap">
                             {getStatusBadge(item.status)}
                           </td>
 
-                          {/* Actions */}
-                          <td className="py-1.5 px-2.5 text-right whitespace-nowrap">
+                          {/* Actions (Termasuk Fitur Copy / Duplikat Item) */}
+                          <td className="py-2 px-3 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end space-x-1">
                               <button
+                                type="button"
+                                onClick={() => handleDuplicateItem(item)}
+                                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
+                                title="Copy / Duplikat Item (Buat item baru dengan data sama)"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                              <button
                                 onClick={() => setCardPrintItems([item])}
-                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition cursor-pointer"
+                                className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition cursor-pointer"
                                 title="Cetak Kartu Fisik Item Ini"
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => openMoveModal([item])}
-                                className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
+                                className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer"
                                 title="Pindah ke Box Lain"
                               >
                                 <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -580,7 +661,7 @@ function BoxDetail({ box }) {
                                   const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
                                   updateItem(item.id, { status: newStatus });
                                 }}
-                                className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                className={`px-2 py-1 text-[10px] font-bold rounded-lg transition cursor-pointer ${
                                   item.status === 'In Storage'
                                     ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
                                     : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
@@ -591,7 +672,7 @@ function BoxDetail({ box }) {
                               </button>
                               <button
                                 onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
-                                className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                                className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
                                 title="Edit Item"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
@@ -602,7 +683,7 @@ function BoxDetail({ box }) {
                                   setDeleteError(null);
                                   setItemToDelete(item);
                                 }}
-                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                                 title="Hapus Item"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -618,7 +699,7 @@ function BoxDetail({ box }) {
             </div>
           ) : (
             /* Card View Alternative */
-            <div className="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[64vh] overflow-y-auto pr-1">
               {filteredItems.map((item) => {
                 const isSelected = selectedItemIds.has(item.id);
                 return (
@@ -639,9 +720,19 @@ function BoxDetail({ box }) {
                           className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer shrink-0"
                           title="Centang untuk cetak kartu"
                         />
-                        <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-[11px] shrink-0">
-                          {item.kode || item.sku || '-'}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
+                          className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 px-2 py-0.5 rounded border border-slate-200 text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs"
+                          title="Klik untuk Salin Kode"
+                        >
+                          <span>{item.kode || item.sku || '-'}</span>
+                          {copiedId === item.id ? (
+                            <Check className="w-3 h-3 text-emerald-600 animate-pulse" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-slate-400" />
+                          )}
+                        </button>
                         {item.jenisSample && (
                           <span className="text-[9px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded shrink-0">
                             {item.jenisSample}
@@ -664,22 +755,30 @@ function BoxDetail({ box }) {
                         {getStatusBadge(item.status)}
                         <div className="flex items-center space-x-1 pl-1">
                           <button
+                            type="button"
+                            onClick={() => handleDuplicateItem(item)}
+                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer transition"
+                            title="Copy / Duplikat Item Ini"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
                             onClick={() => setCardPrintItems([item])}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded cursor-pointer"
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition"
                             title="Cetak Kartu"
                           >
                             <Printer className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => openMoveModal([item])}
-                            className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded cursor-pointer"
+                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg cursor-pointer transition"
                             title="Pindah ke Box Lain"
                           >
                             <ArrowRightLeft className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
-                            className="p-1 text-slate-500 hover:bg-slate-100 rounded"
+                            className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg cursor-pointer transition"
                             title="Edit"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -690,7 +789,7 @@ function BoxDetail({ box }) {
                               setDeleteError(null);
                               setItemToDelete(item);
                             }}
-                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition"
                             title="Hapus"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

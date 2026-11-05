@@ -85,7 +85,8 @@ const ItemModalContent = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  const isEditing = Boolean(itemModalConfig.item);
+  const isDuplicate = Boolean(itemModalConfig.isDuplicate);
+  const isEditing = Boolean(itemModalConfig.item && !isDuplicate);
   const targetBoxNum = Number(itemModalConfig.targetBoxNumber) || (itemModalConfig.item ? Number(itemModalConfig.item.boxNumber) : 1);
 
   function formatTodayDate() {
@@ -106,7 +107,7 @@ const ItemModalContent = () => {
       return fillBlankWithNA({
         track: item.track || '',
         tanggal: item.tanggal || item.dateIn || formatTodayDate(),
-        kode: item.kode || item.sku || getNextSampleCode(items),
+        kode: isDuplicate ? getNextSampleCode(items) : (item.kode || item.sku || getNextSampleCode(items)),
         buyerNo: item.buyerNo || item.buyerNumber || '',
         jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
         style: item.style || item.name || item.deskripsi || '',
@@ -396,7 +397,9 @@ const ItemModalContent = () => {
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase">
-                  {isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`}
+                  {isDuplicate 
+                    ? `Copy / Duplikat Item (Box #${formData.boxNumber})` 
+                    : (isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`)}
                 </h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -951,7 +954,7 @@ const ItemModalContent = () => {
                   ? 'Menyimpan...' 
                   : existingItemWithSameCode 
                     ? 'Tidak Bisa Simpan (Kode Kembar)' 
-                    : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box')}
+                    : (isDuplicate ? 'Simpan Item Salinan' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box'))}
               </span>
             </button>
           </div>
