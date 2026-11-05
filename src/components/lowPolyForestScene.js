@@ -448,6 +448,30 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   headGroup.add(dogNose);
   disposables.push(noseGeo, dogNose);
 
+  // Minecraft Pixel Style Eyes (Sesuai gambar referensi user)
+  const mcEyePupilMat = new THREE.MeshBasicMaterial({ color: 0x0f172a }); // Hitam pekat pupil bagian dalam
+  const mcEyeTanMat = new THREE.MeshBasicMaterial({ color: 0xc29d62 }); // Warna tan/caramel bagian luar
+  disposables.push(mcEyePupilMat, mcEyeTanMat);
+
+  const eyePixelGeo = new THREE.PlaneGeometry(0.045, 0.055);
+  disposables.push(eyePixelGeo);
+
+  // Mata Kiri (bagian dalam hitam, bagian luar tan)
+  const eyePupilL = new THREE.Mesh(eyePixelGeo, mcEyePupilMat);
+  eyePupilL.position.set(-0.046, 0.055, 0.172);
+  const eyeTanL = new THREE.Mesh(eyePixelGeo, mcEyeTanMat);
+  eyeTanL.position.set(-0.091, 0.055, 0.172);
+  headGroup.add(eyePupilL, eyeTanL);
+  disposables.push(eyePupilL, eyeTanL);
+
+  // Mata Kanan (bagian dalam hitam, bagian luar tan)
+  const eyePupilR = new THREE.Mesh(eyePixelGeo, mcEyePupilMat);
+  eyePupilR.position.set(0.046, 0.055, 0.172);
+  const eyeTanR = new THREE.Mesh(eyePixelGeo, mcEyeTanMat);
+  eyeTanR.position.set(0.091, 0.055, 0.172);
+  headGroup.add(eyePupilR, eyeTanR);
+  disposables.push(eyePupilR, eyeTanR);
+
   // Playful pink tongue (lidah menjulur gemas)
   const tongueGeo = new THREE.BoxGeometry(0.1, 0.04, 0.14);
   const dogTongue = new THREE.Mesh(tongueGeo, tongueMat);
