@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Timer, X, Globe, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Timer, X, Globe, RefreshCw } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 
 const TIMER_PIN = '4695';
@@ -12,7 +12,6 @@ export function InventoryTimer() {
   const [unlocked, setUnlocked] = useState(false);
   const [days, setDays] = useState('7');
   const [isSaving, setIsSaving] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
 
   const deadline = Number(timerDeadline) || 0;
   const [now, setNow] = useState(Date.now);
@@ -78,102 +77,70 @@ export function InventoryTimer() {
 
   return (
     <>
-      {isMinimized ? (
-        <aside
-          aria-label="Hitung mundur pendataan"
-          className="fixed bottom-4 left-4 z-40 no-print group flex items-center gap-2.5 px-3.5 py-2 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-full transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:border-blue-400 cursor-pointer"
-          onClick={() => setIsMinimized(false)}
-          title="Klik untuk memperbesar hitung mundur pendataan"
-        >
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-600 shadow-2xs">
-            <Timer className="h-3.5 w-3.5" />
-          </span>
-          <span className="text-xs font-black tracking-tight text-slate-800 tabular-nums">
-            {String(countdown[0][1]).padStart(2, '0')}h : {String(countdown[1][1]).padStart(2, '0')}j : {String(countdown[2][1]).padStart(2, '0')}m : {String(countdown[3][1]).padStart(2, '0')}d
-          </span>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <ChevronUp className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition" />
-        </aside>
-      ) : (
-        <aside 
-          aria-label="Hitung mundur pendataan" 
-          className="fixed bottom-4 left-4 z-40 no-print relative overflow-hidden bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] hover:shadow-[0_18px_50px_-6px_rgba(37,99,235,0.22)] hover:border-blue-300/80 rounded-2xl p-3 sm:p-3.5 transition-all duration-300 max-w-[calc(100vw-2rem)] sm:max-w-md w-auto"
-        >
-          {/* Subtle ambient gradient accent line at top */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 opacity-90" />
+      <section 
+        aria-label="Hitung mundur pendataan" 
+        className="inventory-panel relative overflow-hidden w-fit mx-auto bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(37,99,235,0.08)] rounded-2xl p-3 sm:px-6 sm:py-3.5 transition-all duration-300 hover:shadow-md hover:border-blue-300/80"
+      >
+        {/* Subtle ambient gradient accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 opacity-90" />
 
-          {/* Header Row */}
-          <div className="flex items-center justify-between gap-3 mb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
-                <Timer className="h-3.5 w-3.5" aria-hidden="true" />
-              </span>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h2 className="text-xs sm:text-sm font-black tracking-tight text-slate-900 leading-tight">Hitung Mundur</h2>
-                  <span
-                    className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200"
-                    title="Tersinkronisasi otomatis real-time"
-                  >
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                    </span>
-                    <span>Cloud Sync</span>
+        {/* Header Row */}
+        <div className="flex items-center justify-between gap-5 sm:gap-8 mb-2.5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
+              <Timer className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-xs sm:text-sm font-black tracking-tight text-slate-900 leading-tight">Hitung Mundur</h2>
+                <span
+                  className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200"
+                  title="Tersinkronisasi otomatis real-time"
+                >
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                   </span>
-                </div>
-                <p className="text-[10px] font-medium text-slate-500 leading-tight">
-                  {finished ? '⚠️ Waktu telah berakhir' : deadline ? 'Sisa waktu pengerjaan real-time' : 'Durasi belum diatur'}
-                </p>
+                  <span>Cloud Sync</span>
+                </span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                aria-haspopup="dialog"
-                onClick={() => dialogRef.current?.showModal()}
-                className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-700 transition shadow-2xs hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-                title="Atur durasi timer"
-              >
-                <Timer className="h-3 w-3 text-blue-600" aria-hidden="true" />
-                <span>Atur Timer</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsMinimized(true)}
-                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer"
-                title="Perkecil ke mode ringkas"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </button>
+              <p className="text-[10px] font-medium text-slate-500 leading-tight">
+                {finished ? '⚠️ Waktu telah berakhir' : deadline ? 'Sisa waktu pengerjaan real-time' : 'Durasi belum diatur'}
+              </p>
             </div>
           </div>
 
-          {/* Digital Counter Blocks */}
-          <div role="timer" className="flex items-center justify-between gap-1 sm:gap-1.5">
-            {countdown.map(([label, value], idx) => (
-              <React.Fragment key={label}>
-                <div className="flex-1 flex flex-col items-center justify-center min-w-[50px] sm:min-w-[58px] px-2 py-1 sm:py-1.5 rounded-xl bg-slate-50/90 border border-slate-200/80 shadow-2xs">
-                  <div className="text-base sm:text-lg font-black tabular-nums tracking-tight bg-gradient-to-br from-blue-700 to-indigo-700 bg-clip-text text-transparent">
-                    {String(value).padStart(2, '0')}
-                  </div>
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 -mt-0.5">
-                    {label}
-                  </div>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => dialogRef.current?.showModal()}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+            title="Atur durasi timer (PIN: 4695)"
+          >
+            <Timer className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
+            <span>Atur Timer</span>
+          </button>
+        </div>
+
+        {/* Digital Counter Blocks */}
+        <div role="timer" className="flex items-center justify-center gap-1.5 sm:gap-2.5">
+          {countdown.map(([label, value], idx) => (
+            <React.Fragment key={label}>
+              <div className="flex flex-col items-center justify-center min-w-[54px] sm:min-w-[62px] px-2.5 py-1.5 rounded-xl bg-slate-50/90 border border-slate-200/80 shadow-2xs">
+                <div className="text-lg sm:text-xl font-black tabular-nums tracking-tight bg-gradient-to-br from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                  {String(value).padStart(2, '0')}
                 </div>
-                {idx < countdown.length - 1 && (
-                  <span className="text-slate-300 font-black text-xs select-none">:</span>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        </aside>
-      )}
+                <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 -mt-0.5">
+                  {label}
+                </div>
+              </div>
+              {idx < countdown.length - 1 && (
+                <span className="text-slate-300 font-black text-xs select-none">:</span>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </section>
 
       <span className="sr-only" role="status">{finished ? 'Waktu pengerjaan data habis.' : ''}</span>
       <dialog

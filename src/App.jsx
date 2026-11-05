@@ -224,8 +224,10 @@ const AppContent = () => {
         </div>
       </header>
 
-      {/* Floating Always-On-Top Hitung Mundur Pendataan */}
-      <InventoryTimer />
+      {/* Hitung Mundur Pendataan - Fit Width di Atas Center */}
+      <div className="no-print w-full flex justify-center pt-3 pb-1 px-4">
+        <InventoryTimer />
+      </div>
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">

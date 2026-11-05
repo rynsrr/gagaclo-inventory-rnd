@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { CardPrintModal } from './CardPrintModal';
 import { supabase } from '../lib/supabase';
-import { resolveUniqueCode, getNextSampleCode } from '../utils/sequenceResolver';
+import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, reserveCode, releaseCode } from '../utils/sequenceResolver';
 import { 
   X, 
   Save, 
@@ -90,6 +90,10 @@ const ItemModalContent = () => {
   const isDuplicate = Boolean(itemModalConfig.isDuplicate);
   const isEditing = Boolean(itemModalConfig.item && !isDuplicate);
   const targetBoxNum = Number(itemModalConfig.targetBoxNumber) || (itemModalConfig.item ? Number(itemModalConfig.item.boxNumber) : 1);
+  const targetBoxObj = boxes.find(b => Number(b.boxNumber) === Number(targetBoxNum));
+  const isMaterialBox = targetBoxObj?.category === 'MATERIAL';
+
+  const clientIdRef = useRef('user_' + Math.random().toString(36).substr(2, 6));
 
   function formatTodayDate() {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -98,55 +102,78 @@ const ItemModalContent = () => {
   }
 
   const [formData, setFormData] = useState(() => {
+    const bNum = Number(itemModalConfig.item?.boxNumber) || targetBoxNum;
+    const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
+    const isMat = bObj?.category === 'MATERIAL';
+
+    const generateCode = () => {
+      const c = isMat 
+        ? getNextMaterialCode(items, clientIdRef.current) 
+        : getNextSampleCode(items, clientIdRef.current);
+      reserveCode(c, clientIdRef.current);
+      return c;
+    };
+
     if (itemModalConfig.item) {
       const item = itemModalConfig.item;
-      const bNum = Number(item.boxNumber) || targetBoxNum;
-      const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
       const defaultBoxPlace = bObj 
         ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
         : `BOX ${bNum}`;
 
+      const codeVal = isDuplicate ? generateCode() : (item.kode || item.sku || generateCode());
+      if (isDuplicate) reserveCode(codeVal, clientIdRef.current);
+
       return fillBlankWithNA({
         track: item.track || '',
         tanggal: item.tanggal || item.dateIn || formatTodayDate(),
-        kode: isDuplicate ? getNextSampleCode(items) : (item.kode || item.sku || getNextSampleCode(items)),
+        kode: codeVal,
         buyerNo: item.buyerNo || item.buyerNumber || '',
-        jenisSample: item.jenisSample || item.sampleType || 'DEVELOP',
+        jenisSample: item.jenisSample || item.sampleType || (isMat ? 'FABRIC' : 'DEVELOP'),
         style: item.style || item.name || item.deskripsi || '',
         sampleNo: item.sampleNo || '',
         size: item.size || '',
         color: item.color && item.color !== '-' ? item.color : '',
         jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
-        satuan: item.satuan || item.unit || 'PCS',
+        satuan: item.satuan || item.unit || (isMat ? 'MTR' : 'PCS'),
         boxNumber: bNum,
         place: item.place || defaultBoxPlace,
         status: item.status || 'In Storage',
       });
     } else {
-      const bNum = targetBoxNum || 1;
-      const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
       const defaultBoxPlace = bObj 
         ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
         : `BOX ${bNum}`;
+      const codeVal = generateCode();
 
       return {
         track: '',
         tanggal: formatTodayDate(),
-        kode: getNextSampleCode(items),
+        kode: codeVal,
         buyerNo: '',
-        jenisSample: 'DEVELOP',
+        jenisSample: isMat ? 'FABRIC' : 'DEVELOP',
         style: '',
         sampleNo: '',
         size: '',
         color: '',
         jumlah: 1,
-        satuan: 'PCS',
+        satuan: isMat ? 'MTR' : 'PCS',
         boxNumber: bNum,
         place: defaultBoxPlace,
         status: 'In Storage',
       };
     }
   });
+
+  // Release reservation on unmount
+  useEffect(() => {
+    const codeToRelease = formData.kode;
+    const cid = clientIdRef.current;
+    return () => {
+      if (codeToRelease && !isEditing) {
+        releaseCode(codeToRelease, cid);
+      }
+    };
+  }, []);
 
   const [errors, setErrors] = useState({});
 
@@ -325,19 +352,20 @@ const ItemModalContent = () => {
     const resolvedCode = resolveUniqueCode(kodeClean, activeItems, currentItemId);
     const finalKode = resolvedCode.finalCode;
 
-    // JIKA KODE TERNYATA SUDAH DIGUNAKAN DI REMOTE / MULTI-USER -> TIDAK BISA SIMPAN!
+    // ERP ATOMIC ALLOCATION ON CONFLICT:
+    // If another user submitted the same code while filling the form,
+    // the system automatically allocates the next unique sequence without failing!
     if (resolvedCode.wasAdjusted) {
-      setIsSubmitting(false);
-      setSubmitError(
-        `❌ TIDAK BISA SIMPAN: Kode "${resolvedCode.originalCode || kodeClean}" baru saja disimpan oleh pengguna lain! Kode tidak boleh sama. Silakan ubah ke kode "${resolvedCode.finalCode}" agar bisa disimpan.`
-      );
       showNotification?.(
-        `❌ Tidak bisa simpan! Kode "${resolvedCode.originalCode || kodeClean}" sudah ada di sistem. Silakan ganti ke "${resolvedCode.finalCode}".`,
-        'error',
-        8000
+        `ℹ️ Sistem ERP: Kode "${resolvedCode.originalCode || kodeClean}" telah digunakan pengguna lain saat Anda mengisi data. Item otomatis dialokasikan ke nomor urut unik: "${finalKode}".`,
+        'warning',
+        7500
       );
-      return;
     }
+
+    // Release any temporary reservation
+    releaseCode(formData.kode, clientIdRef.current);
+    releaseCode(finalKode, clientIdRef.current);
 
     const payload = {
       track: trackClean,
@@ -619,7 +647,7 @@ const ItemModalContent = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : getNextSampleCode(items) }));
+                      setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : (isMaterialBox ? getNextMaterialCode(items) : getNextSampleCode(items)) }));
                       if (submitError) setSubmitError(null);
                     }}
                     className="text-[9px] font-black px-1.5 py-0.2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded border border-amber-300 flex items-center gap-0.5 transition cursor-pointer"

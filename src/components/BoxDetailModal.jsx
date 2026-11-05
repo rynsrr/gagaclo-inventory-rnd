@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
-import { getNextSampleCode } from '../utils/sequenceResolver';
+import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
 
 export const BoxDetailModal = () => {
   const { selectedBoxNumber, getBoxDetails } = useInventory();
@@ -71,7 +71,8 @@ function BoxDetail({ box }) {
   };
 
   const handleDuplicateItem = (itemToCopy) => {
-    const nextCode = getNextSampleCode(items);
+    const isMaterial = box.category === 'MATERIAL';
+    const nextCode = isMaterial ? getNextMaterialCode(items) : getNextSampleCode(items);
     setItemModalConfig({
       isOpen: true,
       item: {

@@ -15,7 +15,7 @@ import {
   dbIssueToLocal,
 } from '../lib/supabase';
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
-import { resolveUniqueCode, getNextSampleCode } from '../utils/sequenceResolver';
+import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, releaseCode } from '../utils/sequenceResolver';
 
 const InventoryContext = createContext(null);
 
