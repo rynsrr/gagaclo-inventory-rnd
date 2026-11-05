@@ -65,10 +65,26 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 4. Tabel Issues & Usulan (Laporan Bug, Error, Usulan Fitur & Perbaikan)
+CREATE TABLE IF NOT EXISTS public.issues (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type TEXT DEFAULT 'BUG', -- 'BUG', 'FEATURE', 'IMPROVEMENT', 'OTHER'
+    priority TEXT DEFAULT 'MEDIUM', -- 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
+    status TEXT DEFAULT 'OPEN', -- 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'
+    reporter_name TEXT DEFAULT 'Royan',
+    location TEXT DEFAULT 'Umum',
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Aktifkan Row Level Security (RLS)
 ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.boxes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.issues ENABLE ROW LEVEL SECURITY;
 
 -- Buat Policy Akses Penuh untuk Public / Anon Key
 DROP POLICY IF EXISTS "Public Full Access Items" ON public.items;
@@ -80,7 +96,10 @@ CREATE POLICY "Public Full Access Boxes" ON public.boxes FOR ALL USING (true) WI
 DROP POLICY IF EXISTS "Public Full Access Transactions" ON public.transactions;
 CREATE POLICY "Public Full Access Transactions" ON public.transactions FOR ALL USING (true) WITH CHECK (true);
 
--- Aktifkan Realtime Replication untuk tabel items dan boxes
+DROP POLICY IF EXISTS "Public Full Access Issues" ON public.issues;
+CREATE POLICY "Public Full Access Issues" ON public.issues FOR ALL USING (true) WITH CHECK (true);
+
+-- Aktifkan Realtime Replication untuk tabel items, boxes, dan issues
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -95,5 +114,12 @@ BEGIN
     WHERE pubname = 'supabase_realtime' AND tablename = 'boxes'
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.boxes;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'issues'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.issues;
   END IF;
 END $$;

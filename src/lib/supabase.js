@@ -216,3 +216,35 @@ export function dbTrxToLocal(db) {
     notes: db.notes,
   };
 }
+
+export function localIssueToDb(iss) {
+  return {
+    id: String(iss.id),
+    title: iss.title || '',
+    description: iss.description || '',
+    type: iss.type || 'BUG',
+    priority: iss.priority || 'MEDIUM',
+    status: iss.status || 'OPEN',
+    reporter_name: iss.reporterName || iss.reporter_name || 'Tim R&D',
+    location: iss.location || 'Umum',
+    notes: iss.notes || '',
+    created_at: iss.createdAt || iss.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export function dbIssueToLocal(db) {
+  return {
+    id: String(db.id),
+    title: db.title || '',
+    description: db.description || '',
+    type: db.type || 'BUG',
+    priority: db.priority || 'MEDIUM',
+    status: db.status || 'OPEN',
+    reporterName: db.reporter_name || db.reporterName || 'Tim R&D',
+    location: db.location || 'Umum',
+    notes: db.notes || '',
+    createdAt: db.created_at || db.createdAt || new Date().toISOString(),
+    updatedAt: db.updated_at || db.updatedAt || new Date().toISOString(),
+  };
+}

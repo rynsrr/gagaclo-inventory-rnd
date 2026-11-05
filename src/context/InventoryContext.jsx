@@ -12,6 +12,8 @@ import {
   dbBoxToLocal,
   localTrxToDb,
   dbTrxToLocal,
+  localIssueToDb,
+  dbIssueToLocal,
 } from '../lib/supabase';
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
 
@@ -36,6 +38,61 @@ const PPIC_BADGE_PALETTES = [
   { color: 'emerald', avatarBg: 'bg-emerald-600', badgeClass: 'bg-emerald-600 text-white', tagBg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   { color: 'amber', avatarBg: 'bg-amber-600', badgeClass: 'bg-amber-600 text-white', tagBg: 'bg-amber-50 text-amber-700 border-amber-200' },
   { color: 'rose', avatarBg: 'bg-rose-600', badgeClass: 'bg-rose-600 text-white', tagBg: 'bg-rose-50 text-rose-700 border-rose-200' },
+];
+
+const DEFAULT_ISSUES = [
+  {
+    id: 'iss-sample-1',
+    title: 'Penataan visual countdown timer di bagian atas layar',
+    description: 'Timer hitung mundur pendataan dipindah ke bagian atas di bawah header agar langsung terlihat tanpa harus scroll ke bawah.',
+    type: 'IMPROVEMENT',
+    priority: 'HIGH',
+    status: 'RESOLVED',
+    reporterName: 'Royan',
+    location: 'Halaman Depan / Header',
+    notes: 'Sudah diselesaikan dan disinkronkan ke Supabase Cloud.',
+    createdAt: '2026-11-05 08:15',
+    updatedAt: '2026-11-05 08:20',
+  },
+  {
+    id: 'iss-sample-2',
+    title: 'Fitur pencarian cepat langsung di halaman 3D',
+    description: 'Tambahkan search bar langsung di atas tampilan gudang 3D dengan shortcut Ctrl+K untuk menemukan box dan sampel secara instan.',
+    type: 'FEATURE',
+    priority: 'MEDIUM',
+    status: 'RESOLVED',
+    reporterName: 'Cynara',
+    location: 'Halaman 3D Warehouse',
+    notes: 'Sudah selesai: search bar terintegrasi dengan highlight box otomatis di model 3D.',
+    createdAt: '2026-11-05 08:10',
+    updatedAt: '2026-11-05 08:18',
+  },
+  {
+    id: 'iss-sample-3',
+    title: 'Error saat edit dan pindah penempatan box',
+    description: 'Ketika mengubah box pada kartu item, terjadi error state dan data tidak tersimpan ke cloud Supabase.',
+    type: 'BUG',
+    priority: 'URGENT',
+    status: 'RESOLVED',
+    reporterName: 'Royan',
+    location: 'Detail Box & Edit Kartu',
+    notes: 'Bug terselesaikan: relokasi transaksi diperbaiki, dropdown dinamis dari live boxes, dan ditambahkan tombol pindah box instan.',
+    createdAt: '2026-11-05 08:25',
+    updatedAt: '2026-11-05 08:35',
+  },
+  {
+    id: 'iss-sample-4',
+    title: 'Usulan cetak stiker QR massal per Rak',
+    description: 'Perlu fitur untuk cetak label QR seluruh box dalam satu rak sekaligus agar proses penempelan stiker fisik lebih cepat.',
+    type: 'FEATURE',
+    priority: 'MEDIUM',
+    status: 'IN_PROGRESS',
+    reporterName: 'Ami',
+    location: 'Dokumen Cetak / Label',
+    notes: 'Sedang dirancang untuk format A4 multi-label per lembar.',
+    createdAt: '2026-11-05 08:30',
+    updatedAt: '2026-11-05 08:30',
+  },
 ];
 
 export const InventoryProvider = ({ children }) => {
@@ -195,6 +252,96 @@ export const InventoryProvider = ({ children }) => {
     await updateTimerDeadline(0);
   };
 
+  // Issues, Errors & Feature Proposals State
+  const [issues, setIssues] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + '_issues');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load issues from localStorage', e);
+    }
+    return DEFAULT_ISSUES;
+  });
+
+  // Persist issues to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY + '_issues', JSON.stringify(issues));
+    } catch (e) {
+      console.error('Failed to save issues to localStorage', e);
+    }
+  }, [issues]);
+
+  const syncIssuesToRemote = async (issuesList) => {
+    if (!supabase) return;
+    try {
+      // 1. Sync to backup system box row so all devices immediately see it
+      await supabase.from('boxes').upsert({
+        box_number: 999998,
+        code: 'SYSTEM_ISSUES',
+        rack_id: -1,
+        rack_name: 'SYSTEM',
+        category: 'CONFIG',
+        pic_name: 'SYSTEM',
+        notes: JSON.stringify(issuesList),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'box_number' });
+
+      // 2. Also sync to dedicated issues table if it exists
+      try {
+        await supabase.from('issues').upsert(issuesList.map(localIssueToDb), { onConflict: 'id' });
+      } catch {}
+    } catch (err) {
+      console.error('Failed to sync issues to Supabase:', err);
+    }
+  };
+
+  const addIssue = async ({ title, description, type, priority, reporterName, location }) => {
+    const newIss = {
+      id: 'iss-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      title: (title || '').trim(),
+      description: (description || '').trim(),
+      type: type || 'BUG',
+      priority: priority || 'MEDIUM',
+      status: 'OPEN',
+      reporterName: (reporterName || 'Tim R&D').trim(),
+      location: (location || 'Umum').trim(),
+      notes: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setIssues((prev) => {
+      const next = [newIss, ...prev];
+      syncIssuesToRemote(next);
+      return next;
+    });
+    return newIss;
+  };
+
+  const updateIssue = async (issueId, updates) => {
+    setIssues((prev) => {
+      const next = prev.map((iss) => (iss.id === issueId ? { ...iss, ...updates, updatedAt: new Date().toISOString() } : iss));
+      syncIssuesToRemote(next);
+      return next;
+    });
+  };
+
+  const deleteIssue = async (issueId) => {
+    setIssues((prev) => {
+      const next = prev.filter((iss) => iss.id !== issueId);
+      syncIssuesToRemote(next);
+      return next;
+    });
+    if (supabase) {
+      try {
+        await supabase.from('issues').delete().eq('id', issueId);
+      } catch {}
+    }
+  };
+
   // Persist to localStorage on change as safety cache
   useEffect(() => {
     try {
@@ -274,6 +421,33 @@ export const InventoryProvider = ({ children }) => {
           }
         } catch {}
       }
+
+      // Check for remote issues config in boxes
+      if (dbBoxes && dbBoxes.length > 0) {
+        const issuesBox = dbBoxes.find(b => Number(b.box_number) === 999998 || b.code === 'SYSTEM_ISSUES');
+        if (issuesBox?.notes) {
+          try {
+            const parsed = JSON.parse(issuesBox.notes);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setIssues(parsed);
+              try {
+                localStorage.setItem(STORAGE_KEY + '_issues', JSON.stringify(parsed));
+              } catch {}
+            }
+          } catch {}
+        }
+      }
+
+      // Try fetching from dedicated issues table if available
+      try {
+        const { data: dbIssues } = await client
+          .from('issues')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (dbIssues && dbIssues.length > 0) {
+          setIssues(dbIssues.map(dbIssueToLocal));
+        }
+      } catch {}
 
       // Update local state if remote data is found (excluding system config rows)
       if (dbItems && dbItems.length > 0) {
@@ -456,6 +630,20 @@ export const InventoryProvider = ({ children }) => {
               } catch {}
               return;
             }
+
+            // Realtime Sync for Issues
+            if (Number(payload.new?.box_number) === 999998 || payload.new?.code === 'SYSTEM_ISSUES') {
+              try {
+                const parsed = JSON.parse(payload.new.notes);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  setIssues(parsed);
+                  try {
+                    localStorage.setItem(STORAGE_KEY + '_issues', JSON.stringify(parsed));
+                  } catch {}
+                }
+              } catch {}
+              return;
+            }
             if (Number(payload.new?.box_number) >= 900000) return;
 
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
@@ -467,6 +655,21 @@ export const InventoryProvider = ({ children }) => {
                 }
                 return [...prev, dbBoxToLocal(updatedBox, [])];
               });
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'issues' },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const newIss = dbIssueToLocal(payload.new);
+              setIssues(prev => prev.some(i => i.id === newIss.id) ? prev : [newIss, ...prev]);
+            } else if (payload.eventType === 'UPDATE') {
+              const updated = dbIssueToLocal(payload.new);
+              setIssues(prev => prev.map(i => i.id === updated.id ? updated : i));
+            } else if (payload.eventType === 'DELETE') {
+              setIssues(prev => prev.filter(i => i.id !== payload.old.id));
             }
           }
         )
@@ -1276,6 +1479,11 @@ export const InventoryProvider = ({ children }) => {
     timerDeadline,
     updateTimerDeadline,
     resetTimerDeadline,
+    // Issues, Error Reports & Feature Proposals
+    issues,
+    addIssue,
+    updateIssue,
+    deleteIssue,
   };
 
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;

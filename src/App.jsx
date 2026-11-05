@@ -12,6 +12,7 @@ import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
 import { BoxManageModal } from './components/BoxManageModal';
 import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
+import { FeedbackIssuesView } from './components/FeedbackIssuesView';
 import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
 import {
   Box as BoxIcon,
@@ -19,6 +20,7 @@ import {
   Database,
   LayoutDashboard,
   PackagePlus,
+  MessageSquarePlus,
 } from 'lucide-react';
 
 const AppContent = () => {
@@ -32,6 +34,7 @@ const AppContent = () => {
     setIsSupabaseModalOpen,
     boxes,
     items,
+    issues = [],
   } = useInventory();
 
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
@@ -39,6 +42,8 @@ const AppContent = () => {
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isBoxLabelPrintOpen, setIsBoxLabelPrintOpen] = useState(false);
   const connected = supabaseStatus.isConnected;
+
+  const activeIssuesCount = issues.filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS').length;
 
   // Shared search state: the sidebar panel shows results, the 3D scene highlights
   // the boxes that contain a match.
@@ -88,6 +93,14 @@ const AppContent = () => {
       subtitle: 'Semua barang',
       icon: LayoutDashboard,
       count: items.length,
+      primary: false,
+    },
+    {
+      id: 'issues',
+      label: 'Issue & Usulan',
+      subtitle: 'Laporan & ide fitur',
+      icon: MessageSquarePlus,
+      count: activeIssuesCount,
       primary: false,
     },
   ];
@@ -214,6 +227,7 @@ const AppContent = () => {
             />
           )}
           {appMode === 'summary' && <TotalItemsSummaryView />}
+          {appMode === 'issues' && <FeedbackIssuesView />}
         </main>
       </div>
 
