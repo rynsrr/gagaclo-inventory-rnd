@@ -9,7 +9,7 @@ import * as THREE from 'three';
  * - Pure and clean: no human characters, no display mannequins, unobstructed 360° view
  * - 100% Three.js native procedural geometry running at 60 FPS
  */
-export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
+export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMode = false }) {
   const disposables = [];
 
   // 1. Atmosphere: Cheerful Sunny Sky & Soft Horizon Mist
@@ -182,6 +182,8 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
     },
   ];
 
+  const spotLights = [];
+
   lampConfigs.forEach((cfg) => {
     const lampGroup = new THREE.Group();
     lampGroup.position.set(cfg.x, deckHeight, cfg.z);
@@ -234,12 +236,96 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26 }) {
     spot.target = targetObj;
 
     scene.add(spot);
+    spotLights.push(spot);
     disposables.push(spot, targetObj);
   });
 
+  // 6. Langit Malam Berbintang (Aktif saat Mode Gelap)
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 350;
+  const starPositions = new Float32Array(starCount * 3);
+  for (let s = 0; s < starCount; s++) {
+    starPositions[s * 3] = (Math.random() - 0.5) * 160;
+    starPositions[s * 3 + 1] = 16 + Math.random() * 45;
+    starPositions[s * 3 + 2] = (Math.random() - 0.5) * 160;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+  const starMat = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 0.55,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const starPoints = new THREE.Points(starGeo, starMat);
+  starPoints.visible = false;
+  scene.add(starPoints);
+  disposables.push(starGeo, starMat, starPoints);
+
+  function applyMode(isDark) {
+    if (isDark) {
+      // Midnight Twilight Atmosphere & Dense Fog
+      scene.background.setHex(0x060d17);
+      scene.fog.color.setHex(0x060d17);
+      scene.fog.near = 18;
+      scene.fog.far = 95;
+
+      // Redupkan cahaya matahari menjadi pantulan sinar bulan yang lembut
+      hemiLight.intensity = 0.12;
+      hemiLight.color.setHex(0x60a5fa);
+      hemiLight.groundColor.setHex(0x022c22);
+      sunLight.intensity = 0.18;
+      sunLight.color.setHex(0x93c5fd);
+      fillLight.intensity = 0.05;
+
+      // Lampu Sorot MENYALA SANGAT TERANG & FOKUS MENYOROT BOX!
+      spotLights.forEach((spot) => {
+        spot.intensity = 11.5; // Sorotan super terang dramatis
+        spot.distance = 110;
+        spot.penumbra = 0.45;
+        spot.color.setHex(0xfff7ed);
+      });
+      lensMat.color.setHex(0xffffff); // Lensa bersinar putih keemasan
+
+      starPoints.visible = true;
+    } else {
+      // Suasana Siang Ceria
+      scene.background.setHex(0xbbf7d0);
+      scene.fog.color.setHex(0xbbf7d0);
+      scene.fog.near = 32;
+      scene.fog.far = 115;
+
+      hemiLight.intensity = 0.95;
+      hemiLight.color.setHex(0xfef9c3);
+      hemiLight.groundColor.setHex(0x166534);
+      sunLight.intensity = 1.45;
+      sunLight.color.setHex(0xfff7ed);
+      fillLight.intensity = 0.45;
+
+      // Sorotan normal siang hari
+      spotLights.forEach((spot) => {
+        spot.intensity = 3.2;
+        spot.distance = 70;
+        spot.penumbra = 0.55;
+        spot.color.setHex(0xfffbeb);
+      });
+      lensMat.color.setHex(0xfef08a);
+
+      starPoints.visible = false;
+    }
+  }
+
+  // Terapkan mode awal
+  applyMode(Boolean(isDarkMode));
+
   return {
-    update() {
-      // Scene is static and peaceful
+    setDarkMode(isDark) {
+      applyMode(isDark);
+    },
+    update(elapsed) {
+      // Kerlap-kerlip bintang lembut di malam hari
+      if (starPoints.visible) {
+        starMat.opacity = 0.75 + Math.sin(elapsed * 2.8) * 0.2;
+      }
     },
     dispose() {
       disposables.forEach((item) => {

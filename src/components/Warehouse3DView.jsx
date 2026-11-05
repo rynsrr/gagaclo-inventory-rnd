@@ -104,6 +104,8 @@ export const Warehouse3DView = ({
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const forestRef = useRef(null);
   const rendererRef = useRef(null);
 
   // A Set of box numbers matching the sidebar search (null = no active search).
@@ -324,7 +326,9 @@ export const Warehouse3DView = ({
       scene,
       minX,
       maxX,
+      isDarkMode,
     });
+    forestRef.current = forest;
 
     const boxMeshes = [];
 
@@ -795,6 +799,13 @@ export const Warehouse3DView = ({
     };
   }, [boxes, racks, ppicMembers]);
 
+  // Update scene atmosphere & spotlight intensity on Mode Gelap toggle
+  useEffect(() => {
+    if (forestRef.current) {
+      forestRef.current.setDarkMode(isDarkMode);
+    }
+  }, [isDarkMode]);
+
   // Reapply PIC/search selection whenever filters change or cloud sync rebuilds
   // the scene. A box stays solid only when it satisfies every active filter.
   useEffect(() => {
@@ -1076,10 +1087,31 @@ export const Warehouse3DView = ({
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50">
+      <div className={`warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border shadow-xl ring-1 ring-slate-900/5 transition-all duration-500 ${
+        isDarkMode 
+          ? 'bg-slate-950 border-slate-800' 
+          : 'bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50 border-slate-200/80'
+      }`}>
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
+
+        {/* Day / Night Mode Gelap Switch (Top Right) */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsDarkMode(prev => !prev)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
+              isDarkMode
+                ? 'bg-slate-900/90 text-amber-300 border-amber-400/50 shadow-amber-950/40 hover:bg-slate-800 ring-2 ring-amber-400/30'
+                : 'bg-white/95 text-slate-800 border-slate-200 shadow-slate-900/10 hover:bg-slate-100'
+            }`}
+            title="Klik untuk mengaktifkan / menonaktifkan Mode Gelap dengan sorotan lampu terang"
+          >
+            <span>{isDarkMode ? '🌙' : '☀️'}</span>
+            <span>{isDarkMode ? 'Mode Gelap: Lampu Nyala' : 'Mode Terang'}</span>
+          </button>
+        </div>
 
         {/* Active search indicator (top left) */}
         {searchActive && (
@@ -1134,7 +1166,7 @@ export const Warehouse3DView = ({
         {/* Controls Hint & Meadow Badge (Bottom Right) */}
         <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
           <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <span>🌱</span> Padang Rumput 3D
+            <span>{isDarkMode ? '🌙' : '🌱'}</span> {isDarkMode ? 'Mode Gelap (Lampu Sorot Terang)' : 'Padang Rumput 3D'}
           </span>
           <span className="text-slate-500">|</span>
           <span className="text-amber-300 font-bold">🖱️ Klik 2x: Buka Popup</span>
