@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { buildSpringMeadowEnvironment } from './springMeadowEnvironment';
+import { buildLowPolyForestScene } from './lowPolyForestScene';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { useInventory } from '../context/InventoryContext';
 import { 
@@ -345,12 +345,12 @@ export const Warehouse3DView = ({
       conf.rows = Math.max(conf.rows, Math.ceil(count / conf.cols));
     });
 
-    // --- SPRING MEADOW 3D ENVIRONMENT (Real 3D Models from Internet) ---
+    // --- LOW POLY DISNEY FOREST 3D ENVIRONMENT ---
     const allRackX = rackPositions.map((r) => r.x);
     const minX = allRackX.length > 0 ? Math.min(...allRackX) - 4 : -20;
     const maxX = allRackX.length > 0 ? Math.max(...allRackX) + 4 : 28;
 
-    const meadow = buildSpringMeadowEnvironment({
+    const forest = buildLowPolyForestScene({
       scene,
       minX,
       maxX,
@@ -648,6 +648,9 @@ export const Warehouse3DView = ({
       }
       lastRenderTime = timestamp || 0;
 
+      const elapsed = clock.getElapsedTime();
+      forest?.update(elapsed);
+
       // 1. Cinematic camera flight interpolation
       if (flyCameraTargetRef.current && flyControlsTargetRef.current && !isUserInteractingRef.current) {
         camera.position.lerp(flyCameraTargetRef.current, 0.08);
@@ -766,7 +769,7 @@ export const Warehouse3DView = ({
         container.removeChild(renderer.domElement);
       }
 
-      meadow?.dispose();
+      forest?.dispose();
       renderer.dispose();
     };
   }, [boxes, racks, ppicMembers]);
@@ -1052,7 +1055,7 @@ export const Warehouse3DView = ({
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-50">
+      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border border-slate-200/80 shadow-xl ring-1 ring-slate-900/5 bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
@@ -1124,10 +1127,10 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls Hint & Spring Meadow Badge (Bottom Right) */}
+        {/* Controls Hint & Disney Forest Badge (Bottom Right) */}
         <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
-          <span className="text-pink-300 font-bold flex items-center gap-1">
-            <span>🌸</span> Spring Meadow
+          <span className="text-emerald-400 font-bold flex items-center gap-1">
+            <span>🌲</span> Disney Forest 3D
           </span>
           <span className="text-slate-500">|</span>
           <span>🖱️ Putar: Klik Kiri</span>
