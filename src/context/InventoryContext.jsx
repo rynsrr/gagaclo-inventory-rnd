@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { RACKS_DATA, PPIC_MEMBERS, generateInitialBoxes, INITIAL_ITEMS, INITIAL_TRANSACTIONS } from '../data/initialData';
 import {
@@ -16,6 +16,7 @@ import {
   dbIssueToLocal,
 } from '../lib/supabase';
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
+import { resolveUniqueCode, getNextSampleCode } from '../utils/sequenceResolver';
 
 const InventoryContext = createContext(null);
 
@@ -237,6 +238,20 @@ export const InventoryProvider = ({ children }) => {
     // Default fallback so every device sees the countdown immediately!
     return 1794444171613;
   });
+
+  // Global floating notification state (for concurrency alerts, info messages)
+  const [systemNotification, setSystemNotification] = useState(null);
+  const notificationTimerRef = useRef(null);
+
+  const showNotification = useCallback((message, type = 'info', duration = 6000) => {
+    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    setSystemNotification({ id: Date.now(), message, type });
+    if (duration > 0) {
+      notificationTimerRef.current = setTimeout(() => {
+        setSystemNotification(null);
+      }, duration);
+    }
+  }, []);
 
   const updateTimerDeadline = async (newDeadline) => {
     const val = Number(newDeadline) || 0;
@@ -758,13 +773,28 @@ export const InventoryProvider = ({ children }) => {
     // Automatically record and remember newly inputted data
     recordSuggestions(itemData);
 
+    // Concurrency protection: verify that code is not already taken by another user
+    const rawCode = itemData.kode || itemData.sku;
+    const resolved = resolveUniqueCode(rawCode, items, null);
+    const finalCode = resolved.finalCode;
+
     const newItem = {
       ...itemData,
+      kode: finalCode,
+      sku: finalCode,
       id: 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
       dateIn: itemData.dateIn || new Date().toISOString().split('T')[0],
       status: itemData.status || 'In Storage',
       qty: Number(itemData.qty) || 1,
     };
+
+    if (resolved.wasAdjusted) {
+      showNotification(
+        `⚡ Nomor urut disesuaikan: ${resolved.originalCode || 'Nomor'} sudah dipakai rekan lain. Nomor kartu otomatis menjadi ${finalCode} agar tidak bentrok.`,
+        'info',
+        6000
+      );
+    }
 
     setItems((prev) => [newItem, ...prev]);
 
@@ -851,6 +881,18 @@ export const InventoryProvider = ({ children }) => {
     const oldItem = items.find((i) => String(i.id) === String(itemId));
     if (!oldItem) return null;
 
+    // Concurrency protection on update
+    let finalCode = updatedData.kode !== undefined ? updatedData.kode : (updatedData.sku !== undefined ? updatedData.sku : oldItem.kode);
+    const resolved = resolveUniqueCode(finalCode, items, itemId);
+    if (resolved.wasAdjusted) {
+      finalCode = resolved.finalCode;
+      showNotification(
+        `⚡ Nomor urut disesuaikan: ${resolved.originalCode} sudah dipakai rekan lain. Nomor kartu otomatis menjadi ${finalCode} agar tidak bentrok.`,
+        'info',
+        6000
+      );
+    }
+
     const oldBox = Number(oldItem.boxNumber);
     const newBox = updatedData.boxNumber !== undefined ? Number(updatedData.boxNumber) : oldBox;
     const finalQty = Number(updatedData.qty !== undefined ? updatedData.qty : (updatedData.jumlah !== undefined ? updatedData.jumlah : oldItem.qty)) || 1;
@@ -859,6 +901,8 @@ export const InventoryProvider = ({ children }) => {
     const finalItem = {
       ...oldItem,
       ...updatedData,
+      kode: finalCode,
+      sku: finalCode,
       boxNumber: newBox,
       qty: finalQty,
       jumlah: finalQty,
@@ -1766,6 +1810,10 @@ export const InventoryProvider = ({ children }) => {
     addIssue,
     updateIssue,
     deleteIssue,
+    // Global Floating Notifications
+    systemNotification,
+    showNotification,
+    setSystemNotification,
   };
 
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;

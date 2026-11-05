@@ -21,6 +21,8 @@ import {
   LayoutDashboard,
   PackagePlus,
   MessageSquarePlus,
+  X,
+  Sparkles,
 } from 'lucide-react';
 
 const AppContent = () => {
@@ -35,6 +37,8 @@ const AppContent = () => {
     boxes,
     items,
     issues = [],
+    systemNotification,
+    setSystemNotification,
   } = useInventory();
 
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
@@ -258,6 +262,26 @@ const AppContent = () => {
         isOpen={isBoxManageOpen}
         onClose={() => setIsBoxManageOpen(false)}
       />
+
+      {/* Global Floating Toast Notification (Multi-user concurrency & auto-sequence alerts) */}
+      {systemNotification && (
+        <aside aria-label="Notifikasi sistem" className="fixed top-5 left-1/2 -translate-x-1/2 z-50 animate-fade-in max-w-lg w-[92%] sm:w-auto pointer-events-auto shadow-2xl">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-white/20 backdrop-blur-md text-xs sm:text-sm font-semibold">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-400 text-slate-950 shrink-0 font-bold text-xs">
+              ⚡
+            </span>
+            <span className="flex-1 text-slate-100 leading-snug">{systemNotification.message}</span>
+            <button
+              type="button"
+              onClick={() => setSystemNotification(null)}
+              className="p-1 hover:bg-white/20 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+              aria-label="Tutup notifikasi"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </aside>
+      )}
 
     </div>
   );

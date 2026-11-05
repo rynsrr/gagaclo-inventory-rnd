@@ -3,6 +3,8 @@ import { useInventory } from '../context/InventoryContext';
 import { RACK_GROUPS, DEFAULT_PLACES } from '../data/simpleData';
 import { CardPrintModal } from './CardPrintModal';
 import { SuggestionInput } from './SuggestionInput';
+import { supabase } from '../lib/supabase';
+import { resolveUniqueCode, getNextSampleCode } from '../utils/sequenceResolver';
 import { 
   X, 
   Save, 
@@ -55,27 +57,8 @@ const fillBlankWithNA = (data) => {
   return next;
 };
 
-/**
- * Calculates next sequential code: SAMPLE-00001, SAMPLE-00002, etc. (5-digit numbering)
- * Increments sequentially based on existing items in storage.
- */
-export function getNextSampleCode(items = []) {
-  let maxSeq = 0;
-  if (Array.isArray(items)) {
-    items.forEach(item => {
-      const code = String(item.kode || item.sku || '');
-      const match = code.match(/SAMPLE[-_ ]?(\d+)/i);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (!isNaN(num) && num > maxSeq) {
-          maxSeq = num;
-        }
-      }
-    });
-  }
-  const nextSeq = maxSeq + 1;
-  return `SAMPLE-${String(nextSeq).padStart(5, '0')}`;
-}
+// Re-export getNextSampleCode from sequenceResolver utility
+export { getNextSampleCode };
 
 export const ItemModal = () => {
   const { itemModalConfig } = useInventory();
@@ -92,7 +75,8 @@ const ItemModalContent = () => {
     boxes,
     items,
     suggestions = {},
-    removeSuggestion
+    removeSuggestion,
+    showNotification
   } = useInventory();
 
   const hiddenDateRef = useRef(null);
@@ -278,10 +262,48 @@ const ItemModalContent = () => {
       ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
       : `${styleTrim} - Size: ${sizeTrim}`;
 
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    // Live multi-user sequence collision check right before save
+    let activeItems = [...items];
+    if (supabase) {
+      try {
+        const { data: remoteRecent } = await supabase
+          .from('items')
+          .select('id, kode, sku')
+          .order('id', { ascending: false })
+          .limit(100);
+        if (Array.isArray(remoteRecent) && remoteRecent.length > 0) {
+          const knownIds = new Set(activeItems.map(i => String(i.id)));
+          remoteRecent.forEach(ri => {
+            if (!knownIds.has(String(ri.id))) {
+              activeItems.push({ id: ri.id, kode: ri.kode, sku: ri.sku });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Live sequence check fallback to local:', e);
+      }
+    }
+
+    const currentItemId = isEditing ? itemModalConfig.item?.id : null;
+    const resolvedCode = resolveUniqueCode(kodeClean, activeItems, currentItemId);
+    const finalKode = resolvedCode.finalCode;
+
+    if (resolvedCode.wasAdjusted) {
+      showNotification?.(
+        `⚡ Nomor ${resolvedCode.originalCode || 'Kode'} baru saja disimpan oleh rekan lain. Nomor kartu Anda otomatis disesuaikan menjadi ${finalKode} agar tidak bentrok.`,
+        'info',
+        6000
+      );
+      setFormData(prev => ({ ...prev, kode: finalKode }));
+    }
+
     const payload = {
       track: trackClean,
       tanggal: tanggalClean,
-      kode: kodeClean,
+      kode: finalKode,
       buyerNo: buyerNoTrim,
       jenisSample: clean(formData.jenisSample) || 'DEVELOP',
       style: styleTrim,
@@ -297,7 +319,7 @@ const ItemModalContent = () => {
       name: sampleNoTrim
         ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`
         : `${styleTrim} (Size: ${sizeTrim})`,
-      sku: kodeClean,
+      sku: finalKode,
       buyerNumber: buyerNoTrim,
       description: fullDeskripsi,
       qty: Number(formData.jumlah) || 1,
@@ -311,7 +333,6 @@ const ItemModalContent = () => {
       dateIn: tanggalClean,
     };
 
-    setIsSubmitting(true);
     try {
       if (isEditing) {
         await updateItem(itemModalConfig.item.id, payload);
