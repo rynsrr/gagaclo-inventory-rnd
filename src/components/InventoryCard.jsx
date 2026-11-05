@@ -124,7 +124,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   </span>
                   <div className="flex items-center gap-1 flex-wrap mt-0.5">
                     <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                      SAMPLE: {sampleNoDisplay}
+                      SAMPLE NO: {sampleNoDisplay}
                     </span>
                     <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
                       SIZE: {sizeDisplay}
@@ -138,7 +138,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   </span>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
-                      SAMPLE: {sampleNoDisplay}
+                      SAMPLE NO: {sampleNoDisplay}
                     </span>
                     <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
                       SIZE: {sizeDisplay}
