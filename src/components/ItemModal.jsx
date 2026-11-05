@@ -126,9 +126,9 @@ export const ItemModal = () => {
         // Edit mode
         const item = itemModalConfig.item;
         const bNum = Number(item.boxNumber) || targetBoxNum;
-        const bObj = boxes.find(b => b.boxNumber === bNum);
+        const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
         const defaultBoxPlace = bObj 
-          ? `BOX ${bObj.boxNumber} (${bObj.rackName} - ${bObj.picName})` 
+          ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
           : `BOX ${bNum}`;
 
         setFormData(fillBlankWithNA({
@@ -150,9 +150,9 @@ export const ItemModal = () => {
       } else {
         // New item mode: auto-generate sequential code SAMPLE-00001, SAMPLE-00002...
         const bNum = targetBoxNum || 1;
-        const bObj = boxes.find(b => b.boxNumber === bNum);
+        const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
         const defaultBoxPlace = bObj 
-          ? `BOX ${bObj.boxNumber} (${bObj.rackName} - ${bObj.picName})` 
+          ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
           : `BOX ${bNum}`;
 
         setFormData({
@@ -202,10 +202,14 @@ export const ItemModal = () => {
   const handleBoxSelect = (selectedPlaceValue) => {
     const match = selectedPlaceValue.match(/BOX\s+(\d+)/i);
     const boxNum = match ? Number(match[1]) : formData.boxNumber;
+    const targetBox = boxes.find(b => Number(b.boxNumber) === Number(boxNum));
+    const properPlace = targetBox
+      ? `BOX ${targetBox.boxNumber} (${targetBox.rackName || 'LANTAI'} - ${targetBox.picName || 'Royan'})`
+      : selectedPlaceValue;
     
     setFormData(prev => ({
       ...prev,
-      place: selectedPlaceValue,
+      place: properPlace,
       boxNumber: boxNum,
     }));
   };
@@ -225,8 +229,12 @@ export const ItemModal = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError(null);
     const newErrors = {};
     REQUIRED_FIELDS.forEach(({ key, label }) => {
       const blank = key === 'jumlah'
@@ -241,7 +249,7 @@ export const ItemModal = () => {
     }
 
     const boxNum = Number(formData.boxNumber) || 1;
-    const boxObj = boxes.find(b => b.boxNumber === boxNum);
+    const boxObj = boxes.find(b => Number(b.boxNumber) === boxNum);
 
     const styleTrim = clean(formData.style);
     const sampleNoTrim = clean(formData.sampleNo);
@@ -282,7 +290,7 @@ export const ItemModal = () => {
       qty: Number(formData.jumlah) || 1,
       unit: satuanClean,
       boxNumber: boxNum,
-      rackId: boxObj ? boxObj.rackId : 1,
+      rackId: boxObj ? Number(boxObj.rackId) : 1,
       rackName: boxObj ? boxObj.rackName : 'RACK 1',
       picName: boxObj ? boxObj.picName : 'Royan',
       category: boxObj ? boxObj.category : 'SAMPLE',
@@ -290,16 +298,56 @@ export const ItemModal = () => {
       dateIn: tanggalClean,
     };
 
-    if (isEditing) {
-      updateItem(itemModalConfig.item.id, payload);
-    } else {
-      addItem(payload);
+    setIsSubmitting(true);
+    try {
+      if (isEditing) {
+        await updateItem(itemModalConfig.item.id, payload);
+      } else {
+        await addItem(payload);
+      }
+      setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
+    } catch (err) {
+      console.error('Error saat menyimpan item:', err);
+      setSubmitError(err?.message || 'Gagal menyimpan perubahan. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
   };
 
-  const currentBoxObj = boxes.find(b => b.boxNumber === Number(formData.boxNumber));
+  const currentBoxObj = boxes.find(b => Number(b.boxNumber) === Number(formData.boxNumber));
+
+  // Dynamic rack groupings from live `boxes`
+  const dynamicRackGroups = React.useMemo(() => {
+    const validBoxes = [...boxes]
+      .filter((b) => Number(b.boxNumber) < 900000 && Number(b.boxNumber) > 0)
+      .sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
+
+    const groupMap = new Map();
+
+    validBoxes.forEach((b) => {
+      const rackName = b.rackName || (Number(b.rackId) === 0 ? 'LANTAI' : 'RACK 1');
+      if (!groupMap.has(rackName)) {
+        groupMap.set(rackName, []);
+      }
+      const placeVal = `BOX ${b.boxNumber} (${rackName} - ${b.picName || 'Royan'})`;
+      groupMap.get(rackName).push({
+        boxNumber: b.boxNumber,
+        value: placeVal,
+        label: `BOX #${b.boxNumber} — PIC: ${b.picName || 'Royan'}`,
+      });
+    });
+
+    return Array.from(groupMap.entries()).map(([name, bList]) => ({
+      name,
+      boxes: bList,
+    }));
+  }, [boxes]);
+
+  const allKnownPlaces = React.useMemo(() => {
+    const set = new Set();
+    dynamicRackGroups.forEach(rg => rg.boxes.forEach(b => set.add(b.value)));
+    return set;
+  }, [dynamicRackGroups]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
@@ -326,6 +374,14 @@ export const ItemModal = () => {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Error message */}
+        {submitError && (
+          <div className="mx-4 mt-3 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-2 shrink-0">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{submitError}</span>
+          </div>
+        )}
 
         {/* Modal Body: Direct Interactive Card (Enlarged for Optimal Visibility) */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100 flex flex-col items-center justify-center">
@@ -656,11 +712,11 @@ export const ItemModal = () => {
                         }`}
                         title="Lokasi penyimpanan wajib dipilih"
                       >
-                        {!DEFAULT_PLACES.includes(formData.place) && formData.place && (
+                        {!allKnownPlaces.has(formData.place) && formData.place && (
                           <option value={formData.place}>{formData.place}</option>
                         )}
-                        {RACK_GROUPS.map((rg) => (
-                          <optgroup key={rg.name} label={`${rg.name} — ${rg.range}`}>
+                        {dynamicRackGroups.map((rg) => (
+                          <optgroup key={rg.name} label={`=== ${rg.name} ===`}>
                             {rg.boxes.map((b) => (
                               <option key={b.value} value={b.value}>
                                 {b.value}
@@ -767,10 +823,11 @@ export const ItemModal = () => {
             <button
               type="submit"
               form="direct-card-form"
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black shadow-md shadow-blue-900/20 transition flex items-center space-x-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black shadow-md shadow-blue-900/20 transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>{isEditing ? 'Simpan Perubahan' : 'Simpan ke Box'}</span>
+              <span>{isSubmitting ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box')}</span>
             </button>
           </div>
         </div>

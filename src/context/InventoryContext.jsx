@@ -460,7 +460,13 @@ export const InventoryProvider = ({ children }) => {
 
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
               const updatedBox = payload.new;
-              setBoxes(prev => prev.map(b => b.boxNumber === updatedBox.box_number ? dbBoxToLocal(updatedBox, [b]) : b));
+              setBoxes(prev => {
+                const exists = prev.some(b => Number(b.boxNumber) === Number(updatedBox.box_number));
+                if (exists) {
+                  return prev.map(b => Number(b.boxNumber) === Number(updatedBox.box_number) ? dbBoxToLocal(updatedBox, [b]) : b);
+                }
+                return [...prev, dbBoxToLocal(updatedBox, [])];
+              });
             }
           }
         )
@@ -567,47 +573,56 @@ export const InventoryProvider = ({ children }) => {
     // Automatically record and remember newly inputted data
     recordSuggestions(updatedData);
 
-    let finalItem = null;
+    const oldItem = items.find((i) => String(i.id) === String(itemId));
+    if (!oldItem) return null;
 
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.id === itemId) {
-          const oldBox = item.boxNumber;
-          const newBox = Number(updatedData.boxNumber);
-          finalItem = { ...item, ...updatedData, qty: Number(updatedData.qty) || item.qty };
+    const oldBox = Number(oldItem.boxNumber);
+    const newBox = updatedData.boxNumber !== undefined ? Number(updatedData.boxNumber) : oldBox;
+    const finalQty = Number(updatedData.qty !== undefined ? updatedData.qty : (updatedData.jumlah !== undefined ? updatedData.jumlah : oldItem.qty)) || 1;
+    const finalUnit = updatedData.unit || updatedData.satuan || oldItem.unit || 'PCS';
 
-          // If box changed, log relocate transaction
-          if (oldBox !== newBox) {
-            const oldBoxObj = boxes.find(b => b.boxNumber === oldBox);
-            const newBoxObj = boxes.find(b => b.boxNumber === newBox);
-            addTransaction({
-              type: 'RELOCATE',
-              itemId: item.id,
-              itemName: item.name,
-              boxNumber: newBox,
-              rackName: newBoxObj ? newBoxObj.rackName : 'RACK ?',
-              qty: finalItem.qty,
-              unit: finalItem.unit,
-              picName: finalItem.picName,
-              recipientOrSource: `Dipindah dari Box ${oldBox} (${oldBoxObj ? oldBoxObj.rackName : ''})`,
-              notes: 'Relokasi penempatan box',
-            });
-          }
+    const finalItem = {
+      ...oldItem,
+      ...updatedData,
+      boxNumber: newBox,
+      qty: finalQty,
+      jumlah: finalQty,
+      unit: finalUnit,
+      satuan: finalUnit,
+    };
 
-          return finalItem;
-        }
-        return item;
-      })
-    );
+    // Update local state cleanly
+    setItems((prev) => prev.map((item) => (String(item.id) === String(itemId) ? finalItem : item)));
+
+    // If box changed, log relocate transaction cleanly OUTSIDE of setItems
+    if (!isNaN(oldBox) && !isNaN(newBox) && oldBox !== newBox) {
+      const oldBoxObj = boxes.find((b) => Number(b.boxNumber) === oldBox);
+      const newBoxObj = boxes.find((b) => Number(b.boxNumber) === newBox);
+      addTransaction({
+        type: 'RELOCATE',
+        itemId: finalItem.id,
+        itemName: finalItem.name || finalItem.style || finalItem.deskripsi || oldItem.name || 'Sample',
+        sku: finalItem.sku || finalItem.kode || oldItem.sku || '',
+        boxNumber: newBox,
+        rackName: newBoxObj ? newBoxObj.rackName : 'RACK ?',
+        qty: finalItem.qty,
+        unit: finalItem.unit,
+        picName: finalItem.picName || (newBoxObj ? newBoxObj.picName : 'Royan'),
+        recipientOrSource: `Dipindah dari Box ${oldBox} (${oldBoxObj ? oldBoxObj.rackName : ''})`,
+        notes: `Relokasi dari Box #${oldBox} ke Box #${newBox}`,
+      });
+    }
 
     // Sync to Supabase in background
-    if (supabase && finalItem) {
+    if (supabase) {
       try {
         await supabase.from('items').upsert([localItemToDb(finalItem)], { onConflict: 'id' });
       } catch (err) {
         console.error('Supabase update item error:', err);
       }
     }
+
+    return finalItem;
   };
 
   const deleteItem = async (itemId) => {
@@ -719,11 +734,13 @@ export const InventoryProvider = ({ children }) => {
   // --- Box Management ---
 
   const addBox = async ({ rackId, category, picName, notes }) => {
-    // Auto-assign next box number (tolerate string / missing values)
-    const maxBoxNum = boxes.reduce(
-      (max, b) => Math.max(max, Number(b.boxNumber) || 0),
-      0
-    );
+    // Auto-assign next box number (tolerate string / missing values, ignore system timer box)
+    const maxBoxNum = boxes
+      .filter(b => Number(b.boxNumber) < 900000)
+      .reduce(
+        (max, b) => Math.max(max, Number(b.boxNumber) || 0),
+        0
+      );
     const newBoxNumber = maxBoxNum + 1;
 
     // If no racks exist (or the requested rack is gone), place on "Lantai" (floor)
@@ -767,8 +784,9 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const updateBox = async (boxNumber, updates) => {
-    const box = boxes.find(b => Number(b.boxNumber) === Number(boxNumber));
-    if (!box) throw new Error('Box tidak ditemukan.');
+    const num = Number(boxNumber);
+    const box = boxes.find(b => Number(b.boxNumber) === num);
+    if (!box) throw new Error(`Box #${boxNumber} tidak ditemukan.`);
 
     // An empty PIC selection means "keep the current PIC", not "clear it".
     const cleanUpdates = { ...updates };
@@ -776,7 +794,7 @@ export const InventoryProvider = ({ children }) => {
 
     let updatedBox = { ...box, ...cleanUpdates };
     if (cleanUpdates.rackId !== undefined) {
-      const rack = cleanUpdates.rackId != null && cleanUpdates.rackId !== ''
+      const rack = cleanUpdates.rackId !== null && cleanUpdates.rackId !== ''
         ? racks.find(r => Number(r.id) === Number(cleanUpdates.rackId))
         : null;
       const effectiveRack = rack || getFloorRack(cleanUpdates.category || box.category);
@@ -798,11 +816,11 @@ export const InventoryProvider = ({ children }) => {
       }
     }
 
-    setBoxes(prev => prev.map(b => Number(b.boxNumber) === Number(boxNumber) ? updatedBox : b));
+    setBoxes(prev => prev.map(b => Number(b.boxNumber) === num ? updatedBox : b));
 
     // Items store a denormalised copy of their box's rack/PIC. Keep it in sync
     // so the summary table, filters and printed labels stay consistent.
-    const affectedItems = items.filter(i => Number(i.boxNumber) === Number(boxNumber));
+    const affectedItems = items.filter(i => Number(i.boxNumber) === num);
     if (affectedItems.length > 0) {
       const refreshedItems = affectedItems.map(i => ({
         ...i,
@@ -810,15 +828,17 @@ export const InventoryProvider = ({ children }) => {
         rackName: updatedBox.rackName,
         picName: updatedBox.picName,
         category: updatedBox.category,
+        place: `BOX ${updatedBox.boxNumber} (${updatedBox.rackName} - ${updatedBox.picName})`,
       }));
       setItems(prev => prev.map(i => (
-        Number(i.boxNumber) === Number(boxNumber)
+        Number(i.boxNumber) === num
           ? {
               ...i,
               rackId: updatedBox.rackId,
               rackName: updatedBox.rackName,
               picName: updatedBox.picName,
               category: updatedBox.category,
+              place: `BOX ${updatedBox.boxNumber} (${updatedBox.rackName} - ${updatedBox.picName})`,
             }
           : i
       )));
@@ -843,6 +863,8 @@ export const InventoryProvider = ({ children }) => {
         console.error('Supabase update box error:', err);
       }
     }
+
+    return updatedBox;
   };
 
   const deleteBox = async (boxNumber) => {

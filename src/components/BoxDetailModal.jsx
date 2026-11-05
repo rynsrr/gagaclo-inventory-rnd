@@ -45,6 +45,7 @@ function BoxDetail({ box }) {
     setBoxFull,
     setTransactionModalConfig,
     updateItem,
+    boxes,
   } = useInventory();
   const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
@@ -69,6 +70,53 @@ function BoxDetail({ box }) {
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' (compact default) or 'card'
+
+  // Instant Move Box Dialog state
+  const [movingItems, setMovingItems] = useState(null);
+  const [targetBoxNum, setTargetBoxNum] = useState(1);
+  const [isMoving, setIsMoving] = useState(false);
+  const [moveError, setMoveError] = useState(null);
+
+  const openMoveModal = (itemsToMove) => {
+    setMoveError(null);
+    setMovingItems(itemsToMove);
+    const otherBox = boxes.find(b => Number(b.boxNumber) !== Number(box.boxNumber) && Number(b.boxNumber) < 900000);
+    setTargetBoxNum(otherBox ? otherBox.boxNumber : 1);
+  };
+
+  const handleConfirmMove = async () => {
+    if (!movingItems || movingItems.length === 0) return;
+    const destBox = boxes.find(b => Number(b.boxNumber) === Number(targetBoxNum));
+    if (!destBox) {
+      setMoveError('Pilih box tujuan yang valid.');
+      return;
+    }
+    setIsMoving(true);
+    setMoveError(null);
+    try {
+      for (const it of movingItems) {
+        await updateItem(it.id, {
+          boxNumber: destBox.boxNumber,
+          rackId: destBox.rackId,
+          rackName: destBox.rackName,
+          picName: destBox.picName,
+          category: destBox.category,
+          place: `BOX ${destBox.boxNumber} (${destBox.rackName || 'LANTAI'} - ${destBox.picName || 'Royan'})`,
+        });
+      }
+      setSelectedItemIds(prev => {
+        const next = new Set(prev);
+        movingItems.forEach(i => next.delete(i.id));
+        return next;
+      });
+      setMovingItems(null);
+    } catch (err) {
+      console.error('Error saat memindahkan item:', err);
+      setMoveError(err?.message || 'Gagal memindahkan item.');
+    } finally {
+      setIsMoving(false);
+    }
+  };
 
   const toggleItemSelect = (id) => {
     setSelectedItemIds(prev => {
@@ -303,6 +351,18 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
+              {/* Bulk Move Items to another Box */}
+              {selectedItemIds.size > 0 && (
+                <button
+                  onClick={() => openMoveModal(itemsInBox.filter(i => selectedItemIds.has(i.id)))}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-black shadow-xs transition cursor-pointer"
+                  title="Pindahkan semua item yang dicentang ke Box lain"
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  <span>Pindah Box ({selectedItemIds.size})</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
                 className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
@@ -451,10 +511,17 @@ function BoxDetail({ box }) {
                             <div className="flex items-center justify-end space-x-1">
                               <button
                                 onClick={() => setCardPrintItems([item])}
-                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition"
+                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition cursor-pointer"
                                 title="Cetak Kartu Fisik Item Ini"
                               >
                                 <Printer className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => openMoveModal([item])}
+                                className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
+                                title="Pindah ke Box Lain"
+                              >
+                                <ArrowRightLeft className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => {
@@ -546,10 +613,17 @@ function BoxDetail({ box }) {
                         <div className="flex items-center space-x-1 pl-1">
                           <button
                             onClick={() => setCardPrintItems([item])}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded cursor-pointer"
                             title="Cetak Kartu"
                           >
                             <Printer className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => openMoveModal([item])}
+                            className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded cursor-pointer"
+                            title="Pindah ke Box Lain"
+                          >
+                            <ArrowRightLeft className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
@@ -645,6 +719,99 @@ function BoxDetail({ box }) {
           itemsToPrint={cardPrintItems} 
           onClose={() => setCardPrintItems(null)} 
         />
+      )}
+
+      {/* Quick Move Item(s) to Another Box Modal */}
+      {movingItems && (
+        <div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in no-print">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-md w-full overflow-hidden flex flex-col">
+            <div className="inventory-dialog-heading px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center space-x-2">
+                <ArrowRightLeft className="w-4 h-4 text-amber-400" />
+                <h3 className="font-black text-slate-900 text-sm uppercase">
+                  Pindah Box ({movingItems.length} Item)
+                </h3>
+              </div>
+              <button
+                onClick={() => setMovingItems(null)}
+                className="text-slate-500 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-200 cursor-pointer"
+                aria-label="Tutup"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs">
+              {/* Item preview list */}
+              <div>
+                <span className="block font-bold text-slate-600 mb-1">Item yang akan dipindahkan:</span>
+                <div className="max-h-36 overflow-y-auto space-y-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                  {movingItems.map((it) => (
+                    <div key={it.id} className="flex items-center justify-between text-[11px] font-semibold text-slate-800 py-0.5">
+                      <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-300 text-[10px]">
+                        {it.kode || it.sku || '-'}
+                      </span>
+                      <span className="truncate max-w-[190px] text-slate-700 ml-2">
+                        {it.style || it.deskripsi || it.name}
+                      </span>
+                      <span className="text-slate-500 ml-auto whitespace-nowrap text-[10px]">
+                        {it.jumlah || it.qty} {it.satuan || it.unit || 'PCS'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Destination Box Picker */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Pilih Box Tujuan (saat ini di Box #{box.boxNumber}):
+                </label>
+                <select
+                  value={targetBoxNum}
+                  onChange={(e) => setTargetBoxNum(Number(e.target.value))}
+                  className="w-full p-2.5 bg-white border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs cursor-pointer"
+                >
+                  {boxes
+                    .filter((b) => Number(b.boxNumber) < 900000 && Number(b.boxNumber) !== Number(box.boxNumber))
+                    .sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber))
+                    .map((b) => (
+                      <option key={b.boxNumber} value={b.boxNumber}>
+                        BOX #{b.boxNumber} — {b.rackName || 'LANTAI'} (PIC: {b.picName || 'Royan'})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {moveError && (
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 font-bold text-xs flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{moveError}</span>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setMovingItems(null)}
+                  disabled={isMoving}
+                  className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 font-bold hover:bg-slate-100 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmMove}
+                  disabled={isMoving}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl shadow-md transition flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  <span>{isMoving ? 'Memindahkan...' : 'Pindahkan Sekarang'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

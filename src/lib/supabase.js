@@ -102,8 +102,8 @@ export function localItemToDb(item) {
     jumlah: Number(item.jumlah || item.qty || 1),
     unit: item.unit || item.satuan || 'PCS',
     satuan: item.satuan || item.unit || 'PCS',
-    box_number: Number(item.boxNumber || item.box_number || 1),
-    rack_id: Number(item.rackId || item.rack_id || 1),
+    box_number: Number(item.boxNumber ?? item.box_number ?? 1),
+    rack_id: Number(item.rackId ?? item.rack_id ?? 0),
     rack_name: item.rackName || item.rack_name || 'RACK 1',
     pic_name: item.picName || item.pic_name || 'Royan',
     category: item.category || 'SAMPLE',
@@ -136,7 +136,7 @@ export function dbItemToLocal(db) {
     unit: db.unit || db.satuan || 'PCS',
     satuan: db.satuan || db.unit || 'PCS',
     boxNumber: Number(db.box_number ?? db.boxNumber ?? 1),
-    rackId: Number(db.rack_id ?? db.rackId ?? 1),
+    rackId: Number(db.rack_id ?? db.rackId ?? (db.rack_name === 'LANTAI' ? 0 : 1)),
     rackName: db.rack_name || db.rackName || 'RACK 1',
     picName: db.pic_name || db.picName || 'Royan',
     category: db.category || 'SAMPLE',
@@ -149,26 +149,27 @@ export function dbItemToLocal(db) {
 }
 
 export function localBoxToDb(box) {
+  const bNum = Number(box.boxNumber ?? box.box_number ?? 1);
   return {
-    box_number: Number(box.boxNumber),
-    code: box.code,
-    rack_id: Number(box.rackId),
-    rack_name: box.rackName,
-    category: box.category,
-    pic_name: box.picName,
-    notes: box.notes || '',
+    box_number: bNum,
+    code: box.code || `BOX-${String(bNum).padStart(2, '0')}`,
+    rack_id: Number(box.rackId ?? box.rack_id ?? 0),
+    rack_name: box.rackName || box.rack_name || (Number(box.rackId ?? box.rack_id) === 0 ? 'LANTAI' : 'RACK 1'),
+    category: box.category || 'SAMPLE',
+    pic_name: box.picName || box.pic_name || 'Royan',
+    notes: box.notes ?? '',
     updated_at: new Date().toISOString(),
   };
 }
 
 export function dbBoxToLocal(db, defaultBoxes = []) {
-  const defaultBox = defaultBoxes.find(b => b.boxNumber === db.box_number) || {};
+  const defaultBox = defaultBoxes.find(b => Number(b.boxNumber) === Number(db.box_number)) || {};
   return {
     ...defaultBox,
     boxNumber: Number(db.box_number),
     code: db.code || defaultBox.code,
     // Use ?? so rackId 0 (LANTAI / floor) is preserved instead of falling back to 1
-    rackId: Number(db.rack_id ?? defaultBox.rackId ?? 1),
+    rackId: Number(db.rack_id ?? defaultBox.rackId ?? (db.rack_name === 'LANTAI' ? 0 : 1)),
     rackName: db.rack_name || defaultBox.rackName || 'LANTAI',
     rackDescription: defaultBox.rackDescription || (db.rack_name === 'LANTAI' ? 'Lantai (tanpa rak)' : ''),
     location: defaultBox.location || (db.rack_name === 'LANTAI' ? 'Lantai (tanpa rak)' : ''),
