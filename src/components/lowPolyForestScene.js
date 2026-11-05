@@ -128,7 +128,76 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, ecoModeR
     disposables.push(stone);
   });
 
-  // 5. Low-Poly Disney Trees Factory
+  // 5. Majestic Low-Poly Rocky Cliff Wall (Tebing Batu Bertingkat di Samping)
+  const cliffRockMats = [
+    new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9, flatShading: true }), // Slate grey
+    new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.88, flatShading: true }), // Deep slate
+    new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.85, flatShading: true }), // Sunlit stone
+  ];
+  const cliffMossMat = new THREE.MeshStandardMaterial({
+    color: 0x2d6a4f,
+    roughness: 0.9,
+    flatShading: true,
+  });
+  disposables.push(...cliffRockMats, cliffMossMat);
+
+  const cliffGroup = new THREE.Group();
+
+  // Helper for faceted cliff rock block
+  const createCliffBlock = (cx, cy, cz, w, h, d, rotY = 0, rotZ = 0) => {
+    const geo = new THREE.BoxGeometry(w, h, d, 2, 2, 2);
+    // Add random vertex distortion for natural low-poly faceted rock face
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      p.setX(i, p.getX(i) + (Math.sin(i * 1.7) * 0.22 - 0.11) * w);
+      p.setY(i, p.getY(i) + (Math.cos(i * 2.3) * 0.14 - 0.07) * h);
+      p.setZ(i, p.getZ(i) + (Math.sin(i * 3.1) * 0.22 - 0.11) * d);
+    }
+    geo.computeVertexNormals();
+
+    const mat = cliffRockMats[Math.floor(Math.random() * cliffRockMats.length)];
+    const block = new THREE.Mesh(geo, mat);
+    block.position.set(cx, cy, cz);
+    block.rotation.y = rotY;
+    block.rotation.z = rotZ;
+    block.castShadow = true;
+    block.receiveShadow = true;
+    cliffGroup.add(block);
+    disposables.push(geo, block);
+
+    // Green moss / grass cap on the upper surface of the cliff terrace
+    const capGeo = new THREE.BoxGeometry(w * 0.94, 0.22, d * 0.94);
+    const cap = new THREE.Mesh(capGeo, cliffMossMat);
+    cap.position.set(cx, cy + h / 2 + 0.1, cz);
+    cap.rotation.y = rotY;
+    cap.receiveShadow = true;
+    cliffGroup.add(cap);
+    disposables.push(capGeo, cap);
+  };
+
+  // Stacked, towering cliff tiers on the left flank (x = minX - 10 to minX - 22)
+  const cliffX = minX - 11;
+  // Tier 1 (Base rocky cliff)
+  createCliffBlock(cliffX + 1.5, 2.5, -3, 6.0, 5.0, 24, 0.08, -0.04);
+  createCliffBlock(cliffX + 2.0, 2.0, 8, 5.5, 4.0, 12, -0.06, 0.03);
+  createCliffBlock(cliffX + 1.0, 3.0, -12, 6.5, 6.0, 12, 0.12, -0.05);
+
+  // Tier 2 (Mid towering cliff wall)
+  createCliffBlock(cliffX - 3.5, 6.5, -4, 6.5, 7.5, 26, -0.05, -0.06);
+  createCliffBlock(cliffX - 3.0, 5.5, 7, 6.0, 6.0, 14, 0.08, 0.04);
+
+  // Tier 3 (Peak high mountain ridge)
+  createCliffBlock(cliffX - 8.5, 11.5, -5, 7.0, 9.0, 28, 0.05, -0.08);
+
+  // Right flank complementary rock ridge (x = maxX + 10)
+  const rightCliffX = maxX + 10;
+  createCliffBlock(rightCliffX, 2.2, -2, 5.5, 4.5, 22, -0.08, 0.05);
+  createCliffBlock(rightCliffX + 4.5, 4.8, -4, 6.0, 6.0, 20, 0.06, 0.07);
+
+  scene.add(cliffGroup);
+  disposables.push(cliffGroup);
+
+  // 6. Low-Poly Disney Trees Factory
   // A. Pine Tree (Tiered Cone Conifers)
   const trunkMat = new THREE.MeshStandardMaterial({
     color: 0x673919,
@@ -142,7 +211,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, ecoModeR
   ];
   disposables.push(trunkMat, ...pineLeafMats);
 
-  const createLowPolyPine = (x, z, scale = 1.0) => {
+  const createLowPolyPine = (x, z, scale = 1.0, y = 0) => {
     const tree = new THREE.Group();
     // Trunk
     const tGeo = new THREE.CylinderGeometry(0.25 * scale, 0.4 * scale, 1.8 * scale, 6);
@@ -168,7 +237,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, ecoModeR
       disposables.push(cGeo, cone);
     }
 
-    tree.position.set(x, 0, z);
+    tree.position.set(x, y, z);
     scene.add(tree);
     disposables.push(tree);
     swayingElements.push({ group: tree, speed: 0.7 + Math.random() * 0.4, phase: Math.random() * Math.PI * 2 });
@@ -182,7 +251,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, ecoModeR
   ];
   disposables.push(...canopyLeafMats);
 
-  const createCanopyTree = (x, z, scale = 1.0) => {
+  const createCanopyTree = (x, z, scale = 1.0, y = 0) => {
     const tree = new THREE.Group();
     // Trunk
     const tGeo = new THREE.CylinderGeometry(0.3 * scale, 0.45 * scale, 2.5 * scale, 6);
@@ -209,7 +278,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, ecoModeR
       disposables.push(cGeo, clump);
     });
 
-    tree.position.set(x, 0, z);
+    tree.position.set(x, y, z);
     scene.add(tree);
     disposables.push(tree);
     swayingElements.push({ group: tree, speed: 0.6 + Math.random() * 0.3, phase: Math.random() * Math.PI * 2 });
@@ -218,33 +287,45 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, ecoModeR
   // Populate Forest Trees surrounding the glade
   const treeLayout = [
     // Left forest flank
-    { type: 'pine', x: minX - 6.5, z: 3.5, s: 1.3 },
-    { type: 'canopy', x: minX - 9.0, z: 0.5, s: 1.25 },
-    { type: 'pine', x: minX - 11.5, z: -3.5, s: 1.4 },
-    { type: 'canopy', x: minX - 7.5, z: -6.5, s: 1.15 },
-    { type: 'pine', x: minX - 14.0, z: 2.0, s: 1.5 },
-    { type: 'pine', x: minX - 4.5, z: 6.8, s: 1.1 },
+    { type: 'pine', x: minX - 6.5, z: 3.5, s: 1.3, y: 0 },
+    { type: 'canopy', x: minX - 9.0, z: 0.5, s: 1.25, y: 0 },
+    { type: 'pine', x: minX - 11.5, z: -3.5, s: 1.4, y: 0 },
+    { type: 'canopy', x: minX - 7.5, z: -6.5, s: 1.15, y: 0 },
+    { type: 'pine', x: minX - 14.0, z: 2.0, s: 1.5, y: 0 },
+    { type: 'pine', x: minX - 4.5, z: 6.8, s: 1.1, y: 0 },
+
+    // Perched high trees on the left cliff tiers & ledges
+    { type: 'pine', x: cliffX + 1.2, z: -2.5, s: 0.95, y: 5.0 },
+    { type: 'canopy', x: cliffX + 1.8, z: 7.5, s: 0.85, y: 4.0 },
+    { type: 'pine', x: cliffX - 3.2, z: 1.5, s: 1.1, y: 10.3 },
+    { type: 'pine', x: cliffX - 4.0, z: -6.0, s: 1.15, y: 10.3 },
+    { type: 'pine', x: cliffX - 8.2, z: -4.5, s: 1.35, y: 16.0 },
+    { type: 'canopy', x: cliffX - 8.8, z: 3.0, s: 1.2, y: 16.0 },
 
     // Right forest flank
-    { type: 'pine', x: maxX + 6.0, z: 3.0, s: 1.35 },
-    { type: 'canopy', x: maxX + 8.5, z: -0.5, s: 1.2 },
-    { type: 'pine', x: maxX + 11.0, z: -4.0, s: 1.45 },
-    { type: 'canopy', x: maxX + 7.0, z: -7.0, s: 1.1 },
-    { type: 'pine', x: maxX + 13.5, z: 1.5, s: 1.5 },
-    { type: 'canopy', x: maxX + 4.5, z: 6.5, s: 1.15 },
+    { type: 'pine', x: maxX + 6.0, z: 3.0, s: 1.35, y: 0 },
+    { type: 'canopy', x: maxX + 8.5, z: -0.5, s: 1.2, y: 0 },
+    { type: 'pine', x: maxX + 11.0, z: -4.0, s: 1.45, y: 0 },
+    { type: 'canopy', x: maxX + 7.0, z: -7.0, s: 1.1, y: 0 },
+    { type: 'pine', x: maxX + 13.5, z: 1.5, s: 1.5, y: 0 },
+    { type: 'canopy', x: maxX + 4.5, z: 6.5, s: 1.15, y: 0 },
+
+    // Perched trees on right cliff ridge
+    { type: 'pine', x: rightCliffX + 0.5, z: -2.0, s: 0.9, y: 4.5 },
+    { type: 'pine', x: rightCliffX + 4.2, z: -3.8, s: 1.1, y: 7.8 },
 
     // Deep forest backdrop (behind racks)
-    { type: 'pine', x: deckCenterX - 8.0, z: -9.5, s: 1.5 },
-    { type: 'canopy', x: deckCenterX - 3.5, z: -10.5, s: 1.4 },
-    { type: 'pine', x: deckCenterX + 2.0, z: -9.8, s: 1.6 },
-    { type: 'canopy', x: deckCenterX + 7.5, z: -10.2, s: 1.45 },
-    { type: 'pine', x: deckCenterX + 12.0, z: -8.8, s: 1.5 },
-    { type: 'pine', x: deckCenterX - 13.0, z: -8.5, s: 1.4 },
+    { type: 'pine', x: deckCenterX - 8.0, z: -9.5, s: 1.5, y: 0 },
+    { type: 'canopy', x: deckCenterX - 3.5, z: -10.5, s: 1.4, y: 0 },
+    { type: 'pine', x: deckCenterX + 2.0, z: -9.8, s: 1.6, y: 0 },
+    { type: 'canopy', x: deckCenterX + 7.5, z: -10.2, s: 1.45, y: 0 },
+    { type: 'pine', x: deckCenterX + 12.0, z: -8.8, s: 1.5, y: 0 },
+    { type: 'pine', x: deckCenterX - 13.0, z: -8.5, s: 1.4, y: 0 },
   ];
 
-  treeLayout.forEach(({ type, x, z, s }) => {
-    if (type === 'pine') createLowPolyPine(x, z, s);
-    else createCanopyTree(x, z, s);
+  treeLayout.forEach(({ type, x, z, s, y }) => {
+    if (type === 'pine') createLowPolyPine(x, z, s, y || 0);
+    else createCanopyTree(x, z, s, y || 0);
   });
 
   // 6. Whimsical Forest Accents
