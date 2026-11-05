@@ -11,6 +11,7 @@ import {
   Printer, 
   MapPin,
   AlertCircle,
+  AlertTriangle,
   Calendar,
   Info,
   Sparkles
@@ -145,6 +146,23 @@ const ItemModalContent = () => {
   });
 
   const [errors, setErrors] = useState({});
+
+  const currentItemId = isEditing ? itemModalConfig.item?.id : null;
+
+  // Real-time check if entered code already exists in another item in the database
+  const existingItemWithSameCode = React.useMemo(() => {
+    const entered = String(formData.kode || '').trim().toUpperCase();
+    if (!entered || entered === 'NA') return null;
+    return items.find(i => 
+      String(i.id) !== String(currentItemId) &&
+      String(i.kode || i.sku || '').trim().toUpperCase() === entered
+    );
+  }, [formData.kode, items, currentItemId]);
+
+  const autoResolvedCode = React.useMemo(() => {
+    if (!existingItemWithSameCode) return formData.kode;
+    return resolveUniqueCode(formData.kode, items, currentItemId).finalCode;
+  }, [formData.kode, items, currentItemId, existingItemWithSameCode]);
 
   // Dynamic rack groupings from live `boxes`
   const dynamicRackGroups = React.useMemo(() => {
@@ -287,15 +305,14 @@ const ItemModalContent = () => {
       }
     }
 
-    const currentItemId = isEditing ? itemModalConfig.item?.id : null;
     const resolvedCode = resolveUniqueCode(kodeClean, activeItems, currentItemId);
     const finalKode = resolvedCode.finalCode;
 
     if (resolvedCode.wasAdjusted) {
       showNotification?.(
-        `⚡ Nomor ${resolvedCode.originalCode || 'Kode'} baru saja disimpan oleh rekan lain. Nomor kartu Anda otomatis disesuaikan menjadi ${finalKode} agar tidak bentrok.`,
-        'info',
-        6000
+        `⚠️ Kode tidak boleh sama! Kode "${resolvedCode.originalCode || 'tersebut'}" sudah ada di sistem, maka kode otomatis diubah menjadi "${finalKode}" agar tidak bentrok.`,
+        'warning',
+        7000
       );
       setFormData(prev => ({ ...prev, kode: finalKode }));
     }
@@ -412,6 +429,44 @@ const ItemModalContent = () => {
             </div>
           )}
 
+          {/* Notice: Kode Sudah Ada & Otomatis Ubah Kode */}
+          {existingItemWithSameCode && (
+            <div className="no-print w-full max-w-[580px] mb-3 p-3.5 bg-amber-50 border-2 border-amber-400 rounded-xl text-amber-950 text-xs shadow-md animate-fade-in">
+              <div className="flex items-start space-x-2.5">
+                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5 animate-pulse" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="font-extrabold text-amber-900 text-sm">
+                      ⚠️ Notice: Kode Sudah Digunakan! ({formData.kode})
+                    </p>
+                    <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-200 text-amber-900 rounded-full border border-amber-300">
+                      Kode Tidak Boleh Sama
+                    </span>
+                  </div>
+                  <p className="mt-1 text-amber-800 leading-relaxed">
+                    Kode <span className="font-mono font-bold text-amber-950 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">{formData.kode}</span> sudah dipakai di <strong>BOX #{existingItemWithSameCode.boxNumber || '?'}</strong> ({existingItemWithSameCode.style || existingItemWithSameCode.name || 'Barang lain'}).
+                  </p>
+                  <div className="mt-2.5 p-2 bg-white/90 rounded-lg border border-amber-300 flex items-center justify-between gap-2 flex-wrap shadow-2xs">
+                    <div className="text-[11px] text-amber-900 font-medium">
+                      💡 Kode akan otomatis diubah menjadi: <strong className="font-mono text-xs text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">{autoResolvedCode}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, kode: autoResolvedCode }))}
+                      className="px-2.5 py-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 rounded-lg shadow-sm transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Ganti ke {autoResolvedCode}</span>
+                      <span>➔</span>
+                    </button>
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-amber-700 italic">
+                    * Catatan: Karena kode tidak boleh sama, saat disimpan sistem akan otomatis mengganti kode ke <strong>{autoResolvedCode}</strong> agar tidak ada 2 nomor yang sama tersimpan.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* THE PHYSICAL SAMPLE CARD (EXPANDED PREVIEW CONTAINER) */}
           <div className="w-full max-w-[580px] bg-white p-3 sm:p-4 rounded-2xl shadow-xl border border-slate-300 ring-4 ring-slate-200/60 box-border">
             <form onSubmit={handleSubmit} id="direct-card-form">
@@ -491,23 +546,39 @@ const ItemModalContent = () => {
                     <td className="p-0 align-middle">
                       <div className="grid grid-cols-2 gap-0 items-center w-full">
                         {/* Kolom 1: Kode Barang (50%) */}
-                        <div className="flex items-center min-w-0 border-r-2 border-black px-3 py-1.5">
+                        <div className={`flex items-center min-w-0 border-r-2 border-black px-3 py-1.5 transition ${
+                          existingItemWithSameCode ? 'bg-amber-50/90' : ''
+                        }`}>
                           <input
                             type="text"
                             placeholder="SAMPLE-00001"
                             value={formData.kode}
                             onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
-                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-black text-black font-mono focus:outline-none uppercase transition bg-transparent ${
-                              errors.kode ? 'bg-rose-50 placeholder:text-rose-400' : 'focus:bg-blue-50/60'
+                            className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-black font-mono focus:outline-none uppercase transition bg-transparent ${
+                              existingItemWithSameCode 
+                                ? 'text-amber-900 font-bold' 
+                                : errors.kode ? 'bg-rose-50 placeholder:text-rose-400 text-black' : 'text-black focus:bg-blue-50/60'
                             }`}
                           />
+                          {existingItemWithSameCode && (
+                            <span 
+                              className="no-print mr-1 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white rounded shrink-0 select-none cursor-help shadow-2xs"
+                              title={`Kode sudah ada di BOX #${existingItemWithSameCode.boxNumber}! Kode tidak boleh sama.`}
+                            >
+                              Sudah Ada
+                            </span>
+                          )}
                           <button
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, kode: getNextSampleCode(items) }))}
-                            className="no-print shrink-0 p-1 ml-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition flex items-center justify-center cursor-pointer shadow-2xs"
-                            title="Generate nomor urut otomatis berikutnya"
+                            onClick={() => setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : getNextSampleCode(items) }))}
+                            className={`no-print shrink-0 p-1 ml-1 rounded-lg border transition flex items-center justify-center cursor-pointer shadow-2xs ${
+                              existingItemWithSameCode
+                                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 animate-pulse'
+                                : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
+                            }`}
+                            title={existingItemWithSameCode ? `Ganti ke kode baru yang unik (${autoResolvedCode})` : "Generate nomor urut otomatis berikutnya"}
                           >
-                            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                            <Sparkles className="w-3.5 h-3.5" />
                           </button>
                         </div>
 

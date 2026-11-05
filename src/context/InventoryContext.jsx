@@ -790,9 +790,9 @@ export const InventoryProvider = ({ children }) => {
 
     if (resolved.wasAdjusted) {
       showNotification(
-        `⚡ Nomor urut disesuaikan: ${resolved.originalCode || 'Nomor'} sudah dipakai rekan lain. Nomor kartu otomatis menjadi ${finalCode} agar tidak bentrok.`,
-        'info',
-        6000
+        `⚠️ Kode tidak boleh sama! Kode "${resolved.originalCode || 'tersebut'}" sudah ada di sistem, maka kode otomatis diubah menjadi "${finalCode}" agar tidak bentrok.`,
+        'warning',
+        7000
       );
     }
 
@@ -887,9 +887,9 @@ export const InventoryProvider = ({ children }) => {
     if (resolved.wasAdjusted) {
       finalCode = resolved.finalCode;
       showNotification(
-        `⚡ Nomor urut disesuaikan: ${resolved.originalCode} sudah dipakai rekan lain. Nomor kartu otomatis menjadi ${finalCode} agar tidak bentrok.`,
-        'info',
-        6000
+        `⚠️ Kode tidak boleh sama! Kode "${resolved.originalCode}" sudah ada di sistem, maka kode otomatis diubah menjadi "${finalCode}" agar tidak bentrok.`,
+        'warning',
+        7000
       );
     }
 
