@@ -135,6 +135,66 @@ export const InventoryProvider = ({ children }) => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Global Countdown Timer State (Synced with Supabase Cloud & cached locally)
+  // Default deadline matches the 7-day target set by the team (approx Nov 12, 2026)
+  const [timerDeadline, setTimerDeadline] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_inventory_timer_deadline');
+      if (saved && Number(saved) > 0) return Number(saved);
+    } catch (e) {
+      console.error('Failed to load timer from localStorage', e);
+    }
+    // Default fallback so every device sees the countdown immediately!
+    return 1794444171613;
+  });
+
+  const updateTimerDeadline = async (newDeadline) => {
+    const val = Number(newDeadline) || 0;
+    setTimerDeadline(val);
+    try {
+      if (val > 0) {
+        localStorage.setItem('gagaclo_inventory_timer_deadline', String(val));
+      } else {
+        localStorage.removeItem('gagaclo_inventory_timer_deadline');
+      }
+    } catch (e) {
+      console.error('Failed to write timer to localStorage', e);
+    }
+
+    // Persist to Supabase Cloud so it is visible to everyone on all devices
+    if (supabase) {
+      try {
+        await supabase.from('boxes').upsert({
+          box_number: 999999,
+          code: 'SYSTEM_TIMER',
+          rack_id: -1,
+          rack_name: 'SYSTEM',
+          category: 'CONFIG',
+          pic_name: 'SYSTEM',
+          notes: JSON.stringify({ deadline: val, updatedAt: new Date().toISOString() }),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'box_number' });
+
+        await supabase.from('items').upsert({
+          id: 'SYSTEM_CONFIG_TIMER',
+          sku: 'SYSTEM_TIMER',
+          kode: 'SYSTEM_TIMER',
+          name: 'SYSTEM TIMER CONFIG',
+          description: String(val),
+          box_number: 999999,
+          rack_id: -1,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+      } catch (err) {
+        console.error('Failed to sync timer to Supabase:', err);
+      }
+    }
+  };
+
+  const resetTimerDeadline = async () => {
+    await updateTimerDeadline(0);
+  };
+
   // Persist to localStorage on change as safety cache
   useEffect(() => {
     try {
@@ -183,20 +243,54 @@ export const InventoryProvider = ({ children }) => {
 
       if (trxErr) throw trxErr;
 
-      // Update local state if remote data is found
+      // Check for remote timer config in boxes or items
+      let remoteDeadline = null;
+      if (dbBoxes && dbBoxes.length > 0) {
+        const timerBox = dbBoxes.find(b => Number(b.box_number) === 999999 || b.code === 'SYSTEM_TIMER');
+        if (timerBox?.notes) {
+          try {
+            const parsed = JSON.parse(timerBox.notes);
+            if (typeof parsed?.deadline === 'number') {
+              remoteDeadline = parsed.deadline;
+            }
+          } catch {}
+        }
+      }
+      if (remoteDeadline === null && dbItems && dbItems.length > 0) {
+        const timerItem = dbItems.find(i => i.id === 'SYSTEM_CONFIG_TIMER');
+        if (timerItem?.description) {
+          const num = Number(timerItem.description);
+          if (!isNaN(num)) remoteDeadline = num;
+        }
+      }
+
+      if (remoteDeadline !== null) {
+        setTimerDeadline(remoteDeadline);
+        try {
+          if (remoteDeadline > 0) {
+            localStorage.setItem('gagaclo_inventory_timer_deadline', String(remoteDeadline));
+          } else {
+            localStorage.removeItem('gagaclo_inventory_timer_deadline');
+          }
+        } catch {}
+      }
+
+      // Update local state if remote data is found (excluding system config rows)
       if (dbItems && dbItems.length > 0) {
-        setItems(dbItems.map(dbItemToLocal));
+        const userItems = dbItems.filter(i => i.id !== 'SYSTEM_CONFIG_TIMER' && Number(i.box_number) !== 999999);
+        setItems(userItems.map(dbItemToLocal));
       }
 
       if (dbBoxes && dbBoxes.length > 0) {
+        const userDbBoxes = dbBoxes.filter(b => Number(b.box_number) !== 999999 && Number(b.box_number) > 0 && Number(b.box_number) < 900000);
         setBoxes(prev => {
           const updated = prev.map(box => {
-            const remoteBox = dbBoxes.find(b => b.box_number === box.boxNumber);
+            const remoteBox = userDbBoxes.find(b => b.box_number === box.boxNumber);
             return remoteBox ? dbBoxToLocal(remoteBox, [box]) : box;
           });
           // Include boxes that exist remotely but not locally (added on another device)
           const knownNumbers = new Set(prev.map(b => b.boxNumber));
-          const extra = dbBoxes
+          const extra = userDbBoxes
             .filter(b => !knownNumbers.has(Number(b.box_number)))
             .map(b => dbBoxToLocal(b, []));
           return [...updated, ...extra].sort((a, b) => a.boxNumber - b.boxNumber);
@@ -321,6 +415,18 @@ export const InventoryProvider = ({ children }) => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'items' },
           (payload) => {
+            // Realtime Sync for Global Timer
+            if (payload.new?.id === 'SYSTEM_CONFIG_TIMER') {
+              const d = Number(payload.new.description) || 0;
+              setTimerDeadline(d);
+              try {
+                if (d > 0) localStorage.setItem('gagaclo_inventory_timer_deadline', String(d));
+                else localStorage.removeItem('gagaclo_inventory_timer_deadline');
+              } catch {}
+              return;
+            }
+            if (payload.old?.id === 'SYSTEM_CONFIG_TIMER' || payload.new?.id === 'SYSTEM_CONFIG_TIMER') return;
+
             if (payload.eventType === 'INSERT') {
               const newItem = dbItemToLocal(payload.new);
               setItems(prev => prev.some(i => i.id === newItem.id) ? prev : [newItem, ...prev]);
@@ -336,6 +442,22 @@ export const InventoryProvider = ({ children }) => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'boxes' },
           (payload) => {
+            // Realtime Sync for Global Timer
+            if (Number(payload.new?.box_number) === 999999 || payload.new?.code === 'SYSTEM_TIMER') {
+              try {
+                const parsed = JSON.parse(payload.new.notes);
+                if (typeof parsed?.deadline === 'number') {
+                  setTimerDeadline(parsed.deadline);
+                  try {
+                    if (parsed.deadline > 0) localStorage.setItem('gagaclo_inventory_timer_deadline', String(parsed.deadline));
+                    else localStorage.removeItem('gagaclo_inventory_timer_deadline');
+                  } catch {}
+                }
+              } catch {}
+              return;
+            }
+            if (Number(payload.new?.box_number) >= 900000) return;
+
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
               const updatedBox = payload.new;
               setBoxes(prev => prev.map(b => b.boxNumber === updatedBox.box_number ? dbBoxToLocal(updatedBox, [b]) : b));
@@ -1128,6 +1250,10 @@ export const InventoryProvider = ({ children }) => {
     setSelectedCategoryFilter,
     searchQuery,
     setSearchQuery,
+    // Global Timer State & Operations
+    timerDeadline,
+    updateTimerDeadline,
+    resetTimerDeadline,
   };
 
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;
