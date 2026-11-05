@@ -520,8 +520,9 @@ const ItemModalContent = () => {
 
                   {/* Jenis Sample (ORI / DEVELOP / PPS) */}
                   <tr className="border-b-2 border-black">
-                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80">
-                      Jenis Sample <span className="text-rose-500">*</span>
+                    <td className="py-2 px-3 font-bold border-r-2 border-black align-middle text-black whitespace-nowrap bg-slate-50/80 leading-tight">
+                      <div>Jenis Sample <span className="text-rose-500">*</span></div>
+                      <div className="text-[10px] font-normal text-slate-500 mt-0.5">*(Centang salah satu)</div>
                     </td>
                     <td className="py-1.5 px-3 align-middle">
                       <div className="flex items-center gap-2">

@@ -93,19 +93,23 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
 
           {/* Jenis Sample (ORI / DEVELOP / PPS) */}
           <tr className="border-b border-black">
-            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
-              Jenis Sample
+            <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50 leading-tight">
+              <div>Jenis Sample</div>
+              <div className="text-[6.5px] font-normal text-slate-700 leading-none mt-0.5">*(Centang salah satu)</div>
             </td>
             <td className="py-[1px] px-1.5 align-middle text-black">
               <div className="flex items-center gap-1.5 font-mono text-[7px] leading-none">
-                <span className={`px-1 py-0.2 border border-black ${jenisSample === 'ORI' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
-                  {jenisSample === 'ORI' ? '✓ ORI' : 'ORI'}
+                <span className={`px-1 py-0.5 border border-black flex items-center gap-0.5 ${jenisSample === 'ORI' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-700 font-bold'}`}>
+                  <span>{jenisSample === 'ORI' ? '✓' : ''}</span>
+                  <span>ORI</span>
                 </span>
-                <span className={`px-1 py-0.2 border border-black ${jenisSample === 'DEVELOP' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
-                  {jenisSample === 'DEVELOP' ? '✓ DEVELOP' : 'DEVELOP'}
+                <span className={`px-1 py-0.5 border border-black flex items-center gap-0.5 ${jenisSample === 'DEVELOP' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-700 font-bold'}`}>
+                  <span>{jenisSample === 'DEVELOP' ? '✓' : ''}</span>
+                  <span>DEVELOP</span>
                 </span>
-                <span className={`px-1 py-0.2 border border-black ${jenisSample === 'PPS' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-500 font-bold'}`}>
-                  {jenisSample === 'PPS' ? '✓ PPS' : 'PPS'}
+                <span className={`px-1 py-0.5 border border-black flex items-center gap-0.5 ${jenisSample === 'PPS' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-700 font-bold'}`}>
+                  <span>{jenisSample === 'PPS' ? '✓' : ''}</span>
+                  <span>PPS</span>
                 </span>
               </div>
             </td>
