@@ -154,6 +154,11 @@ const AppContent = () => {
         </div>
       </header>
 
+      {/* Hitung Mundur Pendataan */}
+      <div className="no-print mx-auto w-full max-w-7xl shrink-0 px-4 pt-3 pb-1 sm:px-6 lg:px-8">
+        <InventoryTimer />
+      </div>
+
       {/* Left main navigation + page content */}
       <div className="inventory-body">
         <aside className="inventory-sidebar no-print" aria-label="Navigasi utama">
@@ -208,10 +213,6 @@ const AppContent = () => {
           {appMode === 'summary' && <TotalItemsSummaryView />}
         </main>
       </div>
-
-      <footer className="no-print mx-auto w-full max-w-7xl shrink-0 px-4 pb-3 sm:px-6 lg:px-8">
-        <InventoryTimer />
-      </footer>
 
       {/* Floating Modals for interacting with 3D or 2D Boxes */}
       <BoxDetailModal />
