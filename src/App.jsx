@@ -207,6 +207,9 @@ const AppContent = () => {
             <Warehouse3DView
               controlsHost={warehouseControlsHost}
               highlightBoxNumbers={highlightBoxNumbers}
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
+              searchResults={searchResults}
               onClearSearch={() => setSearchQuery('')}
             />
           )}
