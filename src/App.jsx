@@ -11,6 +11,7 @@ import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
 import { SupabaseModal } from './components/SupabaseModal';
 import { BoxManageModal } from './components/BoxManageModal';
+import { BoxLabelPrintModal } from './components/BoxLabelPrintModal';
 import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
 import {
   Box as BoxIcon,
@@ -36,6 +37,7 @@ const AppContent = () => {
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
+  const [isBoxLabelPrintOpen, setIsBoxLabelPrintOpen] = useState(false);
   const connected = supabaseStatus.isConnected;
 
   // Shared search state: the sidebar panel shows results, the 3D scene highlights

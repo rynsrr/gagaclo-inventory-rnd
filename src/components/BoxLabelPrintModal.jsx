@@ -40,8 +40,8 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto print:block">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none print:overflow-visible print:block">
         
         {/* Header (hidden in print) */}
         <div className="no-print inventory-dialog-heading px-6 py-4 flex items-center justify-between border-b border-slate-800">
@@ -138,13 +138,13 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
         </div>
 
         {/* Printable Area */}
-        <div className="p-6 overflow-y-auto flex-1 bg-slate-100 print:bg-white print:p-0">
+        <div className="p-6 overflow-y-auto flex-1 bg-slate-100 print:bg-white print:p-0 print:overflow-visible">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-items-center print:grid-cols-2 print:gap-4 print:p-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-items-center print:flex print:flex-col print:items-center print:gap-0">
             {boxesToPrint.map((box) => (
               <div 
                 key={box.boxNumber}
-                className="relative print:break-inside-avoid print:page-break-inside-avoid flex flex-col items-center"
+                className="relative print:break-inside-avoid print:page-break-inside-avoid print:break-after-page print:page-break-after-always flex flex-col items-center"
               >
                 <BoxLabel box={box} isPrintMode={true} />
               </div>

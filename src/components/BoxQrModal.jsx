@@ -76,11 +76,11 @@ export const BoxQrModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto print:block">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden print:max-w-none print:shadow-none print:border-none print:rounded-none print:block">
         
         {/* Header */}
-        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
+        <div className="no-print inventory-dialog-heading px-5 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <h3 className="text-base font-bold">Label & QR Code Box</h3>
             <span className="text-xs bg-blue-600 px-2 py-0.5 rounded font-black">
@@ -140,7 +140,7 @@ export const BoxQrModal = () => {
           </div>
 
           {/* Quick Info Box Items */}
-          <div className="w-full mt-4 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <div className="no-print w-full mt-4 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
             <div className="flex justify-between font-bold text-slate-800 mb-1">
               <span>Isi Saat Ini:</span>
               <span>{items.length} jenis item</span>
@@ -160,7 +160,7 @@ export const BoxQrModal = () => {
           </div>
 
           {/* Actions */}
-          <div className="w-full mt-5 flex items-center space-x-2">
+          <div className="no-print w-full mt-5 flex items-center space-x-2">
             <button
               onClick={handlePrint}
               className="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md transition"
