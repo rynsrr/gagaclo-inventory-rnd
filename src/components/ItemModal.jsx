@@ -308,13 +308,21 @@ const ItemModalContent = () => {
     const resolvedCode = resolveUniqueCode(kodeClean, activeItems, currentItemId);
     const finalKode = resolvedCode.finalCode;
 
+    // Jika kode terdeteksi duplikat / sama dengan yang sudah ada di sistem:
+    // JANGAN langsung simpan dan tutup modal!
+    // Ubah kode di form terlebih dahulu agar pengguna bisa melihat perubahannya di kartu fisik, lalu konfirmasi simpan.
     if (resolvedCode.wasAdjusted) {
-      showNotification?.(
-        `⚠️ Kode tidak boleh sama! Kode "${resolvedCode.originalCode || 'tersebut'}" sudah ada di sistem, maka kode otomatis diubah menjadi "${finalKode}" agar tidak bentrok.`,
-        'warning',
-        7000
-      );
+      setIsSubmitting(false);
       setFormData(prev => ({ ...prev, kode: finalKode }));
+      setSubmitError(
+        `⚠️ Kode "${resolvedCode.originalCode || 'tersebut'}" sudah ada di sistem! Nomor kartu telah otomatis diubah menjadi "${finalKode}". Silakan periksa kartu fisik Anda, lalu klik "Simpan" sekali lagi.`
+      );
+      showNotification?.(
+        `⚠️ Kode tidak boleh sama! Kode "${resolvedCode.originalCode || 'tersebut'}" sudah ada di sistem. Nomor kartu Anda telah otomatis diganti menjadi "${finalKode}". Silakan periksa kartu Anda, lalu klik Simpan lagi.`,
+        'warning',
+        9000
+      );
+      return;
     }
 
     const payload = {
@@ -393,11 +401,29 @@ const ItemModalContent = () => {
           </button>
         </div>
 
-        {/* Error message */}
+        {/* Error / Warning Alert message */}
         {submitError && (
-          <div className="mx-4 mt-3 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-bold flex items-center gap-2 shrink-0">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>{submitError}</span>
+          <div className={`mx-4 mt-3 px-3.5 py-2.5 rounded-xl border-2 text-xs font-bold flex items-center gap-2.5 shrink-0 animate-fade-in shadow-xs ${
+            submitError.includes('⚠️') || submitError.includes('Kode')
+              ? 'bg-amber-50 border-amber-400 text-amber-950'
+              : 'bg-rose-50 border-rose-300 text-rose-800'
+          }`}>
+            {submitError.includes('⚠️') || submitError.includes('Kode') ? (
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 animate-pulse" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            )}
+            <span className="leading-snug flex-1">{submitError}</span>
+            {(submitError.includes('⚠️') || submitError.includes('Kode')) && (
+              <button
+                type="submit"
+                form="direct-card-form"
+                className="no-print shrink-0 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-black rounded-lg shadow-sm transition cursor-pointer flex items-center gap-1"
+              >
+                <span>Simpan Sekarang</span>
+                <span>➔</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -448,19 +474,22 @@ const ItemModalContent = () => {
                   </p>
                   <div className="mt-2.5 p-2 bg-white/90 rounded-lg border border-amber-300 flex items-center justify-between gap-2 flex-wrap shadow-2xs">
                     <div className="text-[11px] text-amber-900 font-medium">
-                      💡 Kode akan otomatis diubah menjadi: <strong className="font-mono text-xs text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">{autoResolvedCode}</strong>
+                      💡 Kode unik berikutnya yang tersedia: <strong className="font-mono text-xs text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">{autoResolvedCode}</strong>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, kode: autoResolvedCode }))}
-                      className="px-2.5 py-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 rounded-lg shadow-sm transition flex items-center gap-1 cursor-pointer"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, kode: autoResolvedCode }));
+                        if (submitError) setSubmitError(null);
+                      }}
+                      className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                     >
-                      <span>Ganti ke {autoResolvedCode}</span>
-                      <span>➔</span>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Ubah Sekarang ke {autoResolvedCode} ➔</span>
                     </button>
                   </div>
                   <p className="mt-1.5 text-[10px] text-amber-700 italic">
-                    * Catatan: Karena kode tidak boleh sama, saat disimpan sistem akan otomatis mengganti kode ke <strong>{autoResolvedCode}</strong> agar tidak ada 2 nomor yang sama tersimpan.
+                    * Catatan: Karena kode tidak boleh sama, saat Anda klik Simpan, sistem akan terlebih dahulu mengganti kode menjadi <strong>{autoResolvedCode}</strong> di kartu fisik ini sebelum data disimpan.
                   </p>
                 </div>
               </div>
@@ -553,7 +582,10 @@ const ItemModalContent = () => {
                             type="text"
                             placeholder="SAMPLE-00001"
                             value={formData.kode}
-                            onChange={(e) => setFormData({ ...formData, kode: e.target.value.toUpperCase() })}
+                            onChange={(e) => {
+                              setFormData({ ...formData, kode: e.target.value.toUpperCase() });
+                              if (submitError) setSubmitError(null);
+                            }}
                             className={`min-w-0 flex-1 py-0.5 text-xs sm:text-sm font-black font-mono focus:outline-none uppercase transition bg-transparent ${
                               existingItemWithSameCode 
                                 ? 'text-amber-900 font-bold' 
@@ -570,7 +602,10 @@ const ItemModalContent = () => {
                           )}
                           <button
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : getNextSampleCode(items) }))}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : getNextSampleCode(items) }));
+                              if (submitError) setSubmitError(null);
+                            }}
                             className={`no-print shrink-0 p-1 ml-1 rounded-lg border transition flex items-center justify-center cursor-pointer shadow-2xs ${
                               existingItemWithSameCode
                                 ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 animate-pulse'
