@@ -392,10 +392,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
     flatShading: true,
   });
   const dogDarkMat = new THREE.MeshStandardMaterial({
-    color: 0x18181b, // Glossy button nose and pupils
+    color: 0x18181b, // Glossy button nose
     roughness: 0.25,
   });
-  const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const tongueMat = new THREE.MeshStandardMaterial({
     color: 0xf472b6, // Cute pink tongue
     roughness: 0.4,
@@ -409,7 +408,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
     metalness: 0.8,
     roughness: 0.2,
   });
-  disposables.push(dogFurMat, dogWhiteFurMat, dogDarkMat, eyeWhiteMat, tongueMat, collarMat, bellMat);
+  disposables.push(dogFurMat, dogWhiteFurMat, dogDarkMat, tongueMat, collarMat, bellMat);
 
   // 1. Torso
   const dogBodyGeo = new THREE.BoxGeometry(0.44, 0.38, 0.65);
@@ -448,27 +447,6 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   dogNose.position.set(0, -0.01, 0.34);
   headGroup.add(dogNose);
   disposables.push(noseGeo, dogNose);
-
-  // Big cute sparkling puppy eyes (Mata anjing lucu berbinar)
-  const eyeBallGeo = new THREE.SphereGeometry(0.065, 8, 8);
-  const sparkleGeo = new THREE.SphereGeometry(0.024, 6, 6);
-  disposables.push(eyeBallGeo, sparkleGeo);
-
-  // Left Eye
-  const eyeL = new THREE.Mesh(eyeBallGeo, dogDarkMat);
-  eyeL.position.set(-0.11, 0.05, 0.17);
-  const sparkleL = new THREE.Mesh(sparkleGeo, eyeWhiteMat);
-  sparkleL.position.set(-0.02, 0.02, 0.05);
-  eyeL.add(sparkleL);
-  headGroup.add(eyeL);
-
-  // Right Eye
-  const eyeR = new THREE.Mesh(eyeBallGeo, dogDarkMat);
-  eyeR.position.set(0.11, 0.05, 0.17);
-  const sparkleR = new THREE.Mesh(sparkleGeo, eyeWhiteMat);
-  sparkleR.position.set(-0.02, 0.02, 0.05);
-  eyeR.add(sparkleR);
-  headGroup.add(eyeR);
 
   // Playful pink tongue (lidah menjulur gemas)
   const tongueGeo = new THREE.BoxGeometry(0.1, 0.04, 0.14);
