@@ -991,21 +991,15 @@ const ItemModalContent = () => {
             {/* Info Item */}
             <div className="my-3.5 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-semibold">Kode Sample:</span>
-                <span className="font-mono font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-sm">
-                  {savedItemReminder.kode}
+                <span className="text-slate-500 font-semibold">Style / Barang:</span>
+                <span className="font-bold text-slate-900 truncate max-w-[220px]" title={savedItemReminder.style}>
+                  {savedItemReminder.style}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-semibold">Place / Lokasi:</span>
                 <span className="font-bold text-slate-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                   {savedItemReminder.place}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-semibold">Style / Barang:</span>
-                <span className="font-bold text-slate-900 truncate max-w-[200px]" title={savedItemReminder.style}>
-                  {savedItemReminder.style}
                 </span>
               </div>
             </div>
@@ -1026,7 +1020,7 @@ const ItemModalContent = () => {
                 </div>
                 <div className="flex items-start gap-1.5">
                   <span className="text-amber-700 font-black">2.</span>
-                  <span><strong>TULISKAN MANUAL</strong> keterangan <strong>Kode Sample ({savedItemReminder.kode})</strong> dan <strong>Place ({savedItemReminder.place})</strong> pada kartu lama!</span>
+                  <span><strong>TULISKAN MANUAL</strong> keterangan <strong>Kode Sample</strong> dan <strong>Place / Lokasi Rak</strong> pada kartu fisik lama!</span>
                 </div>
               </div>
             </div>
