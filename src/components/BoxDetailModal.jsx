@@ -63,10 +63,10 @@ function BoxDetail({ box }) {
     try {
       navigator.clipboard.writeText(code);
       setCopiedId(id);
-      showNotification?.(`📋 Kode "${code}" berhasil disalin!`, 'info', 2000);
+      showNotification?.('📋 Kode sample berhasil disalin!', 'info', 2000);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
-      showNotification?.(`Kode: ${code}`, 'info', 3000);
+      showNotification?.('📋 Kode sample disalin', 'info', 2000);
     }
   };
 
@@ -84,7 +84,7 @@ function BoxDetail({ box }) {
       targetBoxNumber: box.boxNumber,
       isDuplicate: true,
     });
-    showNotification?.(`📋 Data item disalin! Kode baru: ${nextCode}`, 'info', 3500);
+    showNotification?.('📋 Data item berhasil diduplikasi! Kode baru otomatis dibuat unik.', 'info', 3000);
   };
 
   const handleCopySelectedInfo = () => {
@@ -96,9 +96,9 @@ function BoxDetail({ box }) {
 
     try {
       navigator.clipboard.writeText(textLines);
-      showNotification?.(`📋 ${selected.length} data item berhasil disalin ke clipboard!`, 'info', 3000);
+      showNotification?.('📋 Data item terpilih berhasil disalin ke clipboard!', 'info', 3000);
     } catch {
-      showNotification?.(`Gagal menyalin ke clipboard`, 'error', 3000);
+      showNotification?.('Gagal menyalin ke clipboard', 'error', 3000);
     }
   };
   const [savingFullStatus, setSavingFullStatus] = useState(false);
@@ -167,9 +167,9 @@ function BoxDetail({ box }) {
         return next;
       });
       showNotification?.(
-        `⚠️ PENGINGAT WAJIB: ${movingItems.length} item berhasil dipindah ke BOX #${destBox.boxNumber}. Harap cetak kartu baru atau tulis Place baru di kartu fisik lama!`,
+        '⚠️ PENGINGAT WAJIB: Item berhasil dipindahkan! Harap cetak kartu sample baru atau tulis Place baru di kartu fisik!',
         'warning',
-        9000
+        8000
       );
       setMovingItems(null);
     } catch (err) {

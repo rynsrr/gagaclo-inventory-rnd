@@ -19,10 +19,10 @@ import {
 
 // Every row on the sample card is mandatory. "NA" is an accepted value when
 // the information genuinely does not exist; "-" and empty text are not.
+// Catatan: "kode" di-generate otomatis unik & berurutan di background agar tidak bentrok antar user.
 const REQUIRED_FIELDS = [
   { key: 'track', label: 'Track' },
   { key: 'tanggal', label: 'Tanggal Sample' },
-  { key: 'kode', label: 'Kode' },
   { key: 'buyerNo', label: 'Buyer No' },
   { key: 'jenisSample', label: 'Jenis Sample' },
   { key: 'style', label: 'Nama / No. Style' },
@@ -46,7 +46,7 @@ const clean = (value) => {
 };
 
 const TEXT_KEYS = [
-  'track', 'tanggal', 'kode', 'buyerNo', 'jenisSample', 'style',
+  'track', 'tanggal', 'buyerNo', 'jenisSample', 'style',
   'sampleNo', 'size', 'color', 'satuan', 'place',
 ];
 
@@ -60,6 +60,36 @@ const fillBlankWithNA = (data) => {
 
 // Re-export getNextSampleCode from sequenceResolver utility
 export { getNextSampleCode };
+
+export function formatTodayDate() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  return `${dd}-${mm}-${yy}`;
+}
+
+export function formatToDDMMYY(str) {
+  if (!str || str === 'NA' || str === '-') return str || '';
+  const cleanStr = String(str).trim();
+  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{2}$/.test(cleanStr)) {
+    const parts = cleanStr.split(/[-/]/);
+    return `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-${parts[2]}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    const [y, m, d] = cleanStr.split('-');
+    return `${d}-${m}-${y.slice(-2)}`;
+  }
+  const monthMap = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+  const textMatch = cleanStr.match(/^(\d{1,2})[-/ ]([A-Za-z]{3})[-/ ](\d{2,4})$/);
+  if (textMatch) {
+    const d = textMatch[1].padStart(2, '0');
+    const m = monthMap[textMatch[2].toLowerCase()] || '01';
+    const y = textMatch[3].slice(-2);
+    return `${d}-${m}-${y}`;
+  }
+  return cleanStr;
+}
 
 export const ItemModal = () => {
   const { itemModalConfig } = useInventory();
@@ -95,12 +125,6 @@ const ItemModalContent = () => {
 
   const clientIdRef = useRef('user_' + Math.random().toString(36).substr(2, 6));
 
-  function formatTodayDate() {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const now = new Date();
-    return `${now.getDate()}-${months[now.getMonth()]}-${now.getFullYear()}`;
-  }
-
   const [formData, setFormData] = useState(() => {
     const bNum = Number(itemModalConfig.item?.boxNumber) || targetBoxNum;
     const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
@@ -125,7 +149,7 @@ const ItemModalContent = () => {
 
       return fillBlankWithNA({
         track: item.track || '',
-        tanggal: item.tanggal || item.dateIn || formatTodayDate(),
+        tanggal: formatToDDMMYY(item.tanggal || item.dateIn) || formatTodayDate(),
         kode: codeVal,
         buyerNo: item.buyerNo || item.buyerNumber || '',
         jenisSample: item.jenisSample || item.sampleType || (isMat ? 'FABRIC' : 'DEVELOP'),
@@ -178,21 +202,6 @@ const ItemModalContent = () => {
   const [errors, setErrors] = useState({});
 
   const currentItemId = isEditing ? itemModalConfig.item?.id : null;
-
-  // Real-time check if entered code already exists in another item in the database
-  const existingItemWithSameCode = React.useMemo(() => {
-    const entered = String(formData.kode || '').trim().toUpperCase();
-    if (!entered || entered === 'NA') return null;
-    return items.find(i => 
-      String(i.id) !== String(currentItemId) &&
-      String(i.kode || i.sku || '').trim().toUpperCase() === entered
-    );
-  }, [formData.kode, items, currentItemId]);
-
-  const autoResolvedCode = React.useMemo(() => {
-    if (!existingItemWithSameCode) return formData.kode;
-    return resolveUniqueCode(formData.kode, items, currentItemId).finalCode;
-  }, [formData.kode, items, currentItemId, existingItemWithSameCode]);
 
   // Clear a field's error as soon as the user fills it (including with "NA").
   useEffect(() => {
@@ -250,7 +259,7 @@ const ItemModalContent = () => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         const form = document.getElementById('direct-card-form');
-        if (form && !isSubmitting && !existingItemWithSameCode) {
+        if (form && !isSubmitting) {
           form.requestSubmit();
         }
       }
@@ -260,20 +269,21 @@ const ItemModalContent = () => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isSubmitting, existingItemWithSameCode, setItemModalConfig]);
+  }, [isSubmitting, setItemModalConfig]);
 
-  // Handle Date picker selection from calendar popup
+  // Handle Date picker selection from calendar popup -> Format: dd-mm-yy
   const handleDatePickerChange = (e) => {
     const val = e.target.value; // Format: "YYYY-MM-DD"
     if (!val) return;
     const parts = val.split('-');
     if (parts.length === 3) {
       const year = parts[0];
-      const monthIdx = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const formatted = `${day}-${months[monthIdx]}-${year}`;
+      const month = parts[1];
+      const day = parts[2];
+      const yy = year.slice(-2);
+      const formatted = `${day}-${month}-${yy}`; // dd-mm-yy
       setFormData(prev => ({ ...prev, tanggal: formatted }));
+      if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
     }
   };
 
@@ -303,7 +313,6 @@ const ItemModalContent = () => {
     const colorTrim = clean(formData.color);
     const trackClean = clean(formData.track);
     const tanggalClean = clean(formData.tanggal);
-    const kodeClean = clean(formData.kode);
     const satuanClean = clean(formData.satuan).toUpperCase();
     const placeClean = clean(formData.place) || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`);
     const fullDeskripsi = sampleNoTrim
@@ -313,21 +322,7 @@ const ItemModalContent = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
-    // JIKA KODE SUDAH ADA MAKA TIDAK BISA SIMPAN
-    if (existingItemWithSameCode) {
-      setIsSubmitting(false);
-      setSubmitError(
-        `❌ TIDAK BISA SIMPAN: Kode "${formData.kode}" sudah terdaftar di BOX #${existingItemWithSameCode.boxNumber || '?'} (${existingItemWithSameCode.style || existingItemWithSameCode.name || 'Barang lain'})! Kode tidak boleh sama. Silakan ubah kode menjadi "${autoResolvedCode}" terlebih dahulu.`
-      );
-      showNotification?.(
-        `❌ Tidak bisa simpan! Kode "${formData.kode}" sudah ada di sistem. Ubah kode terlebih dahulu agar bisa disimpan.`,
-        'error',
-        7000
-      );
-      return;
-    }
-
-    // Live multi-user sequence collision check right before save
+    // Live multi-user sequence check: cari urutan nomor tertinggi terbaru agar kode selalu unik & urut
     let activeItems = [...items];
     if (supabase) {
       try {
@@ -349,18 +344,14 @@ const ItemModalContent = () => {
       }
     }
 
-    const resolvedCode = resolveUniqueCode(kodeClean, activeItems, currentItemId);
-    const finalKode = resolvedCode.finalCode;
-
-    // ERP ATOMIC ALLOCATION ON CONFLICT:
-    // If another user submitted the same code while filling the form,
-    // the system automatically allocates the next unique sequence without failing!
-    if (resolvedCode.wasAdjusted) {
-      showNotification?.(
-        `ℹ️ Sistem ERP: Kode "${resolvedCode.originalCode || kodeClean}" telah digunakan pengguna lain saat Anda mengisi data. Item otomatis dialokasikan ke nomor urut unik: "${finalKode}".`,
-        'warning',
-        7500
-      );
+    // Tentukan kode sample/material unik berurutan: jika edit pakai kode asal, jika baru auto-generate urut unik
+    let finalKode;
+    if (isEditing && (itemModalConfig.item?.kode || itemModalConfig.item?.sku)) {
+      finalKode = itemModalConfig.item.kode || itemModalConfig.item.sku;
+    } else {
+      const desiredCode = formData.kode || (isMaterialBox ? getNextMaterialCode(activeItems) : getNextSampleCode(activeItems));
+      const resolvedCode = resolveUniqueCode(desiredCode, activeItems, currentItemId);
+      finalKode = resolvedCode.finalCode;
     }
 
     // Release any temporary reservation
@@ -417,10 +408,11 @@ const ItemModalContent = () => {
         style: styleTrim,
       });
 
+      // Notif mention saja tanpa memunculkan nomor
       showNotification?.(
-        `⚠️ PENGINGAT WAJIB: Item tersimpan! Segera cetak kartu sample baru ATAU tuliskan Kode (${finalKode}) & Place di kartu lama!`,
+        '⚠️ PENGINGAT WAJIB: Item tersimpan! Segera cetak kartu sample baru ATAU tuliskan Kode & Place di kartu fisik!',
         'warning',
-        9000
+        8000
       );
     } catch (err) {
       console.error('Error saat menyimpan item:', err);
@@ -449,6 +441,11 @@ const ItemModalContent = () => {
                   : (isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`)}
               </h3>
             </div>
+            {isEditing && (itemModalConfig.item?.kode || itemModalConfig.item?.sku) && (
+              <span className="hidden sm:inline-flex items-center text-[10px] font-mono font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shrink-0">
+                {itemModalConfig.item?.kode || itemModalConfig.item?.sku}
+              </span>
+            )}
             <span className="hidden sm:inline-flex items-center text-[11px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-600/50 shrink-0">
               BOX #{formData.boxNumber} ({currentBoxObj?.rackName || 'LANTAI'} - {currentBoxObj?.picName || 'Royan'})
             </span>
@@ -474,28 +471,8 @@ const ItemModalContent = () => {
           </div>
         </div>
 
-        {/* Top Warning Banner: Duplicate Code Warning OR Mandatory Reminder */}
-        {existingItemWithSameCode ? (
-          <div className="bg-rose-600 text-white px-3.5 py-1.5 text-xs font-bold flex items-center justify-between gap-2 shrink-0 animate-fade-in shadow-sm">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <AlertCircle className="w-4 h-4 text-amber-300 shrink-0 animate-bounce" />
-              <span className="truncate">
-                ⛔ KODE SUDAH ADA di BOX #{existingItemWithSameCode.boxNumber}! Ubah kode agar bisa disimpan.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setFormData(prev => ({ ...prev, kode: autoResolvedCode }));
-                if (submitError) setSubmitError(null);
-              }}
-              className="px-2.5 py-0.5 bg-white hover:bg-amber-100 text-rose-700 text-xs font-black rounded transition shrink-0 shadow-xs flex items-center gap-1 cursor-pointer"
-            >
-              <Sparkles className="w-3 h-3 text-amber-600" />
-              <span>Pakai Kode {autoResolvedCode} ➔</span>
-            </button>
-          </div>
-        ) : submitError ? (
+        {/* Top Warning Banner: Mandatory Reminder */}
+        {submitError ? (
           <div className="bg-rose-50 border-b border-rose-300 text-rose-900 px-3.5 py-1 text-xs font-bold flex items-center gap-2 shrink-0">
             <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
             <span className="truncate">{submitError}</span>
@@ -509,7 +486,7 @@ const ItemModalContent = () => {
               </span>
             </div>
             <span className="text-[10px] text-amber-800 font-bold shrink-0 hidden md:inline">
-              *Wajib semua kolom (isi NA jika kosong)
+              *Kode otomatis dibuat unik & berurutan (tidak perlu diketik)
             </span>
           </div>
         )}
@@ -572,7 +549,7 @@ const ItemModalContent = () => {
               }`}>
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Tanggal Sample <span className="text-rose-500">*</span>:
+                    Tanggal Sample (DD-MM-YY) <span className="text-rose-500">*</span>:
                   </label>
                   <div className="flex items-center gap-1">
                     <button
@@ -582,7 +559,7 @@ const ItemModalContent = () => {
                         if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
                       }}
                       className="text-[9px] font-black px-1.5 py-0.2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 transition cursor-pointer"
-                      title="Isi tanggal hari ini"
+                      title="Isi tanggal hari ini (DD-MM-YY)"
                     >
                       Hari Ini
                     </button>
@@ -607,7 +584,7 @@ const ItemModalContent = () => {
                       setFormData(p => ({ ...p, tanggal: e.target.value }));
                       if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
                     }}
-                    placeholder="5-Nov-2026 / NA"
+                    placeholder="dd-mm-yy (contoh: 06-11-26) / NA"
                     className="w-full text-xs font-semibold text-slate-900 focus:outline-none bg-transparent"
                   />
                   <button
@@ -632,48 +609,11 @@ const ItemModalContent = () => {
               </div>
             </div>
 
-            {/* BARIS 2: Kode Sample, Buyer No, & Place (No Heavy Dropdown!) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
-              {/* Kode */}
-              <div className={`border rounded-lg p-1.5 bg-white transition ${
-                existingItemWithSameCode 
-                  ? 'border-rose-500 bg-rose-50/70 ring-1 ring-rose-400' 
-                  : (errors.kode ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500')
-              }`}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Kode <span className="text-rose-500">*</span>:
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, kode: existingItemWithSameCode ? autoResolvedCode : (isMaterialBox ? getNextMaterialCode(items) : getNextSampleCode(items)) }));
-                      if (submitError) setSubmitError(null);
-                    }}
-                    className="text-[9px] font-black px-1.5 py-0.2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded border border-amber-300 flex items-center gap-0.5 transition cursor-pointer"
-                    title="Generate kode urut otomatis"
-                  >
-                    <Sparkles className="w-2.5 h-2.5 text-amber-600" />
-                    <span>Auto</span>
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={formData.kode}
-                  onChange={(e) => {
-                    setFormData(p => ({ ...p, kode: e.target.value.toUpperCase() }));
-                    if (submitError) setSubmitError(null);
-                    if (errors.kode) setErrors(prev => ({ ...prev, kode: null }));
-                  }}
-                  className={`w-full text-xs font-black font-mono uppercase focus:outline-none bg-transparent ${
-                    existingItemWithSameCode ? 'text-rose-700' : 'text-slate-900'
-                  }`}
-                />
-              </div>
-
+            {/* BARIS 2: Buyer No & Place / Lokasi (Kode Sample Otomatis Unik di Background) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
               {/* Buyer No */}
               <div className={`border rounded-lg p-1.5 bg-white transition ${
-                errors.buyerNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+                errors.buyerNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
               }`}>
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
@@ -998,21 +938,15 @@ const ItemModalContent = () => {
             <button
               type="submit"
               form="direct-card-form"
-              disabled={isSubmitting || Boolean(existingItemWithSameCode)}
-              className={`px-5 py-1.5 rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5 ${
-                existingItemWithSameCode
-                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed shadow-none'
-                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 cursor-pointer disabled:opacity-50'
-              }`}
-              title={existingItemWithSameCode ? 'Kode sudah ada! Tidak bisa simpan sebelum kode diubah' : 'Simpan item ke box (Ctrl+Enter)'}
+              disabled={isSubmitting}
+              className="px-5 py-1.5 rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 cursor-pointer disabled:opacity-50"
+              title="Simpan item ke box (Ctrl+Enter)"
             >
               <Save className="w-4 h-4" />
               <span>
                 {isSubmitting 
                   ? 'Menyimpan...' 
-                  : existingItemWithSameCode 
-                    ? 'Tidak Bisa Simpan (Kode Kembar)' 
-                    : (isDuplicate ? 'Simpan Item Salinan' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box'))}
+                  : (isDuplicate ? 'Simpan Item Salinan' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box'))}
               </span>
             </button>
           </div>

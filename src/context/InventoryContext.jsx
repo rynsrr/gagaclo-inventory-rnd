@@ -789,9 +789,9 @@ export const InventoryProvider = ({ children }) => {
 
     if (resolved.wasAdjusted) {
       showNotification(
-        `⚠️ Kode tidak boleh sama! Kode "${resolved.originalCode || 'tersebut'}" sudah ada di sistem, maka kode otomatis diubah menjadi "${finalCode}" agar tidak bentrok.`,
-        'warning',
-        7000
+        '⚠️ Kode sample otomatis dibuat unik dan berurutan agar tidak bentrok antar pengguna.',
+        'info',
+        5000
       );
     }
 
@@ -886,9 +886,9 @@ export const InventoryProvider = ({ children }) => {
     if (resolved.wasAdjusted) {
       finalCode = resolved.finalCode;
       showNotification(
-        `⚠️ Kode tidak boleh sama! Kode "${resolved.originalCode}" sudah ada di sistem, maka kode otomatis diubah menjadi "${finalCode}" agar tidak bentrok.`,
-        'warning',
-        7000
+        '⚠️ Kode sample otomatis disesuaikan agar tetap unik dan tidak bentrok.',
+        'info',
+        5000
       );
     }
 
