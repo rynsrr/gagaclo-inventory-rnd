@@ -85,9 +85,11 @@ export const SimpleInventoryView = () => {
   const [selectedIds, setSelectedIds] = useState([]);
 
   function formatTodayDate() {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const now = new Date();
-    return `${now.getDate()}-${months[now.getMonth()]}-${now.getFullYear()}`;
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = String(now.getFullYear());
+    return `${dd}-${mm}-${yyyy}`;
   }
 
   // Handle Form Submit

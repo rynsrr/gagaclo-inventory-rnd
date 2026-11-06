@@ -65,27 +65,36 @@ export function formatTodayDate() {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, '0');
   const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const yy = String(now.getFullYear()).slice(-2);
-  return `${dd}-${mm}-${yy}`;
+  const yyyy = String(now.getFullYear());
+  return `${dd}-${mm}-${yyyy}`;
 }
 
-export function formatToDDMMYY(str) {
+export function formatToDDMMYYYY(str) {
   if (!str || str === 'NA' || str === '-') return str || '';
   const cleanStr = String(str).trim();
-  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{2}$/.test(cleanStr)) {
+  // If already dd-mm-yyyy or dd/mm/yyyy (4 digit year)
+  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(cleanStr)) {
     const parts = cleanStr.split(/[-/]/);
     return `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-${parts[2]}`;
   }
+  // If dd-mm-yy or dd/mm/yy (2 digit year, e.g. 06-11-26) -> convert to 2026
+  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{2}$/.test(cleanStr)) {
+    const parts = cleanStr.split(/[-/]/);
+    return `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-20${parts[2]}`;
+  }
+  // If YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
     const [y, m, d] = cleanStr.split('-');
-    return `${d}-${m}-${y.slice(-2)}`;
+    return `${d}-${m}-${y}`;
   }
+  // Month name e.g. "4-Nov-2026" or "04-Nov-2026"
   const monthMap = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
   const textMatch = cleanStr.match(/^(\d{1,2})[-/ ]([A-Za-z]{3})[-/ ](\d{2,4})$/);
   if (textMatch) {
     const d = textMatch[1].padStart(2, '0');
     const m = monthMap[textMatch[2].toLowerCase()] || '01';
-    const y = textMatch[3].slice(-2);
+    let y = textMatch[3];
+    if (y.length === 2) y = `20${y}`;
     return `${d}-${m}-${y}`;
   }
   return cleanStr;
@@ -149,7 +158,7 @@ const ItemModalContent = () => {
 
       return fillBlankWithNA({
         track: item.track || '',
-        tanggal: formatToDDMMYY(item.tanggal || item.dateIn) || formatTodayDate(),
+        tanggal: formatToDDMMYYYY(item.tanggal || item.dateIn) || formatTodayDate(),
         kode: codeVal,
         buyerNo: item.buyerNo || item.buyerNumber || '',
         jenisSample: item.jenisSample || item.sampleType || (isMat ? 'FABRIC' : 'DEVELOP'),
@@ -271,7 +280,7 @@ const ItemModalContent = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isSubmitting, setItemModalConfig]);
 
-  // Handle Date picker selection from calendar popup -> Format: dd-mm-yy
+  // Handle Date picker selection from calendar popup -> Format: dd-mm-yyyy
   const handleDatePickerChange = (e) => {
     const val = e.target.value; // Format: "YYYY-MM-DD"
     if (!val) return;
@@ -280,8 +289,7 @@ const ItemModalContent = () => {
       const year = parts[0];
       const month = parts[1];
       const day = parts[2];
-      const yy = year.slice(-2);
-      const formatted = `${day}-${month}-${yy}`; // dd-mm-yy
+      const formatted = `${day}-${month}-${year}`; // dd-mm-yyyy
       setFormData(prev => ({ ...prev, tanggal: formatted }));
       if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
     }
@@ -549,7 +557,7 @@ const ItemModalContent = () => {
               }`}>
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Tanggal Sample (DD-MM-YY) <span className="text-rose-500">*</span>:
+                    Tanggal Sample (DD-MM-YYYY) <span className="text-rose-500">*</span>:
                   </label>
                   <div className="flex items-center gap-1">
                     <button
@@ -559,7 +567,7 @@ const ItemModalContent = () => {
                         if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
                       }}
                       className="text-[9px] font-black px-1.5 py-0.2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 transition cursor-pointer"
-                      title="Isi tanggal hari ini (DD-MM-YY)"
+                      title="Isi tanggal hari ini (DD-MM-YYYY)"
                     >
                       Hari Ini
                     </button>
@@ -584,7 +592,7 @@ const ItemModalContent = () => {
                       setFormData(p => ({ ...p, tanggal: e.target.value }));
                       if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
                     }}
-                    placeholder="dd-mm-yy (contoh: 06-11-26) / NA"
+                    placeholder="dd-mm-yyyy (contoh: 06-11-2026) / NA"
                     className="w-full text-xs font-semibold text-slate-900 focus:outline-none bg-transparent"
                   />
                   <button
