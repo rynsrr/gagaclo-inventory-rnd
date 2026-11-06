@@ -61,7 +61,7 @@ export const SimpleInventoryView = () => {
     tanggal: formatTodayDate(),
     kode: 'SAMPLE-00001',
     buyerNo: '',
-    jenisSample: 'DEVELOP',
+    jenisSample: '',
     style: 'Metal Buckle 50mm',
     sampleNo: '',
     size: '50MM',
@@ -140,7 +140,7 @@ export const SimpleInventoryView = () => {
       tanggal: formatTodayDate(),
       kode: '',
       buyerNo: '',
-      jenisSample: 'DEVELOP',
+      jenisSample: '',
       style: '',
       sampleNo: '',
       size: '',
@@ -421,7 +421,7 @@ export const SimpleInventoryView = () => {
                 </label>
                 <div className="grid grid-cols-3 gap-1">
                   {['ORI', 'DEVELOP', 'PPS'].map((type) => {
-                    const isSelected = (form.jenisSample || 'DEVELOP') === type;
+                    const isSelected = form.jenisSample === type;
                     return (
                       <button
                         key={type}

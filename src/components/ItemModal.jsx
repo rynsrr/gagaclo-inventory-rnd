@@ -161,7 +161,7 @@ const ItemModalContent = () => {
         tanggal: formatToDDMMYYYY(item.tanggal || item.dateIn) || formatTodayDate(),
         kode: codeVal,
         buyerNo: item.buyerNo || item.buyerNumber || '',
-        jenisSample: item.jenisSample || item.sampleType || (isMat ? 'FABRIC' : 'DEVELOP'),
+        jenisSample: item.jenisSample || item.sampleType || '',
         style: item.style || item.name || item.deskripsi || '',
         sampleNo: item.sampleNo || '',
         size: item.size || '',
@@ -183,7 +183,7 @@ const ItemModalContent = () => {
         tanggal: formatTodayDate(),
         kode: codeVal,
         buyerNo: '',
-        jenisSample: isMat ? 'FABRIC' : 'DEVELOP',
+        jenisSample: '',
         style: '',
         sampleNo: '',
         size: '',
@@ -371,7 +371,7 @@ const ItemModalContent = () => {
       tanggal: tanggalClean,
       kode: finalKode,
       buyerNo: buyerNoTrim,
-      jenisSample: clean(formData.jenisSample) || 'DEVELOP',
+      jenisSample: clean(formData.jenisSample),
       style: styleTrim,
       sampleNo: sampleNoTrim,
       size: sizeTrim,
@@ -687,18 +687,23 @@ const ItemModalContent = () => {
             {/* BARIS 3: Jenis Sample (Chip Buttons) & Deskripsi / Style */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
               {/* Jenis Sample Pills */}
-              <div className="md:col-span-4 border border-slate-300 rounded-lg p-1.5 bg-white">
+              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
+                errors.jenisSample ? 'border-rose-500 bg-rose-50/50 ring-1 ring-rose-400' : 'border-slate-300'
+              }`}>
                 <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Jenis Sample <span className="text-rose-500">*</span>:
                 </label>
                 <div className="flex items-center gap-1">
                   {['DEVELOP', 'PPS', 'ORI'].map((type) => {
-                    const isSelected = (formData.jenisSample || 'DEVELOP') === type;
+                    const isSelected = formData.jenisSample === type;
                     return (
                       <button
                         key={type}
                         type="button"
-                        onClick={() => setFormData(p => ({ ...p, jenisSample: type }))}
+                        onClick={() => {
+                          setFormData(p => ({ ...p, jenisSample: type }));
+                          if (errors.jenisSample) setErrors(prev => ({ ...prev, jenisSample: null }));
+                        }}
                         className={`flex-1 py-1 rounded-md text-[11px] font-black uppercase tracking-wider transition border cursor-pointer text-center ${
                           isSelected
                             ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
