@@ -44,6 +44,14 @@ export const Warehouse3DView = ({
 }) => {
   const containerRef = useRef(null);
   const searchInputRef = useRef(null);
+  const [lastSearches, setLastSearches] = useState(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('gagaclo_last_searches') || '[]');
+      return Array.isArray(raw) ? raw.filter(s => typeof s === 'string' && s.trim()) : [];
+    } catch {
+      return [];
+    }
+  });
   const { 
     racks, 
     boxes, 
@@ -96,6 +104,19 @@ export const Warehouse3DView = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onClearSearch]);
+
+  // Record non-empty searches as "last searches" (max 5, stored in localStorage)
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    setLastSearches((prev) => {
+      const next = [q, ...prev.filter((s) => s.toLowerCase() !== q.toLowerCase())].slice(0, 5);
+      try {
+        localStorage.setItem('gagaclo_last_searches', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, [searchQuery]);
 
   // Filter / view state
   const [highlightPpic, setHighlightPpic] = useState('ALL');
@@ -962,11 +983,11 @@ export const Warehouse3DView = ({
           )}
         </div>
 
-        {/* Quick Suggestion Pills when not searching */}
-        {!searchQuery && (
+        {/* Last searches as quick pills when not searching */}
+        {!searchQuery && lastSearches.length > 0 && (
           <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
-            <span className="text-slate-400 font-medium">Saran cepat:</span>
-            {['#1', '#17', 'LANTAI', 'DEVELOP', 'SAMPLE'].map((sug) => (
+            <span className="text-slate-400 font-medium">Pencarian terakhir:</span>
+            {lastSearches.map((sug) => (
               <button
                 key={sug}
                 type="button"
