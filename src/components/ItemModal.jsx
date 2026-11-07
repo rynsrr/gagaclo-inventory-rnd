@@ -181,12 +181,12 @@ const ItemModalContent = () => {
       const codeVal = generateCode();
 
       return {
-        track: '',
+        track: itemModalConfig.prefill?.track || '',
         tanggal: formatTodayDate(),
         kode: codeVal,
-        buyerNo: '',
-        jenisSample: '',
-        style: '',
+        buyerNo: itemModalConfig.prefill?.buyerNo || '',
+        jenisSample: itemModalConfig.prefill?.jenisSample || '',
+        style: itemModalConfig.prefill?.style || '',
         sampleNo: '',
         size: '',
         color: '',
