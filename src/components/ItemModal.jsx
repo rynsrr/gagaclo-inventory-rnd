@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { supabase } from '../lib/supabase';
 import { CardPrintModal } from './CardPrintModal';
@@ -8,6 +8,7 @@ import {
   Save, 
   MapPin,
   AlertCircle,
+  AlertTriangle,
   Calendar,
   Info,
   Sparkles,
@@ -233,6 +234,20 @@ const ItemModalContent = () => {
     });
   }, [formData]);
 
+  // Deteksi jika kode yang sedang di-input/edit sudah dipakai oleh item lain
+  const duplicateItemMatch = useMemo(() => {
+    const curCode = String(formData.kode || '').trim().toUpperCase();
+    if (!curCode || curCode === 'NA' || curCode === '-') return null;
+    const currentId = itemModalConfig.item?.id;
+    return (
+      items.find((i) => {
+        if (currentId && String(i.id) === String(currentId)) return false;
+        const k = String(i.kode || i.sku || '').trim().toUpperCase();
+        return k === curCode;
+      }) || null
+    );
+  }, [formData.kode, items, itemModalConfig.item]);
+
   // Handle box selection change
   const handleBoxSelect = (selectedPlaceValue) => {
     const match = selectedPlaceValue.match(/BOX\s+(\d+)/i);
@@ -456,6 +471,33 @@ const ItemModalContent = () => {
             <div className="flex-1 leading-snug">
               Akses Terkunci: Box #{formData.boxNumber} dialokasikan untuk PIC <strong>{currentBoxObj?.picName}</strong>. Anda login sebagai <strong>{currentUser?.name}</strong>, sehingga tidak dapat menambah atau mengedit item pada box ini.
             </div>
+          </div>
+        )}
+
+        {/* Peringatan Kode Duplikat & Tombol Perbaikan Instan */}
+        {duplicateItemMatch && (
+          <div className="no-print bg-amber-50 border-b border-amber-300 text-amber-950 px-4 py-2 text-xs font-bold flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                Perhatian: Kode sample <strong>#{formData.kode}</strong> sudah tercatat pada Style <strong>"{duplicateItemMatch.style}"</strong> di <strong>BOX #{duplicateItemMatch.boxNumber}</strong>.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const isMat = isMaterialBox;
+                const freshCode = isMat
+                  ? getNextMaterialCode(items, clientIdRef.current)
+                  : getNextSampleCode(items, clientIdRef.current);
+                setFormData((p) => ({ ...p, kode: freshCode }));
+                reserveCode(freshCode, clientIdRef.current);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] whitespace-nowrap cursor-pointer transition shadow-2xs shrink-0"
+              title="Ganti ke kode baru unik yang belum dipakai"
+            >
+              ⚡ Buat Kode Baru Unik
+            </button>
           </div>
         )}
 

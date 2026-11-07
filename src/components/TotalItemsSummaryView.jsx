@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
+import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
 import {
   Archive,
   Search,
@@ -17,6 +18,14 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
+  ShieldCheck,
+  Zap,
+  Copy,
+  Check,
+  BarChart3,
+  Users,
+  RotateCcw,
 } from 'lucide-react';
 
 /**
@@ -67,12 +76,64 @@ export function calculateStorageAge(dateStr) {
   return { days: diffDays, label, tier };
 }
 
+/**
+ * Normalisasi format tanggal apapun ke standar YYYY-MM-DD
+ */
+export function normalizeDateKey(dateStr) {
+  if (!dateStr || dateStr === 'NA' || dateStr === '-') return null;
+  const clean = String(dateStr).trim();
+  if (/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/.test(clean)) {
+    const [, d, m, y] = clean.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  if (/^(\d{4})-(\d{1,2})-(\d{1,2})/.test(clean)) {
+    const [, y, m, d] = clean.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  const parsed = new Date(clean);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, '0');
+    const d = String(parsed.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return null;
+}
+
+/**
+ * Format string YYYY-MM-DD ke teks bahasa Indonesia (contoh: 08 Nov 2026)
+ */
+export function formatDateIndo(isoDateStr) {
+  if (!isoDateStr) return '-';
+  const parts = String(isoDateStr).split('-');
+  if (parts.length !== 3) return isoDateStr;
+  const [y, m, d] = parts;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const monthIdx = Number(m) - 1;
+  return `${Number(d)} ${months[monthIdx] || m} ${y}`;
+}
+
+const DEFAULT_PICS = ['Royan', 'Cynara', 'Ami', 'Ryan', 'Hanami'];
+
 export function TotalItemsSummaryView() {
-  const { boxes, items, deleteItem, setItemModalConfig, currentUser } = useInventory();
+  const {
+    boxes,
+    items,
+    deleteItem,
+    updateItem,
+    setItemModalConfig,
+    currentUser,
+    ppicMembers,
+    showNotification,
+  } = useInventory();
+
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [viewMode, setViewMode] = useState('styles'); // 'styles' | 'table'
+  const [viewMode, setViewMode] = useState('styles'); // 'styles' | 'table' | 'daily' | 'duplicates'
   const [ageFilter, setAgeFilter] = useState('ALL'); // 'ALL' | 'FRESH' | 'MEDIUM' | 'AGED' | 'CRITICAL'
   const [expandedStyles, setExpandedStyles] = useState({});
+  const [fixingItemId, setFixingItemId] = useState(null);
+  const [copiedRekap, setCopiedRekap] = useState(false);
+  const [expandedDailyPics, setExpandedDailyPics] = useState({});
 
   const [query, setQuery] = useState('');
   const boxRackMap = useMemo(() => {
@@ -159,38 +220,164 @@ export function TotalItemsSummaryView() {
       if (!groups[key]) {
         groups[key] = {
           styleName: item.style,
-          buyerNo: item.buyerNo !== 'NA' ? item.buyerNo : null,
+          styleKey: key,
+          buyerNos: new Set(),
+          boxes: new Set(),
+          sampleTypes: new Set(),
           items: [],
-          sampleTypes: {},
-          totalQty: 0,
-          oldestAge: item.age,
-          boxes: new Map(),
+          totalPcs: 0,
+          oldestDays: 0,
+          oldestLabel: '-',
+          oldestTier: 'none',
         };
       }
-      groups[key].items.push(item);
-      groups[key].totalQty += item.jumlah;
+      const g = groups[key];
+      g.items.push(item);
+      g.totalPcs += Number(item.jumlah) || 0;
+      if (item.buyerNo && item.buyerNo !== 'NA') g.buyerNos.add(item.buyerNo);
+      g.boxes.add(Number(item.boxNumber));
+      if (item.jenisSample) g.sampleTypes.add(item.jenisSample.toUpperCase());
 
-      const typeKey = item.jenisSample;
-      if (!groups[key].sampleTypes[typeKey]) {
-        groups[key].sampleTypes[typeKey] = [];
-      }
-      groups[key].sampleTypes[typeKey].push(item);
-
-      if (item.boxNumber) {
-        groups[key].boxes.set(item.boxNumber, item.picName);
-      }
-
-      if (item.age.days > groups[key].oldestAge.days) {
-        groups[key].oldestAge = item.age;
-      }
-
-      if (!groups[key].buyerNo && item.buyerNo && item.buyerNo !== 'NA') {
-        groups[key].buyerNo = item.buyerNo;
+      if (item.age.days >= g.oldestDays) {
+        g.oldestDays = item.age.days;
+        g.oldestLabel = item.age.label;
+        g.oldestTier = item.age.tier;
       }
     });
 
-    return Object.values(groups).sort((a, b) => b.items.length - a.items.length || b.oldestAge.days - a.oldestAge.days);
+    return Object.values(groups).sort((a, b) => b.totalPcs - a.totalPcs || a.styleName.localeCompare(b.styleName));
   }, [filteredItems]);
+
+  // 1. FITUR KODE YANG SAMA (DUPLIKAT) & PERBAIKAN
+  const duplicateCodeGroups = useMemo(() => {
+    const map = {};
+    allItems.forEach((item) => {
+      const cleanCode = String(item.kode || item.sku || '').trim().toUpperCase();
+      if (!cleanCode || cleanCode === 'NA' || cleanCode === '-') return;
+      if (!map[cleanCode]) map[cleanCode] = [];
+      map[cleanCode].push(item);
+    });
+
+    return Object.entries(map)
+      .filter(([_, list]) => list.length > 1)
+      .map(([code, list]) => ({
+        code,
+        count: list.length,
+        items: list,
+        differentBoxes: new Set(list.map((i) => Number(i.boxNumber))).size > 1,
+        differentStyles: new Set(list.map((i) => i.style.toUpperCase())).size > 1,
+        totalPcs: list.reduce((acc, curr) => acc + (Number(curr.jumlah) || 0), 0),
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [allItems]);
+
+  // Auto-Fix Duplikat: Buat kode baru unik berurutan
+  const handleAutoFixCode = async (item) => {
+    try {
+      setFixingItemId(item.id);
+      const isMaterial = item.jenisSample === 'MATERIAL' || Number(item.boxNumber) >= 65;
+      const newCode = isMaterial ? getNextMaterialCode(items) : getNextSampleCode(items);
+
+      if (updateItem) {
+        await updateItem(item.id, { kode: newCode, sku: newCode });
+      }
+
+      if (showNotification) {
+        showNotification(
+          `Kode item "${item.style}" (BOX ${item.boxNumber}) berhasil diperbarui menjadi "${newCode}". Masalah duplikasi selesai!`,
+          'success',
+          4500
+        );
+      }
+    } catch (err) {
+      console.error('Auto fix error:', err);
+      if (showNotification) {
+        showNotification(`Gagal memperbarui kode: ${err.message}`, 'error', 5000);
+      }
+    } finally {
+      setFixingItemId(null);
+    }
+  };
+
+  // 2. FITUR TIAP PPIC PERHARI SIMPAN BERAPA PCS
+  const activePics = useMemo(() => {
+    const set = new Set(DEFAULT_PICS);
+    if (Array.isArray(ppicMembers)) {
+      ppicMembers.forEach((p) => {
+        if (p.name) set.add(p.name);
+      });
+    }
+    return Array.from(set);
+  }, [ppicMembers]);
+
+  const dailyPicRecords = useMemo(() => {
+    const map = {};
+    allItems.forEach((item) => {
+      const dateKey = normalizeDateKey(item.tanggal) || normalizeDateKey(item.dateIn);
+      if (!dateKey) return;
+      if (!map[dateKey]) {
+        map[dateKey] = {
+          date: dateKey,
+          totalPcs: 0,
+          totalItems: 0,
+          byPic: {},
+          items: [],
+        };
+      }
+      const pcs = Number(item.jumlah) || 0;
+      const pic = String(item.picName || 'Lainnya').trim();
+      map[dateKey].totalPcs += pcs;
+      map[dateKey].totalItems += 1;
+      map[dateKey].items.push(item);
+
+      if (!map[dateKey].byPic[pic]) {
+        map[dateKey].byPic[pic] = { pcs: 0, items: 0, itemsList: [] };
+      }
+      map[dateKey].byPic[pic].pcs += pcs;
+      map[dateKey].byPic[pic].items += 1;
+      map[dateKey].byPic[pic].itemsList.push(item);
+    });
+
+    const dates = Object.keys(map).sort((a, b) => b.localeCompare(a));
+    return { map, dates };
+  }, [allItems]);
+
+  // Tanggal default untuk view harian: hari ini atau tanggal terbaru yang ada data
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const [selectedDailyDate, setSelectedDailyDate] = useState(() => {
+    if (dailyPicRecords.dates.includes(todayIso)) return todayIso;
+    return dailyPicRecords.dates[0] || todayIso;
+  });
+
+  const currentDailyData = dailyPicRecords.map[selectedDailyDate] || {
+    date: selectedDailyDate,
+    totalPcs: 0,
+    totalItems: 0,
+    byPic: {},
+    items: [],
+  };
+
+  // Copy Rekap Harian Chat
+  const handleCopyDailyRekap = () => {
+    const dateFormatted = formatDateIndo(selectedDailyDate);
+    const picLines = activePics
+      .map((pic) => {
+        const stats = currentDailyData.byPic[pic] || { pcs: 0, items: 0 };
+        return `- ${pic.padEnd(8)}: ${stats.pcs} PCS (${stats.items} sampel)`;
+      })
+      .join('\n');
+
+    const text = `📊 REKAP PENYIMPANAN HARIAN R&D GAGACLO\n📅 Tanggal: ${dateFormatted}\n━━━━━━━━━━━━━━━━━━━━\n${picLines}\n━━━━━━━━━━━━━━━━━━━━\n📦 TOTAL HARIAN: ${currentDailyData.totalPcs} PCS (${currentDailyData.totalItems} sampel)`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedRekap(true);
+      setTimeout(() => setCopiedRekap(false), 2500);
+      if (showNotification) {
+        showNotification('Teks rekap harian berhasil disalin ke clipboard!', 'success', 3000);
+      }
+    }
+  };
 
   const toggleStyleExpand = (styleKey) => {
     setExpandedStyles((prev) => ({
@@ -199,43 +386,20 @@ export function TotalItemsSummaryView() {
     }));
   };
 
-  const renderBadge = (age) => {
-    if (age.tier === 'none') return <span className="text-slate-400 text-xs">-</span>;
-    if (age.tier === 'critical') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
-          <Clock className="w-3 h-3 text-rose-500" />
-          <span>{age.label} (Lama)</span>
-        </span>
-      );
-    }
-    if (age.tier === 'aged') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
-          <Clock className="w-3 h-3 text-amber-600" />
-          <span>{age.label} (Review)</span>
-        </span>
-      );
-    }
-    if (age.tier === 'medium') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
-          <Clock className="w-3 h-3 text-blue-500" />
-          <span>{age.label}</span>
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-        <Clock className="w-3 h-3 text-emerald-500" />
-        <span>{age.label}</span>
-      </span>
-    );
+  const expandAllStyles = () => {
+    const all = {};
+    styleGroups.forEach((g) => {
+      all[g.styleKey] = true;
+    });
+    setExpandedStyles(all);
   };
 
-  const dashClass = (value) => (value && value !== '-' && value !== 'NA' ? 'text-slate-700' : 'text-slate-400');
+  const collapseAllStyles = () => {
+    setExpandedStyles({});
+  };
 
-  const handleExport = async () => {
+  // Export to Excel with Storage Age & PIC info
+  const handleExportExcel = async () => {
     const XLSX = await import('xlsx');
     const rows = filteredItems.map((item, i) => ({
       No: i + 1,
@@ -272,15 +436,15 @@ export function TotalItemsSummaryView() {
         <div>
           <h1 className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <Archive className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            Ringkasan Total Item &amp; Umur Simpan
+            Ringkasan Total Item &amp; Aktivitas R&D
           </h1>
           <p className="mt-0.5 text-xs text-slate-500">
-            Analisis umur simpan sample, pelacakan kelengkapan per style, dan rekap semua 72 box.
+            Pelacakan umur simpan, rekap harian simpan PCS per PIC, matriks style, dan audit kode duplikat.
           </p>
         </div>
 
         {/* View Mode Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 self-start sm:self-center">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 self-start sm:self-center flex-wrap">
           <button
             type="button"
             onClick={() => setViewMode('styles')}
@@ -312,474 +476,1012 @@ export function TotalItemsSummaryView() {
               {filteredItems.length}
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('daily')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'daily'
+                ? 'bg-white text-emerald-700 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Harian per PPIC</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+              {currentDailyData.totalPcs} PCS
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('duplicates')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'duplicates'
+                ? 'bg-white text-amber-700 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Kode Sama &amp; Perbaikan</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                duplicateCodeGroups.length > 0
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {duplicateCodeGroups.length > 0 ? `${duplicateCodeGroups.length} Duplikat` : '✓ 0'}
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Mention & Rekap Kurang per PIC */}
       <PpicMissingMentionBar />
 
-      {/* Main Section */}
-      <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-        
-        {/* Controls: Search, Aging Filter Chips, Actions */}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1">
-            <div className="relative w-full sm:w-72">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Cari style, buyer, kode, box, PIC..."
-                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/80 py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
-              />
+      {/* ========================================================================= */}
+      {/* SUB-VIEW 1: HARIAN PER PPIC (SIMPAN BERAPA PCS PER HARI)                  */}
+      {/* ========================================================================= */}
+      {viewMode === 'daily' && (
+        <div className="space-y-4">
+          {/* Header Controls: Date Picker & Quick Actions */}
+          <div className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-emerald-600" />
+                <h2 className="text-sm font-bold text-slate-800">
+                  Aktivitas Penyimpanan Harian per Anggota PPIC
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500">
+                Memantau berapa total PCS dan jumlah sampel yang disimpan oleh masing-masing PIC setiap hari.
+              </p>
             </div>
 
-            {/* Quick Aging Filter Chips */}
-            <div className="flex items-center gap-1.5 flex-wrap text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Date Input */}
+              <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold">
+                <span className="text-slate-500 text-[11px]">Tanggal:</span>
+                <input
+                  type="date"
+                  value={selectedDailyDate}
+                  onChange={(e) => setSelectedDailyDate(e.target.value)}
+                  className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer text-xs"
+                />
+              </div>
+
+              {/* Quick Pick: Hari Ini */}
               <button
                 type="button"
-                onClick={() => setAgeFilter('ALL')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
-                  ageFilter === 'ALL'
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                }`}
-              >
-                Semua Umur ({metrics.total})
-              </button>
-              <button
-                type="button"
-                onClick={() => setAgeFilter('FRESH')}
-                className={`px-2.5 py-1.5 rounded-lg font-semibold transition cursor-pointer border ${
-                  ageFilter === 'FRESH'
+                onClick={() => setSelectedDailyDate(todayIso)}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                  selectedDailyDate === todayIso
                     ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-emerald-50 hover:bg-emerald-100/70 text-emerald-800 border-emerald-200'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                 }`}
-                title="Tersimpan kurang dari 30 hari"
               >
-                &lt; 30 Hari ({metrics.fresh})
+                Hari Ini
               </button>
+
+              {/* Salin Rekap Harian */}
               <button
                 type="button"
-                onClick={() => setAgeFilter('MEDIUM')}
-                className={`px-2.5 py-1.5 rounded-lg font-semibold transition cursor-pointer border ${
-                  ageFilter === 'MEDIUM'
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-blue-50 hover:bg-blue-100/70 text-blue-800 border-blue-200'
-                }`}
-                title="Tersimpan 1 hingga 3 bulan"
+                onClick={handleCopyDailyRekap}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
               >
-                30–90 Hari ({metrics.medium})
+                {copiedRekap ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>Tersalin!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Salin Rekap Harian Chat</span>
+                  </>
+                )}
               </button>
-              <button
-                type="button"
-                onClick={() => setAgeFilter('AGED')}
-                className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
-                  ageFilter === 'AGED'
-                    ? 'bg-amber-600 text-white border-amber-600'
-                    : 'bg-amber-50 hover:bg-amber-100/70 text-amber-900 border-amber-200'
-                }`}
-                title="Tersimpan 3 hingga 6 bulan (butuh review)"
-              >
-                &gt; 90 Hari ({metrics.aged})
-              </button>
-              {metrics.critical > 0 && (
+            </div>
+          </div>
+
+          {/* Ringkasan Total Hari Ini */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 rounded-2xl border border-emerald-200/80">
+              <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+                Total PCS Disimpan ({formatDateIndo(selectedDailyDate)})
+              </div>
+              <div className="mt-1 text-2xl font-black text-emerald-950 tabular-nums">
+                {currentDailyData.totalPcs.toLocaleString('id-ID')} <span className="text-sm font-semibold text-emerald-700">PCS</span>
+              </div>
+              <div className="mt-0.5 text-xs text-emerald-700">
+                Dari {currentDailyData.totalItems} transaksi sampel di 5 PIC
+              </div>
+            </div>
+
+            <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-2xl border border-blue-200/80">
+              <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
+                PIC Paling Aktif Hari Ini
+              </div>
+              <div className="mt-1 text-2xl font-black text-blue-950">
+                {(() => {
+                  let topPic = '-';
+                  let maxPcs = 0;
+                  activePics.forEach((p) => {
+                    const pcs = currentDailyData.byPic[p]?.pcs || 0;
+                    if (pcs > maxPcs) {
+                      maxPcs = pcs;
+                      topPic = p;
+                    }
+                  });
+                  return maxPcs > 0 ? `${topPic} (${maxPcs} PCS)` : 'Belum Ada Input';
+                })()}
+              </div>
+              <div className="mt-0.5 text-xs text-blue-700">Kontribusi terbesar pada tanggal ini</div>
+            </div>
+
+            <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-2xl border border-slate-200/80">
+              <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                Riwayat Hari Tercatat
+              </div>
+              <div className="mt-1 text-2xl font-black text-slate-800 tabular-nums">
+                {dailyPicRecords.dates.length} <span className="text-sm font-semibold text-slate-500">Hari</span>
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">Total data riwayat tersimpan</div>
+            </div>
+          </div>
+
+          {/* Grid 5 Kartu PIC: Royan, Cynara, Ami, Ryan, Hanami */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {activePics.map((picName, idx) => {
+              const picStats = currentDailyData.byPic[picName] || { pcs: 0, items: 0, itemsList: [] };
+              const colorSchemes = [
+                { border: 'border-blue-200', bg: 'bg-blue-50/40', text: 'text-blue-900', badge: 'bg-blue-100 text-blue-800' },
+                { border: 'border-purple-200', bg: 'bg-purple-50/40', text: 'text-purple-900', badge: 'bg-purple-100 text-purple-800' },
+                { border: 'border-emerald-200', bg: 'bg-emerald-50/40', text: 'text-emerald-900', badge: 'bg-emerald-100 text-emerald-800' },
+                { border: 'border-amber-200', bg: 'bg-amber-50/40', text: 'text-amber-900', badge: 'bg-amber-100 text-amber-800' },
+                { border: 'border-rose-200', bg: 'bg-rose-50/40', text: 'text-rose-900', badge: 'bg-rose-100 text-rose-800' },
+              ];
+              const scheme = colorSchemes[idx % colorSchemes.length];
+              const isExpanded = Boolean(expandedDailyPics[picName]);
+
+              return (
+                <div
+                  key={picName}
+                  className={`p-4 rounded-2xl border ${scheme.border} ${scheme.bg} backdrop-blur-md flex flex-col justify-between transition shadow-2xs hover:shadow-xs`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-sm text-slate-900">{picName}</span>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${scheme.badge}`}>
+                        PIC #{idx + 1}
+                      </span>
+                    </div>
+
+                    <div className="mt-1">
+                      <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                        Simpan Hari Ini:
+                      </div>
+                      <div className="mt-0.5 text-2xl font-black text-slate-900 tabular-nums">
+                        {picStats.pcs.toLocaleString('id-ID')}{' '}
+                        <span className="text-xs font-semibold text-slate-500">PCS</span>
+                      </div>
+                      <div className="text-xs text-slate-600 mt-0.5">
+                        {picStats.items > 0 ? `${picStats.items} sampel masuk` : 'Belum ada input'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {picStats.itemsList.length > 0 && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/60">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedDailyPics((prev) => ({
+                            ...prev,
+                            [picName]: !prev[picName],
+                          }))
+                        }
+                        className="w-full text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center justify-between cursor-pointer"
+                      >
+                        <span>{isExpanded ? 'Tutup Rincian' : `Lihat ${picStats.itemsList.length} Sampel`}</span>
+                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-2 space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                          {picStats.itemsList.map((it, itemIdx) => (
+                            <div
+                              key={itemIdx}
+                              className="text-[11px] p-1.5 rounded-lg bg-white/90 border border-slate-200/60 leading-tight"
+                            >
+                              <div className="font-bold text-slate-800 truncate">{it.style}</div>
+                              <div className="text-[10px] text-slate-500 flex justify-between mt-0.5">
+                                <span>{it.boxLabel}</span>
+                                <span className="font-semibold text-emerald-700">{it.jumlah} PCS</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Tabel Riwayat Harian per PIC */}
+          <div className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <BarChart3 className="h-4 w-4 text-blue-600" />
+                  <span>Tabel Riwayat Penyimpanan Harian (PCS per PIC)</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Klik tanggal untuk melihat rincian detail kartu di atas.
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/90 text-[11px] font-bold text-slate-700 uppercase">
+                    <th className="px-3 py-2.5">Tanggal</th>
+                    {activePics.map((pic) => (
+                      <th key={pic} className="px-3 py-2.5 text-right">
+                        {pic} (PCS)
+                      </th>
+                    ))}
+                    <th className="px-3 py-2.5 text-right font-black text-emerald-800">Total Harian</th>
+                    <th className="px-3 py-2.5 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {dailyPicRecords.dates.length === 0 ? (
+                    <tr>
+                      <td colSpan={activePics.length + 3} className="px-4 py-8 text-center text-slate-400">
+                        Belum ada riwayat tanggal penyimpanan barang.
+                      </td>
+                    </tr>
+                  ) : (
+                    dailyPicRecords.dates.map((dateKey) => {
+                      const record = dailyPicRecords.map[dateKey];
+                      const isSelected = selectedDailyDate === dateKey;
+                      return (
+                        <tr
+                          key={dateKey}
+                          onClick={() => setSelectedDailyDate(dateKey)}
+                          className={`transition cursor-pointer ${
+                            isSelected ? 'bg-blue-50/70 font-semibold' : 'hover:bg-slate-50/80'
+                          }`}
+                        >
+                          <td className="px-3 py-2 font-bold text-slate-800 whitespace-nowrap">
+                            {formatDateIndo(dateKey)}
+                            {dateKey === todayIso && (
+                              <span className="ml-1.5 px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                                Hari Ini
+                              </span>
+                            )}
+                          </td>
+                          {activePics.map((pic) => {
+                            const pcs = record.byPic[pic]?.pcs || 0;
+                            return (
+                              <td
+                                key={pic}
+                                className={`px-3 py-2 text-right tabular-nums ${
+                                  pcs > 0 ? 'font-bold text-slate-800' : 'text-slate-300'
+                                }`}
+                              >
+                                {pcs > 0 ? `${pcs.toLocaleString('id-ID')} PCS` : '-'}
+                              </td>
+                            );
+                          })}
+                          <td className="px-3 py-2 text-right font-black text-emerald-700 tabular-nums">
+                            {record.totalPcs.toLocaleString('id-ID')} PCS
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <span className="text-[11px] text-blue-600 hover:underline">
+                              {isSelected ? '✓ Terpilih' : 'Pilih'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUB-VIEW 2: KODE SAMA / DUPLIKAT & PERBAIKAN OTOMATIS                     */}
+      {/* ========================================================================= */}
+      {viewMode === 'duplicates' && (
+        <div className="space-y-4">
+          {duplicateCodeGroups.length === 0 ? (
+            <div className="inventory-panel p-8 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs text-center space-y-3">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                <ShieldCheck className="w-8 h-8 text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Semua Kode Sampel Unik (100% Bebas Duplikat)
+                </h2>
+                <p className="mt-1 text-xs text-slate-500 max-w-lg mx-auto">
+                  Seluruh <strong>{allItems.length} sampel</strong> yang tersebar di 72 box memiliki nomor kode yang
+                  valid dan unik. Tidak ada nomor kode yang bentrok antar box maupun antar PIC.
+                </p>
+              </div>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition cursor-pointer"
+                >
+                  Kembali ke Daftar Tabel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Alert Banner */}
+              <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-amber-200/60 text-amber-900 shrink-0 mt-0.5">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold">
+                      Ditemukan {duplicateCodeGroups.length} Nomor Kode yang Dipakai Ganda
+                    </h2>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      Nomor kode berikut terdaftar pada lebih dari satu item. Gunakan tombol{' '}
+                      <strong>"⚡ Buat Kode Unik Baru"</strong> untuk menormalkan kode secara instan atau{' '}
+                      <strong>"✏️ Edit"</strong> untuk mengubah manual.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-100 border border-amber-300/80 self-start sm:self-center shrink-0">
+                  Total {duplicateCodeGroups.reduce((a, b) => a + b.count, 0)} Item Perlu Dicek
+                </div>
+              </div>
+
+              {/* Duplicate Cards per Code */}
+              <div className="space-y-3">
+                {duplicateCodeGroups.map((group) => (
+                  <div
+                    key={group.code}
+                    className="p-4 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-2xs space-y-3"
+                  >
+                    {/* Card Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono text-sm font-black px-2.5 py-1 rounded-lg bg-amber-100 text-amber-950 border border-amber-300">
+                          KODE #{group.code}
+                        </span>
+                        <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                          Digunakan {group.count} Kali
+                        </span>
+                        {group.differentBoxes && (
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            (Tersebar di {group.items.map((i) => `BOX ${i.boxNumber}`).join(', ')})
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-slate-500 font-medium">
+                        Total Kuantitas: <strong>{group.totalPcs} PCS</strong>
+                      </div>
+                    </div>
+
+                    {/* Table of items sharing this code */}
+                    <div className="overflow-x-auto rounded-xl border border-slate-200">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-200 bg-slate-50/90 text-[11px] font-bold text-slate-700 uppercase">
+                            <th className="px-3 py-2">No</th>
+                            <th className="px-3 py-2">Lokasi Box</th>
+                            <th className="px-3 py-2">Style &amp; Buyer</th>
+                            <th className="px-3 py-2">Jenis Sample</th>
+                            <th className="px-3 py-2 text-right">Qty</th>
+                            <th className="px-3 py-2">PIC Pemilik</th>
+                            <th className="px-3 py-2 text-center">Aksi Perbaikan</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {group.items.map((item, idx) => {
+                            const isFixing = fixingItemId === item.id;
+                            const isDeletable =
+                              !currentUser ||
+                              !item.picName ||
+                              String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
+
+                            return (
+                              <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                                <td className="px-3 py-2.5 font-bold text-slate-400">{idx + 1}</td>
+                                <td className="px-3 py-2.5">
+                                  <div className="font-bold text-blue-700">{item.boxLabel}</div>
+                                  <div className="text-[10px] text-slate-400">{item.rackName}</div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <div className="font-bold text-slate-900">{item.style}</div>
+                                  <div className="text-[10px] text-slate-500">Buyer: {item.buyerNo}</div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px]">
+                                    {item.jenisSample}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-right font-black text-slate-800 tabular-nums">
+                                  {item.jumlah} <span className="text-[10px] text-slate-400 font-normal">PCS</span>
+                                </td>
+                                <td className="px-3 py-2.5 font-semibold text-slate-700">
+                                  {item.picName}
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                                    {/* 1-Click Auto Fix: Beri kode baru unik */}
+                                    <button
+                                      type="button"
+                                      disabled={isFixing}
+                                      onClick={() => handleAutoFixCode(item)}
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                                      title="Generate kode unik baru untuk item ini agar tidak bentrok lagi"
+                                    >
+                                      <Zap className="h-3 w-3" />
+                                      <span>{isFixing ? 'Memperbaiki...' : '⚡ Buat Kode Unik Baru'}</span>
+                                    </button>
+
+                                    {/* Edit Item Modal */}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setItemModalConfig({
+                                          isOpen: true,
+                                          item,
+                                          targetBoxNumber: Number(item.boxNumber),
+                                        })
+                                      }
+                                      className="p-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition cursor-pointer"
+                                      title="Edit detail item ini"
+                                      aria-label={`Edit ${item.style}`}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+
+                                    {/* Hapus jika memang duplikat salah input */}
+                                    {isDeletable ? (
+                                      confirmDeleteId === item.id ? (
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={async () => {
+                                              try {
+                                                await deleteItem(item.id);
+                                              } catch (e) {
+                                                console.error(e);
+                                              } finally {
+                                                setConfirmDeleteId(null);
+                                              }
+                                            }}
+                                            className="px-2 py-0.5 rounded bg-red-600 text-white text-[10px] font-bold cursor-pointer"
+                                          >
+                                            Hapus?
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setConfirmDeleteId(null)}
+                                            className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] cursor-pointer"
+                                          >
+                                            Batal
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => setConfirmDeleteId(item.id)}
+                                          className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition cursor-pointer"
+                                          title="Hapus item ini jika duplikat salah input"
+                                          aria-label={`Hapus ${item.style}`}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      )
+                                    ) : (
+                                      <span
+                                        className="p-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed"
+                                        title={`Terkunci: Data milik PIC ${item.picName}`}
+                                      >
+                                        <Lock className="h-3.5 w-3.5" />
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUB-VIEW 3 & 4: PENGELOMPOKAN STYLE & DAFTAR TABEL & UMUR                */}
+      {/* ========================================================================= */}
+      {(viewMode === 'styles' || viewMode === 'table') && (
+        <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+          {/* Controls: Search, Aging Filter Chips, Actions */}
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1">
+              <div className="relative w-full sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Cari style, buyer, kode, box, PIC..."
+                  className="w-full rounded-xl border border-slate-200/90 bg-slate-50/80 py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
+                />
+              </div>
+
+              {/* Quick Aging Filter Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                <button
+                  type="button"
+                  onClick={() => setAgeFilter('ALL')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                    ageFilter === 'ALL'
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  Semua Umur ({metrics.total})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAgeFilter('FRESH')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                    ageFilter === 'FRESH'
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                  }`}
+                >
+                  &lt; 30 Hari ({metrics.fresh})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAgeFilter('MEDIUM')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                    ageFilter === 'MEDIUM'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200'
+                  }`}
+                >
+                  30–90 Hari ({metrics.medium})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAgeFilter('AGED')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                    ageFilter === 'AGED'
+                      ? 'bg-amber-600 text-white border-amber-600'
+                      : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                  }`}
+                >
+                  90–180 Hari ({metrics.aged})
+                </button>
                 <button
                   type="button"
                   onClick={() => setAgeFilter('CRITICAL')}
                   className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
                     ageFilter === 'CRITICAL'
                       ? 'bg-rose-600 text-white border-rose-600'
-                      : 'bg-rose-50 hover:bg-rose-100/70 text-rose-800 border-rose-200'
+                      : 'bg-rose-50 hover:bg-rose-100 text-rose-900 border-rose-200'
                   }`}
-                  title="Tersimpan lebih dari 6 bulan"
                 >
                   &gt; 180 Hari ({metrics.critical})
                 </button>
+              </div>
+            </div>
+
+            {/* Actions: Expand/Collapse & Export Excel */}
+            <div className="flex items-center gap-2 self-start lg:self-center">
+              {viewMode === 'styles' && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={expandAllStyles}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                  >
+                    Buka Semua
+                  </button>
+                  <button
+                    type="button"
+                    onClick={collapseAllStyles}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                  >
+                    Tutup Semua
+                  </button>
+                </div>
               )}
+
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Unduh Excel</span>
+              </button>
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: null })}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/90 px-3.5 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100 shadow-2xs hover:-translate-y-0.5 active:scale-95 cursor-pointer whitespace-nowrap"
-              title="Tambah item / sample baru"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Tambah Item</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleExport}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3.5 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 shadow-2xs hover:-translate-y-0.5 active:scale-95 cursor-pointer whitespace-nowrap"
-              title="Export daftar ini ke Excel (.xlsx) dengan kolom umur simpan"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export Excel</span>
-            </button>
-          </div>
-        </div>
+          {/* Mode 1: Pengelompokan Style Matrix */}
+          {viewMode === 'styles' && (
+            <div className="space-y-3 pt-1">
+              {styleGroups.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                  Tidak ada style yang sesuai dengan filter umur atau pencarian.
+                </div>
+              ) : (
+                styleGroups.map((group) => {
+                  const isExpanded = Boolean(expandedStyles[group.styleKey]);
+                  const buyerDisplay = Array.from(group.buyerNos).join(', ') || 'NA';
+                  const boxNumbers = Array.from(group.boxes).sort((a, b) => a - b);
 
-        {/* MODE 1: Pengelompokan Berdasarkan Nama Style */}
-        {viewMode === 'styles' && (
-          <div className="space-y-3.5">
-            {styleGroups.length === 0 ? (
-              <div className="py-12 text-center text-sm text-slate-400">
-                Tidak ada style yang cocok dengan pencarian dan filter umur.
-              </div>
-            ) : (
-              styleGroups.map((group) => {
-                const isExpanded = expandedStyles[group.styleName] !== false; // default expanded
-                const boxList = Array.from(group.boxes.keys()).sort((a, b) => a - b);
+                  return (
+                    <div
+                      key={group.styleKey}
+                      className="border border-slate-200/90 rounded-2xl bg-white shadow-2xs hover:border-slate-300 transition overflow-hidden"
+                    >
+                      {/* Style Summary Header Bar */}
+                      <div className="p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 via-white to-white">
+                        <div className="flex items-start sm:items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleStyleExpand(group.styleKey)}
+                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer shrink-0 mt-0.5 sm:mt-0"
+                            aria-label={isExpanded ? 'Tutup rincian' : 'Buka rincian'}
+                          >
+                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </button>
 
-                return (
-                  <div
-                    key={group.styleName}
-                    className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs hover:border-slate-300 transition"
-                  >
-                    {/* Style Card Header */}
-                    <div className="p-3.5 sm:p-4 bg-slate-50/70 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="p-2 bg-blue-100 text-blue-700 rounded-lg shrink-0 mt-0.5">
-                          <Shirt className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                              {group.styleName}
-                            </h3>
-                            {group.buyerNo && (
-                              <span className="text-[11px] font-mono font-semibold px-2 py-0.2 bg-slate-200 text-slate-700 rounded">
-                                Buyer: {group.buyerNo}
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h2 className="font-bold text-sm sm:text-base text-slate-900 tracking-tight">
+                                {group.styleName}
+                              </h2>
+                              <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                Buyer: {buyerDisplay}
                               </span>
-                            )}
-                            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.2 rounded-full">
-                              {group.items.length} Sampel ({group.totalQty} PCS)
-                            </span>
-                          </div>
+                              <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                                {group.items.length} Sampel • {group.totalPcs} PCS
+                              </span>
+                            </div>
 
-                          {/* Box Locations & Oldest Age */}
-                          <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-slate-500">
-                            <span className="flex items-center gap-1 font-medium text-slate-600">
-                              <Layers className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Lokasi Box:</span>
-                            </span>
-                            {boxList.map((bNum) => (
-                              <span
-                                key={bNum}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-white border border-slate-200 rounded font-bold text-slate-800 text-[11px]"
-                              >
-                                BOX {bNum}
-                                <span className="text-[9px] font-normal text-slate-400">
-                                  ({group.boxes.get(bNum)})
+                            <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                              <span className="flex items-center gap-1 font-medium">
+                                <Archive className="h-3.5 w-3.5 text-slate-400" />
+                                <span>Lokasi:</span>
+                                <strong className="text-slate-700">
+                                  {boxNumbers.map((b) => `BOX ${b}`).join(', ')}
+                                </strong>
+                              </span>
+
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                <span>Sampel Tertua:</span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    group.oldestTier === 'critical'
+                                      ? 'bg-rose-100 text-rose-800'
+                                      : group.oldestTier === 'aged'
+                                      ? 'bg-amber-100 text-amber-900'
+                                      : group.oldestTier === 'medium'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-emerald-100 text-emerald-800'
+                                  }`}
+                                >
+                                  {group.oldestLabel}
                                 </span>
                               </span>
-                            ))}
-
-                            <span className="text-slate-300">•</span>
-                            <span className="text-slate-600 text-[11px]">Umur tertua:</span>
-                            {renderBadge(group.oldestAge)}
+                            </div>
                           </div>
+                        </div>
+
+                        {/* Checklist Kelengkapan & Aksi Cepat Tambah Sampel */}
+                        <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
+                          {/* Checklist Tahapan Sample */}
+                          <div className="flex items-center gap-1 p-1 bg-slate-100/80 rounded-xl border border-slate-200/80 text-[10px] font-bold">
+                            {SAMPLE_TYPES.map((type) => {
+                              const exists = group.sampleTypes.has(type);
+                              return (
+                                <span
+                                  key={type}
+                                  title={`${type}: ${exists ? 'Sudah ada sampel' : 'Belum ada sampel'}`}
+                                  className={`px-1.5 py-0.5 rounded-md flex items-center gap-1 transition ${
+                                    exists
+                                      ? 'bg-white text-emerald-700 shadow-2xs font-bold'
+                                      : 'text-slate-400 opacity-60'
+                                  }`}
+                                >
+                                  {exists && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />}
+                                  <span>{type === 'BULK SAMPLE' ? 'BULK' : type}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+
+                          {/* Tombol Tambah Sampel Cepat untuk Style Ini */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setItemModalConfig({
+                                isOpen: true,
+                                item: null,
+                                targetBoxNumber: boxNumbers[0] || 1,
+                                prefill: {
+                                  style: group.styleName,
+                                  buyerNo: Array.from(group.buyerNos)[0] || '',
+                                },
+                              })
+                            }
+                            className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition flex items-center gap-1 cursor-pointer border border-blue-200"
+                            title={`Tambah sampel baru untuk style ${group.styleName}`}
+                          >
+                            <Plus className="h-3 w-3" />
+                            <span>Tambah Sampel</span>
+                          </button>
                         </div>
                       </div>
 
-                      {/* Header Actions */}
-                      <div className="flex items-center gap-2 self-start md:self-center shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setItemModalConfig({
-                              isOpen: true,
-                              item: null,
-                              targetBoxNumber: boxList[0] || null,
-                              prefill: {
-                                style: group.styleName,
-                                buyerNo: group.buyerNo || '',
-                              },
-                            })
-                          }
-                          className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
-                          title={`Tambah sampel baru untuk style "${group.styleName}"`}
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Tambah Sampel</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleStyleExpand(group.styleName)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition cursor-pointer"
-                          aria-label={isExpanded ? 'Tutup rincian' : 'Buka rincian'}
-                        >
-                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </button>
-                      </div>
+                      {/* Collapsible Items Table for this Style */}
+                      {isExpanded && (
+                        <div className="border-t border-slate-100 p-3 sm:p-4 bg-slate-50/40">
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-left text-xs">
+                              <thead>
+                                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-600 uppercase">
+                                  <th className="px-3 py-2">Kode</th>
+                                  <th className="px-3 py-2">Tanggal</th>
+                                  <th className="px-3 py-2">Umur Simpan</th>
+                                  <th className="px-3 py-2">Jenis</th>
+                                  <th className="px-3 py-2">Sample No</th>
+                                  <th className="px-3 py-2">Size &amp; Warna</th>
+                                  <th className="px-3 py-2 text-right">Jumlah</th>
+                                  <th className="px-3 py-2">Box &amp; PIC</th>
+                                  <th className="px-3 py-2 text-center">Aksi</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {group.items.map((item) => (
+                                  <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                                    <td className="px-3 py-2 font-mono font-bold text-blue-700">{item.kode}</td>
+                                    <td className="px-3 py-2 text-slate-600">{item.tanggal}</td>
+                                    <td className="px-3 py-2">
+                                      <span
+                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${
+                                          item.age.tier === 'critical'
+                                            ? 'bg-rose-100 text-rose-800'
+                                            : item.age.tier === 'aged'
+                                            ? 'bg-amber-100 text-amber-900'
+                                            : item.age.tier === 'medium'
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : 'bg-emerald-100 text-emerald-800'
+                                        }`}
+                                      >
+                                        {item.age.label}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-2 font-semibold text-slate-800">{item.jenisSample}</td>
+                                    <td className="px-3 py-2 font-mono text-slate-600">{item.sampleNo}</td>
+                                    <td className="px-3 py-2 text-slate-600">
+                                      {item.size} {item.color && item.color !== 'NA' ? `• ${item.color}` : ''}
+                                    </td>
+                                    <td className="px-3 py-2 text-right font-black text-slate-900 tabular-nums">
+                                      {item.jumlah} <span className="text-[10px] text-slate-400 font-normal">{item.satuan}</span>
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <div className="font-bold text-blue-700">{item.boxLabel}</div>
+                                      <div className="text-[10px] text-slate-400">{item.picName}</div>
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <div className="flex items-center justify-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setItemModalConfig({
+                                              isOpen: true,
+                                              item,
+                                              targetBoxNumber: Number(item.boxNumber),
+                                            })
+                                          }
+                                          className="p-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition cursor-pointer"
+                                          title="Edit item ini"
+                                          aria-label={`Edit ${item.kode}`}
+                                        >
+                                          <Pencil className="h-3 w-3" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
                     </div>
+                  );
+                })
+              )}
+            </div>
+          )}
 
-                    {/* Completeness Status Checklist */}
-                    <div className="px-3.5 py-2.5 bg-slate-50/30 border-b border-slate-100 flex items-center gap-2 overflow-x-auto text-xs scrollbar-none">
-                      <span className="text-[11px] font-semibold text-slate-500 shrink-0">Status Sampel:</span>
-                      {SAMPLE_TYPES.map((type) => {
-                        const samplesOfType = group.sampleTypes[type];
-                        const exists = Boolean(samplesOfType && samplesOfType.length > 0);
-
-                        return (
-                          <div
-                            key={type}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs shrink-0 ${
-                              exists
-                                ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900 font-bold'
-                                : 'bg-slate-50 border-slate-200 text-slate-400 font-medium'
+          {/* Mode 2: Tabel Lengkap Standar & Umur */}
+          {viewMode === 'table' && (
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-600 uppercase">
+                    <th className="px-3 py-2.5">No</th>
+                    <th className="px-3 py-2.5">Tanggal</th>
+                    <th className="px-3 py-2.5">Umur Simpan</th>
+                    <th className="px-3 py-2.5">Kode</th>
+                    <th className="px-3 py-2.5">Track</th>
+                    <th className="px-3 py-2.5">Buyer</th>
+                    <th className="px-3 py-2.5">Jenis</th>
+                    <th className="px-3 py-2.5">Style</th>
+                    <th className="px-3 py-2.5">Sample No</th>
+                    <th className="px-3 py-2.5">Size</th>
+                    <th className="px-3 py-2.5">Color</th>
+                    <th className="px-3 py-2.5 text-right">Jumlah</th>
+                    <th className="px-3 py-2.5">Box &amp; PIC</th>
+                    <th className="px-3 py-2.5 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={14} className="px-4 py-8 text-center text-slate-400">
+                        Tidak ada item yang cocok dengan pencarian atau filter umur.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredItems.map((item, i) => (
+                      <tr key={item.id} className="hover:bg-slate-50/70 transition">
+                        <td className="px-3 py-2.5 font-bold text-slate-400">{i + 1}</td>
+                        <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">
+                          <div className="flex items-center gap-1 font-mono text-[11px]">
+                            <Calendar className="h-3 w-3 text-slate-400" />
+                            <span>{item.tanggal}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block shadow-2xs ${
+                              item.age.tier === 'critical'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                : item.age.tier === 'aged'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                                : item.age.tier === 'medium'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                             }`}
                           >
-                            {exists ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            {item.age.label}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono font-bold text-blue-700">{item.kode}</td>
+                        <td className="px-3 py-2.5 font-mono text-slate-600">{item.track}</td>
+                        <td className="px-3 py-2.5 font-mono text-slate-700">{item.buyerNo}</td>
+                        <td className="px-3 py-2.5 font-semibold text-slate-800">{item.jenisSample}</td>
+                        <td className="px-3 py-2.5 font-bold text-slate-900 max-w-xs truncate">{item.style}</td>
+                        <td className="px-3 py-2.5 font-mono text-slate-600">{item.sampleNo}</td>
+                        <td className="px-3 py-2.5 text-slate-600">{item.size}</td>
+                        <td className="px-3 py-2.5 text-slate-600">{item.color}</td>
+                        <td className="px-3 py-2.5 text-right font-black text-slate-900 tabular-nums whitespace-nowrap">
+                          {item.jumlah.toLocaleString('id-ID')}{' '}
+                          <span className="text-[11px] font-normal text-slate-400">{item.satuan}</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="text-xs font-bold text-blue-700">{item.boxLabel}</div>
+                          <div className="mt-0.5 text-[11px] text-slate-500">
+                            {item.rackName}
+                            {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {!currentUser ||
+                            !item.picName ||
+                            String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase() ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setItemModalConfig({
+                                      isOpen: true,
+                                      item,
+                                      targetBoxNumber: Number(item.boxNumber),
+                                    })
+                                  }
+                                  className="p-1.5 rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
+                                  title="Edit item ini"
+                                  aria-label={`Edit ${item.style || item.kode}`}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                                {String(confirmDeleteId) === String(item.id) ? (
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        try {
+                                          await deleteItem(item.id);
+                                        } catch (e) {
+                                          console.error('Delete item error:', e);
+                                        } finally {
+                                          setConfirmDeleteId(null);
+                                        }
+                                      }}
+                                      className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-bold transition hover:bg-red-700 cursor-pointer"
+                                      title="Konfirmasi hapus permanen"
+                                    >
+                                      Hapus?
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmDeleteId(null)}
+                                      className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold transition hover:bg-slate-200 cursor-pointer"
+                                      title="Batal"
+                                    >
+                                      Batal
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteId(item.id)}
+                                    className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
+                                    title="Hapus item ini"
+                                    aria-label={`Hapus ${item.style || item.kode}`}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </>
                             ) : (
-                              <span className="w-3.5 h-3.5 flex items-center justify-center text-[10px] text-slate-400 font-mono">○</span>
-                            )}
-                            <span>{type}</span>
-                            {exists && (
-                              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-white/80 px-1 rounded">
-                                {samplesOfType.map((s) => `B#${s.boxNumber}`).join(', ')}
+                              <span
+                                className="p-1.5 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center cursor-not-allowed"
+                                title={`Terkunci: Data sampel ini milik PIC ${item.picName}. Satu user tidak dapat mengedit data user lain.`}
+                              >
+                                <Lock className="h-3.5 w-3.5 text-slate-400" />
                               </span>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Detailed Items Table for this Style */}
-                    {isExpanded && (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead>
-                            <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wide text-slate-400 bg-white">
-                              <th className="px-3 py-2 font-semibold">Jenis</th>
-                              <th className="px-3 py-2 font-semibold">Kode Sample</th>
-                              <th className="px-3 py-2 font-semibold">Size &amp; Warna</th>
-                              <th className="px-3 py-2 font-semibold text-right">Qty</th>
-                              <th className="px-3 py-2 font-semibold">Lokasi Box</th>
-                              <th className="px-3 py-2 font-semibold">Tanggal Masuk</th>
-                              <th className="px-3 py-2 font-semibold">Umur Simpan</th>
-                              <th className="w-16 px-3 py-2 text-center font-semibold">Aksi</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {group.items.map((item) => (
-                              <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                                <td className="px-3 py-2 whitespace-nowrap">
-                                  <span className="px-2 py-0.5 rounded font-bold text-[10.5px] bg-slate-100 text-slate-800 border border-slate-200">
-                                    {item.jenisSample}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-2 font-mono font-semibold text-slate-900">
-                                  {item.kode}
-                                </td>
-                                <td className="px-3 py-2 text-slate-700">
-                                  Size: <strong className="text-slate-900">{item.size}</strong> • Warna: <span className={dashClass(item.color)}>{item.color}</span>
-                                  {item.sampleNo && item.sampleNo !== 'NA' && (
-                                    <span className="text-slate-400 ml-1.5">(Sample #{item.sampleNo})</span>
-                                  )}
-                                </td>
-                                <td className="px-3 py-2 text-right font-bold text-slate-900">
-                                  {item.jumlah} <span className="text-[10px] font-normal text-slate-400">{item.satuan}</span>
-                                </td>
-                                <td className="px-3 py-2">
-                                  <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">
-                                    {item.boxLabel}
-                                  </span>
-                                  <span className="text-slate-500 text-[11px] ml-1.5">
-                                    {item.rackName} • {item.picName}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-slate-600">
-                                  {item.tanggal}
-                                </td>
-                                <td className="px-3 py-2 whitespace-nowrap">
-                                  {renderBadge(item.age)}
-                                </td>
-                                <td className="px-3 py-2 text-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: item.boxNumber })}
-                                    className="p-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 transition cursor-pointer"
-                                    title="Edit item ini"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-
-        {/* MODE 2: Daftar Semua Barang Tersimpan (Tabel Lengkap + Kolom Umur) */}
-        {viewMode === 'table' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-400">
-                  <th className="w-8 px-3 py-2 font-semibold">#</th>
-                  <th className="whitespace-nowrap px-3 py-2 font-semibold">Tanggal Masuk</th>
-                  <th className="whitespace-nowrap px-3 py-2 font-semibold">Umur Simpan</th>
-                  <th className="px-3 py-2 font-semibold">Kode &amp; Track</th>
-                  <th className="whitespace-nowrap px-3 py-2 font-semibold">Buyer</th>
-                  <th className="whitespace-nowrap px-3 py-2 font-semibold">Jenis</th>
-                  <th className="px-3 py-2 font-semibold">Deskripsi &amp; Style</th>
-                  <th className="whitespace-nowrap px-3 py-2 text-right font-semibold">Qty</th>
-                  <th className="px-3 py-2 font-semibold">Lokasi Box</th>
-                  <th className="w-20 px-3 py-2 text-center font-semibold">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="py-8 text-center text-sm text-slate-400">
-                      Tidak ada barang yang cocok dengan pencarian dan filter umur.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredItems.map((item, idx) => (
-                    <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 align-top">
-                      <td className="px-3 py-2.5 text-slate-400">{idx + 1}</td>
-                      <td className={`px-3 py-2.5 whitespace-nowrap ${dashClass(item.tanggal)}`}>
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{item.tanggal}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        {renderBadge(item.age)}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className={`font-mono text-xs font-semibold ${dashClass(item.kode)}`}>{item.kode}</div>
-                        {item.track && item.track !== 'NA' && (
-                          <div className="mt-0.5 font-mono text-[10px] text-slate-400">Track: {item.track}</div>
-                        )}
-                      </td>
-                      <td className={`px-3 py-2.5 whitespace-nowrap font-mono text-xs ${dashClass(item.buyerNo)}`}>
-                        {item.buyerNo === 'NA' ? 'NA' : item.buyerNo}
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700">
-                          {item.jenisSample}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 max-w-[20rem] break-words">
-                        <div className="font-bold text-slate-900">{item.style}</div>
-                        <div className="mt-0.5 space-x-2 text-[11px] text-slate-500">
-                          {item.sampleNo && item.sampleNo !== 'NA' && (
-                            <span>Sample: <strong className="text-slate-600">{item.sampleNo}</strong></span>
-                          )}
-                          {item.size && item.size !== 'NA' && (
-                            <span>Size: <strong className="text-slate-600">{item.size}</strong></span>
-                          )}
-                          {item.color && item.color !== 'NA' && (
-                            <span className={dashClass(item.color)}>{item.color}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap text-right font-bold text-slate-900">
-                        {item.jumlah.toLocaleString('id-ID')}{' '}
-                        <span className="text-[11px] font-normal text-slate-400">{item.satuan}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="text-xs font-bold text-blue-700">{item.boxLabel}</div>
-                        <div className="mt-0.5 text-[11px] text-slate-500">
-                          {item.rackName}
-                          {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center justify-center gap-1.5">
-                          {!currentUser ||
-                          !item.picName ||
-                          String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase() ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setItemModalConfig({
-                                    isOpen: true,
-                                    item,
-                                    targetBoxNumber: Number(item.boxNumber),
-                                  })
-                                }
-                                className="p-1.5 rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
-                                title="Edit item ini"
-                                aria-label={`Edit ${item.style || item.kode}`}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </button>
-                              {String(confirmDeleteId) === String(item.id) ? (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      try {
-                                        await deleteItem(item.id);
-                                      } catch (e) {
-                                        console.error('Delete item error:', e);
-                                      } finally {
-                                        setConfirmDeleteId(null);
-                                      }
-                                    }}
-                                    className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-bold transition hover:bg-red-700 cursor-pointer"
-                                    title="Konfirmasi hapus permanen"
-                                  >
-                                    Hapus?
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setConfirmDeleteId(null)}
-                                    className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold transition hover:bg-slate-200 cursor-pointer"
-                                    title="Batal"
-                                  >
-                                    Batal
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => setConfirmDeleteId(item.id)}
-                                  className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
-                                  title="Hapus item ini"
-                                  aria-label={`Hapus ${item.style || item.kode}`}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              )}
-                            </>
-                          ) : (
-                            <span
-                              className="p-1.5 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center cursor-not-allowed"
-                              title={`Terkunci: Data sampel ini milik PIC ${item.picName}. Satu user tidak dapat mengedit data user lain.`}
-                            >
-                              <Lock className="h-3.5 w-3.5 text-slate-400" />
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

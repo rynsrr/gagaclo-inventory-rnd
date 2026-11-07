@@ -10,7 +10,6 @@ import {
   ZoomOut, 
   Maximize2, 
   Eye, 
-  Layers, 
   Box as BoxIcon, 
   Sparkles, 
   Info, 
@@ -159,7 +158,6 @@ export const Warehouse3DView = ({
   }, [topSearches, lastSearches]);
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredBox, setHoveredBox] = useState(null);
-  const [activeRackView, setActiveRackView] = useState('ALL');
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
   const [webGlError, setWebGlError] = useState(false);
@@ -178,7 +176,6 @@ export const Warehouse3DView = ({
     { label: 'Penuh', color: 'bg-emerald-100 text-emerald-900', boxes: [] },
   ];
   for (const box of boxes) {
-    if (activeRackView !== 'ALL' && Number(box.rackId) !== Number(activeRackView)) continue;
     if (highlightPpic !== 'ALL' && !matchesPic(box.picName, highlightPpic)) continue;
     if (searchActive && !highlightBoxNumbers.has(Number(box.boxNumber))) continue;
     const hasData = getItemsInBox(box.boxNumber).length > 0;
@@ -928,13 +925,6 @@ export const Warehouse3DView = ({
     }
   }, [highlightPpic, highlightBoxNumbers, searchActive, boxes, racks, ppicMembers]);
 
-  // Camera presets
-  const focusOnRack = (rackId) => {
-    activeRackRef.current = rackId;
-    setActiveRackView(rackId);
-    fitCameraRef.current?.();
-  };
-
   if (webGlError) {
     return (
       <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
@@ -1135,28 +1125,6 @@ export const Warehouse3DView = ({
       </section>
 
       <PpicMissingMentionBar activePic={highlightPpic} onSelectPic={setHighlightPpic} />
-
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mr-1">
-          <Layers className="h-3.5 w-3.5 text-blue-600" />
-          <span>Fokus Rak:</span>
-        </span>
-        <div role="group" aria-label="Pilihan rak" className="inventory-filter-group w-fit max-w-full flex-wrap shadow-2xs">
-          <button onClick={() => focusOnRack('ALL')} aria-pressed={activeRackView === 'ALL'}>
-            Semua Rak
-          </button>
-          {racks.filter((r) => Number(r.id) !== 0).map((r) => (
-            <button key={r.id} onClick={() => focusOnRack(r.id)} aria-pressed={activeRackView === r.id}>
-              {r.name}
-            </button>
-          ))}
-          {boxes.some((b) => Number(b.rackId) === 0) && (
-            <button onClick={() => focusOnRack(0)} aria-pressed={activeRackView === 0}>
-              Lantai ({boxes.filter((b) => Number(b.rackId) === 0).length})
-            </button>
-          )}
-        </div>
-      </div>
 
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
         {occupancyGroups.map(group => (
