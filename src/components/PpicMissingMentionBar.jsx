@@ -4,18 +4,16 @@ import {
   Users, 
   Copy, 
   Check, 
-  AlertCircle, 
-  CheckCircle2, 
   ChevronDown, 
   ChevronUp,
-  Box as BoxIcon,
-  Filter
+  Filter,
+  CheckCircle2,
 } from 'lucide-react';
 
-export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact = false }) => {
+export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
   const { ppicMembers, boxes, getItemsInBox, setSelectedBoxNumber } = useInventory();
   const [copied, setCopied] = useState(false);
-  const [showAllBoxes, setShowAllBoxes] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Calculate missing (kurang) boxes for each PIC
   const picStats = useMemo(() => {
@@ -119,12 +117,12 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact 
           </div>
         </div>
 
-        {/* Copy Mention Button */}
-        <div className="flex items-center gap-2 self-start sm:self-center">
+        {/* Actions: Copy Mention & Toggle Expand */}
+        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
           <button
             type="button"
             onClick={handleCopyMentionText}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs border ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border cursor-pointer ${
               copied
                 ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-200'
                 : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900 hover:shadow-xs hover:-translate-y-0.5 active:scale-95'
@@ -134,20 +132,59 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact 
             {copied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-white" />
-                <span>Tersalin ke Clipboard!</span>
+                <span>Tersalin!</span>
               </>
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5" />
-                <span>Salin Teks Mention Chat</span>
+                <span>Salin Teks Chat</span>
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsExpanded(prev => !prev)}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border border-slate-200 transition cursor-pointer"
+            title={isExpanded ? "Tutup detail 5 kartu PIC" : "Buka detail 5 kartu PIC"}
+          >
+            <span>{isExpanded ? 'Tutup Detail' : 'Buka Detail'}</span>
+            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
-      {/* Grid of PIC Mention Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
+      {/* Mini Inline Summary Chips when collapsed */}
+      {!isExpanded && (
+        <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none text-xs text-slate-600">
+          <span className="text-[11px] font-semibold text-slate-500 shrink-0">Kurang per PIC:</span>
+          {picStats.map(pic => (
+            <button
+              key={pic.id}
+              type="button"
+              onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition cursor-pointer shrink-0 ${
+                activePic === pic.name
+                  ? 'bg-blue-100 border-blue-300 text-blue-900 font-bold'
+                  : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-700'
+              }`}
+              title={`Klik untuk sorot box milik @${pic.name}`}
+            >
+              <span className={`w-4 h-4 rounded text-white font-bold text-[9px] flex items-center justify-center ${pic.avatarBg}`}>
+                {pic.name.charAt(0)}
+              </span>
+              <span>@{pic.name}</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${pic.countKurang > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                {pic.countKurang > 0 ? `${pic.countKurang} box` : 'Lengkap'}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Grid of PIC Mention Cards when expanded */}
+      {isExpanded && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 animate-fade-in pt-1">
         {picStats.map((pic) => {
           const isSelected = activePic !== 'ALL' && activePic.toLowerCase() === pic.name.toLowerCase();
           const hasKurang = pic.countKurang > 0;
@@ -251,6 +288,7 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact 
           );
         })}
       </div>
+      )}
     </div>
   );
 };

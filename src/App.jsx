@@ -32,7 +32,15 @@ const QuickScannerModal = lazy(() =>
 const UserProfileModal = lazy(() =>
   import('./components/UserProfileModal').then((m) => ({ default: m.UserProfileModal }))
 );
-import { X } from 'lucide-react';
+import {
+  Boxes,
+  Box as BoxIcon,
+  LayoutDashboard,
+  MessageSquarePlus,
+  Database,
+  PackagePlus,
+  X,
+} from 'lucide-react';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse' (BOX is the main tab)
@@ -54,7 +62,6 @@ const AppContent = () => {
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
-  const [isBoxLabelPrintOpen, setIsBoxLabelPrintOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const connected = supabaseStatus.isConnected;
 
@@ -178,6 +185,9 @@ const AppContent = () => {
             {/* Actions */}
             <div className="inventory-header-actions flex shrink-0 items-center gap-2">
 
+              {/* Countdown Timer (Compact Badge in Header) */}
+              <InventoryTimer compact />
+
               {/* Supabase Corporate Gagaclo Status Button */}
               <button
                 type="button"
@@ -238,11 +248,6 @@ const AppContent = () => {
           </div>
         </div>
       </header>
-
-      {/* Hitung Mundur Pendataan - Fit Width di Atas Center */}
-      <div className="no-print w-full flex justify-center pt-3 pb-1 px-4">
-        <InventoryTimer />
-      </div>
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">
