@@ -329,27 +329,66 @@
   }
 }
 
-/* Header responsive wrapping for mobile */
+/* Header responsive wrapping for mobile: every row stays inside the viewport */
 @media screen and (max-width: 640px) {
   .inventory-header-scroll {
     overflow-x: visible;
   }
   .inventory-header-row {
     flex-wrap: wrap;
-    min-width: 100%;
+    min-width: 0;
+    width: 100%;
     white-space: normal;
     padding: 8px 10px;
     gap: 6px;
-    justify-content: space-between;
   }
   .inventory-header-brand {
     flex: 0 0 auto;
   }
+
+  /* Main tabs become a full-width, swipeable strip instead of pushing the
+     header wider than the screen. */
+  .inventory-header-row > nav[aria-label="Menu navigasi utama"] {
+    flex: 0 0 100%;
+    min-width: 0;
+    width: 100%;
+    margin-inline: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    order: 2;
+  }
+  .inventory-header-row > nav[aria-label="Menu navigasi utama"]::-webkit-scrollbar {
+    display: none;
+  }
+  .inventory-header-row > nav[aria-label="Menu navigasi utama"] > button {
+    flex: 0 0 auto;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  /* Action buttons wrap instead of being clipped on a phone. */
   .inventory-header-actions {
-    margin-left: auto;
-    gap: 4px;
+    flex: 0 0 100%;
+    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    gap: 6px;
+    order: 3;
+  }
+  .inventory-header-actions > * {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .inventory-header-actions button {
+    padding-inline: 8px;
+    font-size: 11px;
   }
   .inventory-header-controls {
+    flex: 0 0 100%;
     order: 5;
     width: 100%;
     margin-top: 2px;
