@@ -392,9 +392,9 @@ const ItemModalContent = () => {
       }
 
       showNotification?.(
-        `Item tersimpan! Silakan cetak sample card ATAU tulis Kode Sample (${finalKode}) dan Nomer Box / Posisi (${placeClean}) di sample card.`,
+        `Item tersimpan! Silakan cetak sample card ATAU tulis Kode Sample (${finalKode}) dan Nomer Box / Posisi: ${placeClean} di sample card.`,
         'warning',
-        9000
+        0 // 0 = notifikasi tidak otomatis hilang, wajib ditutup manual via tombol [X]
       );
       setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
     } catch (err) {

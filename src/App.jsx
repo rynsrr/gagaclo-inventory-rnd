@@ -327,8 +327,9 @@ const AppContent = () => {
             <button
               type="button"
               onClick={() => setSystemNotification(null)}
-              className="p-1 hover:bg-white/20 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 hover:bg-white/20 active:bg-white/30 rounded-lg text-slate-300 hover:text-white transition cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               aria-label="Tutup notifikasi"
+              title="Tutup notifikasi"
             >
               <X className="w-4 h-4" />
             </button>
