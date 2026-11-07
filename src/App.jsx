@@ -59,7 +59,6 @@ const AppContent = () => {
     currentUser,
   } = useInventory();
 
-  const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
@@ -178,10 +177,6 @@ const AppContent = () => {
               })}
             </nav>
 
-            {appMode === '3d-warehouse' && (
-              <div className="inventory-header-controls" ref={setWarehouseControlsHost} />
-            )}
-
             {/* Actions */}
             <div className="inventory-header-actions flex shrink-0 items-center gap-2">
 
@@ -262,7 +257,6 @@ const AppContent = () => {
               }
             >
               <Warehouse3DView
-                controlsHost={warehouseControlsHost}
                 highlightBoxNumbers={highlightBoxNumbers}
                 searchQuery={searchQuery}
                 onSearchQueryChange={setSearchQuery}

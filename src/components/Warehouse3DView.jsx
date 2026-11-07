@@ -1,4 +1,3 @@
-import { createPortal } from 'react-dom';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -12,7 +11,6 @@ import {
   Maximize2, 
   Eye, 
   Layers, 
-  User, 
   Box as BoxIcon, 
   Sparkles, 
   Info, 
@@ -35,7 +33,6 @@ function matchesPic(picName, selectedPic) {
 }
 
 export const Warehouse3DView = ({ 
-  controlsHost, 
   highlightBoxNumbers = null, 
   searchQuery = '',
   onSearchQueryChange,
@@ -952,35 +949,6 @@ export const Warehouse3DView = ({
 
   return (
     <div className="warehouse-layout space-y-4">
-      
-      {controlsHost && createPortal(
-        <div className="inventory-header-filters flex items-center">
-          <label htmlFor="header-pic-select" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all shadow-2xs cursor-pointer ${
-            highlightPpic !== 'ALL'
-              ? 'bg-blue-50/95 border-blue-300 text-blue-900 ring-2 ring-blue-400/20 shadow-xs'
-              : 'bg-white/95 hover:bg-slate-50 border-slate-200 text-slate-700'
-          }`}>
-            <User className={`h-3.5 w-3.5 ${highlightPpic !== 'ALL' ? 'text-blue-600' : 'text-slate-400'}`} aria-hidden="true" />
-            <span className="text-[11px] font-bold text-slate-500">Filter PIC:</span>
-            <select
-              id="header-pic-select"
-              value={highlightPpic}
-              onChange={(e) => setHighlightPpic(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
-              aria-label="Pilih filter PIC"
-            >
-              <option value="ALL">Semua ({ppicMembers.length} Orang)</option>
-              {ppicMembers.map((pic) => (
-                <option key={pic.id} value={pic.name}>
-                  {pic.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>,
-        controlsHost,
-      )}
-
       {/* Pencarian Cepat di Halaman Depan */}
       <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md shadow-sm border border-slate-200/80 rounded-2xl" aria-label="Pencarian halaman depan">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
