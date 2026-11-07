@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildLowPolyForestScene } from './lowPolyForestScene';
@@ -50,6 +50,15 @@ export const Warehouse3DView = ({
       return Array.isArray(raw) ? raw.filter(s => typeof s === 'string' && s.trim()) : [];
     } catch {
       return [];
+    }
+  });
+  // Search frequency counts: lowercase term -> count, for "most searched" pills
+  const [topSearches, setTopSearches] = useState(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('gagaclo_top_searches') || '{}');
+      return raw && typeof raw === 'object' ? raw : {};
+    } catch {
+      return {};
     }
   });
   const { 
@@ -106,6 +115,7 @@ export const Warehouse3DView = ({
   }, [onClearSearch]);
 
   // Record non-empty searches as "last searches" (max 5, stored in localStorage)
+  // and bump frequency counts for "most searched" (max 5).
   useEffect(() => {
     const q = searchQuery.trim();
     if (!q) return;
@@ -116,9 +126,27 @@ export const Warehouse3DView = ({
       } catch {}
       return next;
     });
+    setTopSearches((prev) => {
+      const key = q.toLowerCase();
+      const next = { ...prev, [key]: (prev[key] || 0) + 1 };
+      try {
+        localStorage.setItem('gagaclo_top_searches', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
   }, [searchQuery]);
 
   // Filter / view state
+  // Top 5 most-searched terms derived from frequency counts (needs >= 2 hits to be "sering")
+  const topSearchPills = useMemo(
+    () =>
+      Object.entries(topSearches)
+        .filter(([, count]) => count >= 2)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([term, count]) => ({ term, count })),
+    [topSearches],
+  );
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredBox, setHoveredBox] = useState(null);
   const [activeRackView, setActiveRackView] = useState('ALL');
@@ -995,6 +1023,24 @@ export const Warehouse3DView = ({
                 className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition font-medium border border-slate-200/60 shadow-2xs"
               >
                 {sug}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Most searched pills when not searching (top 5 by frequency) */}
+        {!searchQuery && topSearchPills.length > 0 && (
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
+            <span className="text-amber-600 font-medium">Paling sering dicari:</span>
+            {topSearchPills.map(({ term, count }) => (
+              <button
+                key={term}
+                type="button"
+                onClick={() => onSearchQueryChange?.(term)}
+                className="px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 hover:text-amber-800 text-amber-700 transition font-medium border border-amber-200/60 shadow-2xs flex items-center gap-1"
+              >
+                {term}
+                <span className="text-[9px] text-amber-500 font-bold">{count}x</span>
               </button>
             ))}
           </div>
