@@ -1,14 +1,16 @@
 import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
-import { Warehouse3DView } from './components/Warehouse3DView';
 import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
 import { InventoryTimer } from './components/InventoryTimer';
 import { InventoryImport } from './components/InventoryImport';
 import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
 
-// Code-split heavy secondary views & modals for ultra lightweight initial load
+// Code-split heavy 3D scene & secondary views for ultra lightweight initial load
+const Warehouse3DView = lazy(() =>
+  import('./components/Warehouse3DView').then((m) => ({ default: m.Warehouse3DView }))
+);
 const TotalItemsSummaryView = lazy(() =>
   import('./components/TotalItemsSummaryView').then((m) => ({ default: m.TotalItemsSummaryView }))
 );
@@ -30,16 +32,7 @@ const QuickScannerModal = lazy(() =>
 const UserProfileModal = lazy(() =>
   import('./components/UserProfileModal').then((m) => ({ default: m.UserProfileModal }))
 );
-import {
-  Box as BoxIcon,
-  Boxes,
-  Database,
-  LayoutDashboard,
-  PackagePlus,
-  MessageSquarePlus,
-  X,
-  Sparkles,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse' (BOX is the main tab)
@@ -255,14 +248,23 @@ const AppContent = () => {
       <div className="inventory-body">
         <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 py-5">
           {appMode === '3d-warehouse' && (
-            <Warehouse3DView
-              controlsHost={warehouseControlsHost}
-              highlightBoxNumbers={highlightBoxNumbers}
-              searchQuery={searchQuery}
-              onSearchQueryChange={setSearchQuery}
-              searchResults={searchResults}
-              onClearSearch={() => setSearchQuery('')}
-            />
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center min-h-[460px] rounded-2xl bg-slate-900/40 border border-slate-800 text-slate-400 gap-3">
+                  <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                  <span className="text-xs font-semibold text-slate-300">Memuat Visualisasi 3D Rak...</span>
+                </div>
+              }
+            >
+              <Warehouse3DView
+                controlsHost={warehouseControlsHost}
+                highlightBoxNumbers={highlightBoxNumbers}
+                searchQuery={searchQuery}
+                onSearchQueryChange={setSearchQuery}
+                searchResults={searchResults}
+                onClearSearch={() => setSearchQuery('')}
+              />
+            </Suspense>
           )}
           {appMode === 'summary' && (
             <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Ringkasan Data...</div>}>

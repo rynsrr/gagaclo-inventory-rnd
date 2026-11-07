@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { supabase } from '../lib/supabase';
+import { CardPrintModal } from './CardPrintModal';
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, reserveCode, releaseCode } from '../utils/sequenceResolver';
 import { 
   X, 
@@ -13,6 +14,8 @@ import {
   Edit3,
   CheckCircle2,
   Lock,
+  Printer,
+  Check,
 } from 'lucide-react';
 
 // Every row on the sample card is mandatory. "NA" is an accepted value when
@@ -120,6 +123,10 @@ const ItemModalContent = () => {
   const hiddenDateRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [savedReminder, setSavedReminder] = useState(null);
+  const savedReminderRef = useRef(null);
+  savedReminderRef.current = savedReminder;
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   const isDuplicate = Boolean(itemModalConfig.isDuplicate);
   const isEditing = Boolean(itemModalConfig.item && !isDuplicate);
@@ -253,6 +260,7 @@ const ItemModalContent = () => {
         }
       }
       if (e.key === 'Escape') {
+        if (savedReminderRef.current) return;
         setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
       }
     };
@@ -391,12 +399,17 @@ const ItemModalContent = () => {
         await addItem(payload);
       }
 
-      showNotification?.(
-        `Item tersimpan! Silakan cetak sample card ATAU tulis Kode Sample (${finalKode}) dan Nomer Box / Posisi: ${placeClean} di sample card.`,
-        'warning',
-        0 // 0 = notifikasi tidak otomatis hilang, wajib ditutup manual via tombol [X]
-      );
-      setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
+      const shortCode = String(finalKode || '').replace(/^(SAMPLE|MAT)-/i, '').trim();
+      const shortLocation = `BOX ${boxNum}`;
+
+      setSavedReminder({
+        kode: shortCode,
+        lokasi: shortLocation,
+        itemForPrint: {
+          ...payload,
+          id: itemModalConfig.item?.id || Date.now(),
+        },
+      });
     } catch (err) {
       console.error('Error saat menyimpan item:', err);
       setSubmitError(err?.message || 'Gagal menyimpan perubahan. Silakan coba lagi.');
@@ -878,6 +891,94 @@ const ItemModalContent = () => {
         </div>
 
       </div>
+
+      {/* Centered Blocking Reminder Modal */}
+      {savedReminder && (
+        <div 
+          className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="saved-reminder-title"
+        >
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden p-6 sm:p-7 space-y-5 animate-scale-in">
+            
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 id="saved-reminder-title" className="text-base font-bold text-slate-900">
+                  Item Berhasil Disimpan
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Perbarui kartu fisik sampel sebelum beralih ke menu lain.
+                </p>
+              </div>
+            </div>
+
+            {/* Instruction description */}
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Silakan cetak sample card ATAU tuliskan kode dan lokasi berikut pada kartu fisik:
+            </p>
+
+            {/* Clean Highlight Info Card */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+                <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">
+                  KODE SAMPLE
+                </span>
+                <span className="text-lg font-mono font-bold text-slate-900 tracking-wider">
+                  {savedReminder.kode}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">
+                  LOKASI
+                </span>
+                <span className="text-base font-bold text-blue-700">
+                  {savedReminder.lokasi}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="w-full min-h-[44px] py-2.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Cetak Sample Card</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSavedReminder(null);
+                  setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
+                }}
+                className="w-full min-h-[44px] py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold border border-slate-300 transition flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              >
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>Selesai (Sudah Dicatat)</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Print Modal */}
+      {showPrintModal && savedReminder && (
+        <CardPrintModal
+          itemsToPrint={[savedReminder.itemForPrint]}
+          onClose={() => {
+            setShowPrintModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };
