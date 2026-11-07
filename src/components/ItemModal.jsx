@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
-import { CardPrintModal } from './CardPrintModal';
 import { supabase } from '../lib/supabase';
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, reserveCode, releaseCode } from '../utils/sequenceResolver';
 import { 
   X, 
   Save, 
-  Printer, 
   MapPin,
   AlertCircle,
-  AlertTriangle,
   Calendar,
   Info,
   Sparkles,
   Edit3,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
 } from 'lucide-react';
 
 // Every row on the sample card is mandatory. "NA" is an accepted value when
@@ -31,7 +29,6 @@ const REQUIRED_FIELDS = [
   { key: 'color', label: 'Color / Warna' },
   { key: 'jumlah', label: 'Jumlah' },
   { key: 'satuan', label: 'Satuan' },
-  { key: 'place', label: 'Place' },
 ];
 
 const isBlank = (value) => {
@@ -116,15 +113,13 @@ const ItemModalContent = () => {
     items,
     suggestions = {},
     removeSuggestion,
-    showNotification
+    showNotification,
+    currentUser,
   } = useInventory();
 
   const hiddenDateRef = useRef(null);
-  const [showPrintModal, setShowPrintModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [savedItemReminder, setSavedItemReminder] = useState(null);
-  const [itemToPrintFromReminder, setItemToPrintFromReminder] = useState(null);
 
   const isDuplicate = Boolean(itemModalConfig.isDuplicate);
   const isEditing = Boolean(itemModalConfig.item && !isDuplicate);
@@ -167,7 +162,7 @@ const ItemModalContent = () => {
         size: item.size || '',
         color: item.color && item.color !== '-' ? item.color : '',
         jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
-        satuan: item.satuan || item.unit || (isMat ? 'MTR' : 'PCS'),
+        satuan: 'PCS',
         boxNumber: bNum,
         place: item.place || defaultBoxPlace,
         status: item.status || 'In Storage',
@@ -189,7 +184,7 @@ const ItemModalContent = () => {
         size: '',
         color: '',
         jumlah: 1,
-        satuan: isMat ? 'MTR' : 'PCS',
+        satuan: 'PCS',
         boxNumber: bNum,
         place: defaultBoxPlace,
         status: 'In Storage',
@@ -239,21 +234,6 @@ const ItemModalContent = () => {
     const properPlace = targetBox
       ? `BOX ${targetBox.boxNumber} (${targetBox.rackName || 'LANTAI'} - ${targetBox.picName || 'Royan'})`
       : selectedPlaceValue;
-    
-    setFormData(prev => ({
-      ...prev,
-      place: properPlace,
-      boxNumber: boxNum,
-    }));
-  };
-
-  // Handle Box Number change directly without heavy 72-option select
-  const handleBoxNumberChange = (num) => {
-    const boxNum = Math.max(1, Math.min(72, Number(num) || 1));
-    const targetBox = boxes.find(b => Number(b.boxNumber) === boxNum);
-    const properPlace = targetBox
-      ? `BOX ${targetBox.boxNumber} (${targetBox.rackName || 'LANTAI'} - ${targetBox.picName || 'Royan'})`
-      : `BOX ${boxNum}`;
     
     setFormData(prev => ({
       ...prev,
@@ -313,6 +293,11 @@ const ItemModalContent = () => {
 
     const boxNum = Number(formData.boxNumber) || 1;
     const boxObj = boxes.find(b => Number(b.boxNumber) === boxNum);
+    const isOwnerBox = !currentUser || !boxObj?.picName || String(currentUser.name).trim().toLowerCase() === String(boxObj.picName).trim().toLowerCase();
+    if (!isOwnerBox) {
+      setSubmitError(`Akses ditolak: Box #${boxNum} adalah milik PIC "${boxObj?.picName}". Anda sedang login sebagai "${currentUser?.name}". Satu user tidak dapat mengedit data user lain.`);
+      return;
+    }
 
     const styleTrim = clean(formData.style);
     const sampleNoTrim = clean(formData.sampleNo);
@@ -321,7 +306,7 @@ const ItemModalContent = () => {
     const colorTrim = clean(formData.color);
     const trackClean = clean(formData.track);
     const tanggalClean = clean(formData.tanggal);
-    const satuanClean = clean(formData.satuan).toUpperCase();
+    const satuanClean = 'PCS';
     const placeClean = clean(formData.place) || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`);
     const fullDeskripsi = sampleNoTrim
       ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
@@ -400,28 +385,18 @@ const ItemModalContent = () => {
     };
 
     try {
-      let savedResult;
       if (isEditing) {
-        savedResult = await updateItem(itemModalConfig.item.id, payload);
+        await updateItem(itemModalConfig.item.id, payload);
       } else {
-        savedResult = await addItem(payload);
+        await addItem(payload);
       }
 
-      // Tampilkan reminder wajib: Print Card Sample ATAU Tulis Kode & Place di Kartu Lama
-      setSavedItemReminder({
-        item: savedResult || { ...payload, id: 'temp-' + Date.now() },
-        boxNumber: boxNum,
-        place: placeClean,
-        kode: finalKode,
-        style: styleTrim,
-      });
-
-      // Notif mention saja tanpa memunculkan nomor
       showNotification?.(
-        '⚠️ PENGINGAT WAJIB: Item tersimpan! Segera cetak kartu sample baru ATAU tuliskan Kode & Place di kartu fisik!',
+        `Item tersimpan! Silakan cetak sample card ATAU tulis Kode Sample (${finalKode}) dan Nomer Box / Posisi (${placeClean}) di sample card.`,
         'warning',
-        8000
+        9000
       );
+      setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
     } catch (err) {
       console.error('Error saat menyimpan item:', err);
       setSubmitError(err?.message || 'Gagal menyimpan perubahan. Silakan coba lagi.');
@@ -431,44 +406,26 @@ const ItemModalContent = () => {
   };
 
   const currentBoxObj = boxes.find(b => Number(b.boxNumber) === Number(formData.boxNumber));
+  const isOwner = !currentUser || !currentBoxObj?.picName || String(currentUser.name).trim().toLowerCase() === String(currentBoxObj.picName).trim().toLowerCase();
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-fade-in print:p-0 print:bg-transparent">
-      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh] ${showPrintModal ? 'no-print' : ''}`}>
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh]">
         
         {/* Modal Header (Compact) */}
         <div className="no-print inventory-dialog-heading px-4 py-2.5 flex items-center justify-between border-b border-slate-800 bg-slate-900 text-white shrink-0">
           <div className="flex items-center space-x-2.5 min-w-0">
-            <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-500 text-white text-[10px] font-black shrink-0">
-              KTP
+            <span className="inline-flex items-center text-xs font-bold text-amber-300 bg-amber-950/80 px-2.5 py-1 rounded border border-amber-600/50 shrink-0">
+              BOX #{formData.boxNumber} ({currentBoxObj?.rackName || 'LANTAI'} - {currentBoxObj?.picName || 'Royan'})
             </span>
-            <div className="min-w-0">
-              <h3 className="text-xs sm:text-sm font-black tracking-tight uppercase truncate">
-                {isDuplicate 
-                  ? `Copy / Duplikat Item (Box #${formData.boxNumber})` 
-                  : (isEditing ? `Edit Kartu Sampel (Box #${formData.boxNumber})` : `Kartu Fisik KTP (Box #${formData.boxNumber})`)}
-              </h3>
-            </div>
             {isEditing && (itemModalConfig.item?.kode || itemModalConfig.item?.sku) && (
-              <span className="hidden sm:inline-flex items-center text-[10px] font-mono font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shrink-0">
+              <span className="inline-flex items-center text-[10px] font-mono font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shrink-0">
                 {itemModalConfig.item?.kode || itemModalConfig.item?.sku}
               </span>
             )}
-            <span className="hidden sm:inline-flex items-center text-[11px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-600/50 shrink-0">
-              BOX #{formData.boxNumber} ({currentBoxObj?.rackName || 'LANTAI'} - {currentBoxObj?.picName || 'Royan'})
-            </span>
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowPrintModal(true)}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer shadow-2xs"
-              title="Cetak Multiple Card Ukuran KTP dalam 1 Lembar A4"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Cetak Multi-KTP</span>
-            </button>
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
@@ -479,23 +436,21 @@ const ItemModalContent = () => {
           </div>
         </div>
 
-        {/* Top Warning Banner: Mandatory Reminder */}
-        {submitError ? (
+        {/* Read-Only Banner when box belongs to another PIC */}
+        {!isOwner && (
+          <div className="no-print bg-amber-50 border-b border-amber-300 text-amber-950 px-4 py-2 text-xs font-bold flex items-center gap-2.5 shrink-0">
+            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+            <div className="flex-1 leading-snug">
+              Akses Terkunci: Box #{formData.boxNumber} dialokasikan untuk PIC <strong>{currentBoxObj?.picName}</strong>. Anda login sebagai <strong>{currentUser?.name}</strong>, sehingga tidak dapat menambah atau mengedit item pada box ini.
+            </div>
+          </div>
+        )}
+
+        {/* Top Error Banner (jika ada error) */}
+        {submitError && (
           <div className="bg-rose-50 border-b border-rose-300 text-rose-900 px-3.5 py-1 text-xs font-bold flex items-center gap-2 shrink-0">
             <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
             <span className="truncate">{submitError}</span>
-          </div>
-        ) : (
-          <div className="bg-amber-500/10 border-b border-amber-300/60 text-amber-950 px-3 py-1 text-[11px] font-semibold flex items-center justify-between gap-2 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>
-                <strong>REMINDER WAJIB:</strong> Setelah simpan, wajib <strong>Print Card Baru (KTP)</strong> ATAU <strong>Tulis Kode & Place di Kartu Lama</strong>.
-              </span>
-            </div>
-            <span className="text-[10px] text-amber-800 font-bold shrink-0 hidden md:inline">
-              *Kode otomatis dibuat unik & berurutan (tidak perlu diketik)
-            </span>
           </div>
         )}
 
@@ -617,84 +572,54 @@ const ItemModalContent = () => {
               </div>
             </div>
 
-            {/* BARIS 2: Buyer No & Place / Lokasi (Kode Sample Otomatis Unik di Background) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-              {/* Buyer No */}
-              <div className={`border rounded-lg p-1.5 bg-white transition ${
-                errors.buyerNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
-              }`}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Buyer No <span className="text-rose-500">*</span>:
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(p => ({ ...p, buyerNo: 'NA' }));
-                      if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
-                    }}
-                    className="text-[9px] font-black px-1.5 py-0.2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
-                  >
-                    + NA
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  list="buyer-datalist"
-                  value={formData.buyerNo}
-                  onChange={(e) => {
-                    setFormData(p => ({ ...p, buyerNo: e.target.value.toUpperCase() }));
+            {/* BARIS 2: Buyer No (Kode Sample & Lokasi Box Otomatis Mengikuti Box Terpilih) */}
+            <div className={`border rounded-lg p-1.5 bg-white transition ${
+              errors.buyerNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
+            }`}>
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Buyer No <span className="text-rose-500">*</span>:
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(p => ({ ...p, buyerNo: 'NA' }));
                     if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
                   }}
-                  placeholder="Contoh: RSD-250015-2 / NA"
-                  className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent"
-                />
-                <datalist id="buyer-datalist">
-                  {(suggestions.buyerNo || []).map((b, idx) => (
-                    <option key={`by-${idx}`} value={b} />
-                  ))}
-                </datalist>
+                  className="text-[9px] font-black px-1.5 py-0.2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
+                >
+                  + NA
+                </button>
               </div>
-
-              {/* Place (Ringan & Cepat: Box Badge + Stepper / Input, No 72-item select lag!) */}
-              <div className="border border-slate-300 rounded-lg p-1.5 bg-slate-50 flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Place / Lokasi <span className="text-rose-500">*</span>:
-                  </label>
-                  <span className="text-[9px] text-slate-500 font-semibold">Box 1 - 72</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="flex-1 min-w-0 bg-white px-2 py-0.5 rounded border border-slate-200 font-bold text-[11px] text-slate-800 truncate" title={formData.place}>
-                    BOX #{formData.boxNumber} ({currentBoxObj?.rackName || 'LANTAI'})
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] font-bold text-slate-400">#</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="72"
-                      value={formData.boxNumber}
-                      onChange={(e) => handleBoxNumberChange(e.target.value)}
-                      className="w-12 px-1.5 py-0.5 bg-white border border-slate-300 rounded text-center text-xs font-black font-mono focus:outline-none focus:border-blue-500"
-                      title="Ganti nomor Box (1 - 72)"
-                    />
-                  </div>
-                </div>
-              </div>
+              <input
+                type="text"
+                list="buyer-datalist"
+                value={formData.buyerNo}
+                onChange={(e) => {
+                  setFormData(p => ({ ...p, buyerNo: e.target.value.toUpperCase() }));
+                  if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                }}
+                placeholder="Contoh: RSD-250015-2 / NA"
+                className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent"
+              />
+              <datalist id="buyer-datalist">
+                {(suggestions.buyerNo || []).map((b, idx) => (
+                  <option key={`by-${idx}`} value={b} />
+                ))}
+              </datalist>
             </div>
 
             {/* BARIS 3: Jenis Sample (Chip Buttons) & Deskripsi / Style */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
               {/* Jenis Sample Pills */}
-              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
+              <div className={`md:col-span-6 border rounded-lg p-1.5 bg-white transition ${
                 errors.jenisSample ? 'border-rose-500 bg-rose-50/50 ring-1 ring-rose-400' : 'border-slate-300'
               }`}>
                 <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Jenis Sample <span className="text-rose-500">*</span>:
                 </label>
                 <div className="flex items-center gap-1">
-                  {['DEVELOP', 'PPS', 'ORI'].map((type) => {
+                  {['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE'].map((type) => {
                     const isSelected = formData.jenisSample === type;
                     return (
                       <button
@@ -704,7 +629,7 @@ const ItemModalContent = () => {
                           setFormData(p => ({ ...p, jenisSample: type }));
                           if (errors.jenisSample) setErrors(prev => ({ ...prev, jenisSample: null }));
                         }}
-                        className={`flex-1 py-1 rounded-md text-[11px] font-black uppercase tracking-wider transition border cursor-pointer text-center ${
+                        className={`flex-1 py-1 px-1 rounded-md text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition border cursor-pointer text-center whitespace-nowrap ${
                           isSelected
                             ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
@@ -719,7 +644,7 @@ const ItemModalContent = () => {
               </div>
 
               {/* Nama / No. Style */}
-              <div className={`md:col-span-8 border rounded-lg p-1.5 bg-white transition ${
+              <div className={`md:col-span-6 border rounded-lg p-1.5 bg-white transition ${
                 errors.style ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
               }`}>
                 <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
@@ -893,41 +818,22 @@ const ItemModalContent = () => {
                 />
               </div>
 
-              {/* Satuan */}
-              <div className={`border rounded-lg p-1.5 bg-white transition ${
-                errors.satuan ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
-              }`}>
+              {/* Satuan (Terkunci ke PCS) */}
+              <div className="border border-slate-300 rounded-lg p-1.5 bg-slate-50/80 transition">
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                     Satuan <span className="text-rose-500">*</span>:
                   </label>
-                  <div className="flex items-center gap-1">
-                    {['PCS', 'YARD', 'MTR', 'ROLL', 'NA'].map(s => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => {
-                          setFormData(p => ({ ...p, satuan: s }));
-                          if (errors.satuan) setErrors(prev => ({ ...prev, satuan: null }));
-                        }}
-                        className={`px-1.5 py-0.2 rounded text-[9px] font-bold transition cursor-pointer ${
-                          formData.satuan === s ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                    PCS
+                  </span>
                 </div>
                 <input
                   type="text"
-                  value={formData.satuan}
-                  onChange={(e) => {
-                    setFormData(p => ({ ...p, satuan: e.target.value.toUpperCase() }));
-                    if (errors.satuan) setErrors(prev => ({ ...prev, satuan: null }));
-                  }}
-                  placeholder="PCS / YARD / MTR / NA"
-                  className="w-full text-xs font-bold uppercase focus:outline-none bg-transparent"
+                  value="PCS"
+                  readOnly
+                  disabled
+                  className="w-full text-xs font-black font-mono text-slate-800 bg-transparent cursor-not-allowed select-none focus:outline-none"
                 />
               </div>
             </div>
@@ -951,123 +857,27 @@ const ItemModalContent = () => {
             <button
               type="submit"
               form="direct-card-form"
-              disabled={isSubmitting}
-              className="px-5 py-1.5 rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 cursor-pointer disabled:opacity-50"
-              title="Simpan item ke box (Ctrl+Enter)"
+              disabled={isSubmitting || !isOwner}
+              className={`px-5 py-1.5 rounded-xl text-xs font-black shadow-md transition flex items-center space-x-1.5 ${
+                !isOwner
+                  ? 'bg-slate-400 text-white cursor-not-allowed opacity-60'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 cursor-pointer disabled:opacity-50'
+              }`}
+              title={!isOwner ? `Terkunci: Box #${formData.boxNumber} milik PIC ${currentBoxObj?.picName}` : "Simpan item ke box (Ctrl+Enter)"}
             >
-              <Save className="w-4 h-4" />
+              {!isOwner ? <Lock className="w-4 h-4" /> : <Save className="w-4 h-4" />}
               <span>
-                {isSubmitting 
-                  ? 'Menyimpan...' 
-                  : (isDuplicate ? 'Simpan Item Salinan' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box'))}
+                {!isOwner
+                  ? `Terkunci (${currentBoxObj?.picName || 'Lain'})`
+                  : (isSubmitting 
+                    ? 'Menyimpan...' 
+                    : (isDuplicate ? 'Simpan Item Salinan' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box')))}
               </span>
             </button>
           </div>
         </div>
 
       </div>
-
-      {/* Modal Pengingat Wajib: Print Card Sample / Update Kartu Lama */}
-      {savedItemReminder && (
-        <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fade-in no-print">
-          <div className="bg-white rounded-2xl shadow-2xl border-2 border-amber-500 w-full max-w-md overflow-hidden flex flex-col p-5 animate-scale-up">
-            
-            {/* Header Icon */}
-            <div className="flex items-center gap-3 border-b border-amber-200 pb-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
-                <AlertTriangle className="w-6 h-6 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight flex items-center gap-1.5">
-                  <span>PENGINGAT WAJIB!</span>
-                  <span className="px-1.5 py-0.2 bg-rose-600 text-white text-[9px] font-black rounded uppercase">WAJIB</span>
-                </h3>
-                <p className="text-[11px] font-bold text-amber-700">
-                  Print Kartu Baru atau Update Kartu Lama
-                </p>
-              </div>
-            </div>
-
-            {/* Info Item */}
-            <div className="my-3.5 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-semibold">Style / Barang:</span>
-                <span className="font-bold text-slate-900 truncate max-w-[220px]" title={savedItemReminder.style}>
-                  {savedItemReminder.style}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-semibold">Place / Lokasi:</span>
-                <span className="font-bold text-slate-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                  {savedItemReminder.place}
-                </span>
-              </div>
-            </div>
-
-            {/* Pesan Instruksi Wajib */}
-            <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-950 text-xs leading-relaxed space-y-1.5">
-              <p className="font-black text-amber-900 flex items-center gap-1">
-                <span>⚠️</span>
-                <span>INSTRUKSI WAJIB BAGIAN GUDANG / R&D:</span>
-              </p>
-              <p className="font-medium text-slate-800 text-[11.5px]">
-                Item telah tersimpan. Anda <strong>WAJIB</strong> lakukan salah satu:
-              </p>
-              <div className="space-y-1.5 text-slate-800 font-semibold text-[11px] pl-1">
-                <div className="flex items-start gap-1.5">
-                  <span className="text-blue-600 font-black">1.</span>
-                  <span><strong>CETAK CARD SAMPLE BARU</strong> (Ukuran KTP) untuk fisik sampel ini, <em>ATAU</em></span>
-                </div>
-                <div className="flex items-start gap-1.5">
-                  <span className="text-amber-700 font-black">2.</span>
-                  <span><strong>TULISKAN MANUAL</strong> keterangan <strong>Kode Sample</strong> dan <strong>Place / Lokasi Rak</strong> pada kartu fisik lama!</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Tombol Aksi */}
-            <div className="mt-4 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setItemToPrintFromReminder(savedItemReminder.item);
-                }}
-                className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-black shadow-md shadow-blue-900/20 transition flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Printer className="w-4 h-4 text-amber-300" />
-                <span>🖨️ Cetak Card Sample Sekarang (Ukuran KTP)</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  setSavedItemReminder(null);
-                  setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
-                }}
-                className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold border border-slate-300 transition cursor-pointer text-center"
-              >
-                ✓ Selesai (Sudah Ditulis di Kartu Lama)
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* Multi-Card A4 Print Modal */}
-      {(showPrintModal || itemToPrintFromReminder) && (
-        <CardPrintModal 
-          itemsToPrint={[itemToPrintFromReminder || formData]} 
-          onClose={() => {
-            setShowPrintModal(false);
-            if (itemToPrintFromReminder) {
-              setItemToPrintFromReminder(null);
-              setSavedItemReminder(null);
-              setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null });
-            }
-          }} 
-        />
-      )}
     </div>
   );
 };

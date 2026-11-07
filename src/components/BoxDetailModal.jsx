@@ -22,10 +22,10 @@ import {
   Printer,
   CheckSquare,
   Search,
-  Table,
-  LayoutGrid,
   Copy,
-  Check
+  Check,
+  Lock,
+  ShieldAlert,
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
@@ -52,9 +52,11 @@ function BoxDetail({ box }) {
     boxes,
     items,
     showNotification,
+    currentUser,
   } = useInventory();
   const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
+  const isOwner = !currentUser || !box.picName || String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
   const [copiedId, setCopiedId] = useState(null);
 
   const handleCopyCode = (e, code, id) => {
@@ -71,6 +73,10 @@ function BoxDetail({ box }) {
   };
 
   const handleDuplicateItem = (itemToCopy) => {
+    if (!isOwner) {
+      showNotification?.(`Akses ditolak: Box ini dialokasikan untuk ${box.picName}. Satu user tidak dapat mengedit data user lain.`, 'error', 4500);
+      return;
+    }
     const isMaterial = box.category === 'MATERIAL';
     const nextCode = isMaterial ? getNextMaterialCode(items) : getNextSampleCode(items);
     setItemModalConfig({
@@ -104,6 +110,10 @@ function BoxDetail({ box }) {
   const [savingFullStatus, setSavingFullStatus] = useState(false);
   const [fullStatusError, setFullStatusError] = useState('');
   const toggleFullStatus = async () => {
+    if (!isOwner) {
+      showNotification?.(`Akses ditolak: Box ini dialokasikan untuk ${box.picName}. Satu user tidak dapat mengubah status box user lain.`, 'error', 4500);
+      return;
+    }
     setSavingFullStatus(true);
     setFullStatusError('');
     try {
@@ -121,7 +131,6 @@ function BoxDetail({ box }) {
   const [cardPrintItems, setCardPrintItems] = useState(null);
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('table'); // 'table' (compact default) or 'card'
 
   // Instant Move Box Dialog state
   const [movingItems, setMovingItems] = useState(null);
@@ -235,6 +244,10 @@ function BoxDetail({ box }) {
   };
 
   const handleSaveNotes = () => {
+    if (!isOwner) {
+      showNotification?.(`Akses ditolak: Catatan Box #${box.boxNumber} milik ${box.picName}. Satu user tidak dapat mengedit data user lain.`, 'error', 4500);
+      return;
+    }
     setIsSavingNotes(true);
     updateBoxNotes(box.boxNumber, boxNotes);
     setTimeout(() => setIsSavingNotes(false), 600);
@@ -292,9 +305,9 @@ function BoxDetail({ box }) {
         
         {/* Header */}
         <div className="inventory-dialog-heading p-5 flex items-start justify-between border-b border-slate-800">
-          <div className="flex items-start space-x-3.5">
-            <div>
-              <div className="flex items-center space-x-2">
+          <div className="flex items-start space-x-3.5 min-w-0 flex-1 mr-4">
+            <div className="w-full">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                 <h2 className="text-xl font-black tracking-tight">{box.code}</h2>
                 <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
                   box.category === 'SAMPLE' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-400 text-slate-950'
@@ -305,6 +318,41 @@ function BoxDetail({ box }) {
                   {box.rackName}
                 </span>
               </div>
+
+              {/* Simple Description / Catatan Box Persis di Bawah Box */}
+              <div className="mt-1.5 flex items-center gap-2 max-w-xl">
+                {isOwner ? (
+                  <div className="flex items-center gap-1.5 w-full">
+                    <input
+                      type="text"
+                      value={boxNotes}
+                      onChange={(e) => setBoxNotes(e.target.value)}
+                      onBlur={handleSaveNotes}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSaveNotes();
+                        }
+                      }}
+                      placeholder="Tambah deskripsi / catatan box..."
+                      className="w-full text-xs text-slate-800 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs transition"
+                      title="Klik untuk ubah catatan (Tekan Enter untuk simpan)"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveNotes}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs shrink-0 px-2.5 py-1 rounded-md transition cursor-pointer"
+                      title="Simpan Catatan"
+                    >
+                      {isSavingNotes ? '✓ Tersimpan' : 'Simpan'}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic truncate" title={boxNotes || 'Tidak ada catatan'}>
+                    {boxNotes ? `Catatan: ${boxNotes}` : 'Tidak ada catatan khusus'}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -312,9 +360,15 @@ function BoxDetail({ box }) {
             <button
               type="button"
               onClick={toggleFullStatus}
-              disabled={savingFullStatus}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+              disabled={savingFullStatus || !isOwner}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold text-white transition ${
+                !isOwner
+                  ? 'bg-slate-500 opacity-60 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-500 disabled:opacity-50'
+              }`}
+              title={!isOwner ? `Terkunci: Box ini milik PIC ${box.picName}` : undefined}
             >
+              {!isOwner && <Lock className="inline w-3 h-3 mr-1 -mt-0.5" />}
               {savingFullStatus ? 'Menyimpan…' : box.isFull ? 'Buka kembali box' : 'Tandai penuh'}
             </button>
             {fullStatusError && <span role="alert" className="text-xs text-red-700">{fullStatusError}</span>}
@@ -353,6 +407,16 @@ function BoxDetail({ box }) {
           </div>
         </div>
 
+        {/* Read-Only Notice when viewing another PIC's box */}
+        {!isOwner && (
+          <div className="bg-amber-50/90 border-b border-amber-200/90 px-5 py-2.5 flex items-center gap-2.5 text-xs text-amber-900 font-semibold shadow-2xs">
+            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+            <div className="flex-1 leading-snug">
+              <strong>Mode Baca Saja (Terkunci):</strong> Box #{box.boxNumber} dialokasikan untuk PIC <strong>{box.picName}</strong>. Anda sedang login sebagai <strong>{currentUser?.name}</strong>, sehingga tidak dapat menambah, mengubah, memindahkan, atau menghapus data di box ini.
+            </div>
+          </div>
+        )}
+
         {/* Modal Body */}
         <div className="p-5 flex-1 overflow-y-auto space-y-4">
           
@@ -385,38 +449,6 @@ function BoxDetail({ box }) {
 
             <div className="flex items-center flex-wrap gap-2">
               
-              {/* View Switcher (Table vs Card) */}
-              {itemsInBox.length > 0 && (
-                <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('table')}
-                    className={`flex items-center space-x-1 px-2 py-1 rounded-md font-bold transition cursor-pointer ${
-                      viewMode === 'table'
-                        ? 'bg-white text-blue-700 shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                    title="Tampilan Tabel Padat (Muat Banyak)"
-                  >
-                    <Table className="w-3.5 h-3.5" />
-                    <span>Tabel Padat</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('card')}
-                    className={`flex items-center space-x-1 px-2 py-1 rounded-md font-bold transition cursor-pointer ${
-                      viewMode === 'card'
-                        ? 'bg-white text-blue-700 shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                    title="Tampilan Kartu"
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                    <span>Kartu</span>
-                  </button>
-                </div>
-              )}
-
               {/* Print Selected or All */}
               {itemsInBox.length > 0 && (
                 <button
@@ -443,8 +475,8 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
-              {/* Bulk Move Items to another Box */}
-              {selectedItemIds.size > 0 && (
+              {/* Bulk Move Items to another Box (Only Owner) */}
+              {isOwner && selectedItemIds.size > 0 && (
                 <button
                   onClick={() => openMoveModal(itemsInBox.filter(i => selectedItemIds.has(i.id)))}
                   className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-black shadow-xs transition cursor-pointer"
@@ -468,8 +500,8 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
-              {/* Bulk Delete Items */}
-              {selectedItemIds.size > 0 && (
+              {/* Bulk Delete Items (Only Owner) */}
+              {isOwner && selectedItemIds.size > 0 && (
                 <button
                   type="button"
                   onClick={() => {
@@ -484,13 +516,23 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
-              <button
-                onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
-                className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Tambah Item</span>
-              </button>
+              {isOwner ? (
+                <button
+                  onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Tambah Item</span>
+                </button>
+              ) : (
+                <span
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-xs font-bold border border-slate-200 cursor-not-allowed"
+                  title={`Terkunci: Box #${box.boxNumber} adalah milik PIC ${box.picName}. Satu user tidak dapat mengedit data user lain.`}
+                >
+                  <Lock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Terkunci ({box.picName})</span>
+                </span>
+              )}
             </div>
           </div>
 
@@ -500,13 +542,19 @@ function BoxDetail({ box }) {
               <Boxes className="w-10 h-10 text-slate-300 mx-auto mb-2" />
               <p className="text-sm font-semibold text-slate-700">Box ini masih kosong</p>
               <p className="text-xs text-slate-500 mt-0.5">Belum ada sample atau material yang dicatat ke Box #{box.boxNumber}.</p>
-              <button
-                onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
-                className="mt-3 inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-xs"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Catat Item Pertama</span>
-              </button>
+              {isOwner ? (
+                <button
+                  onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
+                  className="mt-3 inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Catat Item Pertama</span>
+                </button>
+              ) : (
+                <span className="mt-3 inline-flex items-center gap-1.5 text-xs text-slate-400 font-semibold bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                  <Lock className="w-3.5 h-3.5" /> Hanya PIC {box.picName} yang dapat menambah item ke box ini
+                </span>
+              )}
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-8 px-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-500 text-xs">
@@ -518,8 +566,8 @@ function BoxDetail({ box }) {
                 Hapus Pencarian
               </button>
             </div>
-          ) : viewMode === 'table' ? (
-            /* High-Density Compact Table View (Muat Banyak) */
+          ) : (
+            /* High-Density Compact Table View */
             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white w-full">
               <div className="overflow-x-hidden overflow-y-auto max-h-[66vh] scrollbar-thin w-full">
                 <table className="w-full table-fixed text-left border-collapse text-xs">
@@ -637,17 +685,19 @@ function BoxDetail({ box }) {
                             {getStatusBadge(item.status)}
                           </td>
 
-                          {/* Actions (Termasuk Fitur Copy / Duplikat Item) */}
+                          {/* Actions */}
                           <td className="py-2 px-2 text-right">
                             <div className="flex items-center justify-end space-x-0.5">
-                              <button
-                                type="button"
-                                onClick={() => handleDuplicateItem(item)}
-                                className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition cursor-pointer"
-                                title="Copy / Duplikat Item (Buat item baru)"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDuplicateItem(item)}
+                                  className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition cursor-pointer"
+                                  title="Copy / Duplikat Item (Buat item baru)"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => setCardPrintItems([item])}
@@ -656,48 +706,63 @@ function BoxDetail({ box }) {
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => openMoveModal([item])}
-                                className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
-                                title="Pindah ke Box Lain"
-                              >
-                                <ArrowRightLeft className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
-                                  updateItem(item.id, { status: newStatus });
-                                }}
-                                className={`px-1.5 py-0.5 text-[9px] font-black rounded transition cursor-pointer ${
-                                  item.status === 'In Storage'
-                                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
-                                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                                }`}
-                                title="Ganti Status Simpan / Pinjam"
-                              >
-                                {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
-                                className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
-                                title="Edit Item"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDeleteError(null);
-                                  setItemToDelete(item);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                                title="Hapus Item"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => openMoveModal([item])}
+                                  className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
+                                  title="Pindah ke Box Lain"
+                                >
+                                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
+                                    updateItem(item.id, { status: newStatus });
+                                  }}
+                                  className={`px-1.5 py-0.5 text-[9px] font-black rounded transition cursor-pointer ${
+                                    item.status === 'In Storage'
+                                      ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                  }`}
+                                  title="Ganti Status Simpan / Pinjam"
+                                >
+                                  {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
+                                </button>
+                              )}
+                              {isOwner ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
+                                    className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
+                                    title="Edit Item"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDeleteError(null);
+                                      setItemToDelete(item);
+                                    }}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                    title="Hapus Item"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
+                              ) : (
+                                <span
+                                  className="p-1 text-slate-400 inline-flex items-center"
+                                  title={`Terkunci: Data item ini milik ${box.picName}`}
+                                >
+                                  <Lock className="w-3 h-3 text-slate-400" />
+                                </span>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -707,133 +772,7 @@ function BoxDetail({ box }) {
                 </table>
               </div>
             </div>
-          ) : (
-            /* Card View Alternative */
-            <div className="space-y-2.5 max-h-[64vh] overflow-y-auto pr-1">
-              {filteredItems.map((item) => {
-                const isSelected = selectedItemIds.has(item.id);
-                return (
-                  <div 
-                    key={item.id}
-                    className={`rounded-xl border p-3 transition ${
-                      isSelected
-                        ? 'bg-blue-50/60 border-blue-400 shadow-xs ring-1 ring-blue-300'
-                        : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="flex items-center space-x-2.5 min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleItemSelect(item.id)}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer shrink-0"
-                          title="Centang untuk cetak kartu"
-                        />
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
-                          className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 px-2 py-0.5 rounded border border-slate-200 text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-2xs"
-                          title="Klik untuk Salin Kode"
-                        >
-                          <span>{item.kode || item.sku || '-'}</span>
-                          {copiedId === item.id ? (
-                            <Check className="w-3 h-3 text-emerald-600 animate-pulse" />
-                          ) : (
-                            <Copy className="w-3 h-3 text-slate-400" />
-                          )}
-                        </button>
-                        {item.jenisSample && (
-                          <span className="text-[9px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded shrink-0">
-                            {item.jenisSample}
-                          </span>
-                        )}
-                        <span className="font-bold text-slate-900 text-xs truncate">
-                          {item.style || item.deskripsi || item.name}
-                        </span>
-                        {item.size && (
-                          <span className="bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-black px-1.5 py-0.2 rounded uppercase shrink-0">
-                            Size: {item.size}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between sm:justify-end space-x-2 shrink-0">
-                        <span className="font-mono font-black text-slate-900 text-xs">
-                          {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty} {item.satuan || item.unit || 'PCS'}
-                        </span>
-                        {getStatusBadge(item.status)}
-                        <div className="flex items-center space-x-1 pl-1">
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicateItem(item)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer transition"
-                            title="Copy / Duplikat Item Ini"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setCardPrintItems([item])}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition"
-                            title="Cetak Kartu"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => openMoveModal([item])}
-                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg cursor-pointer transition"
-                            title="Pindah ke Box Lain"
-                          >
-                            <ArrowRightLeft className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
-                            className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg cursor-pointer transition"
-                            title="Edit"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDeleteError(null);
-                              setItemToDelete(item);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           )}
-
-          {/* Internal Box Notes section */}
-          <details key={box.boxNumber} className="pt-3 border-t border-slate-200">
-            <summary className="cursor-pointer text-xs font-semibold text-slate-700">Catatan box</summary>
-            <div className="mt-2 mb-2 flex justify-end">
-              <button
-                onClick={handleSaveNotes}
-                className="flex items-center space-x-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isSavingNotes ? 'Tersimpan!' : 'Simpan Catatan'}</span>
-              </button>
-            </div>
-            <textarea
-              rows={2}
-              aria-label="Catatan box"
-              value={boxNotes}
-              onChange={(e) => setBoxNotes(e.target.value)}
-              placeholder="Tambahkan catatan khusus untuk box ini (misal: kondisi box, prioritas sampling, instruksi penyimpanan khusus)..."
-              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
-            />
-          </details>
         </div>
 
       </div>

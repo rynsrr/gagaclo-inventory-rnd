@@ -81,7 +81,8 @@ export function BoxSearchPanel({ query, onQueryChange, results }) {
   // Ctrl/Cmd + K focuses the search; Escape clears it while focused.
   useEffect(() => {
     const onKeyDown = (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && (key === 'f' || key === 'k')) {
         event.preventDefault();
         inputRef.current?.focus();
         inputRef.current?.select();
@@ -140,7 +141,7 @@ export function BoxSearchPanel({ query, onQueryChange, results }) {
         <p className="mt-2 text-[10px] leading-relaxed text-slate-400 font-medium">
           Cari nomor box, kode, style, PIC, atau rak. Tekan{' '}
           <kbd className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-sans font-bold text-slate-600 shadow-2xs">Ctrl</kbd> +{' '}
-          <kbd className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-sans font-bold text-slate-600 shadow-2xs">K</kbd> untuk fokus cepat.
+          <kbd className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-sans font-bold text-slate-600 shadow-2xs">F</kbd> untuk fokus cepat.
         </p>
       ) : (
         <div className="inventory-search-results mt-2 space-y-2">

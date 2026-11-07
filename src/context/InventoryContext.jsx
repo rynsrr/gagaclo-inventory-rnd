@@ -80,7 +80,7 @@ const DEFAULT_ISSUES = [
   {
     id: 'iss-sample-2',
     title: 'Fitur pencarian cepat langsung di halaman 3D',
-    description: 'Tambahkan search bar langsung di atas tampilan gudang 3D dengan shortcut Ctrl+K untuk menemukan box dan sampel secara instan.',
+    description: 'Tambahkan search bar langsung di atas tampilan gudang 3D dengan shortcut Ctrl+F untuk menemukan box dan sampel secara instan.',
     type: 'FEATURE',
     priority: 'MEDIUM',
     status: 'RESOLVED',
@@ -138,6 +138,65 @@ export const InventoryProvider = ({ children }) => {
       console.error('Failed to load ppic from localStorage', e);
     }
     return PPIC_MEMBERS;
+  });
+
+  // 5 PIC Users (Password default sama dengan nama user)
+  const [users, setUsers] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + '_users');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load users from localStorage', e);
+    }
+    return PPIC_MEMBERS.map(p => ({
+      id: p.id,
+      username: p.name,
+      name: p.name,
+      role: p.role,
+      email: p.email,
+      password: p.name, // Password default sama dengan nama PIC
+      ppicNumber: p.ppicNumber,
+      color: p.color,
+      tagBg: p.tagBg,
+      badgeClass: p.badgeClass,
+      avatarBg: p.avatarBg,
+    }));
+  });
+
+  // Current active logged-in PIC user (default: Royan / user #1)
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const savedUserId = localStorage.getItem(STORAGE_KEY + '_current_user');
+      const savedUsers = localStorage.getItem(STORAGE_KEY + '_users');
+      const parsedUsers = savedUsers ? JSON.parse(savedUsers) : null;
+      const list = Array.isArray(parsedUsers) && parsedUsers.length > 0
+        ? parsedUsers
+        : PPIC_MEMBERS.map(p => ({
+            id: p.id,
+            username: p.name,
+            name: p.name,
+            role: p.role,
+            email: p.email,
+            password: p.name,
+            ppicNumber: p.ppicNumber,
+            color: p.color,
+            tagBg: p.tagBg,
+            badgeClass: p.badgeClass,
+            avatarBg: p.avatarBg,
+          }));
+
+      if (savedUserId) {
+        const found = list.find(u => String(u.id).toLowerCase() === String(savedUserId).toLowerCase());
+        if (found) return found;
+      }
+      return list[0] || null;
+    } catch (e) {
+      console.error('Failed to load current user', e);
+      return null;
+    }
   });
 
   // Load state from localStorage or use initial data
@@ -401,10 +460,16 @@ export const InventoryProvider = ({ children }) => {
       localStorage.setItem(STORAGE_KEY + '_boxes', JSON.stringify(boxes));
       localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(items));
       localStorage.setItem(STORAGE_KEY + '_transactions', JSON.stringify(transactions));
+      localStorage.setItem(STORAGE_KEY + '_users', JSON.stringify(users));
+      if (currentUser) {
+        localStorage.setItem(STORAGE_KEY + '_current_user', currentUser.id);
+      } else {
+        localStorage.removeItem(STORAGE_KEY + '_current_user');
+      }
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
-  }, [racks, ppicMembers, boxes, items, transactions]);
+  }, [racks, ppicMembers, boxes, items, transactions, users, currentUser]);
 
   // Sync from Supabase down to local state
   const syncFromSupabase = useCallback(async (clientInstance = supabase) => {
@@ -769,6 +834,15 @@ export const InventoryProvider = ({ children }) => {
 
   // Actions
   const addItem = async (itemData) => {
+    // ATURAN KEAMANAN: Satu user tidak dapat menambah/mengedit data user lain
+    const targetBox = boxes.find(b => Number(b.boxNumber) === Number(itemData.boxNumber));
+    const boxOwner = targetBox?.picName || itemData.picName;
+    if (currentUser && boxOwner && String(currentUser.name).trim().toLowerCase() !== String(boxOwner).trim().toLowerCase()) {
+      const errMsg = `Akses ditolak: Box #${itemData.boxNumber} adalah milik PIC "${boxOwner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
+      showNotification(errMsg, 'error', 6000);
+      throw new Error(errMsg);
+    }
+
     // Automatically record and remember newly inputted data
     recordSuggestions(itemData);
 
@@ -798,7 +872,6 @@ export const InventoryProvider = ({ children }) => {
     setItems((prev) => [newItem, ...prev]);
 
     // Record initial transaction
-    const targetBox = boxes.find(b => b.boxNumber === Number(newItem.boxNumber));
     const trxData = {
       type: 'IN',
       itemId: newItem.id,
@@ -874,11 +947,29 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const updateItem = async (itemId, updatedData) => {
-    // Automatically record and remember newly inputted data
-    recordSuggestions(updatedData);
-
     const oldItem = items.find((i) => String(i.id) === String(itemId));
     if (!oldItem) return null;
+
+    // ATURAN KEAMANAN: Satu user tidak dapat mengedit data user lain
+    const oldBoxObj = boxes.find(b => Number(b.boxNumber) === Number(oldItem.boxNumber));
+    const oldOwner = oldBoxObj?.picName || oldItem.picName;
+    if (currentUser && oldOwner && String(currentUser.name).trim().toLowerCase() !== String(oldOwner).trim().toLowerCase()) {
+      const errMsg = `Akses ditolak: Data sampel ini berada di Box #${oldItem.boxNumber} milik PIC "${oldOwner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
+      showNotification(errMsg, 'error', 6000);
+      throw new Error(errMsg);
+    }
+    if (updatedData.boxNumber && Number(updatedData.boxNumber) !== Number(oldItem.boxNumber)) {
+      const destBox = boxes.find(b => Number(b.boxNumber) === Number(updatedData.boxNumber));
+      const destOwner = destBox?.picName;
+      if (currentUser && destOwner && String(currentUser.name).trim().toLowerCase() !== String(destOwner).trim().toLowerCase()) {
+        const errMsg = `Akses ditolak: Box tujuan #${updatedData.boxNumber} milik PIC "${destOwner}". Satu user tidak dapat memindahkan data ke box user lain.`;
+        showNotification(errMsg, 'error', 6000);
+        throw new Error(errMsg);
+      }
+    }
+
+    // Automatically record and remember newly inputted data
+    recordSuggestions(updatedData);
 
     // Concurrency protection on update
     let finalCode = updatedData.kode !== undefined ? updatedData.kode : (updatedData.sku !== undefined ? updatedData.sku : oldItem.kode);
@@ -947,6 +1038,17 @@ export const InventoryProvider = ({ children }) => {
     if (!itemId) return;
     const idStr = String(itemId);
     const itemToDelete = items.find(i => String(i.id) === idStr);
+
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain
+    if (itemToDelete) {
+      const box = boxes.find(b => Number(b.boxNumber) === Number(itemToDelete.boxNumber));
+      const owner = box?.picName || itemToDelete.picName;
+      if (currentUser && owner && String(currentUser.name).trim().toLowerCase() !== String(owner).trim().toLowerCase()) {
+        const errMsg = `Akses ditolak: Data sampel ini milik PIC "${owner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus data user lain.`;
+        showNotification(errMsg, 'error', 6000);
+        throw new Error(errMsg);
+      }
+    }
 
     // 1. Simpan ke blacklist deleted IDs di localStorage agar tidak pernah bangkit lagi saat refresh
     recordDeletedItemIds([idStr]);
@@ -1026,6 +1128,23 @@ export const InventoryProvider = ({ children }) => {
     if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) return 0;
     const idStrings = itemIds.map(id => String(id));
     const idSet = new Set(idStrings);
+
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain
+    if (currentUser) {
+      const forbidden = items.find(i => {
+        if (!idSet.has(String(i.id))) return false;
+        const box = boxes.find(b => Number(b.boxNumber) === Number(i.boxNumber));
+        const owner = box?.picName || i.picName;
+        return owner && String(currentUser.name).trim().toLowerCase() !== String(owner).trim().toLowerCase();
+      });
+      if (forbidden) {
+        const box = boxes.find(b => Number(b.boxNumber) === Number(forbidden.boxNumber));
+        const owner = box?.picName || forbidden.picName;
+        const errMsg = `Akses ditolak: Sebagian data terpilih milik PIC "${owner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus data user lain.`;
+        showNotification(errMsg, 'error', 6000);
+        throw new Error(errMsg);
+      }
+    }
 
     // 1. Simpan ke blacklist deleted IDs di localStorage
     recordDeletedItemIds(idStrings);
@@ -1149,6 +1268,13 @@ export const InventoryProvider = ({ children }) => {
     const box = boxes.find(entry => entry.boxNumber === boxNumber);
     if (!box) throw new Error('Box tidak ditemukan.');
 
+    // ATURAN KEAMANAN: Satu user tidak dapat mengubah status box user lain
+    if (currentUser && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
+      const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${box.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
+      showNotification(errMsg, 'error', 6000);
+      throw new Error(errMsg);
+    }
+
     if (supabase) {
       const { error } = await supabase.from('boxes').upsert({
         box_number: boxNumber,
@@ -1163,6 +1289,13 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const updateBoxNotes = async (boxNumber, notes) => {
+    const targetBox = boxes.find(b => Number(b.boxNumber) === Number(boxNumber));
+    if (currentUser && targetBox?.picName && String(currentUser.name).trim().toLowerCase() !== String(targetBox.picName).trim().toLowerCase()) {
+      const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${targetBox.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
+      showNotification(errMsg, 'error', 6000);
+      throw new Error(errMsg);
+    }
+
     setBoxes((prev) =>
       prev.map((box) => (box.boxNumber === boxNumber ? { ...box, notes } : box))
     );
@@ -1236,6 +1369,13 @@ export const InventoryProvider = ({ children }) => {
     const num = Number(boxNumber);
     const box = boxes.find(b => Number(b.boxNumber) === num);
     if (!box) throw new Error(`Box #${boxNumber} tidak ditemukan.`);
+
+    // ATURAN KEAMANAN: Satu user tidak dapat mengedit box user lain
+    if (currentUser && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
+      const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${box.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
+      showNotification(errMsg, 'error', 6000);
+      throw new Error(errMsg);
+    }
 
     // An empty PIC selection means "keep the current PIC", not "clear it".
     const cleanUpdates = { ...updates };
@@ -1318,6 +1458,15 @@ export const InventoryProvider = ({ children }) => {
 
   const deleteBox = async (boxNumber, options = { moveItemsToFloor: true }) => {
     const boxNum = Number(boxNumber);
+    const boxToDelete = boxes.find(b => Number(b.boxNumber) === boxNum);
+
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus box user lain
+    if (currentUser && boxToDelete?.picName && String(currentUser.name).trim().toLowerCase() !== String(boxToDelete.picName).trim().toLowerCase()) {
+      const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${boxToDelete.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus box user lain.`;
+      showNotification(errMsg, 'error', 6000);
+      throw new Error(errMsg);
+    }
+
     // Don't crash if box has items: relocate items to LANTAI if allowed
     const itemsInBox = items.filter(i => Number(i.boxNumber) === boxNum);
     if (itemsInBox.length > 0) {
@@ -1459,6 +1608,11 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const updatePpicMember = (id, updates) => {
+    // ATURAN KEAMANAN: Satu user tidak bisa edit user lain!
+    if (currentUser && String(currentUser.id).toLowerCase() !== String(id).toLowerCase()) {
+      throw new Error(`Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`);
+    }
+
     const member = ppicMembers.find(p => String(p.id) === String(id));
     if (!member) throw new Error('Data orang tidak ditemukan.');
 
@@ -1472,6 +1626,16 @@ export const InventoryProvider = ({ children }) => {
     setPpicMembers(prev => prev.map(p => (
       String(p.id) === String(member.id) ? { ...p, ...updates, name: nextName } : p
     )));
+
+    // Synchronize with users & currentUser
+    setUsers(prev => prev.map(u => (
+      String(u.id).toLowerCase() === String(id).toLowerCase()
+        ? { ...u, ...updates, name: nextName, username: nextName }
+        : u
+    )));
+    if (currentUser && String(currentUser.id).toLowerCase() === String(id).toLowerCase()) {
+      setCurrentUser(prev => ({ ...prev, ...updates, name: nextName, username: nextName }));
+    }
 
     // A person's name is denormalised into boxes and items. Propagate a rename
     // so filters, the 3D warehouse, printed labels and the summary stay consistent.
@@ -1509,6 +1673,11 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const deletePpicMember = (id, options = { reassignToDefault: true }) => {
+    // ATURAN KEAMANAN: Satu user tidak bisa hapus user lain!
+    if (currentUser && String(currentUser.id).toLowerCase() !== String(id).toLowerCase()) {
+      throw new Error(`Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus akun user lain.`);
+    }
+
     const member = ppicMembers.find(p => String(p.id) === String(id));
     if (!member) throw new Error('Data orang tidak ditemukan.');
     const assignedBoxes = boxes.filter(b =>
@@ -1532,6 +1701,114 @@ export const InventoryProvider = ({ children }) => {
       }
     }
     setPpicMembers(prev => prev.filter(p => String(p.id) !== String(member.id)));
+  };
+
+  // User Authentication & Profiling for 5 PICs
+  const loginUser = (username, password) => {
+    const cleanUser = String(username || '').trim().toLowerCase();
+    const cleanPass = String(password || '').trim();
+
+    const user = users.find(u =>
+      u.username.toLowerCase() === cleanUser ||
+      u.name.toLowerCase() === cleanUser ||
+      String(u.id).toLowerCase() === cleanUser
+    );
+
+    if (!user) {
+      return {
+        success: false,
+        message: `User "${username}" tidak ditemukan. Pilihan PIC: ${users.map(u => u.name).join(', ')}.`,
+      };
+    }
+
+    if (user.password !== cleanPass) {
+      return {
+        success: false,
+        message: `Password salah untuk user ${user.name}. (Default password sama dengan nama user).`,
+      };
+    }
+
+    setCurrentUser(user);
+    try {
+      localStorage.setItem(STORAGE_KEY + '_current_user', user.id);
+    } catch {}
+    return { success: true, user };
+  };
+
+  const logoutUser = () => {
+    if (users.length > 0) {
+      setCurrentUser(users[0]);
+    }
+  };
+
+  const updateUserProfile = (targetUserId, updates) => {
+    if (!currentUser) {
+      throw new Error('Anda belum login. Silakan login terlebih dahulu sebagai PIC.');
+    }
+
+    // ATURAN MUTLAK: Satu user tidak bisa edit user lain!
+    if (String(currentUser.id).toLowerCase() !== String(targetUserId).toLowerCase()) {
+      throw new Error(`Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit profil user lain.`);
+    }
+
+    const user = users.find(u => String(u.id).toLowerCase() === String(targetUserId).toLowerCase());
+    if (!user) {
+      throw new Error('Data user tidak ditemukan.');
+    }
+
+    const newName = updates.name !== undefined ? String(updates.name).trim() : user.name;
+    const newRole = updates.role !== undefined ? String(updates.role).trim() : user.role;
+    const newEmail = updates.email !== undefined ? String(updates.email).trim() : user.email;
+    const newPassword = updates.password !== undefined && String(updates.password).trim() !== ''
+      ? String(updates.password).trim()
+      : user.password;
+
+    if (!newName) {
+      throw new Error('Nama user wajib diisi.');
+    }
+
+    if (users.some(u => String(u.id).toLowerCase() !== String(targetUserId).toLowerCase() && u.name.toLowerCase() === newName.toLowerCase())) {
+      throw new Error(`Nama "${newName}" sudah digunakan oleh PIC lain.`);
+    }
+
+    const updatedUser = {
+      ...user,
+      name: newName,
+      username: newName,
+      role: newRole,
+      email: newEmail,
+      password: newPassword,
+    };
+
+    setUsers(prev => prev.map(u => String(u.id).toLowerCase() === String(targetUserId).toLowerCase() ? updatedUser : u));
+    setCurrentUser(updatedUser);
+
+    // Sync with ppicMembers
+    setPpicMembers(prev => prev.map(p => {
+      if (String(p.id).toLowerCase() === String(targetUserId).toLowerCase()) {
+        return {
+          ...p,
+          name: newName,
+          role: newRole,
+          email: newEmail,
+        };
+      }
+      return p;
+    }));
+
+    // If name changed, rename in boxes and items
+    if (user.name !== newName) {
+      setBoxes(prev => prev.map(b => (b.picName === user.name ? { ...b, picName: newName } : b)));
+      setItems(prev => prev.map(i => (i.picName === user.name ? { ...i, picName: newName } : i)));
+      if (supabase) {
+        supabase.from('boxes').update({ pic_name: newName }).eq('pic_name', user.name)
+          .then(({ error }) => { if (error) console.error('Supabase rename box PIC error:', error); });
+        supabase.from('items').update({ pic_name: newName }).eq('pic_name', user.name)
+          .then(({ error }) => { if (error) console.error('Supabase rename item PIC error:', error); });
+      }
+    }
+
+    return { success: true, user: updatedUser };
   };
 
   const resetToInitialData = () => {
@@ -1765,6 +2042,13 @@ export const InventoryProvider = ({ children }) => {
     exportJsonBackup,
     importJsonBackup,
     exportToExcel,
+    // User Authentication & Management (5 PIC)
+    users,
+    currentUser,
+    setCurrentUser,
+    loginUser,
+    logoutUser,
+    updateUserProfile,
     // Supabase Operations & State
     supabaseStatus,
     supabaseConfig: supabaseConfigState,

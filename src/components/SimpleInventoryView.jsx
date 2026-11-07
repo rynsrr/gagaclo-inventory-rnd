@@ -419,8 +419,8 @@ export const SimpleInventoryView = () => {
                 <label className="block font-bold text-slate-700 mb-1">
                   Jenis Sample <span className="text-rose-500">*</span>
                 </label>
-                <div className="grid grid-cols-3 gap-1">
-                  {['ORI', 'DEVELOP', 'PPS'].map((type) => {
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+                  {['ORI', 'DEVELOP', 'PPS', 'BULK SAMPLE'].map((type) => {
                     const isSelected = form.jenisSample === type;
                     return (
                       <button
@@ -520,10 +520,10 @@ export const SimpleInventoryView = () => {
                   <div className="col-span-5">
                     <input
                       type="text"
-                      placeholder="PCS"
-                      value={form.satuan}
-                      onChange={(e) => setForm({ ...form, satuan: e.target.value.toUpperCase() })}
-                      className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value="PCS"
+                      readOnly
+                      disabled
+                      className="w-full text-xs p-2.5 rounded-lg border border-slate-200 bg-slate-100 font-bold uppercase text-slate-700 cursor-not-allowed select-none"
                     />
                   </div>
                 </div>
@@ -547,7 +547,7 @@ export const SimpleInventoryView = () => {
                     <option value={form.place}>{form.place}</option>
                   )}
                   {RACK_GROUPS.map((rg) => (
-                    <optgroup key={rg.name} label={`${rg.name} — ${rg.range}`}>
+                    <optgroup key={rg.name} label={`${rg.name} (${rg.range})`}>
                       {rg.boxes.map((b) => (
                         <option key={b.value} value={b.value}>
                           {b.value}

@@ -111,6 +111,10 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   <span>{jenisSample === 'PPS' ? '✓' : ''}</span>
                   <span>PPS</span>
                 </span>
+                <span className={`px-1 py-0.5 border border-black flex items-center gap-0.5 ${jenisSample === 'BULK SAMPLE' || jenisSample === 'BULK' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-700 font-bold'}`}>
+                  <span>{jenisSample === 'BULK SAMPLE' || jenisSample === 'BULK' ? '✓' : ''}</span>
+                  <span>BULK SAMPLE</span>
+                </span>
               </div>
             </td>
           </tr>

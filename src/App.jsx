@@ -27,6 +27,9 @@ const BoxQrModal = lazy(() =>
 const QuickScannerModal = lazy(() =>
   import('./components/QuickScannerModal').then((m) => ({ default: m.QuickScannerModal }))
 );
+const UserProfileModal = lazy(() =>
+  import('./components/UserProfileModal').then((m) => ({ default: m.UserProfileModal }))
+);
 import {
   Box as BoxIcon,
   Boxes,
@@ -52,12 +55,14 @@ const AppContent = () => {
     issues = [],
     systemNotification,
     setSystemNotification,
+    currentUser,
   } = useInventory();
 
   const [warehouseControlsHost, setWarehouseControlsHost] = useState(null);
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isBoxLabelPrintOpen, setIsBoxLabelPrintOpen] = useState(false);
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const connected = supabaseStatus.isConnected;
 
   const activeIssuesCount = issues.filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS').length;
@@ -92,7 +97,7 @@ const AppContent = () => {
   }, [connected]);
 
   const usageLabel = databaseBytes === null
-    ? 'Pemakaian —'
+    ? 'Pemakaian: -'
     : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB`;
 
   const mainTabs = [
@@ -218,6 +223,23 @@ const AppContent = () => {
                 <span>Kelola Box &amp; Rak</span>
               </button>
 
+              {/* Akun & Profil User PIC */}
+              <button
+                type="button"
+                onClick={() => setIsUserProfileOpen(true)}
+                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-gradient-to-r from-blue-50/90 to-indigo-50/90 hover:from-blue-100 hover:to-indigo-100 text-blue-900 border-blue-200/90 hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
+                aria-label="Akun & Profil PIC"
+                title={`Login sebagai: ${currentUser?.name || 'PIC'} • Klik untuk edit profil atau ganti user`}
+              >
+                <span className={`flex h-4 w-4 items-center justify-center rounded-md text-[10px] font-black text-white ${currentUser?.avatarBg || 'bg-blue-600'}`}>
+                  {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
+                </span>
+                <span className="font-black text-slate-900">{currentUser?.name || 'PIC'}</span>
+                <span className="text-[9px] font-black uppercase text-blue-700 bg-white/80 border border-blue-200/70 px-1 rounded">
+                  #{currentUser?.ppicNumber || 1}
+                </span>
+              </button>
+
             </div>
 
           </div>
@@ -280,6 +302,16 @@ const AppContent = () => {
           <BoxManageModal
             isOpen={isBoxManageOpen}
             onClose={() => setIsBoxManageOpen(false)}
+          />
+        </Suspense>
+      )}
+
+      {/* User Profile & 5 PIC Authentication Modal */}
+      {isUserProfileOpen && (
+        <Suspense fallback={null}>
+          <UserProfileModal
+            isOpen={isUserProfileOpen}
+            onClose={() => setIsUserProfileOpen(false)}
           />
         </Suspense>
       )}

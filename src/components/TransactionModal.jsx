@@ -3,14 +3,14 @@ import { useInventory } from '../context/InventoryContext';
 import { X, ArrowLeftRight, Save } from 'lucide-react';
 
 export const TransactionModal = ({ isOpen, onClose }) => {
-  const { items, boxes, ppicMembers, addTransaction, updateItem } = useInventory();
+  const { items, boxes, ppicMembers, addTransaction, updateItem, currentUser } = useInventory();
 
   const [type, setType] = useState('BORROW');
   const [selectedItemId, setSelectedItemId] = useState(items[0]?.id || '');
   const [boxNumber, setBoxNumber] = useState(1);
   const [qty, setQty] = useState(1);
   const [unit, setUnit] = useState('pcs');
-  const [picName, setPicName] = useState('Royan');
+  const [picName, setPicName] = useState(() => currentUser?.name || 'Royan');
   const [recipient, setRecipient] = useState('');
   const [notes, setNotes] = useState('');
 

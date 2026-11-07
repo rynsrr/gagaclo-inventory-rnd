@@ -15,7 +15,8 @@ import {
   ArrowUpDown,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Lock,
 } from 'lucide-react';
 
 export const ItemsListView = () => {
@@ -28,7 +29,8 @@ export const ItemsListView = () => {
     setItemModalConfig, 
     setSelectedBoxNumber,
     setQrModalBox,
-    exportToExcel 
+    exportToExcel,
+    currentUser,
   } = useInventory();
 
   const [search, setSearch] = useState('');
@@ -397,28 +399,39 @@ export const ItemsListView = () => {
                           >
                             <QrCode className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: item.boxNumber })}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                            title="Edit Item"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (window.confirm(`Hapus "${item.name || item.style || item.kode}"?`)) {
-                                try {
-                                  await deleteItem(item.id);
-                                } catch (err) {
-                                  console.error('Delete item error:', err);
-                                }
-                              }
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {(!currentUser || !item.picName || String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase()) ? (
+                            <>
+                              <button
+                                onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: item.boxNumber })}
+                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                title="Edit Item"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm(`Hapus "${item.name || item.style || item.kode}"?`)) {
+                                    try {
+                                      await deleteItem(item.id);
+                                    } catch (err) {
+                                      console.error('Delete item error:', err);
+                                    }
+                                  }
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                title="Hapus"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <span
+                              className="p-1.5 text-slate-400 inline-flex items-center"
+                              title={`Terkunci: Data item ini milik PIC ${item.picName}. Satu user tidak dapat mengedit data user lain.`}
+                            >
+                              <Lock className="w-3.5 h-3.5 text-slate-400" />
+                            </span>
+                          )}
                         </div>
                       </td>
 

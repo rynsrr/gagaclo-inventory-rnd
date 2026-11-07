@@ -100,7 +100,8 @@ export const Warehouse3DView = ({
   // Ctrl/Cmd + K shortcut for quick search focus
   useEffect(() => {
     const onKeyDown = (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      const key = event.key.toLowerCase();
+      if ((event.ctrlKey || event.metaKey) && (key === 'f' || key === 'k')) {
         event.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
@@ -116,37 +117,49 @@ export const Warehouse3DView = ({
 
   // Record non-empty searches as "last searches" (max 5, stored in localStorage)
   // and bump frequency counts for "most searched" (max 5).
+  // Only record a *finished* search: debounce 800 ms after typing stops, or
+  // immediately on Enter / blur, so prefixes like "6" -> "68" -> "6821"
+  // are never recorded as separate searches.
+  const DEBOUNCE_MS = 800;
   useEffect(() => {
     const q = searchQuery.trim();
     if (!q) return;
-    setLastSearches((prev) => {
-      const next = [q, ...prev.filter((s) => s.toLowerCase() !== q.toLowerCase())].slice(0, 5);
-      try {
-        localStorage.setItem('gagaclo_last_searches', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-    setTopSearches((prev) => {
-      const key = q.toLowerCase();
-      const next = { ...prev, [key]: (prev[key] || 0) + 1 };
-      try {
-        localStorage.setItem('gagaclo_top_searches', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+    const timer = setTimeout(() => {
+      setLastSearches((prev) => {
+        const next = [q, ...prev.filter((s) => s.toLowerCase() !== q.toLowerCase())].slice(0, 5);
+        try {
+          localStorage.setItem('gagaclo_last_searches', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+      setTopSearches((prev) => {
+        const key = q.toLowerCase();
+        const next = { ...prev, [key]: (prev[key] || 0) + 1 };
+        try {
+          localStorage.setItem('gagaclo_top_searches', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
   // Filter / view state
   // Top 5 most-searched terms derived from frequency counts (needs >= 2 hits to be "sering")
-  const topSearchPills = useMemo(
-    () =>
-      Object.entries(topSearches)
-        .filter(([, count]) => count >= 2)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([term, count]) => ({ term, count })),
-    [topSearches],
-  );
+  const topSearchPills = useMemo(() => {
+    const last = lastSearches[0]?.toLowerCase();
+    return Object.entries(topSearches)
+      .filter(([, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([term, count]) => ({ term, count }))
+      .filter(({ term }) => {
+        // Don't show a "most searched" pill that is just a prefix/suffix of the
+        // newest search (e.g. "6"/"68"/"682" vs "6821") — noise, not intent.
+        if (term === last) return true;
+        return !(last && (last.startsWith(term) || term.startsWith(last)));
+      });
+  }, [topSearches, lastSearches]);
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredBox, setHoveredBox] = useState(null);
   const [activeRackView, setActiveRackView] = useState('ALL');
@@ -978,7 +991,7 @@ export const Warehouse3DView = ({
             <span>Pencarian Pintar Box &amp; Barang</span>
           </label>
           <span className="text-[11px] font-medium text-slate-400">
-            Tekan <kbd className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-sans text-[10px] text-slate-600 shadow-2xs font-bold">Ctrl + K</kbd> untuk cari cepat
+            Tekan <kbd className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-sans text-[10px] text-slate-600 shadow-2xs font-bold">Ctrl + F</kbd> untuk cari cepat
           </span>
         </div>
 
@@ -1069,7 +1082,7 @@ export const Warehouse3DView = ({
             {searchResults.boxMatches.length > 0 && (
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                  Box Ditemukan ({searchResults.boxMatches.length}) — Klik untuk langsung buka:
+                  Box Ditemukan ({searchResults.boxMatches.length}). Klik untuk langsung buka:
                 </p>
                 <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
                   {searchResults.boxMatches.map((box) => (
@@ -1093,7 +1106,7 @@ export const Warehouse3DView = ({
             {searchResults.itemMatches.length > 0 && (
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                  Barang / Sampel Cocok ({searchResults.itemMatches.length}) — Klik nama untuk buka box, klik pensil untuk edit:
+                  Barang / Sampel Cocok ({searchResults.itemMatches.length}). Klik nama untuk buka box, klik pensil untuk edit:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
                   {searchResults.itemMatches.slice(0, 10).map((item, idx) => (

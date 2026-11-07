@@ -30,7 +30,7 @@ export const RACK_GROUPS = [
       rack: 'RACK 1',
       category: 'SAMPLE',
       value: `BOX ${b.boxNumber} (RACK 1 - ${b.pic})`,
-      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+      label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   },
   {
@@ -65,7 +65,7 @@ export const RACK_GROUPS = [
       rack: 'RACK 2',
       category: 'SAMPLE',
       value: `BOX ${b.boxNumber} (RACK 2 - ${b.pic})`,
-      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+      label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   },
   {
@@ -92,7 +92,7 @@ export const RACK_GROUPS = [
       rack: 'RACK 3',
       category: 'MATERIAL',
       value: `BOX ${b.boxNumber} (RACK 3 - ${b.pic})`,
-      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+      label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   },
   {
@@ -119,7 +119,7 @@ export const RACK_GROUPS = [
       rack: 'RACK 4',
       category: 'MATERIAL',
       value: `BOX ${b.boxNumber} (RACK 4 - ${b.pic})`,
-      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+      label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   },
   {
@@ -146,7 +146,7 @@ export const RACK_GROUPS = [
       rack: 'RACK 5',
       category: 'MATERIAL',
       value: `BOX ${b.boxNumber} (RACK 5 - ${b.pic})`,
-      label: `BOX ${b.boxNumber} — PIC: ${b.pic}`
+      label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   }
 ];
