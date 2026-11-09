@@ -129,3 +129,91 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.issues;
   END IF;
 END $$;
+
+-- ========================================================
+-- 5. ATOMIC MULTI-USER SEQUENCE COUNTERS & UNIQUE INDEX
+-- (Perlindungan Anti-Bentrok Kode Sample & Material Antar Komputer)
+-- ========================================================
+
+CREATE TABLE IF NOT EXISTS public.sequence_counters (
+    category TEXT PRIMARY KEY,
+    last_value INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+GRANT ALL ON public.sequence_counters TO anon, authenticated, service_role;
+ALTER TABLE public.sequence_counters ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public Full Access Sequence Counters" ON public.sequence_counters;
+CREATE POLICY "Public Full Access Sequence Counters" ON public.sequence_counters FOR ALL USING (true) WITH CHECK (true);
+
+-- Fungsi Atomik Postgres: Mengunci dan mengambil nomor urut berikutnya tanpa bentrok
+CREATE OR REPLACE FUNCTION public.get_next_sequence_code(p_category TEXT DEFAULT 'SAMPLE')
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_cat TEXT;
+    v_prefix TEXT;
+    v_next_val INTEGER;
+    v_code TEXT;
+    v_max_existing INTEGER := 0;
+BEGIN
+    v_cat := UPPER(TRIM(p_category));
+    IF v_cat = 'MATERIAL' THEN
+        v_prefix := 'MAT-';
+    ELSE
+        v_prefix := 'SAMPLE-';
+    END IF;
+
+    -- Cari nomor urut tertinggi yang sudah ada di tabel items
+    SELECT COALESCE(MAX(
+        NULLIF(regexp_replace(kode, '^(SAMPLE|MAT|MATERIAL|SMP)-[0]*', '', 'i'), '')::INTEGER
+    ), 0)
+    INTO v_max_existing
+    FROM public.items
+    WHERE kode ILIKE v_prefix || '%'
+      AND status != 'DELETED'
+      AND box_number > 0;
+
+    -- Upsert atomic sequence counter dengan row-level lock
+    INSERT INTO public.sequence_counters (category, last_value, updated_at)
+    VALUES (v_cat, GREATEST(v_max_existing, 0) + 1, NOW())
+    ON CONFLICT (category) DO UPDATE
+    SET last_value = GREATEST(sequence_counters.last_value, v_max_existing) + 1,
+        updated_at = NOW()
+    RETURNING last_value INTO v_next_val;
+
+    -- Format kode 5 digit: SAMPLE-00001 atau MAT-00001
+    v_code := v_prefix || LPAD(v_next_val::TEXT, 5, '0');
+    RETURN v_code;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_next_sequence_code(TEXT) TO anon, authenticated, service_role;
+
+-- Index unik pada kode untuk mencegah duplikasi di level database engine
+CREATE UNIQUE INDEX IF NOT EXISTS idx_items_unique_kode 
+ON public.items (UPPER(TRIM(kode))) 
+WHERE (status != 'DELETED' AND box_number > 0 AND kode IS NOT NULL AND kode != '');
+
+-- Trigger Auto-Assign Code jika kode kosong/null saat insert (Multi-user concurrency protection)
+CREATE OR REPLACE FUNCTION public.trg_auto_assign_item_code()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.kode IS NULL OR NEW.kode = '' OR NEW.kode = 'AUTO' THEN
+        NEW.kode := public.get_next_sequence_code(COALESCE(NEW.category, 'SAMPLE'));
+        NEW.sku := NEW.kode;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_items_auto_code ON public.items;
+CREATE TRIGGER trg_items_auto_code
+BEFORE INSERT ON public.items
+FOR EACH ROW
+EXECUTE FUNCTION public.trg_auto_assign_item_code();
+

@@ -2,7 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { supabase } from '../lib/supabase';
 import { CardPrintModal } from './CardPrintModal';
-import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, reserveCode, releaseCode } from '../utils/sequenceResolver';
+import { 
+  resolveUniqueCode, 
+  getNextSampleCode, 
+  getNextMaterialCode, 
+  allocateNextSequentialCode, 
+  reserveCode, 
+  releaseCode 
+} from '../utils/sequenceResolver';
 import { 
   X, 
   Save, 
@@ -142,22 +149,14 @@ const ItemModalContent = () => {
     const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
     const isMat = bObj?.category === 'MATERIAL';
 
-    const generateCode = () => {
-      const c = isMat 
-        ? getNextMaterialCode(items, clientIdRef.current) 
-        : getNextSampleCode(items, clientIdRef.current);
-      reserveCode(c, clientIdRef.current);
-      return c;
-    };
-
     if (itemModalConfig.item) {
       const item = itemModalConfig.item;
       const defaultBoxPlace = bObj 
         ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
         : `BOX ${bNum}`;
 
-      const codeVal = isDuplicate ? generateCode() : (item.kode || item.sku || generateCode());
-      if (isDuplicate) reserveCode(codeVal, clientIdRef.current);
+      // JIT Allocation: jika duplikasi, kosongkan kode agar di-generate baru saat tombol Simpan ditekan
+      const codeVal = isDuplicate ? '' : (item.kode || item.sku || '');
 
       return fillBlankWithNA({
         track: item.track || '',
@@ -179,12 +178,12 @@ const ItemModalContent = () => {
       const defaultBoxPlace = bObj 
         ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
         : `BOX ${bNum}`;
-      const codeVal = generateCode();
 
+      // JIT Allocation: untuk item baru, kode kosong di awal dan baru dialokasikan secara atomik saat tombol Simpan diklik
       return {
         track: itemModalConfig.prefill?.track || '',
         tanggal: formatTodayDate(),
-        kode: codeVal,
+        kode: '',
         buyerNo: itemModalConfig.prefill?.buyerNo || '',
         jenisSample: itemModalConfig.prefill?.jenisSample || '',
         style: itemModalConfig.prefill?.style || '',
@@ -338,36 +337,16 @@ const ItemModalContent = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
-    // Live multi-user sequence check: cari urutan nomor tertinggi terbaru agar kode selalu unik & urut
-    let activeItems = [...items];
-    if (supabase) {
-      try {
-        const { data: remoteRecent } = await supabase
-          .from('items')
-          .select('id, kode, sku')
-          .order('id', { ascending: false })
-          .limit(100);
-        if (Array.isArray(remoteRecent) && remoteRecent.length > 0) {
-          const knownIds = new Set(activeItems.map(i => String(i.id)));
-          remoteRecent.forEach(ri => {
-            if (!knownIds.has(String(ri.id))) {
-              activeItems.push({ id: ri.id, kode: ri.kode, sku: ri.sku });
-            }
-          });
-        }
-      } catch (e) {
-        console.warn('Live sequence check fallback to local:', e);
-      }
-    }
-
-    // Tentukan kode sample/material unik berurutan: jika edit pakai kode asal, jika baru auto-generate urut unik
+    // Alokasi kode unik Just-in-Time saat simpan: jika edit pakai kode asal, jika baru/duplikat ambil urutan terbaru secara atomik
     let finalKode;
     if (isEditing && (itemModalConfig.item?.kode || itemModalConfig.item?.sku)) {
       finalKode = itemModalConfig.item.kode || itemModalConfig.item.sku;
     } else {
-      const desiredCode = formData.kode || (isMaterialBox ? getNextMaterialCode(activeItems) : getNextSampleCode(activeItems));
-      const resolvedCode = resolveUniqueCode(desiredCode, activeItems, currentItemId);
-      finalKode = resolvedCode.finalCode;
+      finalKode = await allocateNextSequentialCode(
+        supabase,
+        isMaterialBox ? 'MATERIAL' : 'SAMPLE',
+        items
+      );
     }
 
     // Release any temporary reservation

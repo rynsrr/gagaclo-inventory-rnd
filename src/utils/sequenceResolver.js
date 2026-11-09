@@ -253,3 +253,103 @@ export function resolveUniqueCode(
     return { finalCode: candidate, wasAdjusted: true, originalCode: codeTrim };
   }
 }
+
+/**
+ * Asynchronously allocates the next guaranteed unique sequential code for a category ('SAMPLE' or 'MATERIAL').
+ * Multi-layer ERP sequence allocation for cross-device concurrency:
+ * 1. Checks Supabase RPC get_next_sequence_code (Atomic Postgres Transaction with Row Lock)
+ * 2. If RPC not available, queries Supabase table 'items' for highest sequential code across all users
+ * 3. Scans local state items + active reservations
+ * 4. Verifies candidate code against Supabase before returning
+ * 5. Falls back to local sequence calculation if offline
+ */
+export async function allocateNextSequentialCode(supabaseClient, category = 'SAMPLE', localItems = []) {
+  const isMaterial = String(category || '').trim().toUpperCase() === 'MATERIAL';
+  const catParam = isMaterial ? 'MATERIAL' : 'SAMPLE';
+  const prefix = isMaterial ? 'MAT-' : 'SAMPLE-';
+  const regex = isMaterial 
+    ? /(?:MAT|MATERIAL)[-_ ]?(?:20\d\d[-_ ]?)?(\d+)/i 
+    : /(?:SAMPLE|SMP)[-_ ]?(?:20\d\d[-_ ]?)?(\d+)/i;
+
+  // 1. Try atomic Postgres RPC if Supabase is connected
+  if (supabaseClient) {
+    try {
+      const { data: rpcCode, error: rpcErr } = await supabaseClient.rpc('get_next_sequence_code', {
+        p_category: catParam,
+      });
+      if (!rpcErr && rpcCode && typeof rpcCode === 'string' && rpcCode.toUpperCase().startsWith(prefix)) {
+        const cleanRpc = rpcCode.trim().toUpperCase();
+        reserveCode(cleanRpc);
+        return cleanRpc;
+      }
+    } catch {
+      // RPC might not be installed yet, fallback to direct query
+    }
+
+    // 2. Query Supabase for top recent codes matching prefix across all devices
+    try {
+      const { data: remoteRows } = await supabaseClient
+        .from('items')
+        .select('kode, sku')
+        .ilike('kode', `${prefix}%`)
+        .order('kode', { ascending: false })
+        .limit(30);
+
+      let maxSeq = 0;
+
+      // Scan remote items from all users
+      if (Array.isArray(remoteRows)) {
+        remoteRows.forEach(r => {
+          const num = extractNumberFromCode(r.kode || r.sku, regex);
+          if (num > maxSeq) maxSeq = num;
+        });
+      }
+
+      // Scan local items
+      if (Array.isArray(localItems)) {
+        localItems.forEach(item => {
+          const num = extractNumberFromCode(item.kode || item.sku, regex);
+          if (num > maxSeq) maxSeq = num;
+        });
+      }
+
+      // Scan active local reservations
+      const activeReservations = getActiveReservations();
+      activeReservations.forEach(resCode => {
+        const num = extractNumberFromCode(resCode, regex);
+        if (num > maxSeq) maxSeq = num;
+      });
+
+      let candidateSeq = maxSeq + 1;
+      let candidate = `${prefix}${String(candidateSeq).padStart(5, '0')}`;
+
+      // 3. Double-check candidate availability on Supabase to prevent collisions
+      let attempts = 0;
+      while (attempts < 8) {
+        const { data: conflict } = await supabaseClient
+          .from('items')
+          .select('id')
+          .ilike('kode', candidate)
+          .limit(1);
+
+        if (!conflict || conflict.length === 0) {
+          reserveCode(candidate);
+          return candidate;
+        }
+        candidateSeq++;
+        candidate = `${prefix}${String(candidateSeq).padStart(5, '0')}`;
+        attempts++;
+      }
+
+      reserveCode(candidate);
+      return candidate;
+    } catch (e) {
+      console.warn('Remote sequence resolution query failed, falling back to local calculation:', e);
+    }
+  }
+
+  // 4. Fallback: Pure local sequence calculation (offline or local storage)
+  const fallbackCode = getNextSequentialCode(localItems, catParam);
+  reserveCode(fallbackCode);
+  return fallbackCode;
+}

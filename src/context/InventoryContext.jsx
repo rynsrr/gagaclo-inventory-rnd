@@ -15,7 +15,7 @@ import {
   dbIssueToLocal,
 } from '../lib/supabase';
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
-import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, releaseCode } from '../utils/sequenceResolver';
+import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, releaseCode } from '../utils/sequenceResolver';
 
 const InventoryContext = createContext(null);
 
@@ -847,7 +847,12 @@ export const InventoryProvider = ({ children }) => {
     recordSuggestions(itemData);
 
     // Concurrency protection: verify that code is not already taken by another user
-    const rawCode = itemData.kode || itemData.sku;
+    let rawCode = itemData.kode || itemData.sku;
+    if (!rawCode) {
+      const isMat = itemData.category === 'MATERIAL' || (Number(itemData.boxNumber) <= 20 && boxes.find(b => b.boxNumber === itemData.boxNumber)?.category === 'MATERIAL');
+      rawCode = await allocateNextSequentialCode(supabase, isMat ? 'MATERIAL' : 'SAMPLE', items);
+    }
+
     const resolved = resolveUniqueCode(rawCode, items, null);
     const finalCode = resolved.finalCode;
 
@@ -886,10 +891,42 @@ export const InventoryProvider = ({ children }) => {
     };
     addTransaction(trxData);
 
-    // Sync to Supabase in background
+    // Sync to Supabase in background with auto-retry on concurrency conflict
     if (supabase) {
       try {
-        await supabase.from('items').insert([localItemToDb(newItem)]);
+        let dbPayload = localItemToDb(newItem);
+        const { data: insertedData, error: insertError } = await supabase
+          .from('items')
+          .insert([dbPayload])
+          .select('id, kode, sku')
+          .maybeSingle();
+
+        if (!insertError && insertedData) {
+          if (insertedData.kode && insertedData.kode !== newItem.kode) {
+            newItem.kode = insertedData.kode;
+            newItem.sku = insertedData.kode;
+            setItems(prev => prev.map(i => i.id === newItem.id ? { ...i, kode: insertedData.kode, sku: insertedData.kode } : i));
+          }
+        } else if (insertError) {
+          // Auto-retry on collision (Error 23505 unique violation or duplicate error)
+          if (
+            insertError.code === '23505' || 
+            insertError.message?.toLowerCase().includes('duplicate') || 
+            insertError.message?.toLowerCase().includes('unique')
+          ) {
+            console.warn('⚠️ Supabase code collision detected. Auto-resolving next code...');
+            const isMat = newItem.category === 'MATERIAL' || String(newItem.kode).startsWith('MAT-');
+            const safeNextCode = await allocateNextSequentialCode(supabase, isMat ? 'MATERIAL' : 'SAMPLE', items);
+            newItem.kode = safeNextCode;
+            newItem.sku = safeNextCode;
+            newItem.name = newItem.name.replace(finalCode, safeNextCode);
+            dbPayload = localItemToDb(newItem);
+            await supabase.from('items').insert([dbPayload]);
+            setItems(prev => prev.map(i => i.id === newItem.id ? newItem : i));
+          } else {
+            console.error('Supabase insert item error:', insertError);
+          }
+        }
       } catch (err) {
         console.error('Supabase insert item error:', err);
       }

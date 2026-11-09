@@ -77,20 +77,18 @@ function BoxDetail({ box }) {
       showNotification?.(`Akses ditolak: Box ini dialokasikan untuk ${box.picName}. Satu user tidak dapat mengedit data user lain.`, 'error', 4500);
       return;
     }
-    const isMaterial = box.category === 'MATERIAL';
-    const nextCode = isMaterial ? getNextMaterialCode(items) : getNextSampleCode(items);
     setItemModalConfig({
       isOpen: true,
       item: {
         ...itemToCopy,
         id: undefined,
-        kode: nextCode,
-        sku: nextCode,
+        kode: '',
+        sku: '',
       },
       targetBoxNumber: box.boxNumber,
       isDuplicate: true,
     });
-    showNotification?.('📋 Data item berhasil diduplikasi! Kode baru otomatis dibuat unik.', 'info', 3000);
+    showNotification?.('📋 Data item diduplikasi! Kode unik baru otomatis dibuat saat disimpan.', 'info', 3000);
   };
 
   const handleCopySelectedInfo = () => {
