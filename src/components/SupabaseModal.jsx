@@ -208,12 +208,14 @@ CREATE POLICY "Public Full Access Sequence Counters" ON public.sequence_counters
 CREATE OR REPLACE FUNCTION public.get_next_sequence_code(p_category TEXT DEFAULT 'SAMPLE')
 RETURNS TEXT LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
-    v_cat TEXT := UPPER(TRIM(p_category));
-    v_prefix TEXT := CASE WHEN UPPER(TRIM(p_category)) = 'MATERIAL' THEN 'MAT-' ELSE 'SAMPLE-' END;
+    v_cat TEXT := UPPER(TRIM(COALESCE(p_category, 'SAMPLE')));
+    v_prefix TEXT := CASE WHEN UPPER(TRIM(COALESCE(p_category, 'SAMPLE'))) = 'MATERIAL' THEN 'MAT-' ELSE 'SAMPLE-' END;
     v_next_val INTEGER;
     v_max_existing INTEGER := 0;
 BEGIN
-    SELECT COALESCE(MAX(NULLIF(regexp_replace(kode, '^(SAMPLE|MAT|MATERIAL|SMP)-[0]*', '', 'i'), '')::INTEGER), 0)
+    SELECT COALESCE(MAX(
+        CASE WHEN kode ~ '\d+' THEN ((regexp_match(kode, '(\d+)'))[1])::INTEGER ELSE 0 END
+    ), 0)
     INTO v_max_existing FROM public.items WHERE kode ILIKE v_prefix || '%' AND status != 'DELETED' AND box_number > 0;
 
     INSERT INTO public.sequence_counters (category, last_value, updated_at)

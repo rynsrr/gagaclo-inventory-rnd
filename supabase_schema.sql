@@ -153,22 +153,17 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-    v_cat TEXT;
-    v_prefix TEXT;
+    v_cat TEXT := UPPER(TRIM(COALESCE(p_category, 'SAMPLE')));
+    v_prefix TEXT := CASE WHEN v_cat = 'MATERIAL' THEN 'MAT-' ELSE 'SAMPLE-' END;
     v_next_val INTEGER;
-    v_code TEXT;
     v_max_existing INTEGER := 0;
 BEGIN
-    v_cat := UPPER(TRIM(p_category));
-    IF v_cat = 'MATERIAL' THEN
-        v_prefix := 'MAT-';
-    ELSE
-        v_prefix := 'SAMPLE-';
-    END IF;
-
-    -- Cari nomor urut tertinggi yang sudah ada di tabel items
+    -- Cari nomor urut tertinggi secara aman (tidak akan crash jika ada kode teks/kosong)
     SELECT COALESCE(MAX(
-        NULLIF(regexp_replace(kode, '^(SAMPLE|MAT|MATERIAL|SMP)-[0]*', '', 'i'), '')::INTEGER
+        CASE 
+            WHEN kode ~ '\d+' THEN ((regexp_match(kode, '(\d+)'))[1])::INTEGER 
+            ELSE 0 
+        END
     ), 0)
     INTO v_max_existing
     FROM public.items
