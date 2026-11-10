@@ -427,7 +427,7 @@ export function TotalItemsSummaryView() {
     XLSX.writeFile(wb, `GAGACLO_RINGKASAN_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const SAMPLE_TYPES = ['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE'];
+  const SAMPLE_TYPES = ['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARSIP'];
 
   return (
     <div className="space-y-5">

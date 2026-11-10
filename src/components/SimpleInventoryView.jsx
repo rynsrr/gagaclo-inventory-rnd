@@ -419,15 +419,15 @@ export const SimpleInventoryView = () => {
                 <label className="block font-bold text-slate-700 mb-1">
                   Jenis Sample <span className="text-rose-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
-                  {['ORI', 'DEVELOP', 'PPS', 'BULK SAMPLE'].map((type) => {
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1">
+                  {['ORI', 'DEVELOP', 'PPS', 'BULK SAMPLE', 'ARSIP'].map((type) => {
                     const isSelected = form.jenisSample === type;
                     return (
                       <button
                         key={type}
                         type="button"
                         onClick={() => setForm({ ...form, jenisSample: type })}
-                        className={`py-2 rounded-lg text-xs font-black uppercase transition border cursor-pointer ${
+                        className={`py-2 rounded-lg text-[11px] sm:text-xs font-black uppercase transition border cursor-pointer text-center ${
                           isSelected
                             ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'

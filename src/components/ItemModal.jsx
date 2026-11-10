@@ -653,7 +653,7 @@ const ItemModalContent = () => {
                   Jenis Sample <span className="text-rose-500">*</span>:
                 </label>
                 <div className="flex items-center gap-1">
-                  {['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE'].map((type) => {
+                  {['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARSIP'].map((type) => {
                     const isSelected = formData.jenisSample === type;
                     return (
                       <button
@@ -663,7 +663,7 @@ const ItemModalContent = () => {
                           setFormData(p => ({ ...p, jenisSample: type }));
                           if (errors.jenisSample) setErrors(prev => ({ ...prev, jenisSample: null }));
                         }}
-                        className={`flex-1 py-1 px-1 rounded-md text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider transition border cursor-pointer text-center whitespace-nowrap ${
+                        className={`flex-1 py-1 px-1 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition border cursor-pointer text-center whitespace-nowrap ${
                           isSelected
                             ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
