@@ -958,12 +958,15 @@ export const InventoryProvider = ({ children }) => {
     const resolved = resolveUniqueCode(rawCode, items, null);
     const finalCode = resolved.finalCode;
 
+    const nowIso = new Date().toISOString();
     const newItem = {
       ...itemData,
       kode: finalCode,
       sku: finalCode,
       id: 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-      dateIn: itemData.dateIn || new Date().toISOString().split('T')[0],
+      dateIn: itemData.dateIn || nowIso.split('T')[0],
+      createdAt: nowIso,
+      updatedAt: nowIso,
       status: itemData.status || 'In Storage',
       qty: Number(itemData.qty) || 1,
     };
@@ -1051,6 +1054,8 @@ export const InventoryProvider = ({ children }) => {
       ...record,
       id: `item-${crypto.randomUUID()}`,
       dateIn: record.dateIn || now.slice(0, 10),
+      createdAt: now,
+      updatedAt: now,
       status: 'In Storage',
     }));
     if (client) {

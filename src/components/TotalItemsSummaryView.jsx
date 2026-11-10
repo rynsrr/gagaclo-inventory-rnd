@@ -38,6 +38,61 @@ export function getLocalTodayIso() {
 }
 
 /**
+ * Mendapatkan tanggal pengerjaan/input (record date) oleh PPIC
+ * BUKAN berdasarkan tanggal sample!
+ */
+export function getItemRecordDate(item) {
+  if (!item) return null;
+
+  // 1. created_at / createdAt dari Supabase / database (Format ISO: '2026-11-10T07:15:23.000Z')
+  const rawCreated = item.createdAt || item.created_at;
+  if (rawCreated) {
+    const d = new Date(rawCreated);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  // 2. Ekstrak timestamp dari id format item-TIMESTAMP-RANDOM (contoh: item-1731219800000-abcd)
+  if (typeof item.id === 'string' && /^item-(\d{12,14})/i.test(item.id)) {
+    const match = item.id.match(/^item-(\d{12,14})/i);
+    if (match && match[1]) {
+      const ts = Number(match[1]);
+      const d = new Date(ts);
+      if (!isNaN(d.getTime()) && d.getFullYear() >= 2024) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    }
+  }
+
+  // 3. Fallback ke updated_at / updatedAt jika ada
+  const rawUpdated = item.updatedAt || item.updated_at;
+  if (rawUpdated) {
+    const d = new Date(rawUpdated);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  // 4. Fallback ke dateIn jika diformat YYYY-MM-DD
+  if (item.dateIn && /^\d{4}-\d{2}-\d{2}$/.test(item.dateIn)) {
+    return item.dateIn;
+  }
+
+  // 5. Fallback terakhir jika data lama tidak ada timestamp
+  return normalizeDateKey(item.dateIn) || normalizeDateKey(item.tanggal) || null;
+}
+
+/**
  * Menghitung umur simpan item secara presisi berdasarkan tanggal masuk
  */
 export function calculateStorageAge(dateStr) {
@@ -173,8 +228,10 @@ export function TotalItemsSummaryView() {
         const box = boxRackMap[Number(item.boxNumber)];
         const rawDate = item.tanggal || item.dateIn || 'NA';
         const age = calculateStorageAge(rawDate);
+        const recordDate = getItemRecordDate(item);
         return {
           ...item,
+          recordDate,
           track: item.track || 'NA',
           tanggal: rawDate,
           age,
@@ -339,7 +396,8 @@ export function TotalItemsSummaryView() {
   const dailyPicRecords = useMemo(() => {
     const map = {};
     allItems.forEach((item) => {
-      const dateKey = normalizeDateKey(item.tanggal) || normalizeDateKey(item.dateIn);
+      // PENTING: Dikelompokkan berdasarkan tanggal pengerjaan/input oleh PPIC, BUKAN tanggal sample!
+      const dateKey = item.recordDate || getItemRecordDate(item);
       if (!dateKey) return;
       if (!map[dateKey]) {
         map[dateKey] = {
@@ -579,7 +637,7 @@ export function TotalItemsSummaryView() {
                 </h2>
               </div>
               <p className="text-xs text-slate-500">
-                Memantau berapa total PCS dan jumlah sampel yang disimpan oleh masing-masing PIC setiap hari.
+                Memantau berapa total PCS dan jumlah sampel yang di-input/disimpan oleh masing-masing PIC setiap hari (berdasarkan tanggal pengerjaan/input sistem, bukan tanggal sample).
               </p>
             </div>
 
@@ -716,7 +774,7 @@ export function TotalItemsSummaryView() {
 
                     <div className="mt-1">
                       <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                        Simpan Hari Ini:
+                        Di-Input Hari Ini:
                       </div>
                       <div className="mt-0.5 text-2xl font-black text-slate-900 tabular-nums">
                         {picStats.pcs.toLocaleString('id-ID')}{' '}
@@ -745,16 +803,20 @@ export function TotalItemsSummaryView() {
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-2 space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        <div className="mt-2 space-y-1.5 max-h-44 overflow-y-auto pr-1">
                           {picStats.itemsList.map((it, itemIdx) => (
                             <div
                               key={itemIdx}
-                              className="text-[11px] p-1.5 rounded-lg bg-white/90 border border-slate-200/60 leading-tight"
+                              className="text-[11px] p-2 rounded-lg bg-white/95 border border-slate-200/80 leading-tight shadow-2xs"
                             >
-                              <div className="font-bold text-slate-800 truncate">{it.style}</div>
-                              <div className="text-[10px] text-slate-500 flex justify-between mt-0.5">
-                                <span>{it.boxLabel}</span>
-                                <span className="font-semibold text-emerald-700">{it.jumlah} PCS</span>
+                              <div className="font-bold text-slate-900 truncate">{it.style}</div>
+                              <div className="text-[10px] text-slate-600 flex justify-between items-center mt-1">
+                                <span className="font-mono font-semibold">{it.boxLabel} • {it.kode}</span>
+                                <span className="font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">{it.jumlah} PCS</span>
+                              </div>
+                              <div className="text-[9.5px] text-slate-400 mt-1 flex justify-between items-center border-t border-slate-100 pt-1">
+                                <span>Tgl Sample: <strong className="text-slate-600">{it.tanggal || 'NA'}</strong></span>
+                                {it.recordDate && <span className="text-blue-600 font-semibold">Tgl Input: {it.recordDate}</span>}
                               </div>
                             </div>
                           ))}

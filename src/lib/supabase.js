@@ -113,6 +113,7 @@ export function localItemToDb(item) {
     date_in: item.dateIn || item.date_in || new Date().toISOString().split('T')[0],
     tanggal: item.tanggal || item.dateIn || '',
     tags: Array.isArray(item.tags) ? item.tags : [],
+    created_at: item.createdAt || item.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
 }
@@ -144,7 +145,10 @@ export function dbItemToLocal(db) {
     track: db.track || '-',
     place: db.place || '',
     dateIn: db.date_in || db.tanggal || '',
+    tanggal: db.tanggal || db.date_in || '',
     tags: Array.isArray(db.tags) ? db.tags : [],
+    createdAt: db.created_at || db.createdAt || null,
+    updatedAt: db.updated_at || db.updatedAt || null,
   };
 }
 
