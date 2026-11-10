@@ -4,7 +4,7 @@ import { useInventory } from '../context/InventoryContext';
 
 const TIMER_PIN = '4695';
 
-export function InventoryTimer({ compact = false }) {
+export function InventoryTimer({ compact = false, fullWidth = false }) {
   const dialogRef = useRef(null);
   const { timerDeadline, updateTimerDeadline, resetTimerDeadline } = useInventory();
   const [pin, setPin] = useState('');
@@ -77,7 +77,102 @@ export function InventoryTimer({ compact = false }) {
 
   return (
     <>
-      {compact ? (
+      {fullWidth ? (
+        <section 
+          aria-label="Hitung mundur pendataan inventory" 
+          className="w-full bg-slate-900 border-b border-blue-500/40 px-3 sm:px-6 py-2 shadow-md transition-all duration-300 no-print"
+        >
+          <div className="max-w-[1560px] mx-auto flex flex-wrap items-center justify-between gap-2.5">
+            
+            {/* Sisi Kiri: Label & Status Sinkronisasi */}
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400 border border-blue-400/30 shadow-xs">
+                <Timer className="h-4 w-4 animate-pulse" aria-hidden="true" />
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-blue-200">
+                  Target Hitung Mundur:
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                  </span>
+                  <span>Cloud Real-Time</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Sisi Tengah: Countdown Timer Utama (BOLD, BESAR & MENJADI FOKUS) */}
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => dialogRef.current?.showModal()}
+              className="group flex items-center gap-2 sm:gap-3.5 bg-slate-950/90 hover:bg-slate-950 border-2 border-blue-500/70 hover:border-blue-400 px-4 py-1.5 rounded-2xl shadow-lg shadow-blue-950/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+              title="Klik untuk atur durasi target countdown (PIN: 4695)"
+            >
+              {finished ? (
+                <span className="text-xs sm:text-sm md:text-base font-black text-rose-400 tracking-wider animate-pulse uppercase">
+                  ⚠️ WAKTU PENGERJAAN TELAH BERAKHIR
+                </span>
+              ) : (
+                <div className="flex items-center gap-1.5 sm:gap-2.5 font-black font-mono tracking-normal text-white tabular-nums">
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-amber-300 to-amber-400 bg-clip-text text-transparent">
+                      {countdown[0][1]}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">h</span>
+                  </div>
+                  <span className="text-slate-600 font-black text-sm select-none">:</span>
+
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-base sm:text-lg md:text-xl font-black text-white">
+                      {String(countdown[1][1]).padStart(2, '0')}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">j</span>
+                  </div>
+                  <span className="text-slate-600 font-black text-sm select-none">:</span>
+
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-base sm:text-lg md:text-xl font-black text-white">
+                      {String(countdown[2][1]).padStart(2, '0')}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">m</span>
+                  </div>
+                  <span className="text-slate-600 font-black text-sm select-none">:</span>
+
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-cyan-300 to-cyan-400 bg-clip-text text-transparent">
+                      {String(countdown[3][1]).padStart(2, '0')}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">s</span>
+                  </div>
+                </div>
+              )}
+
+              <span className="relative flex h-2 w-2 ml-1" title="Sinkronisasi Cloud Aktif">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </button>
+
+            {/* Sisi Kanan: Tombol Pengaturan */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => dialogRef.current?.showModal()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                title="Atur durasi timer (PIN: 4695)"
+              >
+                <Timer className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
+                <span>Atur Timer</span>
+              </button>
+            </div>
+
+          </div>
+        </section>
+      ) : compact ? (
         <button
           type="button"
           aria-haspopup="dialog"

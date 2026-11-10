@@ -129,12 +129,17 @@ const AppContent = () => {
   return (
     <div className={`inventory-shell min-h-screen flex flex-col font-sans ${appMode === '3d-warehouse' ? 'warehouse-screen' : ''}`}>
 
-      {/* Top Navigation Bar — actions only; main tabs live in the left sidebar */}
-      <header className="inventory-header no-print sticky top-0 z-30">
-        <div className="inventory-header-scroll">
-          <div className="inventory-header-row">
+      {/* Sticky Top Header Section: Full-Width Focused Countdown Banner + Navigation Header */}
+      <div className="no-print sticky top-0 z-30 w-full shrink-0">
+        {/* Full-Width Countdown Timer Banner (Fokus & Bold) */}
+        <InventoryTimer fullWidth />
 
-            <div className="inventory-header-brand flex shrink-0 items-center gap-2.5">
+        {/* Top Navigation Bar */}
+        <header className="inventory-header">
+          <div className="inventory-header-scroll">
+            <div className="inventory-header-row">
+
+              <div className="inventory-header-brand flex shrink-0 items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white shadow-md shadow-blue-500/25 ring-1 ring-white/30">
                 <Boxes className="h-4 w-4" />
               </div>
@@ -179,9 +184,6 @@ const AppContent = () => {
 
             {/* Actions */}
             <div className="inventory-header-actions flex shrink-0 items-center gap-2">
-
-              {/* Countdown Timer (Compact Badge in Header) */}
-              <InventoryTimer compact />
 
               {/* Supabase Corporate Gagaclo Status Button */}
               <button
@@ -243,6 +245,7 @@ const AppContent = () => {
           </div>
         </div>
       </header>
+      </div>
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">
