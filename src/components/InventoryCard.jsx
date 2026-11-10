@@ -91,7 +91,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             </td>
           </tr>
 
-          {/* Jenis Sample (ORI / DEVELOP / PPS / BULK SAMPLE / ARSIP) */}
+          {/* Jenis Sample (ORI / DEVELOP / PPS / BULK SAMPLE / ARCHIVE) */}
           <tr className="border-b border-black">
             <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50 leading-tight">
               <div>Jenis Sample</div>
@@ -115,9 +115,9 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
                   <span>{jenisSample === 'BULK SAMPLE' || jenisSample === 'BULK' ? '✓' : ''}</span>
                   <span>BULK SAMPLE</span>
                 </span>
-                <span className={`px-1 py-0.5 border border-black flex items-center gap-0.5 ${jenisSample === 'ARSIP' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-700 font-bold'}`}>
-                  <span>{jenisSample === 'ARSIP' ? '✓' : ''}</span>
-                  <span>ARSIP</span>
+                <span className={`px-1 py-0.5 border border-black flex items-center gap-0.5 ${jenisSample === 'ARCHIVE' || jenisSample === 'ARSIP' ? 'bg-black text-white font-black' : 'bg-transparent text-slate-700 font-bold'}`}>
+                  <span>{jenisSample === 'ARCHIVE' || jenisSample === 'ARSIP' ? '✓' : ''}</span>
+                  <span>ARCHIVE</span>
                 </span>
               </div>
             </td>

@@ -236,7 +236,10 @@ export function TotalItemsSummaryView() {
       g.totalPcs += Number(item.jumlah) || 0;
       if (item.buyerNo && item.buyerNo !== 'NA') g.buyerNos.add(item.buyerNo);
       g.boxes.add(Number(item.boxNumber));
-      if (item.jenisSample) g.sampleTypes.add(item.jenisSample.toUpperCase());
+      if (item.jenisSample) {
+        const norm = item.jenisSample.toUpperCase();
+        g.sampleTypes.add(norm === 'ARSIP' ? 'ARCHIVE' : norm);
+      }
 
       if (item.age.days >= g.oldestDays) {
         g.oldestDays = item.age.days;
@@ -427,7 +430,7 @@ export function TotalItemsSummaryView() {
     XLSX.writeFile(wb, `GAGACLO_RINGKASAN_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const SAMPLE_TYPES = ['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARSIP'];
+  const SAMPLE_TYPES = ['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARCHIVE'];
 
   return (
     <div className="space-y-5">

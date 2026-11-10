@@ -163,7 +163,7 @@ const ItemModalContent = () => {
         tanggal: formatToDDMMYYYY(item.tanggal || item.dateIn) || formatTodayDate(),
         kode: codeVal,
         buyerNo: item.buyerNo || item.buyerNumber || '',
-        jenisSample: item.jenisSample || item.sampleType || '',
+        jenisSample: (item.jenisSample === 'ARSIP' ? 'ARCHIVE' : item.jenisSample) || item.sampleType || '',
         style: item.style || item.name || item.deskripsi || '',
         sampleNo: item.sampleNo || '',
         size: item.size || '',
@@ -185,7 +185,7 @@ const ItemModalContent = () => {
         tanggal: formatTodayDate(),
         kode: '',
         buyerNo: itemModalConfig.prefill?.buyerNo || '',
-        jenisSample: itemModalConfig.prefill?.jenisSample || '',
+        jenisSample: (itemModalConfig.prefill?.jenisSample === 'ARSIP' ? 'ARCHIVE' : itemModalConfig.prefill?.jenisSample) || '',
         style: itemModalConfig.prefill?.style || '',
         sampleNo: '',
         size: '',
@@ -653,7 +653,7 @@ const ItemModalContent = () => {
                   Jenis Sample <span className="text-rose-500">*</span>:
                 </label>
                 <div className="flex items-center gap-1">
-                  {['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARSIP'].map((type) => {
+                  {['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARCHIVE'].map((type) => {
                     const isSelected = formData.jenisSample === type;
                     return (
                       <button

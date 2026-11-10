@@ -111,7 +111,7 @@ export const SimpleInventoryView = () => {
     const itemToSave = {
       ...form,
       buyerNo: buyerNoTrim,
-      jenisSample: form.jenisSample || 'DEVELOP',
+      jenisSample: form.jenisSample === 'ARSIP' ? 'ARCHIVE' : (form.jenisSample || 'DEVELOP'),
       style: styleTrim,
       sampleNo: sampleNoTrim,
       size: sizeTrim,
@@ -420,8 +420,8 @@ export const SimpleInventoryView = () => {
                   Jenis Sample <span className="text-rose-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-1">
-                  {['ORI', 'DEVELOP', 'PPS', 'BULK SAMPLE', 'ARSIP'].map((type) => {
-                    const isSelected = form.jenisSample === type;
+                  {['ORI', 'DEVELOP', 'PPS', 'BULK SAMPLE', 'ARCHIVE'].map((type) => {
+                    const isSelected = form.jenisSample === type || (type === 'ARCHIVE' && form.jenisSample === 'ARSIP');
                     return (
                       <button
                         key={type}
