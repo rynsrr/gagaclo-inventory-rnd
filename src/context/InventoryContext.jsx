@@ -308,6 +308,7 @@ export const InventoryProvider = ({ children }) => {
   // Global floating notification state (for concurrency alerts, info messages)
   const [systemNotification, setSystemNotification] = useState(null);
   const notificationTimerRef = useRef(null);
+  const realtimeChannelRef = useRef(null);
 
   const showNotification = useCallback((message, type = 'info', duration = 6000) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
@@ -318,6 +319,27 @@ export const InventoryProvider = ({ children }) => {
       }, duration);
     }
   }, []);
+
+  const broadcastChange = useCallback((action, payload = {}) => {
+    if (realtimeChannelRef.current) {
+      try {
+        realtimeChannelRef.current.send({
+          type: 'broadcast',
+          event: 'INVENTORY_CHANGED',
+          payload: {
+            action,
+            source: currentUser?.name || 'User',
+            timestamp: Date.now(),
+            ...payload,
+          },
+        }).catch(err => {
+          console.warn('Realtime broadcast error:', err);
+        });
+      } catch (err) {
+        console.warn('Realtime broadcast failed:', err);
+      }
+    }
+  }, [currentUser]);
 
   const updateTimerDeadline = async (newDeadline, newNote) => {
     const val = Number(newDeadline) || 0;
@@ -365,6 +387,9 @@ export const InventoryProvider = ({ children }) => {
           rack_id: -1,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
+
+        // Instantly notify all connected devices via broadcast
+        broadcastChange('TIMER_UPDATED', { deadline: val, note: noteVal });
       } catch (err) {
         console.error('Failed to sync timer to Supabase:', err);
       }
@@ -373,6 +398,7 @@ export const InventoryProvider = ({ children }) => {
 
   const resetTimerDeadline = async () => {
     await updateTimerDeadline(0);
+    broadcastChange('TIMER_UPDATED', { deadline: 0, note: '' });
   };
 
   // Issues, Errors & Feature Proposals State
@@ -417,6 +443,9 @@ export const InventoryProvider = ({ children }) => {
       try {
         await supabase.from('issues').upsert(issuesList.map(localIssueToDb), { onConflict: 'id' });
       } catch {}
+
+      // Broadcast issues update to other devices
+      broadcastChange('ISSUES_UPDATED');
     } catch (err) {
       console.error('Failed to sync issues to Supabase:', err);
     }
@@ -489,21 +518,24 @@ export const InventoryProvider = ({ children }) => {
   }, [racks, ppicMembers, boxes, items, transactions, users, currentUser]);
 
   // Sync from Supabase down to local state
-  const syncFromSupabase = useCallback(async (clientInstance = supabase) => {
+  const syncFromSupabase = useCallback(async (clientInstance = supabase, silent = false) => {
     const client = clientInstance || supabase;
     if (!client) {
-      setSupabaseStatus(prev => ({ ...prev, isConnected: false, isSyncing: false }));
+      if (!silent) setSupabaseStatus(prev => ({ ...prev, isConnected: false, isSyncing: false }));
       return { success: false, message: 'Supabase client belum diinisialisasi' };
     }
 
-    setSupabaseStatus(prev => ({ ...prev, isSyncing: true, error: null }));
+    if (!silent) {
+      setSupabaseStatus(prev => ({ ...prev, isSyncing: true, error: null }));
+    }
 
     try {
-      // 1. Fetch items
+      // 1. Fetch items (up to 10000 items)
       const { data: dbItems, error: itemsErr } = await client
         .from('items')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10000);
 
       if (itemsErr) throw itemsErr;
 
@@ -654,12 +686,14 @@ export const InventoryProvider = ({ children }) => {
     } catch (err) {
       console.error('Supabase sync error:', err);
       const errMsg = err.message || 'Gagal menyinkronkan data dengan Supabase';
-      setSupabaseStatus({
-        isConnected: false,
-        isSyncing: false,
-        lastSync: null,
-        error: errMsg,
-      });
+      if (!silent) {
+        setSupabaseStatus({
+          isConnected: false,
+          isSyncing: false,
+          lastSync: null,
+          error: errMsg,
+        });
+      }
       return { success: false, message: errMsg };
     }
   }, []);
@@ -745,9 +779,34 @@ export const InventoryProvider = ({ children }) => {
     if (supabaseConfigState.isConfigured && supabase) {
       syncFromSupabase();
 
-      // Subscribe to Realtime Postgres Changes
+      // Subscribe to Realtime Postgres Changes & Broadcast Channel
       const channel = supabase
-        .channel('gagaclo_inventory_realtime')
+        .channel('gagaclo_inventory_realtime', {
+          config: {
+            broadcast: { ack: false },
+          },
+        })
+        .on('broadcast', { event: 'INVENTORY_CHANGED' }, (msg) => {
+          const data = msg?.payload;
+          // If timer changed, update local state immediately without waiting
+          if (data?.action === 'TIMER_UPDATED') {
+            if (typeof data.deadline === 'number') {
+              setTimerDeadline(data.deadline);
+              try {
+                if (data.deadline > 0) localStorage.setItem('gagaclo_inventory_timer_deadline', String(data.deadline));
+                else localStorage.removeItem('gagaclo_inventory_timer_deadline');
+              } catch {}
+            }
+            if (typeof data.note === 'string') {
+              setTimerNote(data.note);
+              try {
+                if (data.note) localStorage.setItem('gagaclo_inventory_timer_note', data.note);
+              } catch {}
+            }
+          }
+          // Trigger silent full sync to pull authoritative data from Supabase
+          syncFromSupabase(supabase, true);
+        })
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'items' },
@@ -768,30 +827,8 @@ export const InventoryProvider = ({ children }) => {
             }
             if (payload.old?.id === 'SYSTEM_CONFIG_TIMER' || payload.new?.id === 'SYSTEM_CONFIG_TIMER') return;
 
-            if (payload.eventType === 'INSERT') {
-              const deletedIds = getDeletedItemIds();
-              if (
-                deletedIds.has(String(payload.new.id)) ||
-                payload.new.status === 'DELETED' ||
-                Number(payload.new.box_number) <= 0
-              ) return;
-              const newItem = dbItemToLocal(payload.new);
-              setItems(prev => prev.some(i => String(i.id) === String(newItem.id)) ? prev : [newItem, ...prev]);
-            } else if (payload.eventType === 'UPDATE') {
-              const deletedIds = getDeletedItemIds();
-              if (
-                deletedIds.has(String(payload.new.id)) ||
-                payload.new.status === 'DELETED' ||
-                Number(payload.new.box_number) <= 0
-              ) {
-                setItems(prev => prev.filter(i => String(i.id) !== String(payload.new.id)));
-                return;
-              }
-              const updated = dbItemToLocal(payload.new);
-              setItems(prev => prev.map(i => String(i.id) === String(updated.id) ? updated : i));
-            } else if (payload.eventType === 'DELETE') {
-              setItems(prev => prev.filter(i => String(i.id) !== String(payload.old.id)));
-            }
+            // Trigger silent full sync for item changes
+            syncFromSupabase(supabase, true);
           }
         )
         .on(
@@ -834,43 +871,67 @@ export const InventoryProvider = ({ children }) => {
             }
             if (Number(payload.new?.box_number) >= 900000) return;
 
-            if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-              const updatedBox = payload.new;
-              if (updatedBox.code === 'DELETED' || updatedBox.rack_name === 'DELETED' || Number(updatedBox.box_number) <= 0) {
-                setBoxes(prev => prev.filter(b => Number(b.boxNumber) !== Number(updatedBox.box_number)));
-                return;
-              }
-              setBoxes(prev => {
-                const exists = prev.some(b => Number(b.boxNumber) === Number(updatedBox.box_number));
-                if (exists) {
-                  return prev.map(b => Number(b.boxNumber) === Number(updatedBox.box_number) ? dbBoxToLocal(updatedBox, [b]) : b);
-                }
-                return [...prev, dbBoxToLocal(updatedBox, [])];
-              });
-            }
+            syncFromSupabase(supabase, true);
           }
         )
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'issues' },
-          (payload) => {
-            if (payload.eventType === 'INSERT') {
-              const newIss = dbIssueToLocal(payload.new);
-              setIssues(prev => prev.some(i => i.id === newIss.id) ? prev : [newIss, ...prev]);
-            } else if (payload.eventType === 'UPDATE') {
-              const updated = dbIssueToLocal(payload.new);
-              setIssues(prev => prev.map(i => i.id === updated.id ? updated : i));
-            } else if (payload.eventType === 'DELETE') {
-              setIssues(prev => prev.filter(i => i.id !== payload.old.id));
-            }
+          () => {
+            syncFromSupabase(supabase, true);
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('⚡ Realtime channel subscribed successfully');
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.warn('⚡ Realtime channel dropped/error:', status, err);
+            syncFromSupabase(supabase, true);
+          }
+        });
+
+      realtimeChannelRef.current = channel;
 
       return () => {
+        realtimeChannelRef.current = null;
         supabase.removeChannel(channel);
       };
     }
+  }, [supabaseConfigState.isConfigured, syncFromSupabase]);
+
+  // Background Auto-Polling (Setiap 4 detik) untuk menjamin sinkronisasi antar 20 komputer
+  useEffect(() => {
+    if (!supabaseConfigState.isConfigured || !supabase) return;
+
+    const intervalId = window.setInterval(() => {
+      syncFromSupabase(supabase, true);
+    }, 4000);
+
+    return () => window.clearInterval(intervalId);
+  }, [supabaseConfigState.isConfigured, syncFromSupabase]);
+
+  // Window Focus & Tab Visibility Re-sync: langsung ambil data terbaru saat user kembali ke tab ini
+  useEffect(() => {
+    if (!supabaseConfigState.isConfigured || !supabase) return;
+
+    const handleFocusSync = () => {
+      syncFromSupabase(supabase, true);
+    };
+
+    window.addEventListener('focus', handleFocusSync);
+    window.addEventListener('online', handleFocusSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        handleFocusSync();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocusSync);
+      window.removeEventListener('online', handleFocusSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [supabaseConfigState.isConfigured, syncFromSupabase]);
 
   // Actions
@@ -973,6 +1034,9 @@ export const InventoryProvider = ({ children }) => {
       }
     }
 
+    // Instantly broadcast to all other devices
+    broadcastChange('ITEM_ADDED', { id: newItem.id, picName: newItem.picName, boxNumber: newItem.boxNumber });
+
     return newItem;
   };
 
@@ -1021,6 +1085,7 @@ export const InventoryProvider = ({ children }) => {
       }
     }
     setTransactions(prev => [...entries, ...prev]);
+    broadcastChange('DATA_IMPORTED', { count: newItems.length });
     return null;
   };
 
@@ -1108,6 +1173,8 @@ export const InventoryProvider = ({ children }) => {
         console.error('Supabase update item error:', err);
       }
     }
+
+    broadcastChange('ITEM_UPDATED', { id: itemId });
 
     return finalItem;
   };
@@ -1199,6 +1266,8 @@ export const InventoryProvider = ({ children }) => {
       }
     }
 
+    broadcastChange('ITEM_DELETED', { id: itemId });
+
     return true;
   };
 
@@ -1267,6 +1336,8 @@ export const InventoryProvider = ({ children }) => {
         } catch {}
       }
     }
+
+    broadcastChange('ITEMS_DELETED', { count: idStrings.length });
 
     return idStrings.length;
   };
@@ -1530,6 +1601,8 @@ export const InventoryProvider = ({ children }) => {
         console.error('Supabase update box error:', err);
       }
     }
+
+    broadcastChange('BOX_UPDATED', { boxNumber: num });
 
     return updatedBox;
   };

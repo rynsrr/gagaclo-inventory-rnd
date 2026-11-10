@@ -194,6 +194,32 @@ CREATE POLICY "Public Full Access Items" ON public.items FOR ALL USING (true) WI
 CREATE POLICY "Public Full Access Boxes" ON public.boxes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public Full Access Transactions" ON public.transactions FOR ALL USING (true) WITH CHECK (true);
 
+-- Aktifkan Supabase Realtime Publication untuk sinkronisasi otomatis antar komputer
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'items'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.items;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'boxes'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.boxes;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'transactions'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.transactions;
+  END IF;
+END $$;
+ALTER TABLE public.items REPLICA IDENTITY FULL;
+ALTER TABLE public.boxes REPLICA IDENTITY FULL;
+ALTER TABLE public.transactions REPLICA IDENTITY FULL;
+
 -- Atomic Multi-User Sequence Counter (Anti-Collision)
 CREATE TABLE IF NOT EXISTS public.sequence_counters (
     category TEXT PRIMARY KEY,

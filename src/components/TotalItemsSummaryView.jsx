@@ -26,7 +26,16 @@ import {
   BarChart3,
   Users,
   RotateCcw,
+  RefreshCw,
 } from 'lucide-react';
+
+export function getLocalTodayIso() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 /**
  * Menghitung umur simpan item secara presisi berdasarkan tanggal masuk
@@ -125,7 +134,21 @@ export function TotalItemsSummaryView() {
     currentUser,
     ppicMembers,
     showNotification,
+    syncFromSupabase,
   } = useInventory();
+
+  const [isManualSyncing, setIsManualSyncing] = useState(false);
+  const handleManualSync = async () => {
+    setIsManualSyncing(true);
+    try {
+      const res = await syncFromSupabase(undefined, false);
+      if (res?.success) {
+        if (showNotification) showNotification('Data inventory & aktivitas harian berhasil disinkronkan langsung dari server cloud!', 'success', 3000);
+      }
+    } finally {
+      setIsManualSyncing(false);
+    }
+  };
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [viewMode, setViewMode] = useState('styles'); // 'styles' | 'table' | 'daily' | 'duplicates'
@@ -345,8 +368,8 @@ export function TotalItemsSummaryView() {
     return { map, dates };
   }, [allItems]);
 
-  // Tanggal default untuk view harian: hari ini atau tanggal terbaru yang ada data
-  const todayIso = new Date().toISOString().slice(0, 10);
+  // Tanggal default untuk view harian: hari ini (zona lokal) atau tanggal terbaru yang ada data
+  const todayIso = getLocalTodayIso();
   const [selectedDailyDate, setSelectedDailyDate] = useState(() => {
     if (dailyPicRecords.dates.includes(todayIso)) return todayIso;
     return dailyPicRecords.dates[0] || todayIso;
@@ -446,7 +469,24 @@ export function TotalItemsSummaryView() {
           </p>
         </div>
 
-        {/* View Mode Switcher */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Tombol Sinkron Real-time Otomatis */}
+          <button
+            type="button"
+            onClick={handleManualSync}
+            disabled={isManualSyncing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-emerald-500/40 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition cursor-pointer shadow-2xs disabled:opacity-60"
+            title="Sinkronkan data inventory real-time dari Supabase (Otomatis sync tiap 4 detik)"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isManualSyncing ? 'animate-spin' : ''}`} />
+            <span>{isManualSyncing ? 'Menyinkronkan...' : 'Sinkron Real-Time'}</span>
+            <span className="relative flex h-2 w-2 ml-0.5" title="Koneksi Cloud Real-time Aktif">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+          </button>
+
+          {/* View Mode Switcher */}
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 self-start sm:self-center flex-wrap">
           <button
             type="button"
@@ -519,6 +559,7 @@ export function TotalItemsSummaryView() {
           </button>
         </div>
       </div>
+    </div>
 
       {/* Mention & Rekap Kurang per PIC */}
       <PpicMissingMentionBar />
@@ -565,6 +606,18 @@ export function TotalItemsSummaryView() {
                 }`}
               >
                 Hari Ini
+              </button>
+
+              {/* Refresh Data Real-Time */}
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isManualSyncing}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-emerald-500/40 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-60"
+                title="Refresh data aktivitas harian langsung dari server cloud"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isManualSyncing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isManualSyncing ? 'Sync...' : 'Refresh'}</span>
               </button>
 
               {/* Salin Rekap Harian */}
