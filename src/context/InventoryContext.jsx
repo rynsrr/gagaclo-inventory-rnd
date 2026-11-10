@@ -297,6 +297,14 @@ export const InventoryProvider = ({ children }) => {
     return 1794444171613;
   });
 
+  const [timerNote, setTimerNote] = useState(() => {
+    try {
+      return localStorage.getItem('gagaclo_inventory_timer_note') || 'Selesaikan seluruh pendataan sample & material R&D';
+    } catch {
+      return 'Selesaikan seluruh pendataan sample & material R&D';
+    }
+  });
+
   // Global floating notification state (for concurrency alerts, info messages)
   const [systemNotification, setSystemNotification] = useState(null);
   const notificationTimerRef = useRef(null);
@@ -311,14 +319,22 @@ export const InventoryProvider = ({ children }) => {
     }
   }, []);
 
-  const updateTimerDeadline = async (newDeadline) => {
+  const updateTimerDeadline = async (newDeadline, newNote) => {
     const val = Number(newDeadline) || 0;
     setTimerDeadline(val);
+    const noteVal = newNote !== undefined ? String(newNote).trim() : timerNote;
+    if (newNote !== undefined) {
+      setTimerNote(noteVal);
+    }
+
     try {
       if (val > 0) {
         localStorage.setItem('gagaclo_inventory_timer_deadline', String(val));
       } else {
         localStorage.removeItem('gagaclo_inventory_timer_deadline');
+      }
+      if (noteVal) {
+        localStorage.setItem('gagaclo_inventory_timer_note', noteVal);
       }
     } catch (e) {
       console.error('Failed to write timer to localStorage', e);
@@ -334,7 +350,7 @@ export const InventoryProvider = ({ children }) => {
           rack_name: 'SYSTEM',
           category: 'CONFIG',
           pic_name: 'SYSTEM',
-          notes: JSON.stringify({ deadline: val, updatedAt: new Date().toISOString() }),
+          notes: JSON.stringify({ deadline: val, note: noteVal, updatedAt: new Date().toISOString() }),
           updated_at: new Date().toISOString(),
         }, { onConflict: 'box_number' });
 
@@ -344,6 +360,7 @@ export const InventoryProvider = ({ children }) => {
           kode: 'SYSTEM_TIMER',
           name: 'SYSTEM TIMER CONFIG',
           description: String(val),
+          deskripsi: noteVal,
           box_number: 999999,
           rack_id: -1,
           updated_at: new Date().toISOString(),
@@ -508,6 +525,7 @@ export const InventoryProvider = ({ children }) => {
 
       // Check for remote timer config in boxes or items
       let remoteDeadline = null;
+      let remoteNote = null;
       if (dbBoxes && dbBoxes.length > 0) {
         const timerBox = dbBoxes.find(b => Number(b.box_number) === 999999 || b.code === 'SYSTEM_TIMER');
         if (timerBox?.notes) {
@@ -515,6 +533,9 @@ export const InventoryProvider = ({ children }) => {
             const parsed = JSON.parse(timerBox.notes);
             if (typeof parsed?.deadline === 'number') {
               remoteDeadline = parsed.deadline;
+            }
+            if (typeof parsed?.note === 'string') {
+              remoteNote = parsed.note;
             }
           } catch {}
         }
@@ -524,6 +545,9 @@ export const InventoryProvider = ({ children }) => {
         if (timerItem?.description) {
           const num = Number(timerItem.description);
           if (!isNaN(num)) remoteDeadline = num;
+        }
+        if (timerItem?.deskripsi) {
+          remoteNote = timerItem.deskripsi;
         }
       }
 
@@ -535,6 +559,13 @@ export const InventoryProvider = ({ children }) => {
           } else {
             localStorage.removeItem('gagaclo_inventory_timer_deadline');
           }
+        } catch {}
+      }
+
+      if (remoteNote !== null) {
+        setTimerNote(remoteNote);
+        try {
+          localStorage.setItem('gagaclo_inventory_timer_note', remoteNote);
         } catch {}
       }
 
@@ -725,6 +756,10 @@ export const InventoryProvider = ({ children }) => {
             if (payload.new?.id === 'SYSTEM_CONFIG_TIMER') {
               const d = Number(payload.new.description) || 0;
               setTimerDeadline(d);
+              if (payload.new?.deskripsi) {
+                setTimerNote(payload.new.deskripsi);
+                try { localStorage.setItem('gagaclo_inventory_timer_note', payload.new.deskripsi); } catch {}
+              }
               try {
                 if (d > 0) localStorage.setItem('gagaclo_inventory_timer_deadline', String(d));
                 else localStorage.removeItem('gagaclo_inventory_timer_deadline');
@@ -772,6 +807,12 @@ export const InventoryProvider = ({ children }) => {
                   try {
                     if (parsed.deadline > 0) localStorage.setItem('gagaclo_inventory_timer_deadline', String(parsed.deadline));
                     else localStorage.removeItem('gagaclo_inventory_timer_deadline');
+                  } catch {}
+                }
+                if (typeof parsed?.note === 'string') {
+                  setTimerNote(parsed.note);
+                  try {
+                    if (parsed.note) localStorage.setItem('gagaclo_inventory_timer_note', parsed.note);
                   } catch {}
                 }
               } catch {}
@@ -2124,6 +2165,7 @@ export const InventoryProvider = ({ children }) => {
     setSearchQuery,
     // Global Timer State & Operations
     timerDeadline,
+    timerNote,
     updateTimerDeadline,
     resetTimerDeadline,
     // Issues, Error Reports & Feature Proposals

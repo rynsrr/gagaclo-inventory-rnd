@@ -6,12 +6,17 @@ const TIMER_PIN = '4695';
 
 export function InventoryTimer({ compact = false, fullWidth = false }) {
   const dialogRef = useRef(null);
-  const { timerDeadline, updateTimerDeadline, resetTimerDeadline } = useInventory();
+  const { timerDeadline, timerNote, updateTimerDeadline, resetTimerDeadline } = useInventory();
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [days, setDays] = useState('7');
+  const [noteInput, setNoteInput] = useState(timerNote || '');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (timerNote) setNoteInput(timerNote);
+  }, [timerNote]);
 
   const deadline = Number(timerDeadline) || 0;
   const [now, setNow] = useState(Date.now);
@@ -61,9 +66,17 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
     const startedAt = Date.now();
     const end = startedAt + duration * 86_400_000;
     setIsSaving(true);
-    await updateTimerDeadline(end);
+    await updateTimerDeadline(end, noteInput);
     setIsSaving(false);
     setNow(startedAt);
+    dialogRef.current?.close();
+  }
+
+  async function saveNoteOnly() {
+    if (!unlocked) return;
+    setIsSaving(true);
+    await updateTimerDeadline(deadline, noteInput);
+    setIsSaving(false);
     dialogRef.current?.close();
   }
 
@@ -103,70 +116,88 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
               </div>
             </div>
 
-            {/* Sisi Tengah: Countdown Timer Utama (BOLD, BESAR & MENJADI FOKUS) */}
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => dialogRef.current?.showModal()}
-              className="group flex items-center gap-2 sm:gap-3.5 bg-slate-950/90 hover:bg-slate-950 border-2 border-blue-500/70 hover:border-blue-400 px-4 py-1.5 rounded-2xl shadow-lg shadow-blue-950/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
-              title="Klik untuk atur durasi target countdown (PIN: 4695)"
-            >
-              {finished ? (
-                <span className="text-xs sm:text-sm md:text-base font-black text-rose-400 tracking-wider animate-pulse uppercase">
-                  ⚠️ WAKTU PENGERJAAN TELAH BERAKHIR
+            {/* Sisi Tengah: Countdown Timer Utama & Note Target */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => dialogRef.current?.showModal()}
+                className="group flex items-center gap-2 sm:gap-3.5 bg-slate-950/90 hover:bg-slate-950 border-2 border-blue-500/70 hover:border-blue-400 px-4 py-1.5 rounded-2xl shadow-lg shadow-blue-950/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                title="Klik untuk atur durasi target countdown & catatan (PIN: 4695)"
+              >
+                {finished ? (
+                  <span className="text-xs sm:text-sm md:text-base font-black text-rose-400 tracking-wider animate-pulse uppercase">
+                    ⚠️ WAKTU PENGERJAAN TELAH BERAKHIR
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1.5 sm:gap-2.5 font-black font-mono tracking-normal text-white tabular-nums">
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-amber-300 to-amber-400 bg-clip-text text-transparent">
+                        {countdown[0][1]}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">h</span>
+                    </div>
+                    <span className="text-slate-600 font-black text-sm select-none">:</span>
+
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-base sm:text-lg md:text-xl font-black text-white">
+                        {String(countdown[1][1]).padStart(2, '0')}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">j</span>
+                    </div>
+                    <span className="text-slate-600 font-black text-sm select-none">:</span>
+
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-base sm:text-lg md:text-xl font-black text-white">
+                        {String(countdown[2][1]).padStart(2, '0')}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">m</span>
+                    </div>
+                    <span className="text-slate-600 font-black text-sm select-none">:</span>
+
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-cyan-300 to-cyan-400 bg-clip-text text-transparent">
+                        {String(countdown[3][1]).padStart(2, '0')}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">s</span>
+                    </div>
+                  </div>
+                )}
+
+                <span className="relative flex h-2 w-2 ml-1" title="Sinkronisasi Cloud Aktif">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-              ) : (
-                <div className="flex items-center gap-1.5 sm:gap-2.5 font-black font-mono tracking-normal text-white tabular-nums">
-                  <div className="flex items-baseline gap-0.5">
-                    <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-amber-300 to-amber-400 bg-clip-text text-transparent">
-                      {countdown[0][1]}
-                    </span>
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">h</span>
-                  </div>
-                  <span className="text-slate-600 font-black text-sm select-none">:</span>
+              </button>
 
-                  <div className="flex items-baseline gap-0.5">
-                    <span className="text-base sm:text-lg md:text-xl font-black text-white">
-                      {String(countdown[1][1]).padStart(2, '0')}
-                    </span>
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">j</span>
-                  </div>
-                  <span className="text-slate-600 font-black text-sm select-none">:</span>
-
-                  <div className="flex items-baseline gap-0.5">
-                    <span className="text-base sm:text-lg md:text-xl font-black text-white">
-                      {String(countdown[2][1]).padStart(2, '0')}
-                    </span>
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">m</span>
-                  </div>
-                  <span className="text-slate-600 font-black text-sm select-none">:</span>
-
-                  <div className="flex items-baseline gap-0.5">
-                    <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-cyan-300 to-cyan-400 bg-clip-text text-transparent">
-                      {String(countdown[3][1]).padStart(2, '0')}
-                    </span>
-                    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">s</span>
-                  </div>
-                </div>
-              )}
-
-              <span className="relative flex h-2 w-2 ml-1" title="Sinkronisasi Cloud Aktif">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-            </button>
+              {/* Note / Catatan Target Pill */}
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => dialogRef.current?.showModal()}
+                className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/90 hover:bg-slate-950 border border-amber-500/50 hover:border-amber-400 text-amber-200 text-xs font-semibold cursor-pointer transition-all shadow-md shadow-amber-950/20 max-w-[340px] sm:max-w-[480px] truncate"
+                title="Klik untuk ubah catatan target countdown (PIN: 4695)"
+              >
+                <span className="font-black text-amber-400 flex items-center gap-1 shrink-0">
+                  <span>📌 Note:</span>
+                </span>
+                <span className="truncate text-slate-100 font-bold tracking-tight">
+                  {timerNote || 'Selesaikan target pendataan seluruh rak & box'}
+                </span>
+              </button>
+            </div>
 
             {/* Sisi Kanan: Tombol Pengaturan */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 aria-haspopup="dialog"
                 onClick={() => dialogRef.current?.showModal()}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                title="Atur durasi timer (PIN: 4695)"
+                title="Atur durasi & catatan timer (PIN: 4695)"
               >
                 <Timer className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
-                <span>Atur Timer</span>
+                <span>Atur Timer &amp; Note</span>
               </button>
             </div>
 
@@ -222,6 +253,11 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 <p className="text-[10px] font-medium text-slate-500 leading-tight">
                   {finished ? '⚠️ Waktu telah berakhir' : deadline ? 'Sisa waktu pengerjaan real-time' : 'Durasi belum diatur'}
                 </p>
+                {timerNote && (
+                  <p className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 mt-1 max-w-[260px] truncate" title={timerNote}>
+                    📌 {timerNote}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -230,10 +266,10 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
               aria-haspopup="dialog"
               onClick={() => dialogRef.current?.showModal()}
               className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-              title="Atur durasi timer (PIN: 4695)"
+              title="Atur durasi & catatan timer (PIN: 4695)"
             >
               <Timer className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
-              <span>Atur Timer</span>
+              <span>Atur Timer &amp; Note</span>
             </button>
           </div>
 
@@ -263,14 +299,14 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
         ref={dialogRef}
         onClose={lock}
         aria-labelledby="inventory-timer-title"
-        className="no-print m-auto w-[min(92vw,24rem)] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl backdrop:bg-black/45"
+        className="no-print m-auto w-[min(92vw,26rem)] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl backdrop:bg-black/45"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 id="inventory-timer-title" className="text-base font-bold text-slate-900">Timer Pengerjaan Data</h2>
+            <h2 id="inventory-timer-title" className="text-base font-bold text-slate-900">Timer &amp; Note Target</h2>
             <span className="text-[10px] bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded-full border border-blue-200 flex items-center gap-1">
               <Globe className="w-3 h-3" />
-              <span>Global</span>
+              <span>Cloud Realtime</span>
             </span>
           </div>
           <button type="button" aria-label="Tutup" onClick={() => dialogRef.current?.close()}
@@ -279,13 +315,13 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
           </button>
         </div>
         <p className="mt-1 text-xs text-slate-500">
-          Timer ini tersimpan di cloud &amp; terlihat di semua perangkat tim yang membuka aplikasi.
+          Timer dan catatan ini tersimpan di cloud &amp; tersinkronisasi otomatis di semua komputer tim R&amp;D.
         </p>
 
         {!unlocked ? (
           <form onSubmit={unlock} className="mt-4 space-y-4">
             <label className="block text-sm font-semibold text-slate-800">
-              PIN Pengaturan
+              PIN Pengaturan (4695)
               <input
                 type="password"
                 inputMode="numeric"
@@ -305,6 +341,20 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
         ) : (
           <form onSubmit={start} className="mt-4 space-y-4">
             <label className="block text-sm font-semibold text-slate-800">
+              Catatan / Note Target Countdown
+              <textarea
+                rows={2}
+                value={noteInput}
+                onChange={event => setNoteInput(event.target.value)}
+                placeholder="Contoh: Selesaikan target pendataan seluruh rak & box R&D sebelum audit"
+                className="mt-1 block w-full rounded-lg border border-slate-200 p-2.5 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                Catatan ini akan tampil di banner atas dan tersinkronisasi ke semua komputer tim.
+              </span>
+            </label>
+
+            <label className="block text-sm font-semibold text-slate-800">
               Durasi Pengerjaan (Hari)
               <input
                 type="number"
@@ -317,25 +367,40 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 className="mt-1 block w-full rounded-lg border border-slate-200 p-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
             </label>
-            <div className="flex flex-wrap gap-2 pt-1">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-xs disabled:opacity-60"
-              >
-                {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
-                <span>{deadline ? 'Simpan & Mulai Ulang' : 'Mulai Hitung Mundur'}</span>
-              </button>
+
+            <div className="space-y-2 pt-1">
               {deadline > 0 && (
                 <button
                   type="button"
                   disabled={isSaving}
-                  onClick={reset}
-                  className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-60"
+                  onClick={saveNoteOnly}
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-500/60 bg-amber-50 px-4 py-2.5 text-xs sm:text-sm font-bold text-amber-900 hover:bg-amber-100 transition disabled:opacity-60 cursor-pointer shadow-xs"
                 >
-                  Reset
+                  {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>📌 Simpan Perubahan Note Saja</span>
                 </button>
               )}
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-xs disabled:opacity-60 cursor-pointer"
+                >
+                  {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
+                  <span>{deadline ? 'Setel Ulang Durasi & Note' : 'Mulai Hitung Mundur'}</span>
+                </button>
+                {deadline > 0 && (
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={reset}
+                    className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-60 cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         )}
