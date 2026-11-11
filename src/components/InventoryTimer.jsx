@@ -103,9 +103,9 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
           aria-label="Hitung mundur pendataan inventory" 
           className="w-full bg-slate-900 border-b border-blue-500/40 px-3 sm:px-6 py-2 shadow-md transition-all duration-300 no-print"
         >
-          <div className="max-w-[1560px] mx-auto flex flex-wrap items-center justify-between gap-2.5">
+          <div className="max-w-[1560px] mx-auto flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
             {/* Countdown Timer Utama & Note Target */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
               <button
                 type="button"
                 aria-haspopup="dialog"
@@ -174,21 +174,6 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 </span>
               </button>
             </div>
-
-            {/* Sisi Kanan: Tombol Pengaturan */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                aria-haspopup="dialog"
-                onClick={() => dialogRef.current?.showModal()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                title="Atur durasi & catatan timer"
-              >
-                <Timer className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
-                <span>Atur Timer &amp; Note</span>
-              </button>
-            </div>
-
           </div>
         </section>
       ) : compact ? (
