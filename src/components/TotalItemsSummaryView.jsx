@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useInventory } from '../context/InventoryContext';
-import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
 import {
   Archive,
@@ -647,9 +646,6 @@ export function TotalItemsSummaryView() {
         </div>
       </div>
     </div>
-
-      {/* Mention & Rekap Kurang per PIC */}
-      <PpicMissingMentionBar />
 
       {/* ========================================================================= */}
       {/* SUB-VIEW 1: HARIAN PER PPIC (SIMPAN BERAPA PCS PER HARI)                  */}
