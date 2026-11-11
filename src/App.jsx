@@ -140,18 +140,15 @@ const AppContent = () => {
           <div className="inventory-header-scroll">
             <div className="inventory-header-row">
 
-              <div className="inventory-header-brand flex shrink-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white shadow-md shadow-blue-500/25 ring-1 ring-white/30">
-                <Boxes className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
+              <div className="inventory-header-brand flex shrink-0 items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white shadow-md shadow-blue-500/25 ring-1 ring-white/30">
+                  <Boxes className="h-4 w-4" />
+                </div>
                 <span className="inventory-brand text-xs font-black tracking-tight text-slate-900 flex items-center gap-1.5">
                   GAGACLO <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">R&amp;D</span>
                   <span className="text-[9px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.2 rounded-full">v2.0</span>
                 </span>
-                <span className="inventory-brand text-[10px] font-medium text-slate-500 -mt-0.5">Inventory &amp; Sample Studio</span>
               </div>
-            </div>
 
             {/* Top Navigation Tabs */}
             <nav className="flex items-center gap-1.5 mx-1 sm:mx-3" aria-label="Menu navigasi utama">

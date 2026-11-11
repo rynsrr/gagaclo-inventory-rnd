@@ -42,23 +42,6 @@ export const Warehouse3DView = ({
 }) => {
   const containerRef = useRef(null);
   const searchInputRef = useRef(null);
-  const [lastSearches, setLastSearches] = useState(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem('gagaclo_last_searches') || '[]');
-      return Array.isArray(raw) ? raw.filter(s => typeof s === 'string' && s.trim()) : [];
-    } catch {
-      return [];
-    }
-  });
-  // Search frequency counts: lowercase term -> count, for "most searched" pills
-  const [topSearches, setTopSearches] = useState(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem('gagaclo_top_searches') || '{}');
-      return raw && typeof raw === 'object' ? raw : {};
-    } catch {
-      return {};
-    }
-  });
   const { 
     racks, 
     boxes, 
@@ -113,51 +96,7 @@ export const Warehouse3DView = ({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onClearSearch]);
 
-  // Record non-empty searches as "last searches" (max 5, stored in localStorage)
-  // and bump frequency counts for "most searched" (max 5).
-  // Only record a *finished* search: debounce 800 ms after typing stops, or
-  // immediately on Enter / blur, so prefixes like "6" -> "68" -> "6821"
-  // are never recorded as separate searches.
-  const DEBOUNCE_MS = 800;
-  useEffect(() => {
-    const q = searchQuery.trim();
-    if (!q) return;
-    const timer = setTimeout(() => {
-      setLastSearches((prev) => {
-        const next = [q, ...prev.filter((s) => s.toLowerCase() !== q.toLowerCase())].slice(0, 5);
-        try {
-          localStorage.setItem('gagaclo_last_searches', JSON.stringify(next));
-        } catch {}
-        return next;
-      });
-      setTopSearches((prev) => {
-        const key = q.toLowerCase();
-        const next = { ...prev, [key]: (prev[key] || 0) + 1 };
-        try {
-          localStorage.setItem('gagaclo_top_searches', JSON.stringify(next));
-        } catch {}
-        return next;
-      });
-    }, DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   // Filter / view state
-  // Top 5 most-searched terms derived from frequency counts (needs >= 2 hits to be "sering")
-  const topSearchPills = useMemo(() => {
-    const last = lastSearches[0]?.toLowerCase();
-    return Object.entries(topSearches)
-      .filter(([, count]) => count >= 2)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([term, count]) => ({ term, count }))
-      .filter(({ term }) => {
-        // Don't show a "most searched" pill that is just a prefix/suffix of the
-        // newest search (e.g. "6"/"68"/"682" vs "6821") — noise, not intent.
-        if (term === last) return true;
-        return !(last && (last.startsWith(term) || term.startsWith(last)));
-      });
-  }, [topSearches, lastSearches]);
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredBox, setHoveredBox] = useState(null);
   const activeRackRef = useRef('ALL');
@@ -1021,19 +960,7 @@ export const Warehouse3DView = ({
   return (
     <div className="warehouse-layout space-y-4">
       {/* Pencarian Cepat di Halaman Depan */}
-      <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md shadow-sm border border-slate-200/80 rounded-2xl" aria-label="Pencarian halaman depan">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
-          <label htmlFor="frontpage-search" className="text-xs font-black text-slate-800 flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-blue-100 text-blue-600">
-              <Search className="h-3 w-3" aria-hidden="true" />
-            </span>
-            <span>Pencarian Pintar Box &amp; Barang</span>
-          </label>
-          <span className="text-[11px] font-medium text-slate-400">
-            Tekan <kbd className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-sans text-[10px] text-slate-600 shadow-2xs font-bold">Ctrl + F</kbd> untuk cari cepat
-          </span>
-        </div>
-
+      <section className="inventory-panel p-3 sm:p-3.5 bg-white/95 backdrop-blur-md shadow-sm border border-slate-200/80 rounded-2xl" aria-label="Pencarian halaman depan">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input
@@ -1062,41 +989,6 @@ export const Warehouse3DView = ({
             </button>
           )}
         </div>
-
-        {/* Last searches as quick pills when not searching */}
-        {!searchQuery && lastSearches.length > 0 && (
-          <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
-            <span className="text-slate-400 font-medium">Pencarian terakhir:</span>
-            {lastSearches.map((sug) => (
-              <button
-                key={sug}
-                type="button"
-                onClick={() => onSearchQueryChange?.(sug)}
-                className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition font-medium border border-slate-200/60 shadow-2xs"
-              >
-                {sug}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Most searched pills when not searching (top 5 by frequency) */}
-        {!searchQuery && topSearchPills.length > 0 && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
-            <span className="text-amber-600 font-medium">Paling sering dicari:</span>
-            {topSearchPills.map(({ term, count }) => (
-              <button
-                key={term}
-                type="button"
-                onClick={() => onSearchQueryChange?.(term)}
-                className="px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 hover:text-amber-800 text-amber-700 transition font-medium border border-amber-200/60 shadow-2xs flex items-center gap-1"
-              >
-                {term}
-                <span className="text-[9px] text-amber-500 font-bold">{count}x</span>
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Live Search Results on Front Page */}
         {searchResults?.active && (

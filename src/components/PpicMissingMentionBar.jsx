@@ -45,27 +45,22 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
   }, [picStats]);
 
   return (
-    <div className="inventory-panel p-4 sm:p-5 space-y-3 border border-slate-200/80 shadow-2xs bg-white/95 backdrop-blur-md rounded-2xl">
+    <div className="inventory-panel p-3 sm:p-3.5 space-y-2 border border-slate-200/80 shadow-2xs bg-white/95 backdrop-blur-md rounded-2xl">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shadow-2xs shrink-0">
-            <Users className="w-4 h-4" />
+      <div className="flex items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 shadow-2xs shrink-0">
+            <Users className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                Rekap Kurang &amp; Status PIC
-              </h2>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${
-                totalKurang > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              }`}>
-                {totalKurang > 0 ? `Total Kurang: ${totalKurang} Box` : 'Semua Box Terisi! 🎉'}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium">
-              Pantau progres pengisian box masing-masing PIC R&amp;D.
-            </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+              Rekap Kurang &amp; Status PIC
+            </h2>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${
+              totalKurang > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`}>
+              {totalKurang > 0 ? `Total Kurang: ${totalKurang} Box` : 'Semua Box Terisi! 🎉'}
+            </span>
           </div>
         </div>
       </div>
