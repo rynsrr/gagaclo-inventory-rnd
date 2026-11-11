@@ -87,7 +87,7 @@ export function getItemRecordDate(item) {
 }
 
 /**
- * Format string YYYY-MM-DD ke teks bahasa Indonesia (contoh: 08 Nov 2026)
+ * Format string YYYY-MM-DD ke teks bahasa Indonesia (contoh: 12 Nov 2026)
  */
 export function formatDateIndo(isoDateStr) {
   if (!isoDateStr) return '-';
@@ -95,6 +95,22 @@ export function formatDateIndo(isoDateStr) {
   if (parts.length !== 3) return isoDateStr;
   const [y, m, d] = parts;
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const monthIdx = Number(m) - 1;
+  return `${Number(d)} ${months[monthIdx] || m} ${y}`;
+}
+
+/**
+ * Format string YYYY-MM-DD ke teks bahasa Indonesia lengkap: Tanggal, Bulan dan Tahun (contoh: 12 November 2026)
+ */
+export function formatDateIndoFull(isoDateStr) {
+  if (!isoDateStr) return '-';
+  const parts = String(isoDateStr).split('-');
+  if (parts.length !== 3) return isoDateStr;
+  const [y, m, d] = parts;
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
   const monthIdx = Number(m) - 1;
   return `${Number(d)} ${months[monthIdx] || m} ${y}`;
 }

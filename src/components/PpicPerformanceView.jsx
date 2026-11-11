@@ -13,6 +13,7 @@ import {
   getItemRecordDate,
   getLocalTodayIso,
   formatDateIndo,
+  formatDateIndoFull,
 } from '../utils/dateUtils';
 
 const DEFAULT_PICS = ['Royan', 'Cynara', 'Ami', 'Ryan', 'Hanami'];
@@ -198,17 +199,31 @@ export function PpicPerformanceView() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Date Input */}
-          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold">
-            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+          {/* Date Input (Tampil: Tanggal, Bulan dan Tahun) */}
+          <label
+            className="relative flex items-center gap-2 bg-slate-50 hover:bg-slate-100/90 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold cursor-pointer transition shadow-2xs group"
+            title="Klik untuk memilih tanggal dari kalender"
+          >
+            <Calendar className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-600 transition shrink-0" />
             <span className="text-slate-500 text-[11px]">Tanggal:</span>
+            <span className="text-slate-900 font-bold tracking-tight">
+              {formatDateIndoFull(selectedDailyDate)}
+            </span>
+            <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 ml-0.5 shrink-0" />
             <input
               type="date"
               value={selectedDailyDate}
-              onChange={(e) => setSelectedDailyDate(e.target.value)}
-              className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer text-xs"
+              onChange={(e) => {
+                if (e.target.value) setSelectedDailyDate(e.target.value);
+              }}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker?.();
+                } catch {}
+              }}
             />
-          </div>
+          </label>
 
           {/* Quick Pick: Hari Ini */}
           <button
@@ -260,7 +275,7 @@ export function PpicPerformanceView() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-4 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 rounded-2xl border border-emerald-200/80">
           <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-            Total PCS Disimpan ({formatDateIndo(selectedDailyDate)})
+            Total PCS Disimpan ({formatDateIndoFull(selectedDailyDate)})
           </div>
           <div className="mt-1 text-2xl font-black text-emerald-950 tabular-nums">
             {currentDailyData.totalPcs.toLocaleString('id-ID')}{' '}
