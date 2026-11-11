@@ -140,26 +140,63 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   addWallSegment(55, -50, 55, -30);   // East right wing upper wall
   addWallSegment(55, -30, 35, -30);   // Horizontal notch cut wall
   addWallSegment(35, -30, 35, -14);   // Vertical notch cut wall
-  addWallSegment(35, -14, 0, -14);    // South wall of right wing & middle square 3
+
+  // Dinding Bawah Ruang Kanan & Square 3 (Z = -14) dengan Lubang 5 di sudut L-Notch
+  addWallSegment(32, -14, 0, -14);    // Dinding bawah dari X=0 ke X=32
+  // Lubang 5 (Green Hole #5): Bukaan pintu di sudut L-Notch dari X=32 ke X=35 di Z=-14
+  const holeMarkerMat = new THREE.MeshStandardMaterial({
+    color: 0x22c55e, // Vibrant lime green
+    roughness: 0.45,
+    metalness: 0.1,
+  });
+  disposables.push(holeMarkerMat);
+
+  const addHoleThreshold = (cx, cz, width, depth) => {
+    const geo = new THREE.BoxGeometry(width, 0.02, depth);
+    const mesh = new THREE.Mesh(geo, holeMarkerMat);
+    mesh.position.set(cx, 0.06, cz);
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    disposables.push(geo, mesh);
+  };
+
+  addHoleThreshold(33.5, -14, 3.0, 0.6);
+
   addWallSegment(0, -14, 0, 50);      // East wall of long corridor
   addWallSegment(-30, 50, 0, 50);     // South wall of corridor (behind Rak 3, 4, 5)
 
-  // Interior Architectural Partitions (Sekat Ruang Dalam dengan Bukaan Pintu / Doorways)
-  // Partition A: Corridor <-> Middle Squares (x = 0, z from -50 to -14)
-  addWallSegment(0, -50, 0, -35);     // Top segment (Square 1)
-  // Doorway into Square 2 at z in [-35, -29] is open!
-  addWallSegment(0, -29, 0, -14);     // Bottom segment (Square 3)
+  // Interior Architectural Partitions (Sekat Ruang Dalam & 4 Lubang Hijau)
+  // 1. Dinding Pemisah Koridor <-> 3 Bilik (X = 0, dari Z = -50 ke -14)
+  // Sisi Square 1 & Square 2 tertutup penuh (Full Wall, Z: -50 ke -26)
+  addWallSegment(0, -50, 0, -26);
+  // Lubang 3 (Green Hole #3): Pintu masuk dari Koridor ke Square 3 di Z: [-26, -23]
+  addHoleThreshold(0, -24.5, 0.6, 3.0);
+  // Sisa dinding bawah Square 3 (Z: -23 ke -14)
+  addWallSegment(0, -23, 0, -14);
 
-  // Partition B: Square 1 <-> Square 2 (z = -38, x from 0 to 15)
-  addWallSegment(0, -38, 9, -38);     // Doorway at x in [9, 15]
+  // 2. Sekat Horizontal Square 1 <-> Square 2 (Z = -38, X: 0 ke 15)
+  // TERTUTUP PENUH (FULL WALL)
+  addWallSegment(0, -38, 15, -38);
 
-  // Partition C: Square 2 <-> Square 3 (z = -26, x from 0 to 15)
-  addWallSegment(0, -26, 9, -26);     // Doorway at x in [9, 15]
+  // 3. Sekat Horizontal Square 2 <-> Square 3 (Z = -26, X: 0 ke 15)
+  // TERTUTUP PENUH (FULL WALL)
+  addWallSegment(0, -26, 15, -26);
 
-  // Partition D: Middle Squares <-> Right Wing (x = 15, z from -50 to -14)
-  addWallSegment(15, -50, 15, -35);    // Top segment (Square 1 side)
-  // Doorway into Right Wing at z in [-35, -29] is open!
-  addWallSegment(15, -29, 15, -14);    // Bottom segment (Square 3 side)
+  // 4. Dinding Pemisah 3 Bilik <-> Ruang Kanan (X = 15, dari Z = -50 ke -14)
+  // Square 1: Dinding atas (Z: -50 ke -41)
+  addWallSegment(15, -50, 15, -41);
+  // Lubang 1 (Green Hole #1): Pintu Square 1 ke Ruang Kanan di Z: [-41, -38]
+  addHoleThreshold(15, -39.5, 0.6, 3.0);
+
+  // Square 2: Dinding atas (Z: -38 ke -29)
+  addWallSegment(15, -38, 15, -29);
+  // Lubang 2 (Green Hole #2): Pintu Square 2 ke Ruang Kanan di Z: [-29, -26]
+  addHoleThreshold(15, -27.5, 0.6, 3.0);
+
+  // Square 3: Dinding atas (Z: -26 ke -17)
+  addWallSegment(15, -26, 15, -17);
+  // Lubang 4 (Green Hole #4): Pintu Square 3 ke Ruang Kanan di Z: [-17, -14]
+  addHoleThreshold(15, -15.5, 0.6, 3.0);
 
   // 6. Langit Malam Berbintang (Aktif saat Mode Gelap)
   const starGeo = new THREE.BufferGeometry();

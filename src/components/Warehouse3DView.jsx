@@ -327,11 +327,11 @@ export const Warehouse3DView = ({
     // - Rak 2: Bilik 3 (Bottom Square), facing North (-Z) into the room.
     // - Rak 3, 4, 5: South wall of Long Corridor, facing North (-Z) side-by-side.
     const presetPositions = {
-      1: { x: 13.5, z: -44.0, rotationY: -Math.PI / 2, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
-      2: { x: 7.5, z: -15.5, rotationY: Math.PI, cols: 5, rows: 4, beamColor: 0xe2e8f0 },
+      1: { x: 13.5, z: -45.5, rotationY: -Math.PI / 2, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
+      2: { x: 5.5,  z: -15.5, rotationY: Math.PI, cols: 5, rows: 4, beamColor: 0xe2e8f0 },
       3: { x: -22.5, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
       4: { x: -14.0, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
-      5: { x: -5.5, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      5: { x: -5.5,  z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
     };
     let nextExtraX = 22;
     const rackPositions = racks
