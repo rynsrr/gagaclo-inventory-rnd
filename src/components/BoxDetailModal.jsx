@@ -26,9 +26,11 @@ import {
   Check,
   Lock,
   ShieldAlert,
+  FileText,
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
+import { SampleListPrintModal } from './SampleListPrintModal';
 import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
 
 export const BoxDetailModal = () => {
@@ -126,6 +128,7 @@ function BoxDetail({ box }) {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showBoxLabelModal, setShowBoxLabelModal] = useState(false);
+  const [showSampleListPrintModal, setShowSampleListPrintModal] = useState(false);
   const [cardPrintItems, setCardPrintItems] = useState(null);
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -299,7 +302,7 @@ function BoxDetail({ box }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-1 sm:p-3 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
-      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal ? 'no-print' : ''}`}>
+      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal || showSampleListPrintModal ? 'no-print' : ''}`}>
         
         {/* Header */}
         <div className="inventory-dialog-heading p-5 flex items-start justify-between border-b border-slate-800">
@@ -370,6 +373,15 @@ function BoxDetail({ box }) {
               {savingFullStatus ? 'Menyimpan…' : box.isFull ? 'Buka kembali box' : 'Tandai penuh'}
             </button>
             {fullStatusError && <span role="alert" className="text-xs text-red-700">{fullStatusError}</span>}
+            <button
+              type="button"
+              onClick={() => setShowSampleListPrintModal(true)}
+              className="flex items-center space-x-1.5 text-xs font-bold bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 px-3 py-1.5 rounded-lg shadow-2xs transition cursor-pointer"
+              title="Cetak Lembar Daftar Sample Box (Format A4)"
+            >
+              <FileText className="w-4 h-4 text-blue-600" />
+              <span>Print List Sample</span>
+            </button>
             <button
               onClick={() => setShowBoxLabelModal(true)}
               className="flex items-center space-x-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg shadow-sm transition"
@@ -447,7 +459,7 @@ function BoxDetail({ box }) {
 
             <div className="flex items-center flex-wrap gap-2">
               
-              {/* Print Selected or All */}
+              {/* Print Selected or All Cards */}
               {itemsInBox.length > 0 && (
                 <button
                   onClick={() => {
@@ -469,6 +481,23 @@ function BoxDetail({ box }) {
                     {selectedItemIds.size > 0
                       ? `Cetak Terpilih (${selectedItemIds.size})`
                       : `Cetak Semua Kartu (${itemsInBox.length})`}
+                  </span>
+                </button>
+              )}
+
+              {/* Print List Sample (Manifest Lembar A4) */}
+              {itemsInBox.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowSampleListPrintModal(true)}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-2xs transition cursor-pointer"
+                  title="Cetak Lembar Daftar / Manifest Sample Box (Format A4)"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <span>
+                    {selectedItemIds.size > 0
+                      ? `Print List Terpilih (${selectedItemIds.size})`
+                      : `Print List Sample (${itemsInBox.length})`}
                   </span>
                 </button>
               )}
@@ -816,6 +845,15 @@ function BoxDetail({ box }) {
         <CardPrintModal 
           itemsToPrint={cardPrintItems} 
           onClose={() => setCardPrintItems(null)} 
+        />
+      )}
+
+      {/* Printable Sample List Manifest Modal */}
+      {showSampleListPrintModal && (
+        <SampleListPrintModal
+          box={box}
+          items={selectedItemIds.size > 0 ? itemsInBox.filter(i => selectedItemIds.has(i.id)) : itemsInBox}
+          onClose={() => setShowSampleListPrintModal(false)}
         />
       )}
 
