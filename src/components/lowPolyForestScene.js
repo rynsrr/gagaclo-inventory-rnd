@@ -144,63 +144,34 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   disposables.push(starGeo, starMat, starPoints);
 
   // =========================================================================
-  // 7. KUPU-KUPU (BUTTERFLIES) TERBANG RANDOM DI SEKITAR BOX & RAK
+  // 7. KUPU-KUPU TUNGGAL (1 BUTTERFLY YANG LINCAH & DIKEJAR ANJING)
   // =========================================================================
-  const wingGeoL = new THREE.PlaneGeometry(0.18, 0.24);
-  wingGeoL.translate(0.09, 0, 0); // Pivot hinge
-  const wingGeoR = new THREE.PlaneGeometry(0.18, 0.24);
-  wingGeoR.translate(-0.09, 0, 0);
-  const bodyGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.2, 4);
-  const bBodyMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+  const wingGeoL = new THREE.PlaneGeometry(0.24, 0.32);
+  wingGeoL.translate(0.12, 0, 0); // Pivot hinge
+  const wingGeoR = new THREE.PlaneGeometry(0.24, 0.32);
+  wingGeoR.translate(-0.12, 0, 0);
+  const bodyGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.24, 4);
+  const bBodyMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
   disposables.push(wingGeoL, wingGeoR, bodyGeo, bBodyMat);
 
-  const butterflyColors = [0x38bdf8, 0xfbbf24, 0xf43f5e, 0xa855f7, 0x34d399, 0xf97316];
-  const butterflies = [];
-  const butterflyCount = 14;
+  const wingMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8, // Electric cyan / sky-blue yang kontras & mencolok
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.95,
+  });
+  disposables.push(wingMat);
 
-  for (let i = 0; i < butterflyCount; i++) {
-    const color = butterflyColors[i % butterflyColors.length];
-    const wingMat = new THREE.MeshBasicMaterial({
-      color,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.92,
-    });
-    disposables.push(wingMat);
+  const singleButterflyGroup = new THREE.Group();
+  const bWingL = new THREE.Mesh(wingGeoL, wingMat);
+  const bWingR = new THREE.Mesh(wingGeoR, wingMat);
+  const bBody = new THREE.Mesh(bodyGeo, bBodyMat);
+  bBody.rotation.x = Math.PI / 2;
 
-    const bGroup = new THREE.Group();
-    const wingL = new THREE.Mesh(wingGeoL, wingMat);
-    const wingR = new THREE.Mesh(wingGeoR, wingMat);
-    const body = new THREE.Mesh(bodyGeo, bBodyMat);
-    body.rotation.x = Math.PI / 2;
-
-    bGroup.add(wingL);
-    bGroup.add(wingR);
-    bGroup.add(body);
-
-    const baseX = minX + 2 + Math.random() * (maxX - minX - 4);
-    const baseY = 1.0 + Math.random() * 3.5;
-    const baseZ = (Math.random() - 0.5) * 5.5;
-
-    bGroup.position.set(baseX, baseY, baseZ);
-    scene.add(bGroup);
-    disposables.push(bGroup);
-
-    butterflies.push({
-      group: bGroup,
-      wingL,
-      wingR,
-      baseX,
-      baseY,
-      baseZ,
-      radiusX: 2.2 + Math.random() * 3.5,
-      radiusY: 0.6 + Math.random() * 1.2,
-      radiusZ: 1.5 + Math.random() * 2.5,
-      speed: 0.6 + Math.random() * 0.7,
-      flapSpeed: 14 + Math.random() * 8,
-      phase: Math.random() * Math.PI * 2,
-    });
-  }
+  singleButterflyGroup.add(bWingL, bWingR, bBody);
+  singleButterflyGroup.position.set(deckCenterX, deckHeight + 1.2, 2.0);
+  scene.add(singleButterflyGroup);
+  disposables.push(singleButterflyGroup);
 
   // =========================================================================
   // 8. KUNANG-KUNANG (FIREFLIES) BERCAHAYA TERBANG DI SEKITAR BOX
@@ -428,23 +399,17 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(dogGroup);
   disposables.push(dogGroup);
 
-  // Wandering AI State around Racks
+  // Dog AI Chase & Jump State (Mengejar 1 Kupu-kupu & Melompat Lucu)
   const dogAI = {
-    targetX: deckCenterX - 4,
-    targetZ: 2.2,
-    speed: 1.15,
-    isWalking: true,
-    pauseUntil: 0,
-    walkCycle: 0,
     currentAngle: 0,
+    walkCycle: 0,
+    isJumping: false,
+    jumpStartTime: 0,
+    jumpDuration: 0.72,
+    jumpHeight: 1.15,
+    lastJumpTime: -10,
+    jumpCooldown: 2.2,
   };
-
-  function pickNextDogWaypoint(now) {
-    // Patrol along front and between racks on the wooden floor
-    dogAI.targetX = minX + 3 + Math.random() * (maxX - minX - 6);
-    dogAI.targetZ = 1.4 + Math.random() * 1.8;
-    dogAI.isWalking = true;
-  }
 
   let currentIsDark = false;
 
@@ -497,27 +462,30 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
         starMat.opacity = 0.75 + Math.sin(elapsed * 2.8) * 0.2;
       }
 
-      // 2. Kupu-kupu mengepakkan sayap & terbang mengitari box
-      butterflies.forEach((b) => {
-        const flap = Math.sin(elapsed * b.flapSpeed + b.phase) * 0.9;
-        b.wingL.rotation.y = flap;
-        b.wingR.rotation.y = -flap;
+      // 2. Satu Kupu-kupu lincah terbang meliuk-liuk di sekitar area rak
+      const flap = Math.sin(elapsed * 24) * 0.95;
+      bWingL.rotation.y = flap;
+      bWingR.rotation.y = -flap;
 
-        const prevX = b.group.position.x;
-        const prevZ = b.group.position.z;
+      const prevBX = singleButterflyGroup.position.x;
+      const prevBZ = singleButterflyGroup.position.z;
 
-        const newX = b.baseX + Math.sin(elapsed * b.speed + b.phase) * b.radiusX;
-        const newY = b.baseY + Math.sin(elapsed * b.speed * 2.0 + b.phase) * b.radiusY;
-        const newZ = b.baseZ + Math.cos(elapsed * b.speed + b.phase) * b.radiusZ;
+      // Trajektori terbang berputar dan meliuk indah di atas lantai kayu
+      const bX = deckCenterX + Math.sin(elapsed * 0.85) * (deckWidth * 0.35) + Math.cos(elapsed * 0.42) * 1.5;
+      const bZ = 1.6 + Math.cos(elapsed * 0.68) * 1.7 + Math.sin(elapsed * 1.35) * 0.5;
 
-        b.group.position.set(newX, newY, newZ);
+      // Jika anjing sedang melompat menggapai, kupu-kupu terbang sedikit menghindar ke atas (dodge)
+      const isEvading = dogAI.isJumping;
+      const jumpEvade = isEvading ? Math.sin(((elapsed - dogAI.jumpStartTime) / dogAI.jumpDuration) * Math.PI) * 0.85 : 0;
+      const bY = deckHeight + 0.95 + Math.sin(elapsed * 1.6) * 0.45 + Math.cos(elapsed * 3.1) * 0.25 + jumpEvade;
 
-        const dx = newX - prevX;
-        const dz = newZ - prevZ;
-        if (Math.abs(dx) > 0.001 || Math.abs(dz) > 0.001) {
-          b.group.rotation.y = Math.atan2(dx, dz);
-        }
-      });
+      singleButterflyGroup.position.set(bX, bY, bZ);
+
+      const bDx = bX - prevBX;
+      const bDz = bZ - prevBZ;
+      if (Math.abs(bDx) > 0.001 || Math.abs(bDz) > 0.001) {
+        singleButterflyGroup.rotation.y = Math.atan2(bDx, bDz);
+      }
 
       // 3. Kunang-kunang melayang bercahaya kelap-kelip di sekitar box
       fireflies.forEach((ff) => {
@@ -531,50 +499,87 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
         ff.coreMat.color.setHex(blink > 0.35 ? 0xfef08a : 0xa3e635);
       });
 
-      // 4. Anjing Penjaga Berjalan Random & Berpatroli di Sekitar Rak
-      dogTail.rotation.y = Math.sin(elapsed * 14) * 0.6;
-      dogTongue.position.y = -0.14 + Math.sin(elapsed * 8) * 0.015;
-      earL.rotation.x = -0.1 + Math.sin(elapsed * 8) * 0.08;
-      earR.rotation.x = -0.1 + Math.cos(elapsed * 8) * 0.08;
+      // 4. Anjing Penjaga Mengejar Kupu-Kupu & Melompat (Jump!)
+      dogTail.rotation.y = Math.sin(elapsed * (dogAI.isJumping ? 26 : 18)) * 0.8;
+      dogTongue.position.y = -0.14 + Math.sin(elapsed * 12) * 0.02;
+      earL.rotation.x = -0.12 + Math.sin(elapsed * 10) * 0.12;
+      earR.rotation.x = -0.12 + Math.cos(elapsed * 10) * 0.12;
 
       const curX = dogGroup.position.x;
       const curZ = dogGroup.position.z;
-      const distToTarget = Math.hypot(dogAI.targetX - curX, dogAI.targetZ - curZ);
+      const distToB = Math.hypot(bX - curX, bZ - curZ);
 
-      if (distToTarget < 0.4) {
-        if (dogAI.isWalking) {
-          dogAI.isWalking = false;
-          dogAI.pauseUntil = elapsed + (2.5 + Math.random() * 2.5); // istirahat sejenak 2.5 - 5 detik
-        } else if (elapsed > dogAI.pauseUntil) {
-          pickNextDogWaypoint(elapsed);
+      // Cek apakah anjing siap melompat saat dekat kupu-kupu
+      if (!dogAI.isJumping && distToB < 1.7 && (elapsed - dogAI.lastJumpTime) > dogAI.jumpCooldown) {
+        dogAI.isJumping = true;
+        dogAI.jumpStartTime = elapsed;
+        dogAI.lastJumpTime = elapsed;
+      }
+
+      if (dogAI.isJumping) {
+        const jumpProgress = (elapsed - dogAI.jumpStartTime) / dogAI.jumpDuration;
+        if (jumpProgress >= 1) {
+          // Mendarat kembali di lantai kayu
+          dogAI.isJumping = false;
+          dogGroup.position.y = deckHeight;
+          dogBody.position.y = 0.38;
+          dogBody.rotation.x = 0;
+          headGroup.rotation.x = 0;
+          legFL.rotation.x = 0;
+          legFR.rotation.x = 0;
+          legBL.rotation.x = 0;
+          legBR.rotation.x = 0;
+        } else {
+          // Busur parabola lompatan anjing yang lincah
+          const arc = Math.sin(jumpProgress * Math.PI);
+          dogGroup.position.y = deckHeight + arc * dogAI.jumpHeight;
+          dogBody.position.y = 0.38 + arc * 0.12;
+
+          // Sedikit meluncur maju ke arah kupu-kupu saat melayang
+          dogGroup.position.x += Math.sin(dogAI.currentAngle) * 0.038;
+          dogGroup.position.z += Math.cos(dogAI.currentAngle) * 0.038;
+
+          // Pose anjing melompat lucu: kedua kaki depan menggapai ke atas, kaki belakang merentang
+          legFL.rotation.x = -0.95 * arc;
+          legFR.rotation.x = -0.95 * arc;
+          legBL.rotation.x = 0.75 * arc;
+          legBR.rotation.x = 0.75 * arc;
+
+          // Kepala mendongak ke atas menatap kupu-kupu
+          headGroup.rotation.x = -0.65 * arc;
+
+          // Badan menengadah saat naik, lalu menukik saat turun
+          dogBody.rotation.x = (0.5 - jumpProgress) * 0.55;
         }
-        legFL.rotation.x *= 0.85;
-        legFR.rotation.x *= 0.85;
-        legBL.rotation.x *= 0.85;
-        legBR.rotation.x *= 0.85;
-        dogBody.position.y = 0.38;
-        headGroup.rotation.y = Math.sin(elapsed * 2) * 0.22; // tengok kanan-kiri lucu
       } else {
-        dogAI.isWalking = true;
-        const targetAngle = Math.atan2(dogAI.targetX - curX, dogAI.targetZ - curZ);
+        // Anjing berlari di lantai mengejar kupu-kupu
+        dogGroup.position.y = deckHeight;
+        dogBody.rotation.x = 0;
 
+        // Hadapkan anjing tepat ke posisi kupu-kupu
+        const targetAngle = Math.atan2(bX - curX, bZ - curZ);
         let diff = targetAngle - dogAI.currentAngle;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        dogAI.currentAngle += diff * 0.12;
+        dogAI.currentAngle += diff * 0.16;
         dogGroup.rotation.y = dogAI.currentAngle;
 
-        const stepSpeed = 0.024;
+        // Kepala sedikit mendongak ke arah ketinggian kupu-kupu
+        const heightDiff = bY - (deckHeight + 0.6);
+        headGroup.rotation.x = -Math.min(0.5, Math.max(0, heightDiff * 0.35));
+
+        // Lari mengejar kupu-kupu
+        const stepSpeed = Math.min(0.048, distToB * 0.045);
         dogGroup.position.x += Math.sin(dogAI.currentAngle) * stepSpeed;
         dogGroup.position.z += Math.cos(dogAI.currentAngle) * stepSpeed;
 
-        dogAI.walkCycle += 0.22;
-        legFL.rotation.x = Math.sin(dogAI.walkCycle) * 0.45;
-        legFR.rotation.x = -Math.sin(dogAI.walkCycle) * 0.45;
-        legBL.rotation.x = -Math.sin(dogAI.walkCycle) * 0.45;
-        legBR.rotation.x = Math.sin(dogAI.walkCycle) * 0.45;
-        dogBody.position.y = 0.38 + Math.abs(Math.sin(dogAI.walkCycle * 2)) * 0.03;
-        headGroup.rotation.y = Math.sin(dogAI.walkCycle) * 0.08;
+        // Animasi ayunan 4 kaki berlari kencang
+        dogAI.walkCycle += 0.36;
+        legFL.rotation.x = Math.sin(dogAI.walkCycle) * 0.55;
+        legFR.rotation.x = -Math.sin(dogAI.walkCycle) * 0.55;
+        legBL.rotation.x = -Math.sin(dogAI.walkCycle) * 0.55;
+        legBR.rotation.x = Math.sin(dogAI.walkCycle) * 0.55;
+        dogBody.position.y = 0.38 + Math.abs(Math.sin(dogAI.walkCycle * 2)) * 0.04;
       }
     },
     getDogPosition() {
