@@ -61,21 +61,8 @@ export const Warehouse3DView = ({
 
   useEffect(() => {
     selectedBoxNumberRef.current = selectedBoxNumber;
-    if (selectedBoxNumber !== null && boxMeshesRef.current.length > 0) {
-      const mesh = boxMeshesRef.current.find(m => Number(m.userData.boxNumber) === Number(selectedBoxNumber));
-      if (mesh) {
-        const worldPos = new THREE.Vector3();
-        mesh.getWorldPosition(worldPos);
-        const forwardDir = new THREE.Vector3(0, 0, 1).applyQuaternion(
-          mesh.getWorldQuaternion(new THREE.Quaternion())
-        );
-
-        flyControlsTargetRef.current = worldPos.clone().add(new THREE.Vector3(0, 0.1, 0));
-        flyCameraTargetRef.current = worldPos.clone()
-          .add(forwardDir.clone().multiplyScalar(3.4))
-          .add(new THREE.Vector3(0, 0.35, 0));
-      }
-    }
+    // Setelah klik 2 kali box atau pilih box: tidak perlu closeup kamera ke box
+    // Posisi kamera tetap nyaman pada sudut pandang rak/lokasi saat ini
   }, [selectedBoxNumber]);
 
   // Ctrl/Cmd + K shortcut for quick search focus
@@ -449,26 +436,84 @@ export const Warehouse3DView = ({
         interactiveRackMeshes.push(deck);
       }
 
-      // 3. Rack Top Sign Plate
+      // 3. Rack Top Sign Plate & High-Visibility All-Angle Billboard Sprite
+      // A. Physical Sign Plate on Rack
       const labelCanvas = document.createElement('canvas');
-      labelCanvas.width = 256;
-      labelCanvas.height = 64;
+      labelCanvas.width = 512;
+      labelCanvas.height = 128;
       const lctx = labelCanvas.getContext('2d');
-      lctx.fillStyle = rackData.category === 'SAMPLE' ? '#f59e0b' : '#10b981';
-      lctx.fillRect(0, 0, 256, 64);
-      lctx.fillStyle = '#000000';
-      lctx.font = 'bold 30px sans-serif';
+      const isSample = rackData.category === 'SAMPLE';
+      const badgeAccent = isSample ? '#f59e0b' : '#10b981';
+
+      lctx.fillStyle = badgeAccent;
+      lctx.fillRect(0, 0, 512, 128);
+      lctx.fillStyle = '#0f172a';
+      lctx.font = '900 68px system-ui, -apple-system, sans-serif';
       lctx.textAlign = 'center';
-      lctx.fillText(rackData.name, 128, 44);
+      lctx.textBaseline = 'middle';
+      lctx.fillText(rackData.name.toUpperCase(), 256, 64);
 
       const labelTex = new THREE.CanvasTexture(labelCanvas);
-      const signGeo = new THREE.PlaneGeometry(2.4, 0.6);
+      labelTex.colorSpace = THREE.SRGBColorSpace;
+      const signGeo = new THREE.PlaneGeometry(2.6, 0.65);
       const signMat = new THREE.MeshBasicMaterial({ map: labelTex, side: THREE.DoubleSide });
       const sign = new THREE.Mesh(signGeo, signMat);
       sign.position.set(0, totalRackHeight + 0.45, halfD + 0.05);
       sign.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
       rackGroup.add(sign);
       interactiveRackMeshes.push(sign);
+
+      // B. Floating Billboard Sprite (Selalu Menghadap Kamera dari Segala Sudut / All-Angle View)
+      const spriteCanvas = document.createElement('canvas');
+      spriteCanvas.width = 1024;
+      spriteCanvas.height = 320;
+      const spCtx = spriteCanvas.getContext('2d');
+
+      // Rounded container pill
+      spCtx.beginPath();
+      spCtx.roundRect(16, 16, 992, 288, 56);
+      spCtx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+      spCtx.fill();
+      spCtx.lineWidth = 14;
+      spCtx.strokeStyle = badgeAccent;
+      spCtx.stroke();
+
+      // Glowing dot
+      spCtx.beginPath();
+      spCtx.arc(110, 160, 32, 0, Math.PI * 2);
+      spCtx.fillStyle = badgeAccent;
+      spCtx.fill();
+
+      // Large bold rack name
+      spCtx.fillStyle = '#ffffff';
+      spCtx.font = '900 120px system-ui, -apple-system, sans-serif';
+      spCtx.textAlign = 'left';
+      spCtx.textBaseline = 'middle';
+      spCtx.fillText(rackData.name.toUpperCase(), 175, 125);
+
+      // Subtitle info
+      spCtx.fillStyle = '#cbd5e1';
+      spCtx.font = 'bold 46px system-ui, -apple-system, sans-serif';
+      const subInfo = `${isSample ? 'SAMPLE R&D' : 'FABRIC/MATERIAL'} • ${cols * rows} BOX`;
+      spCtx.fillText(subInfo, 178, 225);
+
+      const spriteTex = new THREE.CanvasTexture(spriteCanvas);
+      spriteTex.colorSpace = THREE.SRGBColorSpace;
+
+      const spriteMat = new THREE.SpriteMaterial({
+        map: spriteTex,
+        transparent: true,
+        depthTest: true,
+        depthWrite: false,
+      });
+      const rackSprite = new THREE.Sprite(spriteMat);
+      const spriteW = Math.max(5.5, rackWidth * 0.78);
+      const spriteH = spriteW * (320 / 1024);
+      rackSprite.scale.set(spriteW, spriteH, 1.0);
+      rackSprite.position.set(rackConf.x, totalRackHeight + 1.85, rackConf.z);
+      rackSprite.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+      scene.add(rackSprite);
+      interactiveRackMeshes.push(rackSprite);
 
       // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
       const rackBoxes = boxes.filter((b) => Number(b.rackId) === Number(rackConf.rackId));

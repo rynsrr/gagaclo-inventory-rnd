@@ -248,15 +248,15 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   bBody.rotation.x = Math.PI / 2;
 
   singleButterflyGroup.add(bWingL, bWingR, bBody);
-  singleButterflyGroup.position.set(-15, 1.5, 20);
+  singleButterflyGroup.position.set(24, 1.6, 16);
   scene.add(singleButterflyGroup);
   disposables.push(singleButterflyGroup);
 
   // =========================================================================
-  // 8. ANJING PENJAGA BERJALAN RANDOM & MENGEJAR KUPU-KUPU
+  // 8. ANJING PENJAGA BERJALAN RANDOM & MENGEJAR KUPU-KUPU (HANYA DI LUAR RUANGAN)
   // =========================================================================
   const dogGroup = new THREE.Group();
-  dogGroup.position.set(-15, 0.05, 22);
+  dogGroup.position.set(22, 0.0, 14);
 
   const dogFurMat = new THREE.MeshStandardMaterial({
     color: 0xf59e0b, // Golden honey fur
@@ -423,79 +423,73 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(dogGroup);
   disposables.push(dogGroup);
 
-  // Helper ketinggian permukaan: lantai denah arsitektur (0.05) vs padang rumput hijau (0.0)
-  const isInsideFloor = (x, z) => {
-    // 1. Long corridor: x in [-30, 0] and z in [-50, 50]
-    if (x >= -30 && x <= 0 && z >= -50 && z <= 50) return true;
-    // 2. Middle squares 1-3: x in [0, 15] and z in [-50, -14]
-    if (x >= 0 && x <= 15 && z >= -50 && z <= -14) return true;
-    // 3. Right room upper part: x in [15, 55] and z in [-50, -30]
-    if (x >= 15 && x <= 55 && z >= -50 && z <= -30) return true;
-    // 4. Right room lower part: x in [15, 35] and z in [-30, -14]
-    if (x >= 15 && x <= 35 && z >= -30 && z <= -14) return true;
+  // Helper deteksi batas lantai gedung arsitektur (dengan buffer margin keamanan)
+  const isInsideFloor = (x, z, margin = 0.8) => {
+    // 1. Koridor panjang: x in [-30 - margin, 0 + margin] and z in [-50 - margin, 50 + margin]
+    if (x >= -30 - margin && x <= 0 + margin && z >= -50 - margin && z <= 50 + margin) return true;
+    // 2. Tiga bilik kotak (1-3): x in [0 - margin, 15 + margin] and z in [-50 - margin, -14 + margin]
+    if (x >= 0 - margin && x <= 15 + margin && z >= -50 - margin && z <= -14 + margin) return true;
+    // 3. Sayap kanan bagian atas: x in [15 - margin, 55 + margin] and z in [-50 - margin, -30 + margin]
+    if (x >= 15 - margin && x <= 55 + margin && z >= -50 - margin && z <= -30 + margin) return true;
+    // 4. Sayap kanan bagian bawah (notch): x in [15 - margin, 35 + margin] and z in [-30 - margin, -14 + margin]
+    if (x >= 15 - margin && x <= 35 + margin && z >= -30 - margin && z <= -14 + margin) return true;
     return false;
   };
 
-  const getGroundHeightAt = (x, z) => {
-    return isInsideFloor(x, z) ? 0.05 : 0.0;
+  const getGroundHeightAt = (_x, _z) => {
+    // Anjing dan kupu-kupu hanya boleh di luar ruangan di atas rumput (ketinggian tanah flat 0.0)
+    return 0.0;
   };
 
-  // Helper pemilihan titik target di dalam dan luar denah
-  const getRandomLocation = () => {
+  // Helper pemilihan titik target HANYA DI LUAR RUANGAN (padang rumput luar denah)
+  const getRandomOutdoorLocation = () => {
     const roll = Math.random();
-    if (roll < 0.32) {
-      // Koridor panjang (Long Corridor)
-      return {
-        x: -24 + Math.random() * 20,
-        z: -42 + Math.random() * 84,
+    let pt;
+    if (roll < 0.44) {
+      // Halaman Luas Tenggara (luar denah sisi selatan & timur ruangan)
+      pt = {
+        x: 4 + Math.random() * 56,
+        z: -10 + Math.random() * 65,
       };
-    } else if (roll < 0.46) {
-      // Ruang Kotak 1 / Top Square (Rak 1)
-      return {
-        x: 3 + Math.random() * 9,
-        z: -47 + Math.random() * 8,
+    } else if (roll < 0.70) {
+      // Halaman Barat (sepanjang luar koridor barat)
+      pt = {
+        x: -39 + Math.random() * 7,
+        z: -56 + Math.random() * 110,
       };
-    } else if (roll < 0.60) {
-      // Ruang Kotak 2 / Middle Square (Jalan Akses)
-      return {
-        x: 3 + Math.random() * 9,
-        z: -35 + Math.random() * 7,
+    } else if (roll < 0.82) {
+      // Halaman Timur (sebelah kanan sayap ruangan)
+      pt = {
+        x: 57 + Math.random() * 7,
+        z: -48 + Math.random() * 22,
       };
-    } else if (roll < 0.74) {
-      // Ruang Kotak 3 / Bottom Square (Rak 2)
-      return {
-        x: 3 + Math.random() * 9,
-        z: -23 + Math.random() * 7,
-      };
-    } else if (roll < 0.88) {
-      // Ruang Kanan (Right Wing Room)
-      return {
-        x: 20 + Math.random() * 28,
-        z: -46 + Math.random() * 14,
+    } else if (roll < 0.92) {
+      // Halaman Utara (sepanjang luar dinding utara)
+      pt = {
+        x: -36 + Math.random() * 95,
+        z: -59 + Math.random() * 6,
       };
     } else {
-      // Padang rumput hijau di luar denah (margin proporsional mengelilingi denah)
-      const side = Math.random();
-      if (side < 0.33) {
-        // Sisi Barat
-        return { x: -38 + Math.random() * 6, z: (Math.random() - 0.5) * 90 };
-      } else if (side < 0.66) {
-        // Sisi Timur
-        return { x: 56 + Math.random() * 6, z: (Math.random() - 0.5) * 90 };
-      } else {
-        // Sisi Selatan / Utara
-        const zSign = Math.random() > 0.5 ? 1 : -1;
-        return { x: (Math.random() - 0.5) * 60, z: zSign * (51 + Math.random() * 5) };
-      }
+      // Halaman Selatan (luar dinding selatan koridor)
+      pt = {
+        x: -36 + Math.random() * 34,
+        z: 53 + Math.random() * 6,
+      };
     }
+
+    // Safety fallback: jika kebetulan berada di dalam gedung, geser ke halaman tenggara luar
+    if (isInsideFloor(pt.x, pt.z, 1.2)) {
+      pt = { x: 25 + Math.random() * 25, z: 15 + Math.random() * 30 };
+    }
+    return pt;
   };
 
-  // Kupu-kupu AI: Menjelajah Luas & Acak ke Denah & Padang Rumput
-  const initialLoc = getRandomLocation();
+  // Kupu-kupu AI: Menjelajah HANYA di Padang Rumput Luar Ruangan
+  const initialLoc = getRandomOutdoorLocation();
   const butterflyAI = {
-    x: -12.0,
-    y: 1.5,
-    z: 20.0,
+    x: initialLoc.x,
+    y: 1.6,
+    z: initialLoc.z,
     targetX: initialLoc.x,
     targetY: 1.6,
     targetZ: initialLoc.z,
@@ -505,7 +499,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   };
 
   const pickButterflyWaypoint = (elapsed) => {
-    const loc = getRandomLocation();
+    const loc = getRandomOutdoorLocation();
     butterflyAI.targetX = loc.x;
     butterflyAI.targetZ = loc.z;
     butterflyAI.targetY = 0.8 + Math.random() * 1.8;
@@ -513,7 +507,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   };
   pickButterflyWaypoint(0);
 
-  // Dog AI Chase, Jump & Playful Roaming State
+  // Dog AI: Menjelajah & Bermain HANYA di Padang Rumput Luar Ruangan
   const dogAI = {
     currentAngle: 0,
     walkCycle: 0,
@@ -525,9 +519,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
     jumpCooldown: 2.2,
     mode: 'CHASE', // 'CHASE' atau 'ROAM'
     nextModeSwitchTime: 8,
-    roamTargetX: -14.0,
-    roamTargetZ: 10.0,
-    currentBaseY: 0.05,
+    roamTargetX: initialLoc.x,
+    roamTargetZ: initialLoc.z,
+    currentBaseY: 0.0,
   };
 
   let lastElapsed = null;
@@ -594,8 +588,17 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       butterflyAI.currentAngle += bAngleDiff * Math.min(1.0, dt * 3.2);
 
       const bSpeed = 3.8 + Math.sin(elapsed * 2.4) * 0.8;
-      butterflyAI.x += Math.sin(butterflyAI.currentAngle) * bSpeed * dt;
-      butterflyAI.z += Math.cos(butterflyAI.currentAngle) * bSpeed * dt;
+      const nextBX = butterflyAI.x + Math.sin(butterflyAI.currentAngle) * bSpeed * dt;
+      const nextBZ = butterflyAI.z + Math.cos(butterflyAI.currentAngle) * bSpeed * dt;
+
+      // Kupu-kupu hanya boleh berada di luar ruangan (padang rumput luar)
+      if (!isInsideFloor(nextBX, nextBZ, 0.9) && nextBX >= -41 && nextBX <= 66 && nextBZ >= -61 && nextBZ <= 61) {
+        butterflyAI.x = nextBX;
+        butterflyAI.z = nextBZ;
+      } else {
+        butterflyAI.currentAngle += Math.PI * 0.5 + (Math.random() - 0.5);
+        pickButterflyWaypoint(elapsed);
+      }
 
       // Ketinggian terbang kupu-kupu + kepakan lembut
       const bSurfaceY = getGroundHeightAt(butterflyAI.x, butterflyAI.z);
@@ -624,12 +627,12 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       earL.rotation.x = -0.12 + Math.sin(elapsed * 10) * 0.12;
       earR.rotation.x = -0.12 + Math.cos(elapsed * 10) * 0.12;
 
-      // Pergantian mode bermain anjing di denah & padang rumput secara acak
+      // Pergantian mode bermain anjing di padang rumput luar secara acak
       if (elapsed > dogAI.nextModeSwitchTime && !dogAI.isJumping) {
         if (dogAI.mode === 'CHASE') {
-          // Kesempatan anjing menjelajah atau mengendus lantai/rumput secara mandiri
+          // Kesempatan anjing menjelajah atau mengendus rumput luar secara mandiri
           dogAI.mode = 'ROAM';
-          const rLoc = getRandomLocation();
+          const rLoc = getRandomOutdoorLocation();
           dogAI.roamTargetX = rLoc.x;
           dogAI.roamTargetZ = rLoc.z;
           dogAI.nextModeSwitchTime = elapsed + 3.5 + Math.random() * 4.0;
@@ -682,9 +685,15 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
           dogGroup.position.y = dogAI.currentBaseY + arc * dogAI.jumpHeight;
           dogBody.position.y = 0.38 + arc * 0.12;
 
-          // Meluncur maju ke arah target saat melayang di udara
-          dogGroup.position.x += Math.sin(dogAI.currentAngle) * (0.042 * (dt / 0.016));
-          dogGroup.position.z += Math.cos(dogAI.currentAngle) * (0.042 * (dt / 0.016));
+          // Meluncur maju ke arah target saat melayang di udara (hanya di padang rumput luar)
+          const jumpDX = Math.sin(dogAI.currentAngle) * (0.042 * (dt / 0.016));
+          const jumpDZ = Math.cos(dogAI.currentAngle) * (0.042 * (dt / 0.016));
+          const testJX = dogGroup.position.x + jumpDX;
+          const testJZ = dogGroup.position.z + jumpDZ;
+          if (!isInsideFloor(testJX, testJZ, 0.8) && testJX >= -41 && testJX <= 66 && testJZ >= -61 && testJZ <= 61) {
+            dogGroup.position.x = testJX;
+            dogGroup.position.z = testJZ;
+          }
 
           // Pose anjing melompat lucu
           legFL.rotation.x = -0.95 * arc;
@@ -718,8 +727,21 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
         // Kecepatan lari
         const baseSpeed = dogAI.mode === 'CHASE' ? Math.min(0.062, Math.max(0.038, distToTarget * 0.05)) : 0.038;
         const stepSpeed = baseSpeed * (dt / 0.016);
-        dogGroup.position.x += Math.sin(dogAI.currentAngle) * stepSpeed;
-        dogGroup.position.z += Math.cos(dogAI.currentAngle) * stepSpeed;
+        const testRX = dogGroup.position.x + Math.sin(dogAI.currentAngle) * stepSpeed;
+        const testRZ = dogGroup.position.z + Math.cos(dogAI.currentAngle) * stepSpeed;
+
+        // Anjing hanya boleh berada di luar ruangan (padang rumput luar)
+        if (!isInsideFloor(testRX, testRZ, 0.8) && testRX >= -41 && testRX <= 66 && testRZ >= -61 && testRZ <= 61) {
+          dogGroup.position.x = testRX;
+          dogGroup.position.z = testRZ;
+        } else {
+          dogAI.currentAngle += Math.PI * 0.5 + (Math.random() - 0.5);
+          if (dogAI.mode === 'ROAM') {
+            const rLoc = getRandomOutdoorLocation();
+            dogAI.roamTargetX = rLoc.x;
+            dogAI.roamTargetZ = rLoc.z;
+          }
+        }
 
         // Ayunan kaki berjalan/berlari
         dogAI.walkCycle += (dogAI.mode === 'CHASE' ? 0.42 : 0.3) * (dt / 0.016);
