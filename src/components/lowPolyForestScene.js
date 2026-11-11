@@ -122,124 +122,6 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(deckGroup);
   disposables.push(plankGeo, deckMat, deckGroup);
 
-  // =========================================================================
-  // 5. LAMPU SOROT 4 SISI LANTAI KAYU (MENYOROT BOX & RAK GUDANG)
-  // =========================================================================
-  const poleMat = new THREE.MeshStandardMaterial({
-    color: 0x334155, // Slate dark steel
-    roughness: 0.5,
-    metalness: 0.7,
-    flatShading: true,
-  });
-  const fixtureMat = new THREE.MeshStandardMaterial({
-    color: 0x1e293b,
-    roughness: 0.4,
-    metalness: 0.8,
-    flatShading: true,
-  });
-  const lensMat = new THREE.MeshBasicMaterial({
-    color: 0xfef08a, // Warm glowing floodlight lens
-  });
-  disposables.push(poleMat, fixtureMat, lensMat);
-
-  const poleHeight = 4.4;
-  const poleGeo = new THREE.CylinderGeometry(0.08, 0.11, poleHeight, 6);
-  const baseGeo = new THREE.CylinderGeometry(0.26, 0.32, 0.12, 6);
-  const armGeo = new THREE.BoxGeometry(0.12, 0.12, 0.55);
-  const headGeo = new THREE.BoxGeometry(0.42, 0.28, 0.34);
-  const lensGeo = new THREE.PlaneGeometry(0.38, 0.24);
-  disposables.push(poleGeo, baseGeo, armGeo, headGeo, lensGeo);
-
-  // 4 posisi lampu sorot di 4 sudut/sisi perimeter lantai kayu
-  const lampConfigs = [
-    // 1. Sisi Depan Kiri
-    {
-      x: deckCenterX - deckWidth / 2 + 1.2,
-      z: deckDepth / 2 - 1.0,
-      targetX: deckCenterX - deckWidth / 4,
-      targetZ: 0,
-    },
-    // 2. Sisi Depan Kanan
-    {
-      x: deckCenterX + deckWidth / 2 - 1.2,
-      z: deckDepth / 2 - 1.0,
-      targetX: deckCenterX + deckWidth / 4,
-      targetZ: 0,
-    },
-    // 3. Sisi Belakang Kiri
-    {
-      x: deckCenterX - deckWidth / 2 + 1.2,
-      z: -deckDepth / 2 + 1.0,
-      targetX: deckCenterX - deckWidth / 4,
-      targetZ: 0,
-    },
-    // 4. Sisi Belakang Kanan
-    {
-      x: deckCenterX + deckWidth / 2 - 1.2,
-      z: -deckDepth / 2 + 1.0,
-      targetX: deckCenterX + deckWidth / 4,
-      targetZ: 0,
-    },
-  ];
-
-  const spotLights = [];
-
-  lampConfigs.forEach((cfg) => {
-    const lampGroup = new THREE.Group();
-    lampGroup.position.set(cfg.x, deckHeight, cfg.z);
-
-    // Dudukan tiang baja di atas lantai kayu
-    const base = new THREE.Mesh(baseGeo, poleMat);
-    base.position.y = 0.06;
-    lampGroup.add(base);
-
-    // Tiang lampu vertikal
-    const pole = new THREE.Mesh(poleGeo, poleMat);
-    pole.position.y = poleHeight / 2;
-    pole.castShadow = true;
-    lampGroup.add(pole);
-
-    // Lengan breket lampu mengarah ke area rak
-    const arm = new THREE.Mesh(armGeo, fixtureMat);
-    arm.position.set(0, poleHeight, 0);
-    const angleToTarget = Math.atan2(cfg.targetZ - cfg.z, cfg.targetX - cfg.x);
-    arm.rotation.y = angleToTarget;
-    lampGroup.add(arm);
-
-    // Kepala kap lampu sorot (floodlight housing)
-    const head = new THREE.Mesh(headGeo, fixtureMat);
-    head.position.set(
-      Math.cos(angleToTarget) * 0.35,
-      poleHeight + 0.05,
-      Math.sin(angleToTarget) * 0.35
-    );
-    head.rotation.y = angleToTarget;
-    head.rotation.x = 0.35; // Mengarah menunduk ke arah box
-    head.castShadow = true;
-    lampGroup.add(head);
-
-    // Lensa lampu menyala terang
-    const lens = new THREE.Mesh(lensGeo, lensMat);
-    lens.position.set(0, 0, 0.18);
-    head.add(lens);
-
-    scene.add(lampGroup);
-    disposables.push(lampGroup);
-
-    // Lampu Sorot SpotLight Three.js yang menyinari langsung ke box & rak
-    const spot = new THREE.SpotLight(0xfffbeb, 3.2, 70, Math.PI / 3.2, 0.55, 1.1);
-    spot.position.set(cfg.x, deckHeight + poleHeight, cfg.z);
-
-    const targetObj = new THREE.Object3D();
-    targetObj.position.set(cfg.targetX, 2.0, cfg.targetZ);
-    scene.add(targetObj);
-    spot.target = targetObj;
-
-    scene.add(spot);
-    spotLights.push(spot);
-    disposables.push(spot, targetObj);
-  });
-
   // 6. Langit Malam Berbintang (Aktif saat Mode Gelap)
   const starGeo = new THREE.BufferGeometry();
   const starCount = 350;
@@ -583,15 +465,6 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       sunLight.color.setHex(0x93c5fd);
       fillLight.intensity = 0.05;
 
-      // Lampu Sorot MENYALA SANGAT TERANG & FOKUS MENYOROT BOX!
-      spotLights.forEach((spot) => {
-        spot.intensity = 11.5; // Sorotan super terang dramatis
-        spot.distance = 110;
-        spot.penumbra = 0.45;
-        spot.color.setHex(0xfff7ed);
-      });
-      lensMat.color.setHex(0xffffff); // Lensa bersinar putih keemasan
-
       starPoints.visible = true;
     } else {
       // Suasana Siang Ceria
@@ -606,15 +479,6 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       sunLight.intensity = 1.45;
       sunLight.color.setHex(0xfff7ed);
       fillLight.intensity = 0.45;
-
-      // Sorotan normal siang hari
-      spotLights.forEach((spot) => {
-        spot.intensity = 3.2;
-        spot.distance = 70;
-        spot.penumbra = 0.55;
-        spot.color.setHex(0xfffbeb);
-      });
-      lensMat.color.setHex(0xfef08a);
 
       starPoints.visible = false;
     }
