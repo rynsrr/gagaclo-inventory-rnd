@@ -46,51 +46,20 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(fillLight);
   disposables.push(fillLight);
 
-  // 3. Vast Green Grassland with Laser-Flat Ground Under the Floor
-  const groundGeo = new THREE.PlaneGeometry(160, 160, 32, 32);
-  const posAttr = groundGeo.attributes.position;
+  // 3. Vast Flat Green Grassland (Lantai Padang Rumput Datar Sempurna / Laser-Flat)
+  const groundGeo = new THREE.PlaneGeometry(160, 160);
 
   // Deck dimensions
   const deckCenterX = (minX + maxX) / 2;
   const deckWidth = (maxX - minX) + 8.5;
   const deckDepth = 8.0;
-  const deckHeight = 0.08;
-
-  // Ground undulation: STRICTLY 0 (completely flat) underneath and around the wooden floor!
-  for (let i = 0; i < posAttr.count; i++) {
-    const vx = posAttr.getX(i);
-    const vy = posAttr.getY(i);
-    // When plane is rotated by -PI/2 around X:
-    // world X = vx, world Z = -vy
-    const worldX = vx;
-    const worldZ = -vy;
-
-    // Check distance to the deck bounds with a generous margin of 6 meters
-    const isInsideDeckArea =
-      worldX >= deckCenterX - deckWidth / 2 - 6 &&
-      worldX <= deckCenterX + deckWidth / 2 + 6 &&
-      worldZ >= -deckDepth / 2 - 6 &&
-      worldZ <= deckDepth / 2 + 6;
-
-    if (isInsideDeckArea) {
-      posAttr.setZ(i, 0); // Completely flat ground under and around the wooden floor
-    } else {
-      const distFromCenter = Math.sqrt(worldX * worldX + worldZ * worldZ);
-      if (distFromCenter > 24) {
-        const bump = Math.sin(worldX * 0.1) * Math.cos(worldZ * 0.1) * 1.2;
-        posAttr.setZ(i, bump);
-      } else {
-        posAttr.setZ(i, 0);
-      }
-    }
-  }
-  groundGeo.computeVertexNormals();
+  const deckHeight = 0.04;
 
   const groundMat = new THREE.MeshStandardMaterial({
     color: 0x3bb346, // Fresh, vibrant meadow grass green
     roughness: 0.88,
     metalness: 0.04,
-    flatShading: true,
+    flatShading: false,
   });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI / 2;
@@ -99,29 +68,21 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(ground);
   disposables.push(groundGeo, groundMat, ground);
 
-  // 4. Solid Wooden Timber Floor in the Middle of the Meadow ("Lantai Kayu")
+  // 4. Solid Flat Wooden Floor Platform ("Lantai Kayu Datar / Flat")
   const deckMat = new THREE.MeshStandardMaterial({
-    color: 0xc47b38, // Warm honey oak timber planks
+    color: 0xc47b38, // Warm honey oak timber
     roughness: 0.75,
     metalness: 0.05,
-    flatShading: true,
+    flatShading: false,
   });
-  const plankGeo = new THREE.BoxGeometry(deckWidth, deckHeight, 0.58);
-  const plankSpacing = 0.62;
-  const numPlanks = Math.floor(deckDepth / plankSpacing);
+  const deckGeo = new THREE.BoxGeometry(deckWidth, deckHeight, deckDepth);
+  const deckMesh = new THREE.Mesh(deckGeo, deckMat);
+  deckMesh.position.set(deckCenterX, deckHeight / 2, 0);
+  deckMesh.castShadow = true;
+  deckMesh.receiveShadow = true;
 
-  const deckGroup = new THREE.Group();
-  for (let p = 0; p < numPlanks; p++) {
-    const plank = new THREE.Mesh(plankGeo, deckMat);
-    const pz = -deckDepth / 2 + p * plankSpacing + 0.3;
-    plank.position.set(deckCenterX, deckHeight / 2, pz);
-    plank.castShadow = true;
-    plank.receiveShadow = true;
-    deckGroup.add(plank);
-  }
-
-  scene.add(deckGroup);
-  disposables.push(plankGeo, deckMat, deckGroup);
+  scene.add(deckMesh);
+  disposables.push(deckGeo, deckMat, deckMesh);
 
   // 6. Langit Malam Berbintang (Aktif saat Mode Gelap)
   const starGeo = new THREE.BufferGeometry();
