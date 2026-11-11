@@ -17,7 +17,11 @@ import {
   Info
 } from 'lucide-react';
 
-export const RackView = () => {
+export const RackView = ({
+  hideSearch = false,
+  externalPicFilter = null,
+  onPicFilterChange = null
+}) => {
   const { 
     racks, 
     boxes, 
@@ -39,14 +43,29 @@ export const RackView = () => {
 
   const [viewDensity, setViewDensity] = useState('normal'); // 'normal' or 'compact'
 
+  const effectivePpicFilter = (externalPicFilter !== null && externalPicFilter !== undefined) 
+    ? externalPicFilter 
+    : selectedPpicFilter;
+
+  const handlePicFilterChange = (pic) => {
+    if (onPicFilterChange) {
+      onPicFilterChange(pic);
+    }
+    setSelectedPpicFilter(pic);
+  };
+
   // Filter boxes according to user selections
   const filteredBoxes = boxes.filter((box) => {
     // Rack filter
-    if (selectedRackFilter !== 'ALL' && box.rackId !== Number(selectedRackFilter)) {
+    if (selectedRackFilter === 'LANTAI') {
+      if (box.rackId && Number(box.rackId) !== 0 && box.rackName !== 'LANTAI') {
+        return false;
+      }
+    } else if (selectedRackFilter !== 'ALL' && box.rackId !== Number(selectedRackFilter)) {
       return false;
     }
     // PPIC filter
-    if (selectedPpicFilter !== 'ALL' && box.picName.toLowerCase() !== selectedPpicFilter.toLowerCase()) {
+    if (effectivePpicFilter !== 'ALL' && box.picName.toLowerCase() !== effectivePpicFilter.toLowerCase()) {
       return false;
     }
     // Category filter
@@ -56,15 +75,18 @@ export const RackView = () => {
     // Search query
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
-      const matchBox = String(box.boxNumber).includes(q) || box.code.toLowerCase().includes(q);
-      const matchPic = box.picName.toLowerCase().includes(q);
-      const matchRack = box.rackName.toLowerCase().includes(q);
+      const matchBox = String(box.boxNumber).includes(q) || (box.code && box.code.toLowerCase().includes(q));
+      const matchPic = (box.picName || '').toLowerCase().includes(q);
+      const matchRack = (box.rackName || '').toLowerCase().includes(q);
       
       // Also match items inside box
       const boxItems = getItemsInBox(box.boxNumber);
       const matchItem = boxItems.some(i => 
-        i.name.toLowerCase().includes(q) || 
+        (i.name && i.name.toLowerCase().includes(q)) || 
+        (i.kode && i.kode.toLowerCase().includes(q)) || 
         (i.sku && i.sku.toLowerCase().includes(q)) ||
+        (i.style && i.style.toLowerCase().includes(q)) ||
+        (i.buyerNo && i.buyerNo.toLowerCase().includes(q)) ||
         (i.description && i.description.toLowerCase().includes(q))
       );
 
@@ -76,7 +98,15 @@ export const RackView = () => {
   // Get distinct racks present in filteredBoxes
   const racksToDisplay = selectedRackFilter === 'ALL' 
     ? racks 
-    : racks.filter(r => r.id === Number(selectedRackFilter));
+    : selectedRackFilter === 'LANTAI'
+      ? []
+      : racks.filter(r => r.id === Number(selectedRackFilter));
+
+  // Floor boxes (boxes on ground without a rack)
+  const floorBoxes = filteredBoxes.filter(
+    (b) => !b.rackId || Number(b.rackId) === 0 || b.rackName === 'LANTAI'
+  );
+  const showFloorBoxes = (selectedRackFilter === 'ALL' || selectedRackFilter === 'LANTAI') && floorBoxes.length > 0;
 
   const getPpicBadge = (picName) => {
     switch (picName) {
@@ -102,25 +132,27 @@ export const RackView = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari nomor box (cth: 16), nama PIC, atau nama barang..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          {/* Search Input (dapat disembunyikan jika parent sudah menampilkan pencarian) */}
+          {!hideSearch && (
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari nomor box (cth: 16), nama PIC, atau nama barang..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Filter Dropdowns */}
           <div className="flex flex-wrap items-center gap-2.5">
@@ -132,12 +164,13 @@ export const RackView = () => {
                 onChange={(e) => setSelectedRackFilter(e.target.value)}
                 className="bg-transparent font-semibold focus:outline-none cursor-pointer"
               >
-                <option value="ALL">Semua Rak (1-5)</option>
+                <option value="ALL">Semua Rak &amp; Lantai</option>
                 {racks.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.name} ({r.category})
                   </option>
                 ))}
+                <option value="LANTAI">LANTAI (Tanpa Rak)</option>
               </select>
             </div>
 
@@ -159,8 +192,8 @@ export const RackView = () => {
             <div className="flex items-center space-x-1.5 text-xs font-medium text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
               <span className="text-slate-500">PIC PPIC:</span>
               <select
-                value={selectedPpicFilter}
-                onChange={(e) => setSelectedPpicFilter(e.target.value)}
+                value={effectivePpicFilter}
+                onChange={(e) => handlePicFilterChange(e.target.value)}
                 className="bg-transparent font-semibold focus:outline-none cursor-pointer"
               >
                 <option value="ALL">Semua Anggota PPIC</option>
@@ -173,12 +206,12 @@ export const RackView = () => {
             </div>
 
             {/* Reset Filter Button */}
-            {(selectedRackFilter !== 'ALL' || selectedCategoryFilter !== 'ALL' || selectedPpicFilter !== 'ALL' || searchQuery !== '') && (
+            {(selectedRackFilter !== 'ALL' || selectedCategoryFilter !== 'ALL' || effectivePpicFilter !== 'ALL' || searchQuery !== '') && (
               <button
                 onClick={() => {
                   setSelectedRackFilter('ALL');
                   setSelectedCategoryFilter('ALL');
-                  setSelectedPpicFilter('ALL');
+                  handlePicFilterChange('ALL');
                   setSearchQuery('');
                 }}
                 className="text-xs text-blue-600 hover:text-blue-800 font-semibold px-2 py-1 underline"
@@ -196,9 +229,9 @@ export const RackView = () => {
             {ppicMembers.map((pic) => (
               <button
                 key={pic.id}
-                onClick={() => setSelectedPpicFilter(selectedPpicFilter === pic.name ? 'ALL' : pic.name)}
+                onClick={() => handlePicFilterChange(effectivePpicFilter === pic.name ? 'ALL' : pic.name)}
                 className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md border text-xs font-medium transition ${
-                  selectedPpicFilter === pic.name ? 'ring-2 ring-blue-500 shadow-sm' : ''
+                  effectivePpicFilter === pic.name ? 'ring-2 ring-blue-500 shadow-sm' : ''
                 } ${pic.tagBg}`}
               >
                 <span className={`w-2 h-2 rounded-full ${pic.avatarBg}`}></span>
@@ -388,6 +421,136 @@ export const RackView = () => {
             </div>
           );
         })}
+
+        {/* Section Box di Lantai (Tanpa Rak / Floor Boxes) */}
+        {showFloorBoxes && (
+          <div className="bg-white rounded-2xl shadow-sm border border-amber-300 overflow-hidden transition shadow-amber-50">
+            <div className="px-5 py-4 bg-gradient-to-r from-amber-600 via-amber-700 to-orange-700 text-white flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-amber-800">
+              <div className="flex items-center space-x-3">
+                <div className="px-2.5 py-1 rounded text-xs font-black uppercase tracking-wider bg-white text-amber-900 font-bold shadow-xs">
+                  LANTAI
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h2 className="text-xl font-black tracking-tight">Box di Lantai (Tanpa Rak)</h2>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 font-medium">
+                      Area Gudang R&amp;D
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-100 flex items-center space-x-1.5 mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 inline text-amber-200" />
+                    <span>Box yang ditempatkan di lantai kerja R&amp;D di depan rak fisik</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 text-xs">
+                <div className="bg-black/20 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/10">
+                  <span className="text-amber-100">Total Box Lantai: </span>
+                  <strong className="text-white font-bold">{floorBoxes.length} Box</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid Box Lantai */}
+            <div className="p-5 sm:p-6 bg-amber-50/40">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3.5">
+                {floorBoxes.map((box) => {
+                  const boxItems = getItemsInBox(box.boxNumber);
+                  const itemCount = boxItems.length;
+                  const totalQty = boxItems.reduce((acc, curr) => acc + (Number(curr.qty) || 0), 0);
+                  const hasItems = itemCount > 0;
+                  const ppicStyle = getPpicBadge(box.picName);
+
+                  return (
+                    <div
+                      key={`floor-${box.boxNumber}`}
+                      onClick={() => setSelectedBoxNumber(box.boxNumber)}
+                      className={`group relative bg-white rounded-xl border p-3.5 flex flex-col justify-between transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 ${
+                        hasItems
+                          ? 'border-amber-300 hover:border-amber-500 ring-0 hover:ring-2 hover:ring-amber-200'
+                          : 'border-dashed border-amber-300/80 bg-amber-50/30 hover:bg-white hover:border-amber-400'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-lg font-black text-slate-900 tracking-tight">
+                            #{box.boxNumber}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {box.code}
+                          </span>
+                        </div>
+                        {hasItems ? (
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center space-x-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>{itemCount}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-medium italic">
+                            Kosong
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="my-2.5">
+                        <div className={`inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 rounded-md border ${ppicStyle.bg}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${ppicStyle.dot}`}></span>
+                          <span>{box.picName}</span>
+                        </div>
+                        {hasItems && (
+                          <p className="text-[11px] text-slate-600 line-clamp-1 mt-1.5 font-medium" title={boxItems[0]?.name}>
+                            {boxItems[0]?.name}
+                            {itemCount > 1 && ` (+${itemCount - 1} lainnya)`}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>
+                          {hasItems ? `${totalQty} unit` : '0 unit'}
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setQrModalBox(box);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                            title="Cetak Label QR Box"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber });
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                            title="Tambah Item ke Box Ini"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="absolute bottom-0 left-0 right-0 h-1 rounded-b-xl overflow-hidden bg-slate-100">
+                        <div 
+                          className={`h-full transition-all duration-300 ${
+                            hasItems ? 'bg-amber-500' : 'bg-transparent'
+                          }`}
+                          style={{ width: hasItems ? `${Math.min(100, (itemCount / 5) * 100)}%` : '0%' }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {filteredBoxes.length === 0 && (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
