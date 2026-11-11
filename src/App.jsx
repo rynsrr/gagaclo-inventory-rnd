@@ -228,7 +228,7 @@ const AppContent = () => {
                 onClick={() => setIsUserProfileOpen(true)}
                 className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-gradient-to-r from-blue-50/90 to-indigo-50/90 hover:from-blue-100 hover:to-indigo-100 text-blue-900 border-blue-200/90 hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
                 aria-label="Akun & Profil PIC"
-                title={`Login sebagai: ${currentUser?.name || 'PIC'} • Klik untuk edit profil atau ganti user`}
+                title={`Login sebagai: ${currentUser?.name || 'PIC'} • Klik untuk beralih akun PIC`}
               >
                 <span className={`flex h-4 w-4 items-center justify-center rounded-md text-[10px] font-black text-white ${currentUser?.avatarBg || 'bg-blue-600'}`}>
                   {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
