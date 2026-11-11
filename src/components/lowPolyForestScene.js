@@ -47,13 +47,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   disposables.push(fillLight);
 
   // 3. Vast Flat Green Grassland (Lantai Padang Rumput Datar Sempurna / Laser-Flat)
-  const groundGeo = new THREE.PlaneGeometry(160, 160);
-
-  // Deck dimensions
-  const deckCenterX = (minX + maxX) / 2;
-  const deckWidth = (maxX - minX) + 8.5;
-  const deckDepth = 8.0;
-  const deckHeight = 0.04;
+  const groundGeo = new THREE.PlaneGeometry(260, 260);
 
   const groundMat = new THREE.MeshStandardMaterial({
     color: 0x3bb346, // Fresh, vibrant meadow grass green
@@ -68,21 +62,104 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(ground);
   disposables.push(groundGeo, groundMat, ground);
 
-  // 4. Solid Flat Wooden Floor Platform ("Lantai Kayu Datar / Flat")
-  const deckMat = new THREE.MeshStandardMaterial({
+  // 4. Architectural Floor Plan Slab (Lantai Kayu Datar sesuai Denah Arsitektural)
+  // Polygon 8-vertex: Long Corridor, Middle Squares, Right Wing with L-Notch
+  const floorShape = new THREE.Shape();
+  floorShape.moveTo(-30, 50);   // z = -50
+  floorShape.lineTo(55, 50);    // z = -50
+  floorShape.lineTo(55, 30);    // z = -30
+  floorShape.lineTo(35, 30);    // z = -30
+  floorShape.lineTo(35, 14);    // z = -14
+  floorShape.lineTo(0, 14);     // z = -14
+  floorShape.lineTo(0, -50);    // z = 50
+  floorShape.lineTo(-30, -50);  // z = 50
+  floorShape.closePath();
+
+  const floorGeo = new THREE.ShapeGeometry(floorShape);
+  const floorMat = new THREE.MeshStandardMaterial({
     color: 0xc47b38, // Warm honey oak timber
     roughness: 0.75,
     metalness: 0.05,
     flatShading: false,
   });
-  const deckGeo = new THREE.BoxGeometry(deckWidth, deckHeight, deckDepth);
-  const deckMesh = new THREE.Mesh(deckGeo, deckMat);
-  deckMesh.position.set(deckCenterX, deckHeight / 2, 0);
-  deckMesh.castShadow = true;
-  deckMesh.receiveShadow = true;
+  const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+  floorMesh.rotation.x = -Math.PI / 2;
+  floorMesh.position.y = 0.05; // Elevated slightly above grass
+  floorMesh.receiveShadow = true;
+  scene.add(floorMesh);
+  disposables.push(floorGeo, floorMat, floorMesh);
 
-  scene.add(deckMesh);
-  disposables.push(deckGeo, deckMat, deckMesh);
+  // 5. Architectural Low Boundary Walls with Red Top Cap Accent ("Garis Merah Dinding Pembatas")
+  const wallH = 1.15;
+  const wallThick = 0.32;
+  const capH = 0.08;
+  const capThick = 0.36;
+
+  const wallBodyMat = new THREE.MeshStandardMaterial({
+    color: 0xf1f5f9, // Architectural clean smooth white
+    roughness: 0.65,
+    metalness: 0.05,
+  });
+  const wallCapMat = new THREE.MeshStandardMaterial({
+    color: 0xef4444, // Vibrant architectural red cap accent
+    roughness: 0.45,
+    metalness: 0.1,
+  });
+  disposables.push(wallBodyMat, wallCapMat);
+
+  const addWallSegment = (x1, z1, x2, z2) => {
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const len = Math.hypot(dx, dz);
+    if (len < 0.05) return;
+    const angle = Math.atan2(dx, dz);
+    const cx = (x1 + x2) / 2;
+    const cz = (z1 + z2) / 2;
+
+    const bodyGeo = new THREE.BoxGeometry(wallThick, wallH, len);
+    const bodyMesh = new THREE.Mesh(bodyGeo, wallBodyMat);
+    bodyMesh.position.set(cx, wallH / 2 + 0.05, cz);
+    bodyMesh.rotation.y = angle;
+    bodyMesh.castShadow = true;
+    bodyMesh.receiveShadow = true;
+    scene.add(bodyMesh);
+
+    const capGeo = new THREE.BoxGeometry(capThick, capH, len + 0.02);
+    const capMesh = new THREE.Mesh(capGeo, wallCapMat);
+    capMesh.position.set(cx, wallH + capH / 2 + 0.05, cz);
+    capMesh.rotation.y = angle;
+    capMesh.castShadow = true;
+    scene.add(capMesh);
+
+    disposables.push(bodyGeo, capGeo, bodyMesh, capMesh);
+  };
+
+  // Exterior Perimeter Walls
+  addWallSegment(-30, -50, -30, 50);  // West corridor wall (full 100m)
+  addWallSegment(-30, -50, 55, -50);  // North perimeter wall (from corridor to right wing)
+  addWallSegment(55, -50, 55, -30);   // East right wing upper wall
+  addWallSegment(55, -30, 35, -30);   // Horizontal notch cut wall
+  addWallSegment(35, -30, 35, -14);   // Vertical notch cut wall
+  addWallSegment(35, -14, 0, -14);    // South wall of right wing & middle square 3
+  addWallSegment(0, -14, 0, 50);      // East wall of long corridor
+  addWallSegment(-30, 50, 0, 50);     // South wall of corridor (behind Rak 3, 4, 5)
+
+  // Interior Architectural Partitions (Sekat Ruang Dalam dengan Bukaan Pintu / Doorways)
+  // Partition A: Corridor <-> Middle Squares (x = 0, z from -50 to -14)
+  addWallSegment(0, -50, 0, -35);     // Top segment (Square 1)
+  // Doorway into Square 2 at z in [-35, -29] is open!
+  addWallSegment(0, -29, 0, -14);     // Bottom segment (Square 3)
+
+  // Partition B: Square 1 <-> Square 2 (z = -38, x from 0 to 15)
+  addWallSegment(0, -38, 9, -38);     // Doorway at x in [9, 15]
+
+  // Partition C: Square 2 <-> Square 3 (z = -26, x from 0 to 15)
+  addWallSegment(0, -26, 9, -26);     // Doorway at x in [9, 15]
+
+  // Partition D: Middle Squares <-> Right Wing (x = 15, z from -50 to -14)
+  addWallSegment(15, -50, 15, -35);    // Top segment (Square 1 side)
+  // Doorway into Right Wing at z in [-35, -29] is open!
+  addWallSegment(15, -29, 15, -14);    // Bottom segment (Square 3 side)
 
   // 6. Langit Malam Berbintang (Aktif saat Mode Gelap)
   const starGeo = new THREE.BufferGeometry();
@@ -131,7 +208,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   bBody.rotation.x = Math.PI / 2;
 
   singleButterflyGroup.add(bWingL, bWingR, bBody);
-  singleButterflyGroup.position.set(deckCenterX, deckHeight + 1.2, 2.0);
+  singleButterflyGroup.position.set(-15, 1.5, 20);
   scene.add(singleButterflyGroup);
   disposables.push(singleButterflyGroup);
 
@@ -139,7 +216,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   // 8. ANJING PENJAGA BERJALAN RANDOM & MENGEJAR KUPU-KUPU
   // =========================================================================
   const dogGroup = new THREE.Group();
-  dogGroup.position.set(deckCenterX, deckHeight, 2.5);
+  dogGroup.position.set(-15, 0.05, 22);
 
   const dogFurMat = new THREE.MeshStandardMaterial({
     color: 0xf59e0b, // Golden honey fur
@@ -306,66 +383,93 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(dogGroup);
   disposables.push(dogGroup);
 
-  // Helper ketinggian permukaan: lantai kayu (deckHeight = 0.08) vs padang rumput hijau (0.0)
-  const getGroundHeightAt = (x, z) => {
-    const halfW = deckWidth / 2;
-    const halfD = deckDepth / 2;
-    const onDeck =
-      x >= deckCenterX - halfW &&
-      x <= deckCenterX + halfW &&
-      z >= -halfD &&
-      z <= halfD;
-    return onDeck ? deckHeight : 0.0;
+  // Helper ketinggian permukaan: lantai denah arsitektur (0.05) vs padang rumput hijau (0.0)
+  const isInsideFloor = (x, z) => {
+    // 1. Long corridor: x in [-30, 0] and z in [-50, 50]
+    if (x >= -30 && x <= 0 && z >= -50 && z <= 50) return true;
+    // 2. Middle squares 1-3: x in [0, 15] and z in [-50, -14]
+    if (x >= 0 && x <= 15 && z >= -50 && z <= -14) return true;
+    // 3. Right room upper part: x in [15, 55] and z in [-50, -30]
+    if (x >= 15 && x <= 55 && z >= -50 && z <= -30) return true;
+    // 4. Right room lower part: x in [15, 35] and z in [-30, -14]
+    if (x >= 15 && x <= 35 && z >= -30 && z <= -14) return true;
+    return false;
   };
 
-  // Kupu-kupu AI: Menjelajah Luas & Acak ke Padang Rumput
+  const getGroundHeightAt = (x, z) => {
+    return isInsideFloor(x, z) ? 0.05 : 0.0;
+  };
+
+  // Helper pemilihan titik target di dalam dan luar denah
+  const getRandomLocation = () => {
+    const roll = Math.random();
+    if (roll < 0.32) {
+      // Koridor panjang (Long Corridor)
+      return {
+        x: -24 + Math.random() * 20,
+        z: -42 + Math.random() * 84,
+      };
+    } else if (roll < 0.46) {
+      // Ruang Kotak 1 / Top Square (Rak 1)
+      return {
+        x: 3 + Math.random() * 9,
+        z: -47 + Math.random() * 8,
+      };
+    } else if (roll < 0.60) {
+      // Ruang Kotak 2 / Middle Square (Jalan Akses)
+      return {
+        x: 3 + Math.random() * 9,
+        z: -35 + Math.random() * 7,
+      };
+    } else if (roll < 0.74) {
+      // Ruang Kotak 3 / Bottom Square (Rak 2)
+      return {
+        x: 3 + Math.random() * 9,
+        z: -23 + Math.random() * 7,
+      };
+    } else if (roll < 0.88) {
+      // Ruang Kanan (Right Wing Room)
+      return {
+        x: 20 + Math.random() * 28,
+        z: -46 + Math.random() * 14,
+      };
+    } else {
+      // Padang rumput hijau di luar denah
+      const side = Math.random();
+      if (side < 0.33) {
+        return { x: -45 + Math.random() * 12, z: (Math.random() - 0.5) * 80 };
+      } else if (side < 0.66) {
+        return { x: 58 + Math.random() * 15, z: (Math.random() - 0.5) * 80 };
+      } else {
+        return { x: (Math.random() - 0.5) * 60, z: 53 + Math.random() * 15 };
+      }
+    }
+  };
+
+  // Kupu-kupu AI: Menjelajah Luas & Acak ke Denah & Padang Rumput
+  const initialLoc = getRandomLocation();
   const butterflyAI = {
-    x: deckCenterX,
-    y: deckHeight + 1.2,
-    z: 2.0,
-    targetX: deckCenterX,
-    targetY: 1.5,
-    targetZ: 6.5,
+    x: -12.0,
+    y: 1.5,
+    z: 20.0,
+    targetX: initialLoc.x,
+    targetY: 1.6,
+    targetZ: initialLoc.z,
     currentAngle: 0,
     rollAngle: 0,
     nextWaypointTime: 0,
   };
 
   const pickButterflyWaypoint = (elapsed) => {
-    const roll = Math.random();
-    let tx, tz, ty;
-
-    if (roll < 0.52) {
-      // 52% Padang Rumput Depan (Front Meadow): hamparan rumput hijau luas di depan rak & kamera
-      tx = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.95);
-      tz = 4.8 + Math.random() * 9.5; // Z: 4.8 s/d 14.3 (rumput hijau depan)
-      ty = 0.5 + Math.random() * 1.6;
-    } else if (roll < 0.74) {
-      // 22% Padang Rumput Samping (Flanks Meadow): sisi barat atau timur di luar lantai kayu
-      const side = Math.random() > 0.5 ? 1 : -1;
-      tx = deckCenterX + side * (deckWidth * 0.5 + 3.0 + Math.random() * 8.0);
-      tz = (Math.random() - 0.5) * 16.0;
-      ty = 0.7 + Math.random() * 2.0;
-    } else if (roll < 0.88) {
-      // 14% Padang Rumput Belakang (Back Meadow): rumput hijau di balik rak
-      tx = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.85);
-      tz = -4.8 - Math.random() * 6.5; // Z: -4.8 s/d -11.3
-      ty = 0.6 + Math.random() * 1.8;
-    } else {
-      // 12% Melintas di atas area rak & lantai kayu
-      tx = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.6);
-      tz = (Math.random() - 0.5) * 3.5;
-      ty = 1.8 + Math.random() * 2.0;
-    }
-
-    butterflyAI.targetX = tx;
-    butterflyAI.targetZ = tz;
-    butterflyAI.targetY = ty;
+    const loc = getRandomLocation();
+    butterflyAI.targetX = loc.x;
+    butterflyAI.targetZ = loc.z;
+    butterflyAI.targetY = 0.8 + Math.random() * 1.8;
     butterflyAI.nextWaypointTime = elapsed + 4.5 + Math.random() * 4.5;
   };
   pickButterflyWaypoint(0);
 
-  // Dog AI Chase, Jump & Playful Meadow Roaming State
+  // Dog AI Chase, Jump & Playful Roaming State
   const dogAI = {
     currentAngle: 0,
     walkCycle: 0,
@@ -377,9 +481,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
     jumpCooldown: 2.2,
     mode: 'CHASE', // 'CHASE' atau 'ROAM'
     nextModeSwitchTime: 8,
-    roamTargetX: deckCenterX,
-    roamTargetZ: 6.5,
-    currentBaseY: deckHeight,
+    roamTargetX: -14.0,
+    roamTargetZ: 10.0,
+    currentBaseY: 0.05,
   };
 
   let lastElapsed = null;
@@ -476,22 +580,17 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       earL.rotation.x = -0.12 + Math.sin(elapsed * 10) * 0.12;
       earR.rotation.x = -0.12 + Math.cos(elapsed * 10) * 0.12;
 
-      // Pergantian mode bermain anjing di padang rumput secara acak
+      // Pergantian mode bermain anjing di denah & padang rumput secara acak
       if (elapsed > dogAI.nextModeSwitchTime && !dogAI.isJumping) {
         if (dogAI.mode === 'CHASE') {
-          // Kesempatan anjing menjelajah atau mengendus rumput padang rumput secara mandiri
+          // Kesempatan anjing menjelajah atau mengendus lantai/rumput secara mandiri
           dogAI.mode = 'ROAM';
-          const roamSide = Math.random() > 0.4 ? 1 : -1;
-          dogAI.roamTargetX = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.85);
-          dogAI.roamTargetZ = 5.0 + Math.random() * 8.5; // Hamparan rumput depan
-          if (Math.random() < 0.35) {
-            // Hamparan rumput samping
-            dogAI.roamTargetX = deckCenterX + roamSide * (deckWidth * 0.5 + 4.0 + Math.random() * 6.0);
-            dogAI.roamTargetZ = (Math.random() - 0.5) * 12.0;
-          }
-          dogAI.nextModeSwitchTime = elapsed + 3.0 + Math.random() * 3.5;
+          const rLoc = getRandomLocation();
+          dogAI.roamTargetX = rLoc.x;
+          dogAI.roamTargetZ = rLoc.z;
+          dogAI.nextModeSwitchTime = elapsed + 3.5 + Math.random() * 4.0;
         } else {
-          // Kembali mengejar kupu-kupu ke padang rumput
+          // Kembali mengejar kupu-kupu
           dogAI.mode = 'CHASE';
           dogAI.nextModeSwitchTime = elapsed + 8.0 + Math.random() * 10.0;
         }

@@ -64,16 +64,16 @@ export const Warehouse3DView = ({
     if (selectedBoxNumber !== null && boxMeshesRef.current.length > 0) {
       const mesh = boxMeshesRef.current.find(m => Number(m.userData.boxNumber) === Number(selectedBoxNumber));
       if (mesh) {
-        flyControlsTargetRef.current = new THREE.Vector3(
-          mesh.userData.initialX,
-          mesh.userData.initialY + 0.1,
-          mesh.userData.initialZ
+        const worldPos = new THREE.Vector3();
+        mesh.getWorldPosition(worldPos);
+        const forwardDir = new THREE.Vector3(0, 0, 1).applyQuaternion(
+          mesh.getWorldQuaternion(new THREE.Quaternion())
         );
-        flyCameraTargetRef.current = new THREE.Vector3(
-          mesh.userData.initialX,
-          mesh.userData.initialY + 0.35,
-          mesh.userData.initialZ + 3.4
-        );
+
+        flyControlsTargetRef.current = worldPos.clone().add(new THREE.Vector3(0, 0.1, 0));
+        flyCameraTargetRef.current = worldPos.clone()
+          .add(forwardDir.clone().multiplyScalar(3.4))
+          .add(new THREE.Vector3(0, 0.35, 0));
       }
     }
   }, [selectedBoxNumber]);
@@ -306,9 +306,9 @@ export const Warehouse3DView = ({
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI / 2.05; // Keep camera above ground level
-    controls.minDistance = 6;
-    controls.maxDistance = 85;
-    controls.target.set(0, 4, 0);
+    controls.minDistance = 4;
+    controls.maxDistance = 240;
+    controls.target.set(10, 2, 0);
     controls.addEventListener('start', () => {
       isUserInteractingRef.current = true;
       flyCameraTargetRef.current = null;
@@ -322,23 +322,27 @@ export const Warehouse3DView = ({
     // Build the 3D Physical Racks from current rack data.
     // Racks 1-5 keep their original warehouse layout; any newly added rack
     // is placed further to the right with a standard 4x3 shelf layout.
+    // Build the 3D Physical Racks from current rack data according to the Architectural Floor Plan.
+    // - Rak 1: Bilik 1 (Top Square), facing West (-X) into the room.
+    // - Rak 2: Bilik 3 (Bottom Square), facing North (-Z) into the room.
+    // - Rak 3, 4, 5: South wall of Long Corridor, facing North (-Z) side-by-side.
     const presetPositions = {
-      1: { x: -16, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
-      2: { x: -5.5, cols: 5, rows: 4, beamColor: 0xe2e8f0 },
-      3: { x: 6,   cols: 4, rows: 3, beamColor: 0xe2e8f0 },
-      4: { x: 15,  cols: 4, rows: 3, beamColor: 0xe2e8f0 },
-      5: { x: 24,  cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      1: { x: 13.5, z: -44.0, rotationY: -Math.PI / 2, cols: 4, rows: 4, beamColor: 0x1d4ed8 },
+      2: { x: 7.5, z: -15.5, rotationY: Math.PI, cols: 5, rows: 4, beamColor: 0xe2e8f0 },
+      3: { x: -22.5, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      4: { x: -14.0, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      5: { x: -5.5, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
     };
-    let nextExtraX = 33;
+    let nextExtraX = 22;
     const rackPositions = racks
       .filter((r) => Number(r.id) !== 0)
       .map((r) => {
         const preset = presetPositions[r.id];
         if (preset) {
-          return { rackId: r.id, z: 0, ...preset };
+          return { rackId: r.id, ...preset };
         }
-        const conf = { rackId: r.id, x: nextExtraX, z: 0, cols: 4, rows: 3, beamColor: 0xcbd5e1 };
-        nextExtraX += 9;
+        const conf = { rackId: r.id, x: nextExtraX, z: -42, rotationY: 0, cols: 4, rows: 3, beamColor: 0xcbd5e1 };
+        nextExtraX += 10;
         return conf;
       });
 
@@ -349,15 +353,9 @@ export const Warehouse3DView = ({
       conf.rows = Math.max(conf.rows, Math.ceil(count / conf.cols));
     });
 
-    // --- LOW POLY DISNEY FOREST 3D ENVIRONMENT ---
-    const allRackX = rackPositions.map((r) => r.x);
-    const minX = allRackX.length > 0 ? Math.min(...allRackX) - 4 : -20;
-    const maxX = allRackX.length > 0 ? Math.max(...allRackX) + 4 : 28;
-
+    // --- LOW POLY MEADOW & ARCHITECTURAL FLOOR PLAN 3D ENVIRONMENT ---
     const forest = buildLowPolyForestScene({
       scene,
-      minX,
-      maxX,
       isDarkMode: false,
     });
     forestRef.current = forest;
@@ -368,7 +366,7 @@ export const Warehouse3DView = ({
       const rackData = racks.find((r) => Number(r.id) === Number(rackConf.rackId));
       if (!rackData) return;
 
-      const { x: rx, z: rz, cols, rows, beamColor } = rackConf;
+      const { x: rx, z: rz, rotationY = 0, cols, rows, beamColor } = rackConf;
       const rackWidth = cols * 1.8 + 0.4;
       const shelfHeight = 1.9;
       const rackDepth = 1.6;
@@ -378,6 +376,11 @@ export const Warehouse3DView = ({
       const pillarHeight = hasTopCover
         ? totalRackHeight
         : firstShelfY + (rows - 1) * shelfHeight + 0.08;
+
+      const rackGroup = new THREE.Group();
+      rackGroup.position.set(rx, 0, rz);
+      rackGroup.rotation.y = rotationY;
+      scene.add(rackGroup);
 
       // 1. Upright Steel Pillars (4 vertical posts)
       const pillarGeo = new THREE.BoxGeometry(0.15, pillarHeight, 0.15);
@@ -399,10 +402,10 @@ export const Warehouse3DView = ({
 
       postPositions.forEach(([px, pz]) => {
         const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-        pillar.position.set(rx + px, pillarHeight / 2, rz + pz);
+        pillar.position.set(px, pillarHeight / 2, pz);
         pillar.castShadow = true;
         pillar.receiveShadow = true;
-        scene.add(pillar);
+        rackGroup.add(pillar);
       });
 
       // 2. Horizontal Beam Shelves
@@ -413,15 +416,15 @@ export const Warehouse3DView = ({
         // Front beam
         const beamGeo = new THREE.BoxGeometry(rackWidth, 0.12, 0.12);
         const frontBeam = new THREE.Mesh(beamGeo, pillarMat);
-        frontBeam.position.set(rx, sy, rz + halfD);
+        frontBeam.position.set(0, sy, halfD);
         frontBeam.castShadow = true;
-        scene.add(frontBeam);
+        rackGroup.add(frontBeam);
 
         // Back beam
         const backBeam = new THREE.Mesh(beamGeo, pillarMat);
-        backBeam.position.set(rx, sy, rz - halfD);
+        backBeam.position.set(0, sy, -halfD);
         backBeam.castShadow = true;
-        scene.add(backBeam);
+        rackGroup.add(backBeam);
 
         // Wooden/wire deck plank
         const deckGeo = new THREE.BoxGeometry(rackWidth - 0.1, 0.06, rackDepth - 0.2);
@@ -431,9 +434,9 @@ export const Warehouse3DView = ({
           roughness: 0.7,
         });
         const deck = new THREE.Mesh(deckGeo, deckMat);
-        deck.position.set(rx, sy + 0.05, rz);
+        deck.position.set(0, sy + 0.05, 0);
         deck.receiveShadow = true;
-        scene.add(deck);
+        rackGroup.add(deck);
       }
 
       // 3. Rack Top Sign Plate
@@ -452,8 +455,8 @@ export const Warehouse3DView = ({
       const signGeo = new THREE.PlaneGeometry(2.4, 0.6);
       const signMat = new THREE.MeshBasicMaterial({ map: labelTex, side: THREE.DoubleSide });
       const sign = new THREE.Mesh(signGeo, signMat);
-      sign.position.set(rx, totalRackHeight + 0.45, rz + halfD + 0.05);
-      scene.add(sign);
+      sign.position.set(0, totalRackHeight + 0.45, halfD + 0.05);
+      rackGroup.add(sign);
 
       // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
       const rackBoxes = boxes.filter((b) => Number(b.rackId) === Number(rackConf.rackId));
@@ -462,15 +465,14 @@ export const Warehouse3DView = ({
         const colIdx = index % cols;
         const rowIdx = Math.floor(index / cols);
 
-        // Position coordinates
-        const bx = rx - halfW + 0.9 + colIdx * 1.8;
-        const by = 0.2 + rowIdx * shelfHeight + 0.48;
-        const bz = rz;
+        // Position coordinates in rackGroup local space
+        const localX = -halfW + 0.9 + colIdx * 1.8;
+        const localY = 0.2 + rowIdx * shelfHeight + 0.48;
+        const localZ = 0;
 
         // Box geometry: 1.35m wide, 0.75m high, 1.1m deep
         const boxGeo = new THREE.BoxGeometry(1.35, 0.75, 1.1);
 
-        // Exact front label texture matching user uploaded image with status indicator
         const boxItems = getItemsInBox(boxObj.boxNumber);
         const frontTexture = createBoxFaceTexture(
           boxObj.boxNumber, 
@@ -503,12 +505,12 @@ export const Warehouse3DView = ({
           sideMat,
           sideMat,
           sideMat,
-          frontMat, // Front face has the official label
+          frontMat, // Front face (+Z local) has the official label
           sideMat,
         ];
 
         const boxMesh = new THREE.Mesh(boxGeo, materials);
-        boxMesh.position.set(bx, by, bz);
+        boxMesh.position.set(localX, localY, localZ);
         boxMesh.castShadow = true;
         boxMesh.receiveShadow = true;
 
@@ -521,26 +523,28 @@ export const Warehouse3DView = ({
           category: boxObj.category,
           picName: boxObj.picName,
           baseColor: baseColor,
-          initialX: bx,
-          initialY: by,
-          initialZ: bz,
+          initialLocalX: localX,
+          initialLocalY: localY,
+          initialLocalZ: localZ,
+          initialX: rx,
+          initialY: localY,
+          initialZ: rz,
         };
 
-        scene.add(boxMesh);
+        rackGroup.add(boxMesh);
         boxMeshes.push(boxMesh);
       });
     });
 
-    // 5. Floor boxes (rackId 0 / "LANTAI") — boxes without a rack sit on the ground
-    // in front of the racks so they stay visible and clickable.
+    // 5. Floor boxes (rackId 0 / "LANTAI") sitting in the long corridor
     const floorBoxes = boxes.filter((b) => Number(b.rackId) === 0);
-    const floorCols = 6;
+    const floorCols = 4;
     floorBoxes.forEach((boxObj, index) => {
       const colIdx = index % floorCols;
       const rowIdx = Math.floor(index / floorCols);
-      const fx = -12 + colIdx * 2.0;
-      const fy = 0.4; // sits on the floor
-      const fz = 5 + rowIdx * 2.0;
+      const fx = -22 + colIdx * 2.0;
+      const fy = 0.42;
+      const fz = 36 + rowIdx * 2.0;
 
       const floorItems = getItemsInBox(boxObj.boxNumber);
       const boxGeo = new THREE.BoxGeometry(1.35, 0.75, 1.1);
@@ -575,6 +579,9 @@ export const Warehouse3DView = ({
         category: boxObj.category,
         picName: boxObj.picName,
         baseColor: baseColor,
+        initialLocalX: fx,
+        initialLocalY: fy,
+        initialLocalZ: fz,
         initialX: fx,
         initialY: fy,
         initialZ: fz,
@@ -650,16 +657,16 @@ export const Warehouse3DView = ({
           lastClickTime = now;
           lastClickedBoxNumber = boxNum;
 
-          flyControlsTargetRef.current = new THREE.Vector3(
-            hit.userData.initialX,
-            hit.userData.initialY + 0.1,
-            hit.userData.initialZ
+          const worldPos = new THREE.Vector3();
+          hit.getWorldPosition(worldPos);
+          const forwardDir = new THREE.Vector3(0, 0, 1).applyQuaternion(
+            hit.getWorldQuaternion(new THREE.Quaternion())
           );
-          flyCameraTargetRef.current = new THREE.Vector3(
-            hit.userData.initialX,
-            hit.userData.initialY + 0.35,
-            hit.userData.initialZ + 3.4
-          );
+
+          flyControlsTargetRef.current = worldPos.clone().add(new THREE.Vector3(0, 0.1, 0));
+          flyCameraTargetRef.current = worldPos.clone()
+            .add(forwardDir.clone().multiplyScalar(3.4))
+            .add(new THREE.Vector3(0, 0.35, 0));
         }
       } else {
         lastClickTime = 0;
@@ -749,8 +756,8 @@ export const Warehouse3DView = ({
         const isSelected = curSelectedNum !== null && Number(curSelectedNum) === Number(mesh.userData.boxNumber);
         const isHovered = currentHoveredMesh === mesh;
 
-        let targetZ = mesh.userData.initialZ;
-        let targetY = mesh.userData.initialY;
+        let targetZ = mesh.userData.initialLocalZ;
+        let targetY = mesh.userData.initialLocalY;
 
         if (isSelected) {
           targetZ += 0.42; // Smooth drawer slide-out
@@ -787,37 +794,70 @@ export const Warehouse3DView = ({
     animate();
 
     const fitFrontView = (smooth = true) => {
+      const isAll = activeRackRef.current === 'ALL';
       const bounds = new THREE.Box3();
       for (const mesh of boxMeshes) {
-        if (activeRackRef.current === 'ALL' || Number(mesh.userData.rackId) === Number(activeRackRef.current)) {
+        if (isAll || Number(mesh.userData.rackId) === Number(activeRackRef.current)) {
           bounds.expandByObject(mesh);
         }
       }
       if (bounds.isEmpty()) return;
 
-      // Include room for the frame and rack sign above the boxes.
-      bounds.min.x -= 1;
-      bounds.max.x += 1;
-      bounds.min.y -= 1;
-      bounds.max.y += 2;
+      if (isAll) {
+        // Expand bounds to cover the entire architectural floor slab & all rooms
+        bounds.expandByPoint(new THREE.Vector3(-30, 0, -50));
+        bounds.expandByPoint(new THREE.Vector3(55, 0, -50));
+        bounds.expandByPoint(new THREE.Vector3(55, 0, -30));
+        bounds.expandByPoint(new THREE.Vector3(0, 0, 50));
+        bounds.expandByPoint(new THREE.Vector3(-30, 0, 50));
+      } else {
+        // Include room for the frame and rack sign above the boxes.
+        bounds.min.x -= 1;
+        bounds.max.x += 1;
+        bounds.min.y -= 1;
+        bounds.max.y += 2;
+      }
+
       const size = bounds.getSize(new THREE.Vector3());
       const center = bounds.getCenter(new THREE.Vector3());
       const verticalSlope = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-      const distance = 1.12 * Math.max(
+      const distance = 1.15 * Math.max(
         size.y / (2 * verticalSlope),
         size.x / (2 * verticalSlope * camera.aspect),
-      ) + size.z / 2;
+        size.z / (2 * verticalSlope)
+      );
 
-      controls.maxDistance = Math.max(75, distance * 1.5);
-      camera.far = Math.max(200, distance * 3);
+      controls.maxDistance = Math.max(220, distance * 2.5);
+      camera.far = Math.max(450, distance * 4);
       camera.updateProjectionMatrix();
+
+      let targetPos;
+      if (isAll) {
+        // Elevate camera for a clean 3D isometric architectural overview of the full floor plan
+        targetPos = new THREE.Vector3(
+          center.x + distance * 0.45,
+          center.y + distance * 1.1,
+          center.z + distance * 0.85
+        );
+      } else {
+        const curRackId = Number(activeRackRef.current);
+        if (curRackId === 1) {
+          // Rak 1 faces West (-X)
+          targetPos = new THREE.Vector3(center.x - distance, center.y + 0.5, center.z);
+        } else if (curRackId >= 2 && curRackId <= 5) {
+          // Rak 2, 3, 4, 5 face North (-Z)
+          targetPos = new THREE.Vector3(center.x, center.y + 0.5, center.z - distance);
+        } else {
+          targetPos = new THREE.Vector3(center.x, center.y, center.z + distance);
+        }
+      }
 
       if (smooth) {
         flyControlsTargetRef.current = center.clone();
-        flyCameraTargetRef.current = new THREE.Vector3(center.x, center.y, center.z + distance);
+        flyCameraTargetRef.current = targetPos;
       } else {
         controls.target.copy(center);
-        camera.position.set(center.x, center.y, center.z + distance);
+        camera.position.copy(targetPos);
         controls.update();
       }
     };
