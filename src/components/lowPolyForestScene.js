@@ -12,19 +12,19 @@ import * as THREE from 'three';
 export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMode = false }) {
   const disposables = [];
 
-  // 1. Atmosphere: Langit Biru Cerah Alami & Kabut Halus Cakrawala (Sunny Azure Sky)
-  const SKY_BLUE = 0x67b6f6; // Biru langit cerah alami
-  scene.background = new THREE.Color(SKY_BLUE);
-  scene.fog = new THREE.Fog(SKY_BLUE, 42, 140);
+  // 1. Atmosphere: Langit Putih Bersih & Kabut Cakrawala Lembut (Clean White Sky)
+  const SKY_WHITE = 0xffffff;
+  scene.background = new THREE.Color(SKY_WHITE);
+  scene.fog = new THREE.Fog(SKY_WHITE, 45, 140);
 
-  // 2. Sunny Daylight & Warm Meadow Ambient Lighting
-  const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x166534, 1.05);
+  // 2. Daylight & Meadow Ambient Lighting
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x166534, 1.0);
   hemiLight.position.set(0, 50, 0);
   scene.add(hemiLight);
   disposables.push(hemiLight);
 
-  // Warm golden sunbeams (Sinar matahari cerah)
-  const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.55);
+  // Warm radiant sunbeams
+  const sunLight = new THREE.DirectionalLight(0xfffdf5, 1.5);
   sunLight.position.set(24, 38, 22);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.width = 1024;
@@ -40,8 +40,8 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(sunLight);
   disposables.push(sunLight);
 
-  // Soft sky blue ambient fill
-  const fillLight = new THREE.DirectionalLight(0xbae6fd, 0.45);
+  // Soft clean fill
+  const fillLight = new THREE.DirectionalLight(0xf8fafc, 0.4);
   fillLight.position.set(-20, 16, -18);
   scene.add(fillLight);
   disposables.push(fillLight);
@@ -122,55 +122,6 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
 
   scene.add(deckGroup);
   disposables.push(plankGeo, deckMat, deckGroup);
-
-  // 5. Gumpalan Awan Putih Rendah-Poligon Melayang di Langit Biru (Low-Poly Puffy Clouds)
-  const cloudMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.95,
-    metalness: 0.02,
-    flatShading: true,
-  });
-  const cloudPuffGeo = new THREE.DodecahedronGeometry(1.0, 1);
-  disposables.push(cloudMat, cloudPuffGeo);
-
-  const clouds = [];
-  const cloudCount = 12;
-
-  for (let c = 0; c < cloudCount; c++) {
-    const cloudGroup = new THREE.Group();
-    // Tiap awan tersusun dari 4 s/d 7 gumpalan bulat lembut bertumpuk
-    const puffCount = 4 + Math.floor(Math.random() * 4);
-    for (let p = 0; p < puffCount; p++) {
-      const puff = new THREE.Mesh(cloudPuffGeo, cloudMat);
-      const sx = 1.3 + Math.random() * 1.8;
-      const sy = 0.8 + Math.random() * 0.9;
-      const sz = 1.1 + Math.random() * 1.4;
-      puff.scale.set(sx, sy, sz);
-      puff.position.set(
-        (p - puffCount / 2) * 1.7 + (Math.random() - 0.5) * 0.8,
-        (Math.random() - 0.5) * 0.6,
-        (Math.random() - 0.5) * 1.2
-      );
-      puff.castShadow = true;
-      cloudGroup.add(puff);
-    }
-
-    const startX = minX - 45 + Math.random() * (maxX - minX + 90);
-    const startY = 18 + Math.random() * 16; // Ketinggian di langit
-    const startZ = -35 + Math.random() * 65;
-    cloudGroup.position.set(startX, startY, startZ);
-
-    scene.add(cloudGroup);
-    disposables.push(cloudGroup);
-
-    clouds.push({
-      group: cloudGroup,
-      baseY: startY,
-      speed: 0.28 + Math.random() * 0.45,
-      bobSpeed: 0.35 + Math.random() * 0.45,
-      phase: Math.random() * Math.PI * 2,
-    });
-  }
 
   // 6. Langit Malam Berbintang (Aktif saat Mode Gelap)
   const starGeo = new THREE.BufferGeometry();
@@ -492,18 +443,18 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
 
       starPoints.visible = true;
     } else {
-      // Suasana Siang Cerah dengan Langit Biru & Cahaya Hangat
-      scene.background.setHex(0x67b6f6);
-      scene.fog.color.setHex(0x67b6f6);
-      scene.fog.near = 42;
+      // Suasana Siang Bersih dengan Langit Putih
+      scene.background.setHex(0xffffff);
+      scene.fog.color.setHex(0xffffff);
+      scene.fog.near = 45;
       scene.fog.far = 140;
 
-      hemiLight.intensity = 1.05;
-      hemiLight.color.setHex(0xe0f2fe);
+      hemiLight.intensity = 1.0;
+      hemiLight.color.setHex(0xffffff);
       hemiLight.groundColor.setHex(0x166534);
-      sunLight.intensity = 1.55;
-      sunLight.color.setHex(0xfffbeb);
-      fillLight.intensity = 0.45;
+      sunLight.intensity = 1.5;
+      sunLight.color.setHex(0xfffdf5);
+      fillLight.intensity = 0.4;
 
       starPoints.visible = false;
     }
@@ -520,16 +471,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       const dt = lastElapsed === null ? 0.016 : Math.min(0.05, Math.max(0.001, elapsed - lastElapsed));
       lastElapsed = elapsed;
 
-      // 1. Awan putih berlayar perlahan melintasi langit biru cerah
-      clouds.forEach((cloud) => {
-        cloud.group.position.x += cloud.speed * dt;
-        if (cloud.group.position.x > maxX + 50) {
-          cloud.group.position.x = minX - 50;
-        }
-        cloud.group.position.y = cloud.baseY + Math.sin(elapsed * cloud.bobSpeed + cloud.phase) * 0.35;
-      });
-
-      // 2. Kerlap-kerlip bintang lembut di malam hari
+      // 1. Kerlap-kerlip bintang lembut di malam hari
       if (starPoints.visible) {
         starMat.opacity = 0.75 + Math.sin(elapsed * 2.8) * 0.2;
       }
