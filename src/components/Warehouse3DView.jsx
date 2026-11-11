@@ -109,7 +109,6 @@ export const Warehouse3DView = ({
     setRetryKey(k => k + 1);
   };
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [dogReminderActive, setDogReminderActive] = useState(false);
   const lastInputTimeRef = useRef(Date.now());
   const lastUserInteractionTimeRef = useRef(Date.now());
@@ -359,7 +358,7 @@ export const Warehouse3DView = ({
       scene,
       minX,
       maxX,
-      isDarkMode,
+      isDarkMode: false,
     });
     forestRef.current = forest;
 
@@ -877,13 +876,6 @@ export const Warehouse3DView = ({
     };
   }, [boxesStructureKey, racks, ppicMembers, retryKey]);
 
-  // Update scene atmosphere & spotlight intensity on Mode Gelap toggle
-  useEffect(() => {
-    if (forestRef.current) {
-      forestRef.current.setDarkMode(isDarkMode);
-    }
-  }, [isDarkMode]);
-
   // Pantau aktivitas input data untuk pengingat 15 menit dari anjing penjaga
   useEffect(() => {
     lastInputTimeRef.current = Date.now();
@@ -1122,11 +1114,7 @@ export const Warehouse3DView = ({
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className={`warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border shadow-xl ring-1 ring-slate-900/5 transition-all duration-500 ${
-        isDarkMode 
-          ? 'bg-slate-950 border-slate-800' 
-          : 'bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50 border-slate-200/80'
-      }`}>
+      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border shadow-xl ring-1 ring-slate-900/5 transition-all duration-500 bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50 border-slate-200/80">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
@@ -1154,34 +1142,16 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls (Top Right): Fit View Face Side & Mode Gelap */}
+        {/* Controls (Top Right): Fit View Face Side */}
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
           <button
             type="button"
             onClick={() => fitCameraRef.current?.(true)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
-              isDarkMode
-                ? 'bg-slate-900/90 text-blue-300 border-blue-400/40 hover:bg-slate-800'
-                : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10'
-            }`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10"
             title="Posisikan kamera tepat lurus menghadap depan rak (Fit View Face Side)"
           >
             <Maximize2 className="h-3.5 w-3.5 text-blue-500" />
             <span>Fit View Face Side</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsDarkMode(prev => !prev)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
-              isDarkMode
-                ? 'bg-slate-900/90 text-amber-300 border-amber-400/50 shadow-amber-950/40 hover:bg-slate-800 ring-2 ring-amber-400/30'
-                : 'bg-white/95 text-slate-800 border-slate-200 shadow-slate-900/10 hover:bg-slate-100'
-            }`}
-            title="Klik untuk mengaktifkan / menonaktifkan Mode Gelap dengan sorotan lampu terang"
-          >
-            <span>{isDarkMode ? '🌙' : '☀️'}</span>
-            <span>{isDarkMode ? 'Mode Gelap: Lampu Nyala' : 'Mode Terang'}</span>
           </button>
         </div>
 
@@ -1261,7 +1231,7 @@ export const Warehouse3DView = ({
         {/* Controls Hint & Meadow Badge (Bottom Right) */}
         <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
           <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <span>{isDarkMode ? '🌙' : '🌱'}</span> {isDarkMode ? 'Mode Gelap (Lampu Sorot Terang)' : 'Padang Rumput 3D'}
+            <span>🌱</span> Padang Rumput 3D
           </span>
           <span className="text-slate-500">|</span>
           <span className="text-amber-300 font-bold">🖱️ Klik 2x: Buka Popup</span>
