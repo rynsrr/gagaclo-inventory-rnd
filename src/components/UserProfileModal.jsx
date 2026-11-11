@@ -171,8 +171,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-500 truncate">{u.role}</p>
-                          <p className="text-[10px] text-slate-400">{boxCount} Box alokasi</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{boxCount} Box alokasi</p>
                         </div>
                       </div>
 
