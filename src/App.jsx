@@ -185,20 +185,18 @@ const AppContent = () => {
             {/* Actions */}
             <div className="inventory-header-actions flex shrink-0 items-center gap-2">
 
-              {/* Supabase Corporate Gagaclo Status Button */}
-              <button
-                type="button"
-                onClick={() => setIsSupabaseModalOpen(true)}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border ${
+              {/* Supabase Corporate Gagaclo Status Badge (Display Only - Tidak Dapat Diklik untuk Keamanan Data) */}
+              <div
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs border cursor-default select-none ${
                   supabaseStatus.isConnected
-                    ? 'bg-emerald-50/90 hover:bg-emerald-100/90 text-emerald-800 border-emerald-200/90 hover:shadow-xs hover:-translate-y-0.5'
-                    : 'bg-white/90 hover:bg-slate-100/90 text-slate-700 border-slate-200 hover:shadow-xs hover:-translate-y-0.5'
+                    ? 'bg-emerald-50/90 text-emerald-800 border-emerald-200/90'
+                    : 'bg-slate-50 text-slate-600 border-slate-200'
                 }`}
-                aria-label={connected ? `Supabase Gagaclo, ${usageLabel}` : 'Hubungkan Supabase Gagaclo'}
+                aria-label={connected ? `Supabase Gagaclo, ${usageLabel}` : 'Status Cloud Supabase'}
                 title={
                   supabaseStatus.isConnected
-                    ? `Supabase Cloud Terhubung • Sinkronisasi Aktif (${supabaseStatus.lastSync || 'Baru saja'})`
-                    : 'Hubungkan ke Cloud Database Supabase Corporate Gagaclo'
+                    ? `Supabase Cloud Terhubung • Sinkronisasi Otomatis Aktif (${supabaseStatus.lastSync || 'Baru saja'}) • Pengaturan Terkunci`
+                    : 'Cloud Database Gagaclo'
                 }
               >
                 <span className="relative flex h-2 w-2">
@@ -206,8 +204,8 @@ const AppContent = () => {
                   <span className={`relative inline-flex rounded-full h-2 w-2 ${connected ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
                 </span>
                 <Database className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>{connected ? usageLabel : 'Hubungkan Cloud'}</span>
-              </button>
+                <span>{connected ? usageLabel : 'Cloud Terhubung'}</span>
+              </div>
 
               <InventoryImport />
 
