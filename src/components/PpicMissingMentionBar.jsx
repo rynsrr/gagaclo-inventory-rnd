@@ -1,19 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
-import { 
-  Users, 
-  Copy, 
-  Check, 
-  ChevronDown, 
-  ChevronUp,
-  Filter,
-  CheckCircle2,
-} from 'lucide-react';
+import { Users } from 'lucide-react';
 
 export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
-  const { ppicMembers, boxes, getItemsInBox, setSelectedBoxNumber } = useInventory();
-  const [copied, setCopied] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { ppicMembers, boxes, getItemsInBox } = useInventory();
 
   // Calculate missing (kurang) boxes for each PIC
   const picStats = useMemo(() => {
@@ -54,46 +44,8 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
     return picStats.reduce((acc, p) => acc + p.countKurang, 0);
   }, [picStats]);
 
-  // Generate formatted mention text for WhatsApp/Team Chat
-  const handleCopyMentionText = () => {
-    const today = new Date().toLocaleDateString('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-
-    const lines = [
-      `📢 *REKAP KEKURANGAN BOX SAMPLE R&D GAGACLO*`,
-      `📅 *${today}*`,
-      `━━━━━━━━━━━━━━━━━━━━━━━━`,
-      '',
-    ];
-
-    picStats.forEach((pic) => {
-      if (pic.countKurang > 0) {
-        const boxList = pic.emptyBoxes.map((b) => `#${b.boxNumber}`).join(', ');
-        lines.push(`@${pic.name} : *Kurang ${pic.countKurang} Box* (Belum ada data: ${boxList})`);
-      } else {
-        lines.push(`@${pic.name} : *Lengkap* (Semua ${pic.totalAssigned} box terisi) ✅`);
-      }
-    });
-
-    lines.push('');
-    lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`⚠️ *Total: ${totalKurang} box* masih kosong/belum ada data.`);
-    lines.push(`Mohon rekan PIC segera melengkapi input data box masing-masing.`);
-    lines.push(`🔗 Akses: https://gagaclo-inventory-rnd.vercel.app/`);
-
-    const text = lines.join('\n');
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
-  };
-
   return (
-    <div className="inventory-panel p-4 sm:p-5 space-y-3.5 border border-slate-200/80 shadow-2xs bg-white/95 backdrop-blur-md rounded-2xl">
+    <div className="inventory-panel p-4 sm:p-5 space-y-3 border border-slate-200/80 shadow-2xs bg-white/95 backdrop-blur-md rounded-2xl">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
@@ -103,7 +55,7 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                Rekap Kurang &amp; Mention PIC
+                Rekap Kurang &amp; Status PIC
               </h2>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${
                 totalKurang > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -112,183 +64,37 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
               </span>
             </div>
             <p className="text-[11px] text-slate-500 font-medium">
-              Pantau progres pengisian box masing-masing PIC dan salin teks rekap otomatis untuk grup chat.
+              Pantau progres pengisian box masing-masing PIC R&amp;D.
             </p>
           </div>
         </div>
+      </div>
 
-        {/* Actions: Copy Mention & Toggle Expand */}
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+      {/* Mini Inline Summary Chips */}
+      <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none text-xs text-slate-600">
+        <span className="text-[11px] font-semibold text-slate-500 shrink-0">Kurang per PIC:</span>
+        {picStats.map(pic => (
           <button
+            key={pic.id}
             type="button"
-            onClick={handleCopyMentionText}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border cursor-pointer ${
-              copied
-                ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-200'
-                : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900 hover:shadow-xs hover:-translate-y-0.5 active:scale-95'
+            onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition cursor-pointer shrink-0 ${
+              activePic === pic.name
+                ? 'bg-blue-100 border-blue-300 text-blue-900 font-bold'
+                : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-700'
             }`}
-            title="Salin pesan mention teks untuk WhatsApp/Telegram grup PPIC"
+            title={`Klik untuk sorot box milik @${pic.name}`}
           >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-white" />
-                <span>Tersalin!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Salin Teks Chat</span>
-              </>
-            )}
+            <span className={`w-4 h-4 rounded text-white font-bold text-[9px] flex items-center justify-center ${pic.avatarBg}`}>
+              {pic.name.charAt(0)}
+            </span>
+            <span>@{pic.name}</span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${pic.countKurang > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
+              {pic.countKurang > 0 ? `${pic.countKurang} box` : 'Lengkap'}
+            </span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setIsExpanded(prev => !prev)}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border border-slate-200 transition cursor-pointer"
-            title={isExpanded ? "Tutup detail 5 kartu PIC" : "Buka detail 5 kartu PIC"}
-          >
-            <span>{isExpanded ? 'Tutup Detail' : 'Buka Detail'}</span>
-            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-        </div>
+        ))}
       </div>
-
-      {/* Mini Inline Summary Chips when collapsed */}
-      {!isExpanded && (
-        <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none text-xs text-slate-600">
-          <span className="text-[11px] font-semibold text-slate-500 shrink-0">Kurang per PIC:</span>
-          {picStats.map(pic => (
-            <button
-              key={pic.id}
-              type="button"
-              onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition cursor-pointer shrink-0 ${
-                activePic === pic.name
-                  ? 'bg-blue-100 border-blue-300 text-blue-900 font-bold'
-                  : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-700'
-              }`}
-              title={`Klik untuk sorot box milik @${pic.name}`}
-            >
-              <span className={`w-4 h-4 rounded text-white font-bold text-[9px] flex items-center justify-center ${pic.avatarBg}`}>
-                {pic.name.charAt(0)}
-              </span>
-              <span>@{pic.name}</span>
-              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${pic.countKurang > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
-                {pic.countKurang > 0 ? `${pic.countKurang} box` : 'Lengkap'}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Grid of PIC Mention Cards when expanded */}
-      {isExpanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 animate-fade-in pt-1">
-        {picStats.map((pic) => {
-          const isSelected = activePic !== 'ALL' && activePic.toLowerCase() === pic.name.toLowerCase();
-          const hasKurang = pic.countKurang > 0;
-
-          return (
-            <div
-              key={pic.id}
-              className={`flex flex-col justify-between p-3 rounded-xl border transition-all text-xs ${
-                isSelected 
-                  ? 'border-blue-500 bg-blue-50/50 ring-2 ring-blue-200' 
-                  : 'border-slate-200 hover:border-slate-300 bg-slate-50/40 hover:bg-white'
-              }`}
-            >
-              {/* Top row: Avatar + Mention Name + Badge */}
-              <div>
-                <div className="flex items-center justify-between gap-1.5 mb-1.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className={`w-6 h-6 rounded-lg text-white font-black text-[11px] flex items-center justify-center shrink-0 ${pic.avatarBg}`}>
-                      {pic.name.charAt(0)}
-                    </span>
-                    <span 
-                      className="font-mono font-bold text-slate-800 truncate text-xs hover:text-blue-600 cursor-pointer"
-                      title={`Filter box milik @${pic.name}`}
-                      onClick={() => onSelectPic && onSelectPic(isSelected ? 'ALL' : pic.name)}
-                    >
-                      @{pic.name}
-                    </span>
-                  </div>
-
-                  {hasKurang ? (
-                    <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 border border-rose-200">
-                      Kurang {pic.countKurang}
-                    </span>
-                  ) : (
-                    <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 border border-emerald-200">
-                      Lengkap ✓
-                    </span>
-                  )}
-                </div>
-
-                {/* Progress bar */}
-                <div className="space-y-1 mb-2">
-                  <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-                    <span>Terisi: {pic.filledCount}/{pic.totalAssigned} box</span>
-                    <span>{Math.round((pic.filledCount / (pic.totalAssigned || 1)) * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-300 ${
-                        hasKurang ? 'bg-amber-500' : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${(pic.filledCount / (pic.totalAssigned || 1)) * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Missing boxes chips */}
-                {hasKurang ? (
-                  <div className="space-y-1">
-                    <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                      Box belum diisi:
-                    </div>
-                    <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-0.5">
-                      {pic.emptyBoxes.map((b) => (
-                        <button
-                          key={b.boxNumber}
-                          type="button"
-                          onClick={() => setSelectedBoxNumber(b.boxNumber)}
-                          className="inline-flex items-center px-1.5 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold font-mono transition"
-                          title={`Buka & isi Box #${b.boxNumber}`}
-                        >
-                          #{b.boxNumber}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold py-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>Semua box aman</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Filter action button */}
-              {onSelectPic && (
-                <button
-                  type="button"
-                  onClick={() => onSelectPic(isSelected ? 'ALL' : pic.name)}
-                  className={`mt-2.5 w-full py-1 px-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition ${
-                    isSelected
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  <Filter className="w-3 h-3" />
-                  <span>{isSelected ? 'Tampilkan Semua' : `Sorot Box @${pic.name}`}</span>
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      )}
     </div>
   );
 };
