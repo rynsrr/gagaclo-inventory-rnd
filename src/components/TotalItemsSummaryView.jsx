@@ -426,6 +426,35 @@ export function TotalItemsSummaryView() {
     return { map, dates };
   }, [allItems]);
 
+  // Total akumulasi per PIC di seluruh riwayat tanggal
+  const allTimePicTotals = useMemo(() => {
+    const totals = {
+      byPic: {},
+      grandTotalPcs: 0,
+      grandTotalItems: 0,
+    };
+    activePics.forEach((pic) => {
+      totals.byPic[pic] = { pcs: 0, items: 0 };
+    });
+
+    dailyPicRecords.dates.forEach((dateKey) => {
+      const record = dailyPicRecords.map[dateKey];
+      if (!record) return;
+      totals.grandTotalPcs += record.totalPcs || 0;
+      totals.grandTotalItems += record.totalItems || 0;
+
+      activePics.forEach((pic) => {
+        const picData = record.byPic[pic];
+        if (picData) {
+          totals.byPic[pic].pcs += picData.pcs || 0;
+          totals.byPic[pic].items += picData.items || 0;
+        }
+      });
+    });
+
+    return totals;
+  }, [activePics, dailyPicRecords]);
+
   // Tanggal default untuk view harian: hari ini (zona lokal) atau tanggal terbaru yang ada data
   const todayIso = getLocalTodayIso();
   const [selectedDailyDate, setSelectedDailyDate] = useState(() => {
@@ -784,6 +813,14 @@ export function TotalItemsSummaryView() {
                         {picStats.items > 0 ? `${picStats.items} sampel masuk` : 'Belum ada input'}
                       </div>
                     </div>
+
+                    {/* Total Akumulasi Semua Hari per PIC */}
+                    <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500 font-medium">Total Akumulasi:</span>
+                      <span className="font-black text-slate-900 tabular-nums">
+                        {(allTimePicTotals.byPic[picName]?.pcs || 0).toLocaleString('id-ID')} PCS
+                      </span>
+                    </div>
                   </div>
 
                   {picStats.itemsList.length > 0 && (
@@ -831,7 +868,7 @@ export function TotalItemsSummaryView() {
 
           {/* Tabel Riwayat Harian per PIC */}
           <div className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   <BarChart3 className="h-4 w-4 text-blue-600" />
@@ -840,6 +877,55 @@ export function TotalItemsSummaryView() {
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Klik tanggal untuk melihat rincian detail kartu di atas.
                 </p>
+              </div>
+            </div>
+
+            {/* Total Akumulasi per PIC Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1 pb-1">
+              {activePics.map((pic, idx) => {
+                const totalPicPcs = allTimePicTotals.byPic[pic]?.pcs || 0;
+                const totalPicItems = allTimePicTotals.byPic[pic]?.items || 0;
+                const colorBadges = [
+                  'bg-blue-50/80 text-blue-900 border-blue-200',
+                  'bg-purple-50/80 text-purple-900 border-purple-200',
+                  'bg-emerald-50/80 text-emerald-900 border-emerald-200',
+                  'bg-amber-50/80 text-amber-900 border-amber-200',
+                  'bg-rose-50/80 text-rose-900 border-rose-200',
+                ];
+                const badgeCls = colorBadges[idx % colorBadges.length];
+                return (
+                  <div
+                    key={`summary-bar-${pic}`}
+                    className={`p-2.5 rounded-xl border ${badgeCls} flex flex-col justify-between shadow-2xs`}
+                  >
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider opacity-80">
+                      <span>{pic}</span>
+                      <span className="text-[9px] font-black">TOTAL</span>
+                    </div>
+                    <div className="mt-1 text-base font-black tabular-nums">
+                      {totalPicPcs.toLocaleString('id-ID')}{' '}
+                      <span className="text-[10px] font-bold opacity-75">PCS</span>
+                    </div>
+                    <div className="text-[10px] opacity-75 mt-0.5">
+                      {totalPicItems} transaksi sampel
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="p-2.5 rounded-xl border bg-gradient-to-br from-emerald-100/90 to-teal-100/90 border-emerald-300 text-emerald-950 flex flex-col justify-between shadow-2xs">
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-emerald-900">
+                  <span>TOTAL SEMUA</span>
+                  <span className="text-[9px] font-black px-1.5 py-0.2 bg-emerald-200/80 rounded">
+                    {dailyPicRecords.dates.length} HARI
+                  </span>
+                </div>
+                <div className="mt-1 text-base font-black tabular-nums text-emerald-950">
+                  {allTimePicTotals.grandTotalPcs.toLocaleString('id-ID')}{' '}
+                  <span className="text-[10px] font-bold text-emerald-800">PCS</span>
+                </div>
+                <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">
+                  {allTimePicTotals.grandTotalItems} transaksi di {activePics.length} PIC
+                </div>
               </div>
             </div>
 
@@ -858,6 +944,36 @@ export function TotalItemsSummaryView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
+                  {/* Baris Total Akumulasi per PIC di bagian teratas tabel */}
+                  {dailyPicRecords.dates.length > 0 && (
+                    <tr className="border-b-2 border-blue-300 bg-gradient-to-r from-blue-100/90 via-indigo-50/80 to-blue-100/90 font-black text-slate-900 shadow-2xs">
+                      <td className="px-3 py-2.5 font-black text-blue-900 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-black tracking-wide shadow-2xs">
+                          Σ TOTAL PER PIC
+                        </span>
+                      </td>
+                      {activePics.map((pic) => {
+                        const pcs = allTimePicTotals.byPic[pic]?.pcs || 0;
+                        return (
+                          <td
+                            key={`top-total-${pic}`}
+                            className="px-3 py-2.5 text-right font-black tabular-nums text-blue-950"
+                          >
+                            {pcs > 0 ? `${pcs.toLocaleString('id-ID')} PCS` : '-'}
+                          </td>
+                        );
+                      })}
+                      <td className="px-3 py-2.5 text-right font-black text-emerald-800 tabular-nums">
+                        {allTimePicTotals.grandTotalPcs.toLocaleString('id-ID')} PCS
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-200/80 text-blue-900">
+                          Semua Hari
+                        </span>
+                      </td>
+                    </tr>
+                  )}
+
                   {dailyPicRecords.dates.length === 0 ? (
                     <tr>
                       <td colSpan={activePics.length + 3} className="px-4 py-8 text-center text-slate-400">
@@ -910,6 +1026,36 @@ export function TotalItemsSummaryView() {
                     })
                   )}
                 </tbody>
+                {dailyPicRecords.dates.length > 0 && (
+                  <tfoot className="border-t-2 border-slate-300 bg-slate-100/90 font-black">
+                    <tr className="border-t-2 border-slate-300 bg-gradient-to-r from-slate-100 via-blue-50/40 to-slate-100 text-[11px] font-black text-slate-900">
+                      <td className="px-3 py-2.5 font-black text-slate-900 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-white text-[10px] font-black tracking-wide shadow-2xs">
+                          TOTAL KESELURUHAN
+                        </span>
+                      </td>
+                      {activePics.map((pic) => {
+                        const pcs = allTimePicTotals.byPic[pic]?.pcs || 0;
+                        return (
+                          <td
+                            key={`foot-total-${pic}`}
+                            className="px-3 py-2.5 text-right font-black tabular-nums text-slate-900"
+                          >
+                            {pcs > 0 ? `${pcs.toLocaleString('id-ID')} PCS` : '-'}
+                          </td>
+                        );
+                      })}
+                      <td className="px-3 py-2.5 text-right font-black text-emerald-800 tabular-nums">
+                        {allTimePicTotals.grandTotalPcs.toLocaleString('id-ID')} PCS
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-700">
+                          {dailyPicRecords.dates.length} Hari
+                        </span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
           </div>
