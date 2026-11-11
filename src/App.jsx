@@ -39,7 +39,7 @@ import {
   Boxes,
   Box as BoxIcon,
   LayoutDashboard,
-  TrendingUp,
+  Calendar,
   MessageSquarePlus,
   Database,
   PackagePlus,
@@ -106,23 +106,15 @@ const AppContent = () => {
     : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB`;
 
   const todayIso = getLocalTodayIso();
-  const latestDailyPcs = useMemo(() => {
+  const todayDailyPcs = useMemo(() => {
     let todaySum = 0;
-    const dateSums = {};
     items.forEach((item) => {
       const dateKey = item.recordDate || getItemRecordDate(item);
-      if (!dateKey) return;
-      const pcs = Number(item.jumlah) || 0;
-      dateSums[dateKey] = (dateSums[dateKey] || 0) + pcs;
-      if (dateKey === todayIso) todaySum += pcs;
+      if (dateKey === todayIso) {
+        todaySum += Number(item.jumlah) || 0;
+      }
     });
-
-    if (todaySum > 0) return `${todaySum} PCS`;
-    const sortedDates = Object.keys(dateSums).sort((a, b) => b.localeCompare(a));
-    if (sortedDates.length > 0 && dateSums[sortedDates[0]] > 0) {
-      return `${dateSums[sortedDates[0]]} PCS`;
-    }
-    return '0 PCS';
+    return `${todaySum} PCS`;
   }, [items, todayIso]);
 
   const mainTabs = [
@@ -144,10 +136,10 @@ const AppContent = () => {
     },
     {
       id: 'ppic-performance',
-      label: 'Performa PPIC',
-      subtitle: 'Aktivitas harian tim',
-      icon: TrendingUp,
-      count: latestDailyPcs,
+      label: 'Rekap Harian',
+      subtitle: 'Penyimpanan per hari',
+      icon: Calendar,
+      count: todayDailyPcs,
       primary: false,
     },
     {
@@ -303,7 +295,7 @@ const AppContent = () => {
             </Suspense>
           )}
           {appMode === 'ppic-performance' && (
-            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Performa PPIC...</div>}>
+            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Rekap Harian...</div>}>
               <PpicPerformanceView />
             </Suspense>
           )}

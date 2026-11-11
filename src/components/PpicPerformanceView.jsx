@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import {
   Calendar,
@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronUp,
   BarChart3,
-  TrendingUp,
 } from 'lucide-react';
 import {
   getItemRecordDate,
@@ -38,7 +37,7 @@ export function PpicPerformanceView() {
       if (res?.success) {
         if (showNotification) {
           showNotification(
-            'Data performa PPIC & aktivitas harian berhasil disinkronkan dari server cloud!',
+            'Data rekap harian berhasil disinkronkan dari server cloud!',
             'success',
             3000
           );
@@ -139,10 +138,12 @@ export function PpicPerformanceView() {
   }, [activePics, dailyPicRecords]);
 
   const todayIso = getLocalTodayIso();
-  const [selectedDailyDate, setSelectedDailyDate] = useState(() => {
-    if (dailyPicRecords.dates.includes(todayIso)) return todayIso;
-    return dailyPicRecords.dates[0] || todayIso;
-  });
+  const [selectedDailyDate, setSelectedDailyDate] = useState(todayIso);
+
+  // Otomatis pindah hari ke hari ini saat komponen dibuka atau saat tanggal berubah
+  useEffect(() => {
+    setSelectedDailyDate(todayIso);
+  }, [todayIso]);
 
   const currentDailyData = dailyPicRecords.map[selectedDailyDate] || {
     date: selectedDailyDate,
@@ -161,14 +162,14 @@ export function PpicPerformanceView() {
       })
       .join('\n');
 
-    const text = `📊 REKAP PERFORMA HARIAN PPIC - R&D GAGACLO\n📅 Tanggal: ${dateFormatted}\n━━━━━━━━━━━━━━━━━━━━\n${picLines}\n━━━━━━━━━━━━━━━━━━━━\n📦 TOTAL HARIAN: ${currentDailyData.totalPcs} PCS (${currentDailyData.totalItems} sampel)`;
+    const text = `📊 REKAP PENYIMPANAN HARIAN R&D GAGACLO\n📅 Tanggal: ${dateFormatted}\n━━━━━━━━━━━━━━━━━━━━\n${picLines}\n━━━━━━━━━━━━━━━━━━━━\n📦 TOTAL HARIAN: ${currentDailyData.totalPcs} PCS (${currentDailyData.totalItems} sampel)`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopiedRekap(true);
       setTimeout(() => setCopiedRekap(false), 2500);
       if (showNotification) {
-        showNotification('Teks rekap performa harian berhasil disalin!', 'success', 3000);
+        showNotification('Teks rekap harian berhasil disalin!', 'success', 3000);
       }
     }
   };
@@ -180,11 +181,11 @@ export function PpicPerformanceView() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
-              <TrendingUp className="h-4.5 w-4.5" />
+              <Calendar className="h-4.5 w-4.5" />
             </div>
             <div>
               <h1 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                Performa &amp; Aktivitas Penyimpanan PPIC
+                Rekap Harian Penyimpanan PPIC
                 <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                   {currentDailyData.totalPcs} PCS
                 </span>
