@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildLowPolyForestScene } from './lowPolyForestScene';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
-import { RackView } from './RackView';
 import { useInventory } from '../context/InventoryContext';
 import { 
   RotateCcw, 
@@ -19,22 +18,9 @@ import {
   X, 
   Pencil, 
   Package,
-  LayoutGrid,
   AlertTriangle,
   RefreshCw,
 } from 'lucide-react';
-
-export function checkWebGLSupport() {
-  if (typeof window === 'undefined') return false;
-  try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl', { failIfMajorPerformanceCaveat: false }) ||
-               canvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: false });
-    return Boolean(gl && gl instanceof WebGLRenderingContext);
-  } catch {
-    return false;
-  }
-}
 
 // Indigo, purple, emerald, amber, rose — the original five PPIC colors,
 // followed by extra shades for PICs added at runtime.
@@ -176,47 +162,12 @@ export const Warehouse3DView = ({
   const [hoveredBox, setHoveredBox] = useState(null);
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
-  const isInitialWebGlSupported = useMemo(() => checkWebGLSupport(), []);
-  const [webGlError, setWebGlError] = useState(() => !isInitialWebGlSupported);
-  const [viewMode, setViewMode] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gagaclo_box_view_mode');
-      if (saved === '2d' || saved === '3d') {
-        if (saved === '3d' && !isInitialWebGlSupported) return '2d';
-        return saved;
-      }
-    } catch {}
-    return isInitialWebGlSupported ? '3d' : '2d';
-  });
-
-  const handleSetViewMode = (mode) => {
-    if (mode === '3d') {
-      const supported = checkWebGLSupport();
-      if (!supported) {
-        setWebGlError(true);
-        setViewMode('2d');
-        alert('Akselerasi 3D (WebGL) tidak terdeteksi aktif di browser Anda. Sistem tetap menampilkan Denah Rak 2D lengkap.');
-        return;
-      }
-      setWebGlError(false);
-    }
-    setViewMode(mode);
-    try {
-      localStorage.setItem('gagaclo_box_view_mode', mode);
-    } catch {}
-  };
+  const [webGlError, setWebGlError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   const handleRetryWebGl = () => {
-    const supported = checkWebGLSupport();
-    if (supported) {
-      setWebGlError(false);
-      setViewMode('3d');
-      try {
-        localStorage.setItem('gagaclo_box_view_mode', '3d');
-      } catch {}
-    } else {
-      alert('Akselerasi WebGL masih belum aktif. Silakan buka Settings > System > aktifkan "Use graphics acceleration when available" di browser Anda, lalu restart browser.');
-    }
+    setWebGlError(false);
+    setRetryKey(k => k + 1);
   };
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -352,7 +303,6 @@ export const Warehouse3DView = ({
   };
 
   useEffect(() => {
-    if (viewMode !== '3d' || webGlError) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -370,22 +320,33 @@ export const Warehouse3DView = ({
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.5, 200);
     cameraRef.current = camera;
 
-    // Renderer with safe WebGL check
-    let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'default' });
-    } catch (e) {
-      console.warn('WebGL not supported:', e);
+    // Renderer with multi-tier resilient WebGL check
+    let renderer = null;
+    const rendererConfigs = [
+      { antialias: true, alpha: true, powerPreference: 'default' },
+      { antialias: false, alpha: true, failIfMajorPerformanceCaveat: false },
+      { antialias: false, alpha: false, failIfMajorPerformanceCaveat: false, powerPreference: 'low-power' }
+    ];
+    for (const cfg of rendererConfigs) {
+      try {
+        renderer = new THREE.WebGLRenderer(cfg);
+        if (renderer) break;
+      } catch (e) {
+        console.warn('WebGL config failed, trying next fallback:', cfg, e);
+      }
+    }
+
+    if (!renderer) {
+      console.warn('All WebGL renderer options failed');
       setWebGlError(true);
-      setViewMode('2d');
       return;
     }
+    setWebGlError(false);
 
     const handleContextLost = (e) => {
       e.preventDefault();
-      console.warn('WebGL context lost, falling back to 2D view');
+      console.warn('WebGL context lost');
       setWebGlError(true);
-      setViewMode('2d');
     };
     renderer.domElement.addEventListener('webglcontextlost', handleContextLost, false);
 
@@ -925,7 +886,7 @@ export const Warehouse3DView = ({
       forest?.dispose();
       renderer.dispose();
     };
-  }, [boxes, racks, ppicMembers, viewMode, webGlError]);
+  }, [boxes, racks, ppicMembers, retryKey]);
 
   // Update scene atmosphere & spotlight intensity on Mode Gelap toggle
   useEffect(() => {
@@ -1206,238 +1167,159 @@ export const Warehouse3DView = ({
         ))}
       </section>
 
-      {/* View Switcher: 3D vs 2D Toggle Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-black text-slate-800">Tampilan Denah:</span>
-          <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => handleSetViewMode('3d')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === '3d' && !webGlError
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
-            >
-              <BoxIcon className="w-3.5 h-3.5" />
-              <span>🎮 Visual 3D</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSetViewMode('2d')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === '2d' || webGlError
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>📋 Denah Rak 2D</span>
-            </button>
-          </div>
-        </div>
+      {/* Main 3D Canvas Container */}
+      <div className={`warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border shadow-xl ring-1 ring-slate-900/5 transition-all duration-500 ${
+        isDarkMode 
+          ? 'bg-slate-950 border-slate-800' 
+          : 'bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50 border-slate-200/80'
+      }`}>
+        
+        {/* Three.js viewport */}
+        <div ref={containerRef} className="w-full h-full" />
 
-        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-          {viewMode === '3d' && !webGlError ? (
-            <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-semibold">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Akselerasi 3D WebGL Aktif
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 font-semibold">
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Mode Denah Rak 2D (Cepat &amp; Responsif)
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* WebGL Not Available / Inactive Notification Banner */}
-      {webGlError && (
-        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200/80 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in">
-          <div className="flex items-start gap-3.5">
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-              <BoxIcon className="h-5 w-5" />
+        {/* WebGL Fallback Overlay if GPU context is unavailable */}
+        {webGlError && (
+          <div className="absolute inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3.5 animate-fade-in">
+            <div className="h-14 w-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/10">
+              <BoxIcon className="h-7 w-7" />
             </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900">
-                  Mode Denah Rak 2D Aktif (WebGL Tidak Terdeteksi)
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                  Semua Fitur Berfungsi Normal 100%
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
-                Browser atau GPU Anda saat ini tidak mengaktifkan akselerasi 3D (WebGL). Anda tetap dapat menggunakan seluruh denah rak, mencari box, input kartu sampel, dan cetak QR dengan normal &amp; cepat dalam <strong>Denah Rak 2D</strong> di bawah ini.
-              </p>
-              <details className="text-[11px] text-slate-500 cursor-pointer pt-1">
-                <summary className="font-semibold text-blue-700 hover:underline">
-                  💡 Tips mengaktifkan 3D di browser Google Chrome / Microsoft Edge
-                </summary>
-                <div className="mt-1.5 p-3 rounded-xl bg-white/80 border border-slate-200 space-y-1 text-slate-700 font-sans text-xs">
-                  <p>1. Buka <strong>Settings (Pengaturan)</strong> di browser Chrome atau Edge.</p>
-                  <p>2. Pilih menu <strong>System (Sistem)</strong> di menu sebelah kiri.</p>
-                  <p>3. Aktifkan opsi: <strong>"Use graphics acceleration when available" (Gunakan akselerasi grafis saat tersedia)</strong>.</p>
-                  <p>4. Klik tombol <strong>Relaunch / Mulai Ulang Browser</strong>, lalu muat ulang halaman ini.</p>
-                </div>
-              </details>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+            <h3 className="text-base sm:text-lg font-black text-white">
+              Akselerasi 3D (WebGL) Diperlukan
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+              Browser atau perangkat Anda belum mengaktifkan WebGL. Buka <strong>Settings &gt; System</strong> di browser Chrome/Edge, aktifkan <strong>"Use graphics acceleration when available"</strong> (Gunakan akselerasi grafis), lalu restart browser.
+            </p>
             <button
               type="button"
               onClick={handleRetryWebGl}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-2xs hover:shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+              className="mt-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition flex items-center gap-2 cursor-pointer active:scale-95"
             >
-              <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+              <RefreshCw className="h-4 w-4" />
               <span>Coba Muat Ulang 3D</span>
             </button>
           </div>
+        )}
+
+        {/* Controls (Top Right): Fit View Face Side & Mode Gelap */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fitCameraRef.current?.(true)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
+              isDarkMode
+                ? 'bg-slate-900/90 text-blue-300 border-blue-400/40 hover:bg-slate-800'
+                : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10'
+            }`}
+            title="Posisikan kamera tepat lurus menghadap depan rak (Fit View Face Side)"
+          >
+            <Maximize2 className="h-3.5 w-3.5 text-blue-500" />
+            <span>Fit View Face Side</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsDarkMode(prev => !prev)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
+              isDarkMode
+                ? 'bg-slate-900/90 text-amber-300 border-amber-400/50 shadow-amber-950/40 hover:bg-slate-800 ring-2 ring-amber-400/30'
+                : 'bg-white/95 text-slate-800 border-slate-200 shadow-slate-900/10 hover:bg-slate-100'
+            }`}
+            title="Klik untuk mengaktifkan / menonaktifkan Mode Gelap dengan sorotan lampu terang"
+          >
+            <span>{isDarkMode ? '🌙' : '☀️'}</span>
+            <span>{isDarkMode ? 'Mode Gelap: Lampu Nyala' : 'Mode Terang'}</span>
+          </button>
         </div>
-      )}
 
-      {/* Main View Area: 3D Viewport OR 2D Rack Grid */}
-      {viewMode === '3d' && !webGlError ? (
-        <div className={`warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-3xl border shadow-xl ring-1 ring-slate-900/5 transition-all duration-500 ${
-          isDarkMode 
-            ? 'bg-slate-950 border-slate-800' 
-            : 'bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50 border-slate-200/80'
-        }`}>
-          
-          {/* Three.js viewport */}
-          <div ref={containerRef} className="w-full h-full" />
-
-          {/* Controls (Top Right): Fit View Face Side & Mode Gelap */}
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fitCameraRef.current?.(true)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
-                isDarkMode
-                  ? 'bg-slate-900/90 text-blue-300 border-blue-400/40 hover:bg-slate-800'
-                  : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10'
-              }`}
-              title="Posisikan kamera tepat lurus menghadap depan rak (Fit View Face Side)"
-            >
-              <Maximize2 className="h-3.5 w-3.5 text-blue-500" />
-              <span>Fit View Face Side</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsDarkMode(prev => !prev)}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 ${
-                isDarkMode
-                  ? 'bg-slate-900/90 text-amber-300 border-amber-400/50 shadow-amber-950/40 hover:bg-slate-800 ring-2 ring-amber-400/30'
-                  : 'bg-white/95 text-slate-800 border-slate-200 shadow-slate-900/10 hover:bg-slate-100'
-              }`}
-              title="Klik untuk mengaktifkan / menonaktifkan Mode Gelap dengan sorotan lampu terang"
-            >
-              <span>{isDarkMode ? '🌙' : '☀️'}</span>
-              <span>{isDarkMode ? 'Mode Gelap: Lampu Nyala' : 'Mode Terang'}</span>
-            </button>
-          </div>
-
-          {/* Anjing Penjaga 15-Menit Inactivity Reminder Banner */}
-          {dogReminderActive && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-slate-950 px-5 py-3.5 rounded-2xl shadow-2xl border-2 border-white ring-4 ring-amber-400/50 animate-bounce">
-              <div className="space-y-2">
-                <p className="text-xs sm:text-sm font-black text-slate-950 leading-snug">
-                  "Woof woof! 🐾 Hey, please fill data on the box!"
-                </p>
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDogReminderActive(false);
-                      lastInputTimeRef.current = Date.now();
-                    }}
-                    className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition shadow-md cursor-pointer active:scale-95"
-                  >
-                    OK, Siap! 🐾
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Active search indicator (top left) */}
-          {searchActive && (
-            <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-blue-200 bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm backdrop-blur-xs">
-              <Search className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>
-                {highlightBoxNumbers.size} box cocok &amp; disorot
-              </span>
-              {onClearSearch && (
+        {/* Anjing Penjaga 15-Menit Inactivity Reminder Banner */}
+        {dogReminderActive && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-slate-950 px-5 py-3.5 rounded-2xl shadow-2xl border-2 border-white ring-4 ring-amber-400/50 animate-bounce">
+            <div className="space-y-2">
+              <p className="text-xs sm:text-sm font-black text-slate-950 leading-snug">
+                "Woof woof! 🐾 Hey, please fill data on the box!"
+              </p>
+              <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={onClearSearch}
-                  className="rounded px-1.5 py-0.5 text-blue-600 underline underline-offset-2 transition hover:bg-blue-50 hover:text-blue-800"
-                  title="Hapus pencarian"
+                  onClick={() => {
+                    setDogReminderActive(false);
+                    lastInputTimeRef.current = Date.now();
+                  }}
+                  className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition shadow-md cursor-pointer active:scale-95"
                 >
-                  Hapus
+                  OK, Siap! 🐾
                 </button>
-              )}
-            </div>
-          )}
-
-          {/* Hovered Box HUD Card (Bottom Left) */}
-          {hoveredBox && (
-            <div className="absolute bottom-5 left-5 z-10 bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none">
-              <div className="flex items-center space-x-2">
-                <span className="text-xl font-black text-white">
-                  #{hoveredBox.boxNumber}
-                </span>
-                <span className="font-mono text-xs text-slate-400">
-                  {hoveredBox.code}
-                </span>
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
-                  hoveredBox.category === 'SAMPLE' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
-                }`}>
-                  {hoveredBox.category} BOX
-                </span>
-              </div>
-
-              <div className="mt-2 space-y-1 text-slate-300">
-                <p>📍 <strong>{hoveredBox.rackName}</strong> • {hoveredBox.rackDescription}</p>
-                <p>👤 PIC PPIC: <strong className="text-white font-bold">{hoveredBox.picName}</strong></p>
-                <p>📦 Tersimpan: <strong className="text-emerald-400">{getItemsInBox(hoveredBox.boxNumber).length} item</strong></p>
-              </div>
-
-              <div className="mt-2.5 pt-2 border-t border-slate-700/80 text-[11px] text-blue-400 font-bold flex items-center space-x-1">
-                <span>Klik 1x fokus • Klik 2x buka popup jendela</span>
-                <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </div>
-          )}
-
-          {/* Controls Hint & Meadow Badge (Bottom Right) */}
-          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
-            <span className="text-emerald-400 font-bold flex items-center gap-1">
-              <span>{isDarkMode ? '🌙' : '🌱'}</span> {isDarkMode ? 'Mode Gelap (Lampu Sorot Terang)' : 'Padang Rumput 3D'}
-            </span>
-            <span className="text-slate-500">|</span>
-            <span className="text-amber-300 font-bold">🖱️ Klik 2x: Buka Popup</span>
-            <span className="text-slate-600">•</span>
-            <span>🖱️ Putar: Klik Kiri</span>
-            <span className="text-slate-600">•</span>
-            <span>🔍 Zoom: Scroll</span>
-            <span className="text-slate-600">•</span>
-            <span>✋ Geser: Klik Kanan</span>
           </div>
+        )}
 
+        {/* Active search indicator (top left) */}
+        {searchActive && (
+          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-blue-200 bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm backdrop-blur-xs">
+            <Search className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {highlightBoxNumbers.size} box cocok &amp; disorot
+            </span>
+            {onClearSearch && (
+              <button
+                type="button"
+                onClick={onClearSearch}
+                className="rounded px-1.5 py-0.5 text-blue-600 underline underline-offset-2 transition hover:bg-blue-50 hover:text-blue-800"
+                title="Hapus pencarian"
+              >
+                Hapus
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Hovered Box HUD Card (Bottom Left) */}
+        {hoveredBox && (
+          <div className="absolute bottom-5 left-5 z-10 bg-slate-900/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl font-black text-white">
+                #{hoveredBox.boxNumber}
+              </span>
+              <span className="font-mono text-xs text-slate-400">
+                {hoveredBox.code}
+              </span>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
+                hoveredBox.category === 'SAMPLE' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
+              }`}>
+                {hoveredBox.category} BOX
+              </span>
+            </div>
+
+            <div className="mt-2 space-y-1 text-slate-300">
+              <p>📍 <strong>{hoveredBox.rackName}</strong> • {hoveredBox.rackDescription}</p>
+              <p>👤 PIC PPIC: <strong className="text-white font-bold">{hoveredBox.picName}</strong></p>
+              <p>📦 Tersimpan: <strong className="text-emerald-400">{getItemsInBox(hoveredBox.boxNumber).length} item</strong></p>
+            </div>
+
+            <div className="mt-2.5 pt-2 border-t border-slate-700/80 text-[11px] text-blue-400 font-bold flex items-center space-x-1">
+              <span>Klik 1x fokus • Klik 2x buka popup jendela</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        )}
+
+        {/* Controls Hint & Meadow Badge (Bottom Right) */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-[10px] sm:text-[11px] text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
+          <span className="text-emerald-400 font-bold flex items-center gap-1">
+            <span>{isDarkMode ? '🌙' : '🌱'}</span> {isDarkMode ? 'Mode Gelap (Lampu Sorot Terang)' : 'Padang Rumput 3D'}
+          </span>
+          <span className="text-slate-500">|</span>
+          <span className="text-amber-300 font-bold">🖱️ Klik 2x: Buka Popup</span>
+          <span className="text-slate-600">•</span>
+          <span>🖱️ Putar: Klik Kiri</span>
+          <span className="text-slate-600">•</span>
+          <span>🔍 Zoom: Scroll</span>
+          <span className="text-slate-600">•</span>
+          <span>✋ Geser: Klik Kanan</span>
         </div>
-      ) : (
-        <div className="inventory-panel p-2 sm:p-4 bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-sm animate-fade-in">
-          <RackView 
-            hideSearch={true} 
-            externalPicFilter={highlightPpic} 
-            onPicFilterChange={setHighlightPpic} 
-          />
-        </div>
-      )}
+
+      </div>
 
     </div>
   );
