@@ -14,6 +14,9 @@ const Warehouse3DView = lazy(() =>
 const TotalItemsSummaryView = lazy(() =>
   import('./components/TotalItemsSummaryView').then((m) => ({ default: m.TotalItemsSummaryView }))
 );
+const PpicPerformanceView = lazy(() =>
+  import('./components/PpicPerformanceView').then((m) => ({ default: m.PpicPerformanceView }))
+);
 const FeedbackIssuesView = lazy(() =>
   import('./components/FeedbackIssuesView').then((m) => ({ default: m.FeedbackIssuesView }))
 );
@@ -36,11 +39,13 @@ import {
   Boxes,
   Box as BoxIcon,
   LayoutDashboard,
+  TrendingUp,
   MessageSquarePlus,
   Database,
   PackagePlus,
   X,
 } from 'lucide-react';
+import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse' (BOX is the main tab)
@@ -100,6 +105,26 @@ const AppContent = () => {
     ? 'Pemakaian: -'
     : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB`;
 
+  const todayIso = getLocalTodayIso();
+  const latestDailyPcs = useMemo(() => {
+    let todaySum = 0;
+    const dateSums = {};
+    items.forEach((item) => {
+      const dateKey = item.recordDate || getItemRecordDate(item);
+      if (!dateKey) return;
+      const pcs = Number(item.jumlah) || 0;
+      dateSums[dateKey] = (dateSums[dateKey] || 0) + pcs;
+      if (dateKey === todayIso) todaySum += pcs;
+    });
+
+    if (todaySum > 0) return `${todaySum} PCS`;
+    const sortedDates = Object.keys(dateSums).sort((a, b) => b.localeCompare(a));
+    if (sortedDates.length > 0 && dateSums[sortedDates[0]] > 0) {
+      return `${dateSums[sortedDates[0]]} PCS`;
+    }
+    return '0 PCS';
+  }, [items, todayIso]);
+
   const mainTabs = [
     {
       id: '3d-warehouse',
@@ -118,9 +143,17 @@ const AppContent = () => {
       primary: false,
     },
     {
+      id: 'ppic-performance',
+      label: 'Performa PPIC',
+      subtitle: 'Aktivitas harian tim',
+      icon: TrendingUp,
+      count: latestDailyPcs,
+      primary: false,
+    },
+    {
       id: 'issues',
-      label: 'Issue & Usulan',
-      subtitle: 'Laporan & ide fitur',
+      label: 'Isu & Usulan',
+      subtitle: 'Laporan & ide tim',
       icon: MessageSquarePlus,
       count: activeIssuesCount,
       primary: false,
@@ -267,6 +300,11 @@ const AppContent = () => {
           {appMode === 'summary' && (
             <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Ringkasan Data...</div>}>
               <TotalItemsSummaryView />
+            </Suspense>
+          )}
+          {appMode === 'ppic-performance' && (
+            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Performa PPIC...</div>}>
+              <PpicPerformanceView />
             </Suspense>
           )}
           {appMode === 'issues' && (
