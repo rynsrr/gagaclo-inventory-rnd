@@ -913,11 +913,11 @@ export const Warehouse3DView = ({
 
       let targetPos;
       if (isAll) {
-        // Elevate camera for a clean 3D isometric architectural overview of the full floor plan
+        // Default fit view: Sudut pandang isometrik arsitektural ideal membingkai seluruh denah & 5 rak
         targetPos = new THREE.Vector3(
-          center.x + distance * 0.45,
-          center.y + distance * 1.1,
-          center.z + distance * 0.85
+          center.x - 82,
+          63,
+          center.z - 64
         );
       } else {
         const curRackId = Number(activeRackRef.current);
