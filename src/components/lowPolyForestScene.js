@@ -12,10 +12,10 @@ import * as THREE from 'three';
 export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMode = false }) {
   const disposables = [];
 
-  // 1. Atmosphere: Langit Putih Bersih & Kabut Cakrawala Lembut (Clean White Sky)
+  // 1. Atmosphere: Langit Putih Bersih Tanpa Kabut (Clean White Sky, No Fog)
   const SKY_WHITE = 0xffffff;
   scene.background = new THREE.Color(SKY_WHITE);
-  scene.fog = new THREE.Fog(SKY_WHITE, 45, 140);
+  scene.fog = null;
 
   // 2. Daylight & Meadow Ambient Lighting
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x166534, 1.0);
@@ -427,11 +427,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   function applyMode(isDark) {
     currentIsDark = Boolean(isDark);
     if (isDark) {
-      // Midnight Twilight Atmosphere & Dense Fog
+      // Midnight Twilight Atmosphere
       scene.background.setHex(0x060d17);
-      scene.fog.color.setHex(0x060d17);
-      scene.fog.near = 18;
-      scene.fog.far = 95;
+      scene.fog = null;
 
       // Redupkan cahaya matahari menjadi pantulan sinar bulan yang lembut
       hemiLight.intensity = 0.12;
@@ -443,11 +441,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
 
       starPoints.visible = true;
     } else {
-      // Suasana Siang Bersih dengan Langit Putih
+      // Suasana Siang Bersih dengan Langit Putih (Tanpa Kabut)
       scene.background.setHex(0xffffff);
-      scene.fog.color.setHex(0xffffff);
-      scene.fog.near = 45;
-      scene.fog.far = 140;
+      scene.fog = null;
 
       hemiLight.intensity = 1.0;
       hemiLight.color.setHex(0xffffff);

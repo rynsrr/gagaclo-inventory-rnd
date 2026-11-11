@@ -254,10 +254,10 @@ export const Warehouse3DView = ({
     const width = container.clientWidth;
     const height = container.clientHeight || 580;
 
-    // Scene - Clean Studio / Warehouse Environment
+    // Scene - Clean Studio / Warehouse Environment (Tanpa Kabut / No Fog)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf1f5f9);
-    scene.fog = new THREE.Fog(0xf1f5f9, 40, 110);
+    scene.background = new THREE.Color(0xffffff);
+    scene.fog = null;
     sceneRef.current = scene;
 
     // Camera
