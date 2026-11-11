@@ -344,18 +344,83 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   scene.add(dogGroup);
   disposables.push(dogGroup);
 
-  // Dog AI Chase & Jump State (Mengejar 1 Kupu-kupu & Melompat Lucu)
+  // Helper ketinggian permukaan: lantai kayu (deckHeight = 0.08) vs padang rumput hijau (0.0)
+  const getGroundHeightAt = (x, z) => {
+    const halfW = deckWidth / 2;
+    const halfD = deckDepth / 2;
+    const onDeck =
+      x >= deckCenterX - halfW &&
+      x <= deckCenterX + halfW &&
+      z >= -halfD &&
+      z <= halfD;
+    return onDeck ? deckHeight : 0.0;
+  };
+
+  // Kupu-kupu AI: Menjelajah Luas & Acak ke Padang Rumput
+  const butterflyAI = {
+    x: deckCenterX,
+    y: deckHeight + 1.2,
+    z: 2.0,
+    targetX: deckCenterX,
+    targetY: 1.5,
+    targetZ: 6.5,
+    currentAngle: 0,
+    rollAngle: 0,
+    nextWaypointTime: 0,
+  };
+
+  const pickButterflyWaypoint = (elapsed) => {
+    const roll = Math.random();
+    let tx, tz, ty;
+
+    if (roll < 0.52) {
+      // 52% Padang Rumput Depan (Front Meadow): hamparan rumput hijau luas di depan rak & kamera
+      tx = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.95);
+      tz = 4.8 + Math.random() * 9.5; // Z: 4.8 s/d 14.3 (rumput hijau depan)
+      ty = 0.5 + Math.random() * 1.6;
+    } else if (roll < 0.74) {
+      // 22% Padang Rumput Samping (Flanks Meadow): sisi barat atau timur di luar lantai kayu
+      const side = Math.random() > 0.5 ? 1 : -1;
+      tx = deckCenterX + side * (deckWidth * 0.5 + 3.0 + Math.random() * 8.0);
+      tz = (Math.random() - 0.5) * 16.0;
+      ty = 0.7 + Math.random() * 2.0;
+    } else if (roll < 0.88) {
+      // 14% Padang Rumput Belakang (Back Meadow): rumput hijau di balik rak
+      tx = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.85);
+      tz = -4.8 - Math.random() * 6.5; // Z: -4.8 s/d -11.3
+      ty = 0.6 + Math.random() * 1.8;
+    } else {
+      // 12% Melintas di atas area rak & lantai kayu
+      tx = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.6);
+      tz = (Math.random() - 0.5) * 3.5;
+      ty = 1.8 + Math.random() * 2.0;
+    }
+
+    butterflyAI.targetX = tx;
+    butterflyAI.targetZ = tz;
+    butterflyAI.targetY = ty;
+    butterflyAI.nextWaypointTime = elapsed + 4.5 + Math.random() * 4.5;
+  };
+  pickButterflyWaypoint(0);
+
+  // Dog AI Chase, Jump & Playful Meadow Roaming State
   const dogAI = {
     currentAngle: 0,
     walkCycle: 0,
     isJumping: false,
     jumpStartTime: 0,
     jumpDuration: 0.72,
-    jumpHeight: 1.15,
+    jumpHeight: 1.25,
     lastJumpTime: -10,
     jumpCooldown: 2.2,
+    mode: 'CHASE', // 'CHASE' atau 'ROAM'
+    nextModeSwitchTime: 8,
+    roamTargetX: deckCenterX,
+    roamTargetZ: 6.5,
+    currentBaseY: deckHeight,
   };
 
+  let lastElapsed = null;
   let currentIsDark = false;
 
   function applyMode(isDark) {
@@ -402,50 +467,96 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       applyMode(isDark);
     },
     update(elapsed) {
+      const dt = lastElapsed === null ? 0.016 : Math.min(0.05, Math.max(0.001, elapsed - lastElapsed));
+      lastElapsed = elapsed;
+
       // 1. Kerlap-kerlip bintang lembut di malam hari
       if (starPoints.visible) {
         starMat.opacity = 0.75 + Math.sin(elapsed * 2.8) * 0.2;
       }
 
-      // 2. Kupu-kupu terbang acak & dinamis mengitari rak hingga keluar ke padang rumput
-      const flap = Math.sin(elapsed * 28 + Math.sin(elapsed * 3.5) * 3) * 0.95;
+      // 2. Kupu-kupu terbang acak & dinamis mengitari padang rumput luas
+      const distToBTarget = Math.hypot(butterflyAI.targetX - butterflyAI.x, butterflyAI.targetZ - butterflyAI.z);
+      if (elapsed > butterflyAI.nextWaypointTime || distToBTarget < 1.4) {
+        pickButterflyWaypoint(elapsed);
+      }
+
+      const bTargetAngle = Math.atan2(butterflyAI.targetX - butterflyAI.x, butterflyAI.targetZ - butterflyAI.z);
+      let bAngleDiff = bTargetAngle - butterflyAI.currentAngle;
+      while (bAngleDiff < -Math.PI) bAngleDiff += Math.PI * 2;
+      while (bAngleDiff > Math.PI) bAngleDiff -= Math.PI * 2;
+      butterflyAI.currentAngle += bAngleDiff * Math.min(1.0, dt * 3.2);
+
+      const bSpeed = 3.8 + Math.sin(elapsed * 2.4) * 0.8;
+      butterflyAI.x += Math.sin(butterflyAI.currentAngle) * bSpeed * dt;
+      butterflyAI.z += Math.cos(butterflyAI.currentAngle) * bSpeed * dt;
+
+      // Ketinggian terbang kupu-kupu + kepakan lembut
+      const bSurfaceY = getGroundHeightAt(butterflyAI.x, butterflyAI.z);
+      const naturalBob = Math.sin(elapsed * 5.2) * 0.22 + Math.cos(elapsed * 2.3) * 0.15;
+      const targetBY = Math.max(bSurfaceY + 0.45, butterflyAI.targetY + naturalBob);
+      butterflyAI.y += (targetBY - butterflyAI.y) * Math.min(1.0, dt * 2.8);
+
+      const isEvading = dogAI.isJumping;
+      const jumpEvade = isEvading ? Math.sin(((elapsed - dogAI.jumpStartTime) / dogAI.jumpDuration) * Math.PI) * 1.25 : 0;
+      const finalBY = Math.max(bSurfaceY + 0.45, butterflyAI.y + jumpEvade);
+
+      singleButterflyGroup.position.set(butterflyAI.x, finalBY, butterflyAI.z);
+      singleButterflyGroup.rotation.y = butterflyAI.currentAngle;
+      butterflyAI.rollAngle += (-bAngleDiff * 0.7 - butterflyAI.rollAngle) * Math.min(1.0, dt * 4.5);
+      singleButterflyGroup.rotation.z = butterflyAI.rollAngle;
+
+      // Kepakan sayap dinamis
+      const flapSpeed = 26 + (isEvading ? 16 : 0);
+      const flap = Math.sin(elapsed * flapSpeed) * 0.95;
       bWingL.rotation.y = flap;
       bWingR.rotation.y = -flap;
 
-      const prevBX = singleButterflyGroup.position.x;
-      const prevBZ = singleButterflyGroup.position.z;
-
-      // Trajektori multi-frekuensi acak luas (bisa keluar dari lantai kayu ke rumput hijau)
-      const bX = deckCenterX + Math.sin(elapsed * 0.45) * (deckWidth * 0.65) + Math.cos(elapsed * 0.92) * 4.2 + Math.sin(elapsed * 1.7) * 1.5;
-      const bZ = Math.cos(elapsed * 0.38) * 6.0 + Math.sin(elapsed * 0.82) * 3.2 + Math.cos(elapsed * 1.55) * 1.2;
-
-      // Ketinggian terbang bervariasi: menukik rendah ke rumput lalu melambung tinggi di atas rak
-      const isEvading = dogAI.isJumping;
-      const jumpEvade = isEvading ? Math.sin(((elapsed - dogAI.jumpStartTime) / dogAI.jumpDuration) * Math.PI) * 0.95 : 0;
-      const bYBase = 1.6 + Math.sin(elapsed * 0.72) * 1.1 + Math.cos(elapsed * 1.45) * 0.6 + Math.sin(elapsed * 3.6) * 0.25;
-      const bY = Math.max(0.65, bYBase + jumpEvade);
-
-      singleButterflyGroup.position.set(bX, bY, bZ);
-
-      const bDx = bX - prevBX;
-      const bDz = bZ - prevBZ;
-      if (Math.abs(bDx) > 0.001 || Math.abs(bDz) > 0.001) {
-        singleButterflyGroup.rotation.y = Math.atan2(bDx, bDz);
-        singleButterflyGroup.rotation.z = Math.sin(elapsed * 2.8) * 0.2; // Sedikit miring saat berbelok
-      }
-
-      // 4. Anjing Penjaga Mengejar Kupu-Kupu & Melompat (Jump!)
+      // 3. Anjing Penjaga: Mengejar Kupu-Kupu & Menjelajah Padang Rumput
       dogTail.rotation.y = Math.sin(elapsed * (dogAI.isJumping ? 26 : 18)) * 0.8;
       dogTongue.position.y = -0.14 + Math.sin(elapsed * 12) * 0.02;
       earL.rotation.x = -0.12 + Math.sin(elapsed * 10) * 0.12;
       earR.rotation.x = -0.12 + Math.cos(elapsed * 10) * 0.12;
 
+      // Pergantian mode bermain anjing di padang rumput secara acak
+      if (elapsed > dogAI.nextModeSwitchTime && !dogAI.isJumping) {
+        if (dogAI.mode === 'CHASE') {
+          // Kesempatan anjing menjelajah atau mengendus rumput padang rumput secara mandiri
+          dogAI.mode = 'ROAM';
+          const roamSide = Math.random() > 0.4 ? 1 : -1;
+          dogAI.roamTargetX = deckCenterX + (Math.random() - 0.5) * (deckWidth * 0.85);
+          dogAI.roamTargetZ = 5.0 + Math.random() * 8.5; // Hamparan rumput depan
+          if (Math.random() < 0.35) {
+            // Hamparan rumput samping
+            dogAI.roamTargetX = deckCenterX + roamSide * (deckWidth * 0.5 + 4.0 + Math.random() * 6.0);
+            dogAI.roamTargetZ = (Math.random() - 0.5) * 12.0;
+          }
+          dogAI.nextModeSwitchTime = elapsed + 3.0 + Math.random() * 3.5;
+        } else {
+          // Kembali mengejar kupu-kupu ke padang rumput
+          dogAI.mode = 'CHASE';
+          dogAI.nextModeSwitchTime = elapsed + 8.0 + Math.random() * 10.0;
+        }
+      }
+
+      let dogTargetX = butterflyAI.x;
+      let dogTargetZ = butterflyAI.z;
+      if (dogAI.mode === 'ROAM') {
+        dogTargetX = dogAI.roamTargetX;
+        dogTargetZ = dogAI.roamTargetZ;
+      }
+
       const curX = dogGroup.position.x;
       const curZ = dogGroup.position.z;
-      const distToB = Math.hypot(bX - curX, bZ - curZ);
+      const distToTarget = Math.hypot(dogTargetX - curX, dogTargetZ - curZ);
+      const distToButterfly = Math.hypot(butterflyAI.x - curX, butterflyAI.z - curZ);
+
+      // Ketinggian permukaan dasar: menyesuaikan lantai kayu (0.08) atau rumput (0.0)
+      const surfaceBaseY = getGroundHeightAt(curX, curZ);
+      dogAI.currentBaseY += (surfaceBaseY - dogAI.currentBaseY) * Math.min(1.0, dt * 10.0);
 
       // Cek apakah anjing siap melompat saat dekat kupu-kupu
-      if (!dogAI.isJumping && distToB < 1.7 && (elapsed - dogAI.lastJumpTime) > dogAI.jumpCooldown) {
+      if (!dogAI.isJumping && distToButterfly < 1.9 && (elapsed - dogAI.lastJumpTime) > dogAI.jumpCooldown) {
         dogAI.isJumping = true;
         dogAI.jumpStartTime = elapsed;
         dogAI.lastJumpTime = elapsed;
@@ -454,9 +565,9 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       if (dogAI.isJumping) {
         const jumpProgress = (elapsed - dogAI.jumpStartTime) / dogAI.jumpDuration;
         if (jumpProgress >= 1) {
-          // Mendarat kembali di lantai kayu
+          // Mendarat kembali
           dogAI.isJumping = false;
-          dogGroup.position.y = deckHeight;
+          dogGroup.position.y = dogAI.currentBaseY;
           dogBody.position.y = 0.38;
           dogBody.rotation.x = 0;
           headGroup.rotation.x = 0;
@@ -467,49 +578,50 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
         } else {
           // Busur parabola lompatan anjing yang lincah
           const arc = Math.sin(jumpProgress * Math.PI);
-          dogGroup.position.y = deckHeight + arc * dogAI.jumpHeight;
+          dogGroup.position.y = dogAI.currentBaseY + arc * dogAI.jumpHeight;
           dogBody.position.y = 0.38 + arc * 0.12;
 
-          // Sedikit meluncur maju ke arah kupu-kupu saat melayang
-          dogGroup.position.x += Math.sin(dogAI.currentAngle) * 0.038;
-          dogGroup.position.z += Math.cos(dogAI.currentAngle) * 0.038;
+          // Meluncur maju ke arah target saat melayang di udara
+          dogGroup.position.x += Math.sin(dogAI.currentAngle) * (0.042 * (dt / 0.016));
+          dogGroup.position.z += Math.cos(dogAI.currentAngle) * (0.042 * (dt / 0.016));
 
-          // Pose anjing melompat lucu: kedua kaki depan menggapai ke atas, kaki belakang merentang
+          // Pose anjing melompat lucu
           legFL.rotation.x = -0.95 * arc;
           legFR.rotation.x = -0.95 * arc;
           legBL.rotation.x = 0.75 * arc;
           legBR.rotation.x = 0.75 * arc;
-
-          // Kepala mendongak ke atas menatap kupu-kupu
           headGroup.rotation.x = -0.65 * arc;
-
-          // Badan menengadah saat naik, lalu menukik saat turun
           dogBody.rotation.x = (0.5 - jumpProgress) * 0.55;
         }
       } else {
-        // Anjing berlari di lantai mengejar kupu-kupu
-        dogGroup.position.y = deckHeight;
+        // Berlari di atas permukaan tanah (lantai kayu / rumput)
+        dogGroup.position.y = dogAI.currentBaseY;
         dogBody.rotation.x = 0;
 
-        // Hadapkan anjing tepat ke posisi kupu-kupu
-        const targetAngle = Math.atan2(bX - curX, bZ - curZ);
+        const targetAngle = Math.atan2(dogTargetX - curX, dogTargetZ - curZ);
         let diff = targetAngle - dogAI.currentAngle;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        dogAI.currentAngle += diff * 0.16;
+        dogAI.currentAngle += diff * Math.min(1.0, dt * 7.5);
         dogGroup.rotation.y = dogAI.currentAngle;
 
-        // Kepala sedikit mendongak ke arah ketinggian kupu-kupu
-        const heightDiff = bY - (deckHeight + 0.6);
-        headGroup.rotation.x = -Math.min(0.5, Math.max(0, heightDiff * 0.35));
+        if (dogAI.mode === 'ROAM') {
+          // Sedang menjelajah/mengendus rumput di padang rumput
+          headGroup.rotation.x = 0.22 + Math.sin(elapsed * 4) * 0.08;
+        } else {
+          // Sedang mengejar kupu-kupu: kepala mendongak ke arah ketinggian kupu-kupu
+          const heightDiff = finalBY - (dogAI.currentBaseY + 0.6);
+          headGroup.rotation.x = -Math.min(0.55, Math.max(0, heightDiff * 0.35));
+        }
 
-        // Lari mengejar kupu-kupu
-        const stepSpeed = Math.min(0.048, distToB * 0.045);
+        // Kecepatan lari
+        const baseSpeed = dogAI.mode === 'CHASE' ? Math.min(0.062, Math.max(0.038, distToTarget * 0.05)) : 0.038;
+        const stepSpeed = baseSpeed * (dt / 0.016);
         dogGroup.position.x += Math.sin(dogAI.currentAngle) * stepSpeed;
         dogGroup.position.z += Math.cos(dogAI.currentAngle) * stepSpeed;
 
-        // Animasi ayunan 4 kaki berlari kencang
-        dogAI.walkCycle += 0.36;
+        // Ayunan kaki berjalan/berlari
+        dogAI.walkCycle += (dogAI.mode === 'CHASE' ? 0.42 : 0.3) * (dt / 0.016);
         legFL.rotation.x = Math.sin(dogAI.walkCycle) * 0.55;
         legFR.rotation.x = -Math.sin(dogAI.walkCycle) * 0.55;
         legBL.rotation.x = -Math.sin(dogAI.walkCycle) * 0.55;
