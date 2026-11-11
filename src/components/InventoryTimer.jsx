@@ -131,7 +131,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 aria-haspopup="dialog"
                 onClick={() => dialogRef.current?.showModal()}
                 className="group flex items-center gap-2 sm:gap-3.5 bg-slate-950/90 hover:bg-slate-950 border-2 border-blue-500/70 hover:border-blue-400 px-4 py-1.5 rounded-2xl shadow-lg shadow-blue-950/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
-                title="Klik untuk atur durasi target countdown & catatan (PIN: 4695)"
+                title="Klik untuk atur durasi target countdown & catatan"
               >
                 {finished ? (
                   <span className="text-xs sm:text-sm md:text-base font-black text-rose-400 tracking-wider animate-pulse uppercase">
@@ -184,7 +184,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 aria-haspopup="dialog"
                 onClick={() => dialogRef.current?.showModal()}
                 className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/90 hover:bg-slate-950 border border-amber-500/50 hover:border-amber-400 text-amber-200 text-xs font-semibold cursor-pointer transition-all shadow-md shadow-amber-950/20 max-w-[340px] sm:max-w-[480px] truncate"
-                title="Klik untuk ubah catatan target countdown (PIN: 4695)"
+                title="Klik untuk ubah catatan target countdown"
               >
                 <span className="font-black text-amber-400 flex items-center gap-1 shrink-0">
                   <span>📌 Note:</span>
@@ -202,7 +202,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 aria-haspopup="dialog"
                 onClick={() => dialogRef.current?.showModal()}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                title="Atur durasi & catatan timer (PIN: 4695)"
+                title="Atur durasi & catatan timer"
               >
                 <Timer className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
                 <span>Atur Timer &amp; Note</span>
@@ -217,7 +217,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
           aria-haspopup="dialog"
           onClick={() => dialogRef.current?.showModal()}
           className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-white/90 hover:bg-slate-100/90 text-slate-800 border-slate-200 hover:shadow-xs hover:-translate-y-0.5 cursor-pointer shrink-0"
-          title="Atur durasi timer (PIN: 4695)"
+          title="Atur durasi timer"
         >
           <Timer className="h-3.5 w-3.5 text-blue-600 shrink-0" aria-hidden="true" />
           <span className="font-mono font-bold tracking-tight text-slate-900 tabular-nums">
@@ -274,7 +274,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
               aria-haspopup="dialog"
               onClick={() => dialogRef.current?.showModal()}
               className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:scale-95 cursor-pointer"
-              title="Atur durasi & catatan timer (PIN: 4695)"
+              title="Atur durasi & catatan timer"
             >
               <Timer className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
               <span>Atur Timer &amp; Note</span>
@@ -329,7 +329,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
         {!unlocked ? (
           <form onSubmit={unlock} className="mt-4 space-y-4">
             <label className="block text-sm font-semibold text-slate-800">
-              PIN Pengaturan (4695)
+              PIN Pengaturan
               <input
                 type="password"
                 inputMode="numeric"
