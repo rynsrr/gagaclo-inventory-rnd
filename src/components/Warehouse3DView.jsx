@@ -141,6 +141,7 @@ export const Warehouse3DView = ({
   const cameraRef = useRef(null);
   const controlsRef = useRef(null);
   const boxMeshesRef = useRef([]);
+  const interactiveRackMeshesRef = useRef([]);
   const animationFrameIdRef = useRef(null);
 
   // PPIC color palette for 3D boxes body. Built from the live PPIC list so
@@ -361,6 +362,7 @@ export const Warehouse3DView = ({
     forestRef.current = forest;
 
     const boxMeshes = [];
+    const interactiveRackMeshes = [];
 
     rackPositions.forEach((rackConf) => {
       const rackData = racks.find((r) => Number(r.id) === Number(rackConf.rackId));
@@ -405,7 +407,9 @@ export const Warehouse3DView = ({
         pillar.position.set(px, pillarHeight / 2, pz);
         pillar.castShadow = true;
         pillar.receiveShadow = true;
+        pillar.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
         rackGroup.add(pillar);
+        interactiveRackMeshes.push(pillar);
       });
 
       // 2. Horizontal Beam Shelves
@@ -418,13 +422,17 @@ export const Warehouse3DView = ({
         const frontBeam = new THREE.Mesh(beamGeo, pillarMat);
         frontBeam.position.set(0, sy, halfD);
         frontBeam.castShadow = true;
+        frontBeam.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
         rackGroup.add(frontBeam);
+        interactiveRackMeshes.push(frontBeam);
 
         // Back beam
         const backBeam = new THREE.Mesh(beamGeo, pillarMat);
         backBeam.position.set(0, sy, -halfD);
         backBeam.castShadow = true;
+        backBeam.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
         rackGroup.add(backBeam);
+        interactiveRackMeshes.push(backBeam);
 
         // Wooden/wire deck plank
         const deckGeo = new THREE.BoxGeometry(rackWidth - 0.1, 0.06, rackDepth - 0.2);
@@ -436,7 +444,9 @@ export const Warehouse3DView = ({
         const deck = new THREE.Mesh(deckGeo, deckMat);
         deck.position.set(0, sy + 0.05, 0);
         deck.receiveShadow = true;
+        deck.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
         rackGroup.add(deck);
+        interactiveRackMeshes.push(deck);
       }
 
       // 3. Rack Top Sign Plate
@@ -456,7 +466,9 @@ export const Warehouse3DView = ({
       const signMat = new THREE.MeshBasicMaterial({ map: labelTex, side: THREE.DoubleSide });
       const sign = new THREE.Mesh(signGeo, signMat);
       sign.position.set(0, totalRackHeight + 0.45, halfD + 0.05);
+      sign.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
       rackGroup.add(sign);
+      interactiveRackMeshes.push(sign);
 
       // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
       const rackBoxes = boxes.filter((b) => Number(b.rackId) === Number(rackConf.rackId));
@@ -591,6 +603,37 @@ export const Warehouse3DView = ({
     });
 
     boxMeshesRef.current = boxMeshes;
+    interactiveRackMeshesRef.current = interactiveRackMeshes;
+
+    // Helper: Fokus kamera close view tegak lurus menghadap muka rak (face side fit)
+    const focusRackFaceSide = (rackId) => {
+      const rId = Number(rackId);
+      const conf = rackPositions.find(r => Number(r.rackId) === rId);
+      if (!conf) return;
+
+      const { x: rx, z: rz, rotationY = 0, cols, rows } = conf;
+      const rackWidth = cols * 1.8 + 0.4;
+      const shelfHeight = 1.9;
+      const totalRackHeight = rows * shelfHeight + 0.5;
+      const midY = totalRackHeight / 2;
+
+      const verticalSlope = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const fitDistance = 1.15 * Math.max(
+        totalRackHeight / (2 * verticalSlope),
+        rackWidth / (2 * verticalSlope * camera.aspect)
+      ) + 1.2;
+
+      // Vektor hadap muka depan rak (+Z lokal) di dunia 3D
+      const forwardDir = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationY);
+
+      const centerTarget = new THREE.Vector3(rx, midY, rz);
+      const camTarget = centerTarget.clone()
+        .add(forwardDir.clone().multiplyScalar(fitDistance))
+        .add(new THREE.Vector3(0, 0.15, 0));
+
+      flyControlsTargetRef.current = centerTarget;
+      flyCameraTargetRef.current = camTarget;
+    };
 
     // Raycasting for Mouse Hover & Click
     const raycaster = new THREE.Raycaster();
@@ -610,21 +653,29 @@ export const Warehouse3DView = ({
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(boxMeshesRef.current);
+      const allClickable = [...boxMeshesRef.current, ...interactiveRackMeshesRef.current];
+      const intersects = raycaster.intersectObjects(allClickable);
 
       if (intersects.length > 0) {
         const hit = intersects[0].object;
-        if (currentHoveredMesh !== hit) {
-          currentHoveredMesh = hit;
-          const boxData = boxes.find(b => b.boxNumber === hit.userData.boxNumber);
-          setHoveredBox(boxData);
-          renderer.domElement.style.cursor = 'pointer';
+        renderer.domElement.style.cursor = 'pointer';
+        if (hit.userData?.boxNumber) {
+          if (currentHoveredMesh !== hit) {
+            currentHoveredMesh = hit;
+            const boxData = boxes.find(b => b.boxNumber === hit.userData.boxNumber);
+            setHoveredBox(boxData);
+          }
+        } else {
+          if (currentHoveredMesh) {
+            currentHoveredMesh = null;
+            setHoveredBox(null);
+          }
         }
       } else {
+        renderer.domElement.style.cursor = 'default';
         if (currentHoveredMesh) {
           currentHoveredMesh = null;
           setHoveredBox(null);
-          renderer.domElement.style.cursor = 'default';
         }
       }
     };
@@ -639,34 +690,41 @@ export const Warehouse3DView = ({
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(boxMeshesRef.current);
+      const allClickable = [...boxMeshesRef.current, ...interactiveRackMeshesRef.current];
+      const intersects = raycaster.intersectObjects(allClickable);
 
       if (intersects.length > 0) {
         const hit = intersects[0].object;
-        const boxNum = hit.userData.boxNumber;
+        const boxNum = hit.userData?.boxNumber;
+        const targetRackId = hit.userData?.rackId;
         const now = Date.now();
 
         // Cek jika pengguna mengklik 2 kali berturut-turut pada box yang sama (< 450ms)
-        if (lastClickedBoxNumber === boxNum && (now - lastClickTime) < 450) {
+        if (boxNum && lastClickedBoxNumber === boxNum && (now - lastClickTime) < 450) {
           // Klik 2 kali: Buka popup jendela detail box
           setSelectedBoxNumber(boxNum);
           lastClickTime = 0;
           lastClickedBoxNumber = null;
         } else {
-          // Klik 1 kali: Fokuskan kamera mendekat ke box tanpa membuka popup
           lastClickTime = now;
-          lastClickedBoxNumber = boxNum;
+          lastClickedBoxNumber = boxNum || null;
 
-          const worldPos = new THREE.Vector3();
-          hit.getWorldPosition(worldPos);
-          const forwardDir = new THREE.Vector3(0, 0, 1).applyQuaternion(
-            hit.getWorldQuaternion(new THREE.Quaternion())
-          );
+          if (targetRackId && Number(targetRackId) !== 0) {
+            // Close view face side fit per nomor rak yang diklik
+            focusRackFaceSide(targetRackId);
+          } else if (boxNum) {
+            // Box di lantai (rackId 0)
+            const worldPos = new THREE.Vector3();
+            hit.getWorldPosition(worldPos);
+            const forwardDir = new THREE.Vector3(0, 0, 1).applyQuaternion(
+              hit.getWorldQuaternion(new THREE.Quaternion())
+            );
 
-          flyControlsTargetRef.current = worldPos.clone().add(new THREE.Vector3(0, 0.1, 0));
-          flyCameraTargetRef.current = worldPos.clone()
-            .add(forwardDir.clone().multiplyScalar(3.4))
-            .add(new THREE.Vector3(0, 0.35, 0));
+            flyControlsTargetRef.current = worldPos.clone().add(new THREE.Vector3(0, 0.1, 0));
+            flyCameraTargetRef.current = worldPos.clone()
+              .add(forwardDir.clone().multiplyScalar(3.4))
+              .add(new THREE.Vector3(0, 0.35, 0));
+          }
         }
       } else {
         lastClickTime = 0;

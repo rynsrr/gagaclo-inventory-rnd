@@ -47,7 +47,8 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   disposables.push(fillLight);
 
   // 3. Vast Flat Green Grassland (Lantai Padang Rumput Datar Sempurna / Laser-Flat)
-  const groundGeo = new THREE.PlaneGeometry(260, 260);
+  // Ukuran proporsional membingkai floor plan (lebar 110m, panjang 126m, center di x=12.5, z=0)
+  const groundGeo = new THREE.PlaneGeometry(110, 126);
 
   const groundMat = new THREE.MeshStandardMaterial({
     color: 0x3bb346, // Fresh, vibrant meadow grass green
@@ -57,12 +58,12 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI / 2;
-  ground.position.y = 0; // Exactly level with 0
+  ground.position.set(12.5, 0, 0); // Presisi di tengah denah arsitektur
   ground.receiveShadow = true;
   scene.add(ground);
   disposables.push(groundGeo, groundMat, ground);
 
-  // 4. Architectural Floor Plan Slab (Lantai Kayu Datar sesuai Denah Arsitektural)
+  // 4. Architectural Floor Plan Slab (Lantai Putih Arsitektural Datar sesuai Denah)
   // Polygon 8-vertex: Long Corridor, Middle Squares, Right Wing with L-Notch
   const floorShape = new THREE.Shape();
   floorShape.moveTo(-30, 50);   // z = -50
@@ -77,8 +78,8 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
 
   const floorGeo = new THREE.ShapeGeometry(floorShape);
   const floorMat = new THREE.MeshStandardMaterial({
-    color: 0xc47b38, // Warm honey oak timber
-    roughness: 0.75,
+    color: 0xf8fafc, // Clean architectural white / epoxy finish
+    roughness: 0.55,
     metalness: 0.05,
     flatShading: false,
   });
@@ -473,14 +474,18 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
         z: -46 + Math.random() * 14,
       };
     } else {
-      // Padang rumput hijau di luar denah
+      // Padang rumput hijau di luar denah (margin proporsional mengelilingi denah)
       const side = Math.random();
       if (side < 0.33) {
-        return { x: -45 + Math.random() * 12, z: (Math.random() - 0.5) * 80 };
+        // Sisi Barat
+        return { x: -38 + Math.random() * 6, z: (Math.random() - 0.5) * 90 };
       } else if (side < 0.66) {
-        return { x: 58 + Math.random() * 15, z: (Math.random() - 0.5) * 80 };
+        // Sisi Timur
+        return { x: 56 + Math.random() * 6, z: (Math.random() - 0.5) * 90 };
       } else {
-        return { x: (Math.random() - 0.5) * 60, z: 53 + Math.random() * 15 };
+        // Sisi Selatan / Utara
+        const zSign = Math.random() > 0.5 ? 1 : -1;
+        return { x: (Math.random() - 0.5) * 60, z: zSign * (51 + Math.random() * 5) };
       }
     }
   };
