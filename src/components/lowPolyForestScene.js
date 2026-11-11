@@ -174,62 +174,7 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   disposables.push(singleButterflyGroup);
 
   // =========================================================================
-  // 8. KUNANG-KUNANG (FIREFLIES) BERCAHAYA TERBANG DI SEKITAR BOX
-  // =========================================================================
-  const ffCoreGeo = new THREE.SphereGeometry(0.045, 6, 6);
-  const ffHaloGeo = new THREE.SphereGeometry(0.14, 6, 6);
-  disposables.push(ffCoreGeo, ffHaloGeo);
-
-  const fireflies = [];
-  const fireflyCount = 26;
-
-  for (let j = 0; j < fireflyCount; j++) {
-    const ffGroup = new THREE.Group();
-    const coreMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-    const haloMat = new THREE.MeshBasicMaterial({
-      color: 0x84cc16,
-      transparent: true,
-      opacity: 0.5,
-    });
-    disposables.push(coreMat, haloMat);
-
-    const core = new THREE.Mesh(ffCoreGeo, coreMat);
-    const halo = new THREE.Mesh(ffHaloGeo, haloMat);
-    ffGroup.add(core);
-    ffGroup.add(halo);
-
-    const baseX = minX + 1 + Math.random() * (maxX - minX - 2);
-    const baseY = 0.5 + Math.random() * 4.2;
-    const baseZ = (Math.random() - 0.5) * 6.5;
-
-    ffGroup.position.set(baseX, baseY, baseZ);
-    scene.add(ffGroup);
-    disposables.push(ffGroup);
-
-    fireflies.push({
-      group: ffGroup,
-      coreMat,
-      halo,
-      haloMat,
-      baseX,
-      baseY,
-      baseZ,
-      radiusX: 1.8 + Math.random() * 3.0,
-      radiusY: 0.8 + Math.random() * 1.4,
-      radiusZ: 1.5 + Math.random() * 2.8,
-      speedX: 0.4 + Math.random() * 0.5,
-      speedY: 0.5 + Math.random() * 0.6,
-      speedZ: 0.35 + Math.random() * 0.45,
-      phaseX: Math.random() * Math.PI * 2,
-      phaseY: Math.random() * Math.PI * 2,
-      phaseZ: Math.random() * Math.PI * 2,
-      blinkSpeed: 2.0 + Math.random() * 3.0,
-      blinkPhase: Math.random() * Math.PI * 2,
-    });
-  }
-
-  // =========================================================================
-  // 9. ANJING PENJAGA BERJALAN RANDOM (WAJAH LUCU, PUPPY EYES & PATROLI RAK)
+  // 8. ANJING PENJAGA BERJALAN RANDOM & MENGEJAR KUPU-KUPU
   // =========================================================================
   const dogGroup = new THREE.Group();
   dogGroup.position.set(deckCenterX, deckHeight, 2.5);
@@ -462,22 +407,23 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
         starMat.opacity = 0.75 + Math.sin(elapsed * 2.8) * 0.2;
       }
 
-      // 2. Satu Kupu-kupu lincah terbang meliuk-liuk di sekitar area rak
-      const flap = Math.sin(elapsed * 24) * 0.95;
+      // 2. Kupu-kupu terbang acak & dinamis mengitari rak hingga keluar ke padang rumput
+      const flap = Math.sin(elapsed * 28 + Math.sin(elapsed * 3.5) * 3) * 0.95;
       bWingL.rotation.y = flap;
       bWingR.rotation.y = -flap;
 
       const prevBX = singleButterflyGroup.position.x;
       const prevBZ = singleButterflyGroup.position.z;
 
-      // Trajektori terbang berputar dan meliuk indah di atas lantai kayu
-      const bX = deckCenterX + Math.sin(elapsed * 0.85) * (deckWidth * 0.35) + Math.cos(elapsed * 0.42) * 1.5;
-      const bZ = 1.6 + Math.cos(elapsed * 0.68) * 1.7 + Math.sin(elapsed * 1.35) * 0.5;
+      // Trajektori multi-frekuensi acak luas (bisa keluar dari lantai kayu ke rumput hijau)
+      const bX = deckCenterX + Math.sin(elapsed * 0.45) * (deckWidth * 0.65) + Math.cos(elapsed * 0.92) * 4.2 + Math.sin(elapsed * 1.7) * 1.5;
+      const bZ = Math.cos(elapsed * 0.38) * 6.0 + Math.sin(elapsed * 0.82) * 3.2 + Math.cos(elapsed * 1.55) * 1.2;
 
-      // Jika anjing sedang melompat menggapai, kupu-kupu terbang sedikit menghindar ke atas (dodge)
+      // Ketinggian terbang bervariasi: menukik rendah ke rumput lalu melambung tinggi di atas rak
       const isEvading = dogAI.isJumping;
-      const jumpEvade = isEvading ? Math.sin(((elapsed - dogAI.jumpStartTime) / dogAI.jumpDuration) * Math.PI) * 0.85 : 0;
-      const bY = deckHeight + 0.95 + Math.sin(elapsed * 1.6) * 0.45 + Math.cos(elapsed * 3.1) * 0.25 + jumpEvade;
+      const jumpEvade = isEvading ? Math.sin(((elapsed - dogAI.jumpStartTime) / dogAI.jumpDuration) * Math.PI) * 0.95 : 0;
+      const bYBase = 1.6 + Math.sin(elapsed * 0.72) * 1.1 + Math.cos(elapsed * 1.45) * 0.6 + Math.sin(elapsed * 3.6) * 0.25;
+      const bY = Math.max(0.65, bYBase + jumpEvade);
 
       singleButterflyGroup.position.set(bX, bY, bZ);
 
@@ -485,19 +431,8 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
       const bDz = bZ - prevBZ;
       if (Math.abs(bDx) > 0.001 || Math.abs(bDz) > 0.001) {
         singleButterflyGroup.rotation.y = Math.atan2(bDx, bDz);
+        singleButterflyGroup.rotation.z = Math.sin(elapsed * 2.8) * 0.2; // Sedikit miring saat berbelok
       }
-
-      // 3. Kunang-kunang melayang bercahaya kelap-kelip di sekitar box
-      fireflies.forEach((ff) => {
-        ff.group.position.x = ff.baseX + Math.sin(elapsed * ff.speedX + ff.phaseX) * ff.radiusX;
-        ff.group.position.y = ff.baseY + Math.sin(elapsed * ff.speedY + ff.phaseY) * ff.radiusY;
-        ff.group.position.z = ff.baseZ + Math.cos(elapsed * ff.speedZ + ff.phaseZ) * ff.radiusZ;
-
-        const blink = Math.pow(Math.max(0, Math.sin(elapsed * ff.blinkSpeed + ff.blinkPhase)), 2.0);
-        ff.halo.scale.setScalar(0.7 + blink * 0.9);
-        ff.haloMat.opacity = currentIsDark ? (0.25 + blink * 0.7) : (0.15 + blink * 0.35);
-        ff.coreMat.color.setHex(blink > 0.35 ? 0xfef08a : 0xa3e635);
-      });
 
       // 4. Anjing Penjaga Mengejar Kupu-Kupu & Melompat (Jump!)
       dogTail.rotation.y = Math.sin(elapsed * (dogAI.isJumping ? 26 : 18)) * 0.8;
