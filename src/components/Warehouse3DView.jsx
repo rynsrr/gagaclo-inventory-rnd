@@ -436,34 +436,11 @@ export const Warehouse3DView = ({
         interactiveRackMeshes.push(deck);
       }
 
-      // 3. Rack Top Sign Plate & High-Visibility All-Angle Billboard Sprite
-      // A. Physical Sign Plate on Rack
-      const labelCanvas = document.createElement('canvas');
-      labelCanvas.width = 512;
-      labelCanvas.height = 128;
-      const lctx = labelCanvas.getContext('2d');
+      // 3. High-Visibility All-Angle Billboard Sprite (Papan Nama Rak Terapung)
       const isSample = rackData.category === 'SAMPLE';
       const badgeAccent = isSample ? '#f59e0b' : '#10b981';
 
-      lctx.fillStyle = badgeAccent;
-      lctx.fillRect(0, 0, 512, 128);
-      lctx.fillStyle = '#0f172a';
-      lctx.font = '900 68px system-ui, -apple-system, sans-serif';
-      lctx.textAlign = 'center';
-      lctx.textBaseline = 'middle';
-      lctx.fillText(rackData.name.toUpperCase(), 256, 64);
-
-      const labelTex = new THREE.CanvasTexture(labelCanvas);
-      labelTex.colorSpace = THREE.SRGBColorSpace;
-      const signGeo = new THREE.PlaneGeometry(2.6, 0.65);
-      const signMat = new THREE.MeshBasicMaterial({ map: labelTex, side: THREE.DoubleSide });
-      const sign = new THREE.Mesh(signGeo, signMat);
-      sign.position.set(0, totalRackHeight + 0.45, halfD + 0.05);
-      sign.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
-      rackGroup.add(sign);
-      interactiveRackMeshes.push(sign);
-
-      // B. Floating Billboard Sprite (Selalu Menghadap Kamera dari Segala Sudut / All-Angle View)
+      // Floating Billboard Sprite (Selalu Menghadap Kamera dari Segala Sudut / All-Angle View)
       const spriteCanvas = document.createElement('canvas');
       spriteCanvas.width = 1024;
       spriteCanvas.height = 320;
