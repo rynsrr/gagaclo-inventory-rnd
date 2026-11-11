@@ -309,6 +309,8 @@ export const InventoryProvider = ({ children }) => {
   const [systemNotification, setSystemNotification] = useState(null);
   const notificationTimerRef = useRef(null);
   const realtimeChannelRef = useRef(null);
+  const isSyncingRef = useRef(false);
+  const saveTimeoutRef = useRef(null);
 
   const showNotification = useCallback((message, type = 'info', duration = 6000) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
@@ -498,23 +500,30 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  // Persist to localStorage on change as safety cache
+  // Persist to localStorage on change as safety cache (Debounced to prevent thread blocking)
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + '_racks', JSON.stringify(racks));
-      localStorage.setItem(STORAGE_KEY + '_ppic', JSON.stringify(ppicMembers));
-      localStorage.setItem(STORAGE_KEY + '_boxes', JSON.stringify(boxes));
-      localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(items));
-      localStorage.setItem(STORAGE_KEY + '_transactions', JSON.stringify(transactions));
-      localStorage.setItem(STORAGE_KEY + '_users', JSON.stringify(users));
-      if (currentUser) {
-        localStorage.setItem(STORAGE_KEY + '_current_user', currentUser.id);
-      } else {
-        localStorage.removeItem(STORAGE_KEY + '_current_user');
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY + '_racks', JSON.stringify(racks));
+        localStorage.setItem(STORAGE_KEY + '_ppic', JSON.stringify(ppicMembers));
+        localStorage.setItem(STORAGE_KEY + '_boxes', JSON.stringify(boxes));
+        localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(items));
+        localStorage.setItem(STORAGE_KEY + '_transactions', JSON.stringify(transactions));
+        localStorage.setItem(STORAGE_KEY + '_users', JSON.stringify(users));
+        if (currentUser) {
+          localStorage.setItem(STORAGE_KEY + '_current_user', currentUser.id);
+        } else {
+          localStorage.removeItem(STORAGE_KEY + '_current_user');
+        }
+      } catch (e) {
+        console.error('Failed to save to localStorage', e);
       }
-    } catch (e) {
-      console.error('Failed to save to localStorage', e);
-    }
+    }, 800);
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [racks, ppicMembers, boxes, items, transactions, users, currentUser]);
 
   // Sync from Supabase down to local state
@@ -524,6 +533,11 @@ export const InventoryProvider = ({ children }) => {
       if (!silent) setSupabaseStatus(prev => ({ ...prev, isConnected: false, isSyncing: false }));
       return { success: false, message: 'Supabase client belum diinisialisasi' };
     }
+
+    if (isSyncingRef.current) {
+      return { success: true, message: 'Sinkronisasi sedang berjalan' };
+    }
+    isSyncingRef.current = true;
 
     if (!silent) {
       setSupabaseStatus(prev => ({ ...prev, isSyncing: true, error: null }));
@@ -624,7 +638,15 @@ export const InventoryProvider = ({ children }) => {
           .select('*')
           .order('created_at', { ascending: false });
         if (dbIssues && dbIssues.length > 0) {
-          setIssues(dbIssues.map(dbIssueToLocal));
+          setIssues(prev => {
+            const mapped = dbIssues.map(dbIssueToLocal);
+            if (prev.length !== mapped.length) return mapped;
+            const changed = mapped.some((m, idx) => {
+              const p = prev[idx];
+              return !p || p.id !== m.id || p.status !== m.status || p.updatedAt !== m.updatedAt;
+            });
+            return changed ? mapped : prev;
+          });
         }
       } catch {}
 
@@ -640,7 +662,42 @@ export const InventoryProvider = ({ children }) => {
           i.status !== 'Disposal' &&
           !deletedIds.has(String(i.id))
         ));
-        setItems(userItems.map(dbItemToLocal));
+
+        setItems(prev => {
+          if (prev.length !== userItems.length) {
+            return userItems.map(dbItemToLocal);
+          }
+          const mapped = userItems.map(dbItemToLocal);
+          const prevMap = new Map(prev.map(item => [String(item.id), item]));
+          let hasChange = false;
+          for (const item of mapped) {
+            const old = prevMap.get(String(item.id));
+            if (!old) {
+              hasChange = true;
+              break;
+            }
+            if (
+              old.quantity !== item.quantity ||
+              old.boxNumber !== item.boxNumber ||
+              old.kode !== item.kode ||
+              old.picName !== item.picName ||
+              old.recordDate !== item.recordDate ||
+              old.storageDate !== item.storageDate ||
+              old.style !== item.style ||
+              old.sampleNo !== item.sampleNo ||
+              old.size !== item.size ||
+              old.color !== item.color ||
+              old.buyerNo !== item.buyerNo ||
+              old.jenisSample !== item.jenisSample ||
+              old.status !== item.status ||
+              old.description !== item.description
+            ) {
+              hasChange = true;
+              break;
+            }
+          }
+          return hasChange ? mapped : prev;
+        });
       }
 
       if (dbBoxes && dbBoxes.length > 0) {
@@ -662,20 +719,47 @@ export const InventoryProvider = ({ children }) => {
           const extra = userDbBoxes
             .filter(b => !knownNumbers.has(Number(b.box_number)))
             .map(b => dbBoxToLocal(b, []));
-          return [...updated, ...extra].sort((a, b) => a.boxNumber - b.boxNumber);
+          const next = [...updated, ...extra].sort((a, b) => a.boxNumber - b.boxNumber);
+
+          if (next.length !== prev.length) return next;
+          const hasChange = next.some((b, idx) => {
+            const p = prev[idx];
+            return !p ||
+              p.boxNumber !== b.boxNumber ||
+              p.rackId !== b.rackId ||
+              p.picName !== b.picName ||
+              p.code !== b.code ||
+              p.isFull !== b.isFull ||
+              p.notes !== b.notes;
+          });
+          return hasChange ? next : prev;
         });
       }
 
       if (dbTrx && dbTrx.length > 0) {
-        setTransactions(dbTrx.map(dbTrxToLocal));
+        setTransactions(prev => {
+          const mapped = dbTrx.map(dbTrxToLocal);
+          if (prev.length !== mapped.length) return mapped;
+          if (prev.length === 0) return prev;
+          if (prev[0]?.id !== mapped[0]?.id || prev[prev.length - 1]?.id !== mapped[mapped.length - 1]?.id) {
+            return mapped;
+          }
+          return prev;
+        });
       }
 
       const syncTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      setSupabaseStatus({
-        isConnected: true,
-        isSyncing: false,
-        lastSync: syncTime,
-        error: null,
+      setSupabaseStatus(prev => {
+        // If silent polling and already connected without error, avoid state updates to prevent re-rendering root App
+        if (silent && prev.isConnected && !prev.error) {
+          return prev;
+        }
+        return {
+          isConnected: true,
+          isSyncing: false,
+          lastSync: syncTime,
+          error: null,
+        };
       });
 
       return {
@@ -695,6 +779,8 @@ export const InventoryProvider = ({ children }) => {
         });
       }
       return { success: false, message: errMsg };
+    } finally {
+      isSyncingRef.current = false;
     }
   }, []);
 
@@ -899,13 +985,16 @@ export const InventoryProvider = ({ children }) => {
     }
   }, [supabaseConfigState.isConfigured, syncFromSupabase]);
 
-  // Background Auto-Polling (Setiap 4 detik) untuk menjamin sinkronisasi antar 20 komputer
+  // Background Auto-Polling: hemat memori & CPU saat idle, pause jika tab ditinggal di background
   useEffect(() => {
     if (!supabaseConfigState.isConfigured || !supabase) return;
 
+    // Polling tiap 20 detik saat tab aktif sebagai cadangan jika ada event websocket dropped.
+    // Jika tab ditinggal / background (document.hidden), interval sama sekali TIDAK berjalan.
     const intervalId = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       syncFromSupabase(supabase, true);
-    }, 4000);
+    }, 20000);
 
     return () => window.clearInterval(intervalId);
   }, [supabaseConfigState.isConfigured, syncFromSupabase]);
@@ -914,8 +1003,14 @@ export const InventoryProvider = ({ children }) => {
   useEffect(() => {
     if (!supabaseConfigState.isConfigured || !supabase) return;
 
+    let lastFocusSync = Date.now();
     const handleFocusSync = () => {
-      syncFromSupabase(supabase, true);
+      const now = Date.now();
+      // Throttling 4 detik agar tidak spam request berulang saat window focus & visibilitychange bersamaan
+      if (now - lastFocusSync > 4000) {
+        lastFocusSync = now;
+        syncFromSupabase(supabase, true);
+      }
     };
 
     window.addEventListener('focus', handleFocusSync);

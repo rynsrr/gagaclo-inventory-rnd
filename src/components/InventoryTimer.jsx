@@ -32,12 +32,20 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
 
   useEffect(() => {
     if (!deadline || finished) return;
-    const update = () => setNow(Date.now());
-    const interval = window.setInterval(update, 250);
-    document.addEventListener('visibilitychange', update);
+    const update = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      setNow(Date.now());
+    };
+    const interval = window.setInterval(update, 1000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        setNow(Date.now());
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', update);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [deadline, finished]);
 

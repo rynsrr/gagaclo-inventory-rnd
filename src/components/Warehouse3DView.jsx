@@ -173,8 +173,14 @@ export const Warehouse3DView = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [dogReminderActive, setDogReminderActive] = useState(false);
   const lastInputTimeRef = useRef(Date.now());
+  const lastUserInteractionTimeRef = useRef(Date.now());
   const forestRef = useRef(null);
   const rendererRef = useRef(null);
+
+  // Stable key untuk mencegah rebuild scene 3D yang merusak memori GPU jika data box tidak berubah
+  const boxesStructureKey = useMemo(() => {
+    return boxes.map(b => `${b.boxNumber}:${b.rackId}:${b.picName}:${b.isFull}`).join('|');
+  }, [boxes]);
 
   // A Set of box numbers matching the sidebar search (null = no active search).
   const searchActive = highlightBoxNumbers !== null;
@@ -759,6 +765,29 @@ export const Warehouse3DView = ({
         return;
       }
 
+      // Adaptive idle throttling: hemat GPU & CPU saat user sedang tidak aktif/meninggalkan komputer
+      const idleMs = Date.now() - lastUserInteractionTimeRef.current;
+      const isActivelyMoving = Boolean(
+        flyCameraTargetRef.current || 
+        isUserInteractingRef.current || 
+        selectedBoxNumberRef.current !== null ||
+        currentHoveredMesh !== null
+      );
+
+      if (!isActivelyMoving) {
+        if (idleMs > 300000) {
+          // Idle > 5 menit: batasi render ke 2 FPS (hampir 0% beban GPU & baterai)
+          if (timestamp - lastRenderTime < 500) return;
+        } else if (idleMs > 60000) {
+          // Idle > 1 menit: batasi ke 15 FPS
+          if (timestamp - lastRenderTime < 66) return;
+        } else if (idleMs > 20000) {
+          // Idle > 20 detik: batasi ke 30 FPS
+          if (timestamp - lastRenderTime < 33) return;
+        }
+      }
+      lastRenderTime = timestamp;
+
       const elapsed = clock.getElapsedTime();
       forest?.update(elapsed);
 
@@ -883,10 +912,31 @@ export const Warehouse3DView = ({
         container.removeChild(renderer.domElement);
       }
 
+      // Bersihkan seluruh geometri, material, dan tekstur Three.js dari memori GPU
+      scene.traverse((obj) => {
+        if (obj.geometry && typeof obj.geometry.dispose === 'function') {
+          obj.geometry.dispose();
+        }
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((mat) => {
+              if (mat.map && typeof mat.map.dispose === 'function') mat.map.dispose();
+              mat.dispose();
+            });
+          } else {
+            if (obj.material.map && typeof obj.material.map.dispose === 'function') {
+              obj.material.map.dispose();
+            }
+            obj.material.dispose();
+          }
+        }
+      });
+      scene.clear();
+
       forest?.dispose();
       renderer.dispose();
     };
-  }, [boxes, racks, ppicMembers, retryKey]);
+  }, [boxesStructureKey, racks, ppicMembers, retryKey]);
 
   // Update scene atmosphere & spotlight intensity on Mode Gelap toggle
   useEffect(() => {
@@ -898,18 +948,30 @@ export const Warehouse3DView = ({
   // Pantau aktivitas input data untuk pengingat 15 menit dari anjing penjaga
   useEffect(() => {
     lastInputTimeRef.current = Date.now();
+    lastUserInteractionTimeRef.current = Date.now();
     setDogReminderActive(false);
   }, [items]);
 
   useEffect(() => {
     const markActivity = () => {
       lastInputTimeRef.current = Date.now();
+      lastUserInteractionTimeRef.current = Date.now();
     };
     window.addEventListener('input', markActivity);
     window.addEventListener('change', markActivity);
+    window.addEventListener('pointermove', markActivity, { passive: true });
+    window.addEventListener('pointerdown', markActivity, { passive: true });
+    window.addEventListener('keydown', markActivity, { passive: true });
+    window.addEventListener('wheel', markActivity, { passive: true });
+    window.addEventListener('touchstart', markActivity, { passive: true });
     return () => {
       window.removeEventListener('input', markActivity);
       window.removeEventListener('change', markActivity);
+      window.removeEventListener('pointermove', markActivity);
+      window.removeEventListener('pointerdown', markActivity);
+      window.removeEventListener('keydown', markActivity);
+      window.removeEventListener('wheel', markActivity);
+      window.removeEventListener('touchstart', markActivity);
     };
   }, []);
 
@@ -930,7 +992,7 @@ export const Warehouse3DView = ({
       if (elapsed >= IDLE_LIMIT_MS && !dogReminderActive) {
         triggerDogReminder();
       }
-    }, 4000);
+    }, 30000); // Cek tiap 30 detik (bukan 4 detik) untuk efisiensi CPU
     return () => clearInterval(interval);
   }, [dogReminderActive]);
 

@@ -80,6 +80,7 @@ const AppContent = () => {
     if (!connected || !client) return;
     let active = true;
     const refresh = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         const { data, error } = await client.rpc('inventory_database_bytes');
         if (active) setDatabaseBytes(!error && typeof data === 'number' && data >= 0 ? data : null);
