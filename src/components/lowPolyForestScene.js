@@ -139,11 +139,10 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
   addWallSegment(-30, -50, 55, -50);  // North perimeter wall (from corridor to right wing)
   addWallSegment(55, -50, 55, -30);   // East right wing upper wall
   addWallSegment(55, -30, 35, -30);   // Horizontal notch cut wall
-  addWallSegment(35, -30, 35, -14);   // Vertical notch cut wall
 
-  // Dinding Bawah Ruang Kanan & Square 3 (Z = -14) dengan Lubang 5 di sudut L-Notch
-  addWallSegment(32, -14, 0, -14);    // Dinding bawah dari X=0 ke X=32
-  // Lubang 5 (Green Hole #5): Bukaan pintu di sudut L-Notch dari X=32 ke X=35 di Z=-14
+  // Dinding Vertikal L-Notch (X = 35) dengan Lubang 5 di ujung bawahnya (sesuai denah user)
+  addWallSegment(35, -30, 35, -17);   // Segmen dinding vertikal atas
+  // Lubang 5 (Green Hole #5): Bukaan pintu di dinding vertikal L-Notch di Z: [-17, -14]
   const holeMarkerMat = new THREE.MeshStandardMaterial({
     color: 0x22c55e, // Vibrant lime green
     roughness: 0.45,
@@ -160,7 +159,10 @@ export function buildLowPolyForestScene({ scene, minX = -18, maxX = 26, isDarkMo
     disposables.push(geo, mesh);
   };
 
-  addHoleThreshold(33.5, -14, 3.0, 0.6);
+  addHoleThreshold(35, -15.5, 0.6, 3.0);
+
+  // Dinding Bawah Ruang Kanan & Square 3 (Z = -14) menyambung utuh sampai sudut siku L-Notch (X = 35)
+  addWallSegment(35, -14, 0, -14);
 
   addWallSegment(0, -14, 0, 50);      // East wall of long corridor
   addWallSegment(-30, 50, 0, 50);     // South wall of corridor (behind Rak 3, 4, 5)
