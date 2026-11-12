@@ -18,6 +18,7 @@ import {
   Plus,
   Lock,
   Clock,
+  Calendar,
   Shirt,
   CheckCircle2,
   Layers,
@@ -29,6 +30,7 @@ import {
   Copy,
   Check,
   RotateCcw,
+  RefreshCw,
 } from 'lucide-react';
 
 /**
