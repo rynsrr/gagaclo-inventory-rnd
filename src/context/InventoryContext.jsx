@@ -1415,11 +1415,11 @@ export const InventoryProvider = ({ children }) => {
       throw new Error(errMsg);
     }
 
-    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain (Kecuali Superuser / Royan)
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain (Kecuali Superuser / Support)
     if (itemToDelete) {
       const box = boxes.find(b => Number(b.boxNumber) === Number(itemToDelete.boxNumber));
       const owner = box?.picName || itemToDelete.picName;
-      if (currentUser && !isSuperuser(currentUser) && owner && String(currentUser.name).trim().toLowerCase() !== String(owner).trim().toLowerCase()) {
+      if (currentUser && !isSuperuser(currentUser) && !isHelper(currentUser) && owner && String(currentUser.name).trim().toLowerCase() !== String(owner).trim().toLowerCase()) {
         const errMsg = `Akses ditolak: Data sampel ini milik PIC "${owner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus data user lain.`;
         showNotification(errMsg, 'error', 6000);
         throw new Error(errMsg);
@@ -1513,8 +1513,8 @@ export const InventoryProvider = ({ children }) => {
       throw new Error(errMsg);
     }
 
-    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain (Kecuali Superuser / Royan)
-    if (currentUser && !isSuperuser(currentUser)) {
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain (Kecuali Superuser / Support)
+    if (currentUser && !isSuperuser(currentUser) && !isHelper(currentUser)) {
       const forbidden = items.find(i => {
         if (!idSet.has(String(i.id))) return false;
         const box = boxes.find(b => Number(b.boxNumber) === Number(i.boxNumber));
@@ -1756,8 +1756,8 @@ export const InventoryProvider = ({ children }) => {
     const box = boxes.find(b => Number(b.boxNumber) === num);
     if (!box) throw new Error(`Box #${boxNumber} tidak ditemukan.`);
 
-    // ATURAN KEAMANAN: Satu user tidak dapat mengedit box user lain (Kecuali Superuser / Royan)
-    if (currentUser && !isSuperuser(currentUser) && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
+    // ATURAN KEAMANAN: Satu user tidak dapat mengedit box user lain (Kecuali Superuser / Support)
+    if (currentUser && !isSuperuser(currentUser) && !isHelper(currentUser) && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
       const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${box.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);

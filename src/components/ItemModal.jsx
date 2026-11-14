@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { supabase } from '../lib/supabase';
 import { CardPrintModal } from './CardPrintModal';
+import { isSupport, isHelper, isSuperuser } from '../utils/authUtils';
 import { 
   resolveUniqueCode, 
   getNextSampleCode, 
@@ -315,7 +316,9 @@ const ItemModalContent = () => {
 
     const boxNum = Number(formData.boxNumber) || 1;
     const boxObj = boxes.find(b => Number(b.boxNumber) === boxNum);
-    const isOwnerBox = !currentUser || !boxObj?.picName || String(currentUser.name).trim().toLowerCase() === String(boxObj.picName).trim().toLowerCase();
+    const isSuper = isSuperuser?.(currentUser);
+    const isSupportUser = isSupport?.(currentUser) || isHelper?.(currentUser);
+    const isOwnerBox = !currentUser || isSuper || isSupportUser || !boxObj?.picName || String(currentUser.name).trim().toLowerCase() === String(boxObj.picName).trim().toLowerCase();
     if (!isOwnerBox) {
       setSubmitError(`Akses ditolak: Box #${boxNum} adalah milik PIC "${boxObj?.picName}". Anda sedang login sebagai "${currentUser?.name}". Satu user tidak dapat mengedit data user lain.`);
       return;
@@ -413,7 +416,10 @@ const ItemModalContent = () => {
   };
 
   const currentBoxObj = boxes.find(b => Number(b.boxNumber) === Number(formData.boxNumber));
-  const isOwner = !currentUser || !currentBoxObj?.picName || String(currentUser.name).trim().toLowerCase() === String(currentBoxObj.picName).trim().toLowerCase();
+  const isSuper = isSuperuser?.(currentUser);
+  const isSupportUser = isSupport?.(currentUser) || isHelper?.(currentUser);
+  const isRealOwner = currentUser && currentBoxObj?.picName && String(currentUser.name).trim().toLowerCase() === String(currentBoxObj.picName).trim().toLowerCase();
+  const isOwner = !currentUser || isSuper || isSupportUser || !currentBoxObj?.picName || isRealOwner;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-fade-in print:p-0 print:bg-transparent">
@@ -442,6 +448,16 @@ const ItemModalContent = () => {
             </button>
           </div>
         </div>
+
+        {/* Support User Banner */}
+        {isSupportUser && !isRealOwner && currentBoxObj?.picName && (
+          <div className="no-print bg-teal-50 border-b border-teal-300 text-teal-950 px-4 py-2 text-xs font-bold flex items-center gap-2.5 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse shrink-0"></span>
+            <div className="flex-1 leading-snug">
+              <strong>Mode Tim Support:</strong> Anda sedang login sebagai <strong>{currentUser?.name}</strong> untuk membantu input item di Box #{formData.boxNumber} (Milik PIC <strong>{currentBoxObj?.picName}</strong>). Stok tetap tercatat di Box {currentBoxObj?.picName}, dan kontribusi input dicatat secara Dual-Tracking.
+            </div>
+          </div>
+        )}
 
         {/* Read-Only Banner when box belongs to another PIC */}
         {!isOwner && (

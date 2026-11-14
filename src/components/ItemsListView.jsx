@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useInventory } from '../context/InventoryContext';
+import { isSupport, isHelper, isSuperuser } from '../utils/authUtils';
 import { 
   Search, 
   FileSpreadsheet, 
@@ -399,7 +400,7 @@ export const ItemsListView = () => {
                           >
                             <QrCode className="w-3.5 h-3.5" />
                           </button>
-                          {(!currentUser || !item.picName || String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase()) ? (
+                          {(!currentUser || isSuperuser(currentUser) || isSupport(currentUser) || isHelper(currentUser) || !item.picName || String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase()) ? (
                             <>
                               <button
                                 onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: item.boxNumber })}
