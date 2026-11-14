@@ -86,7 +86,6 @@ export const PpicDashboardView = () => {
                         <span className="text-xs font-bold text-slate-400">PPIC #{pic.ppicNumber}</span>
                         <h3 className="text-lg font-black text-slate-900">{pic.name}</h3>
                       </div>
-                      <p className="text-xs text-slate-500 font-medium">{pic.role}</p>
                     </div>
                   </div>
 

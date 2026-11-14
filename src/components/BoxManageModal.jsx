@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { isSuperuser } from '../utils/authUtils';
 
 const EMPTY_PERSON_FORM = { name: '', role: '', email: '' };
 const EMPTY_RACK_FORM = { name: '', category: 'SAMPLE', location: '' };
@@ -131,15 +132,15 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
       if (editingPerson) {
         updatePpicMember(editingPerson.id, {
           name,
-          role: personForm.role.trim() || 'PPIC Staff',
-          email: personForm.email.trim(),
+          role: editingPerson.role || 'PPIC Staff',
+          email: editingPerson.email || '',
         });
         flash('ok', `Data ${name} berhasil diperbarui.`);
       } else {
         addPpicMember({
           name,
-          role: personForm.role.trim(),
-          email: personForm.email.trim(),
+          role: 'PPIC Staff',
+          email: '',
         });
         flash('ok', `${name} berhasil ditambahkan sebagai PIC.`);
       }
@@ -151,8 +152,10 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
   };
 
   const startEditPerson = (person) => {
-    if (currentUser && String(currentUser.id).toLowerCase() !== String(person.id).toLowerCase()) {
-      flash('err', `Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak bisa mengedit data user lain.`);
+    const isSuper = isSuperuser(currentUser);
+    const isSelf = currentUser && String(currentUser.id).toLowerCase() === String(person.id).toLowerCase();
+    if (!isSuper && !isSelf) {
+      flash('err', `Akses ditolak: Anda sedang login sebagai "${currentUser?.name}". Satu user tidak bisa mengedit data user lain.`);
       return;
     }
     setEditingPerson(person);
@@ -184,8 +187,10 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
         await deleteBox(confirmDelete.id, { moveItemsToFloor: true });
         flash('ok', `Box #${confirmDelete.id} berhasil dihapus.`);
       } else if (confirmDelete.type === 'person') {
-        if (currentUser && String(currentUser.id).toLowerCase() !== String(confirmDelete.id).toLowerCase()) {
-          flash('err', `Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus akun user lain.`);
+        const isSuper = isSuperuser(currentUser);
+        const isSelf = currentUser && String(currentUser.id).toLowerCase() === String(confirmDelete.id).toLowerCase();
+        if (!isSuper && !isSelf) {
+          flash('err', `Akses ditolak: Anda sedang login sebagai "${currentUser?.name}". Satu user tidak dapat menghapus akun user lain.`);
           setConfirmDelete(null);
           setBusy(false);
           return;
@@ -452,35 +457,15 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                   <Plus className="w-3.5 h-3.5 text-blue-600" />
                   {editingPerson ? `Edit ${editingPerson.name}` : 'Tambah Orang (PIC)'}
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="max-w-md">
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Nama *</span>
+                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Nama PIC *</span>
                     <input
                       type="text"
                       value={personForm.name}
                       onChange={(e) => setPersonForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="Nama orang"
-                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Role / Jabatan</span>
-                    <input
-                      type="text"
-                      value={personForm.role}
-                      onChange={(e) => setPersonForm((f) => ({ ...f, role: e.target.value }))}
-                      placeholder="PPIC Staff"
-                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Email</span>
-                    <input
-                      type="text"
-                      value={personForm.email}
-                      onChange={(e) => setPersonForm((f) => ({ ...f, email: e.target.value }))}
-                      placeholder="nama@gagaclo.internal"
-                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none"
+                      placeholder="Nama PIC (contoh: Royan, Cynara...)"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none"
                     />
                   </label>
                 </div>
@@ -519,6 +504,8 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                   {ppicMembers.map((p) => {
                     const boxCount = boxes.filter(b => b.picName === p.name).length;
                     const isSelf = currentUser && String(currentUser.id).toLowerCase() === String(p.id).toLowerCase();
+                    const isSuper = isSuperuser(currentUser);
+                    const canEdit = isSuper || isSelf;
                     return (
                       <div
                         key={p.id}
@@ -529,12 +516,16 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                         }`}
                       >
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs font-black text-slate-800 truncate">{p.name}</span>
                             <span className="text-[10px] font-bold text-slate-400">#{p.ppicNumber}</span>
                             {isSelf ? (
                               <span className="rounded-full bg-emerald-100 px-1.5 py-0.2 text-[9px] font-black text-emerald-700">
                                 Akun Anda
+                              </span>
+                            ) : isSuper ? (
+                              <span className="rounded-full bg-amber-100 px-1.5 py-0.2 text-[9px] font-black text-amber-800">
+                                ⚡ Superuser
                               </span>
                             ) : (
                               <span className="rounded-full bg-slate-100 px-1.5 py-0.2 text-[9px] font-bold text-slate-500 flex items-center gap-0.5">
@@ -542,17 +533,18 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-500 truncate">{p.role || 'PPIC Staff'}</div>
-                          <div className="text-[10px] text-slate-400 truncate">{p.email || '-'} • {boxCount} box</div>
+                          <div className="text-[11px] font-semibold text-slate-500 mt-1">
+                            {boxCount} box alokasi
+                          </div>
                         </div>
                         <div className="flex shrink-0 gap-1">
-                          {isSelf ? (
+                          {canEdit ? (
                             <>
                               <button
                                 type="button"
                                 onClick={() => startEditPerson(p)}
                                 className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-100/80 transition"
-                                title="Edit profil akun Anda"
+                                title={isSelf ? "Edit profil akun Anda" : `Edit profil ${p.name}`}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
@@ -560,7 +552,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                                 type="button"
                                 onClick={() => setConfirmDelete({ type: 'person', id: p.id, label: p.name })}
                                 className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-100/80 transition"
-                                title="Hapus akun Anda"
+                                title={isSelf ? "Hapus akun Anda" : `Hapus akun ${p.name}`}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
