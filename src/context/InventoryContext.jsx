@@ -159,8 +159,8 @@ export const InventoryProvider = ({ children }) => {
             .filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
             .map(u => ({
               ...u,
-              isSuperuser: String(u.name).trim().toLowerCase() === 'royan' || u.isSuperuser === true,
-              role: String(u.name).trim().toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : u.role,
+              isSuperuser: false,
+              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || 'PPIC Staff'),
             }));
         }
       }
@@ -171,8 +171,8 @@ export const InventoryProvider = ({ children }) => {
       id: p.id,
       username: p.name,
       name: p.name,
-      role: p.name.toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : p.role,
-      isSuperuser: p.name.toLowerCase() === 'royan' || p.isSuperuser === true,
+      role: p.role || 'PPIC Staff',
+      isSuperuser: false,
       email: p.email,
       password: p.name, // Password default sama dengan nama PIC
       ppicNumber: p.ppicNumber,
@@ -194,15 +194,15 @@ export const InventoryProvider = ({ children }) => {
             .filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
             .map(u => ({
               ...u,
-              isSuperuser: String(u.name).trim().toLowerCase() === 'royan' || u.isSuperuser === true,
-              role: String(u.name).trim().toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : u.role,
+              isSuperuser: false,
+              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || 'PPIC Staff'),
             }))
         : PPIC_MEMBERS.map(p => ({
             id: p.id,
             username: p.name,
             name: p.name,
-            role: p.name.toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : p.role,
-            isSuperuser: p.name.toLowerCase() === 'royan' || p.isSuperuser === true,
+            role: p.role || 'PPIC Staff',
+            isSuperuser: false,
             email: p.email,
             password: p.name,
             ppicNumber: p.ppicNumber,
