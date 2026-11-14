@@ -31,6 +31,115 @@ const DEFAULT_TEAM_MEMBERS = [
   { name: 'Tri', role: 'Support #3', type: 'Support', tagBg: 'bg-sky-100 text-sky-800', border: 'border-sky-200', bg: 'bg-sky-50/40', textAccent: 'text-sky-900' },
 ];
 
+// Koleksi Teks Dinamis Pujian & Ajakan (Semangat Tim & Individu)
+const PRAISE_QUOTES = [
+  '🔥 Mantap, target tembus!',
+  '⭐ Keren banget performanya!',
+  '🎉 Luar biasa, tuntas!',
+  '🚀 Gacor parah hari ini!',
+  '👏 Kerja hebat, pertahankan!',
+  '✨ Juara, sudah lewat target!',
+  '👑 Top markotop!',
+  '💪 Gaspol, target terlampaui!',
+  '💯 Sempurna, tugas tuntas!',
+  '🌟 Produktif maksimal!',
+  '🎯 Target tuntas sempurna!',
+  '🏆 Terbaik hari ini!',
+];
+
+const CALL_TO_ACTION_START = [
+  'Yuk mulai cicil input!',
+  'Ayo gas masukkan sampel!',
+  'Semangat, bisa yuk mulai!',
+  'Waktunya gerak kejar target!',
+  'Ayo buka box dan data!',
+  'Siap-siap, target menanti!',
+  'Bismillah, gas 1 sampel dulu!',
+  'Ayo mulai, pasti bisa!',
+  'Fokus, cicil dari sekarang!',
+  'Kejar target hari ini!',
+];
+
+const CALL_TO_ACTION_PROGRESS = [
+  'Kejar terus, jangan kendor!',
+  'Gas tipis-tipis, lanjut!',
+  'Bisa yuk, tambah lagi!',
+  'Mantap, lanjut input berikutnya!',
+  'Fokus, cicil sampai tuntas!',
+  'Semangat terus berproses!',
+  'Yuk kejar sampai hijau!',
+  'Terus gas, progres mantap!',
+];
+
+const CALL_TO_ACTION_ALMOST = [
+  'Dikit lagi tembus, gas!',
+  'Hampir finis, yuk tuntaskan!',
+  'Tinggal dikit lagi, gass!',
+  'Sentuhan akhir, pasti bisa!',
+  'Satu langkah lagi tembus!',
+  'Dikit lagi, tuntaskan hari ini!',
+];
+
+const TEAM_PRAISE_QUOTES = [
+  '🎉 Keren tim R&D, target harian tembus bersama!',
+  '🚀 Kompak luar biasa, target hari ini sukses dituntaskan!',
+  '👑 Solid banget, target tim berhasil dilewati!',
+  '🔥 Hari yang produktif, target 100% tercapai!',
+  '⭐ Luar biasa kekompakan tim hari ini, pertahankan!',
+  '🏆 Tim impian, target harian tuntas sempurna!',
+];
+
+const TEAM_CALL_TO_ACTION_QUOTES = [
+  '⚡ Ayo tim R&D, kolaborasi kejar target bersama!',
+  '💪 Bersama kita bisa, yuk tuntaskan target hari ini!',
+  '🔥 Semangat tim, terus cicil dan penuhi target bersama!',
+  '🚀 Gas bareng-bareng, masih ada target untuk diselesaikan!',
+  '🎯 Kompak terus, satukan langkah kejar target tim!',
+  '🌟 Kolaborasi solid, yuk bawa target tim sampai hijau!',
+];
+
+function getDynamicMemberQuote(member, stats, personTarget, tick) {
+  const currentPcs = stats?.pcs || 0;
+  const isAchieved = currentPcs >= personTarget;
+  const charCodeSum = member.name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const seed = Math.abs(charCodeSum + tick);
+
+  if (isAchieved) {
+    return {
+      text: PRAISE_QUOTES[seed % PRAISE_QUOTES.length],
+      type: 'praise',
+    };
+  }
+
+  if (currentPcs === 0) {
+    return {
+      text: CALL_TO_ACTION_START[seed % CALL_TO_ACTION_START.length],
+      type: 'start',
+    };
+  }
+
+  const remaining = personTarget - currentPcs;
+  if (remaining <= Math.max(3, Math.round(personTarget * 0.25))) {
+    return {
+      text: CALL_TO_ACTION_ALMOST[seed % CALL_TO_ACTION_ALMOST.length],
+      type: 'almost',
+    };
+  }
+
+  return {
+    text: CALL_TO_ACTION_PROGRESS[seed % CALL_TO_ACTION_PROGRESS.length],
+    type: 'progress',
+  };
+}
+
+function getDynamicTeamQuote(currentTotal, dailyTarget, tick) {
+  const isAchieved = currentTotal >= dailyTarget;
+  if (isAchieved) {
+    return TEAM_PRAISE_QUOTES[tick % TEAM_PRAISE_QUOTES.length];
+  }
+  return TEAM_CALL_TO_ACTION_QUOTES[tick % TEAM_CALL_TO_ACTION_QUOTES.length];
+}
+
 export function PpicPerformanceView() {
   const {
     boxes,
@@ -90,6 +199,15 @@ export function PpicPerformanceView() {
 
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const [expandedCards, setExpandedCards] = useState({});
+
+  // Rotasi kata-kata dinamis (pujian/ajakan) setiap 7 detik
+  const [quoteTick, setQuoteTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setQuoteTick((t) => (t + 1) % 1000);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleManualSync = async () => {
     setIsManualSyncing(true);
@@ -434,13 +552,26 @@ export function PpicPerformanceView() {
               style={{ width: `${Math.min(100, Math.round((currentDailyData.totalPcs / dailyTarget) * 100))}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-            <span>
-              {currentDailyData.totalPcs >= dailyTarget
-                ? `🎉 Target team tercapai! (${currentDailyData.totalItems} transaksi sampel)`
-                : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS lagi (${currentDailyData.totalItems} transaksi sampel)`}
-            </span>
-            <span className="text-indigo-600 font-medium">Oleh Mgr. Jasmine</span>
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600 gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>
+                {currentDailyData.totalPcs >= dailyTarget
+                  ? `🎉 Target team tercapai! (${currentDailyData.totalItems} transaksi sampel)`
+                  : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS lagi (${currentDailyData.totalItems} transaksi sampel)`}
+              </span>
+              <span
+                onClick={() => setQuoteTick((t) => (t + 1) % 1000)}
+                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full cursor-pointer transition-all duration-300 select-none shadow-2xs ${
+                  currentDailyData.totalPcs >= dailyTarget
+                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                    : 'bg-indigo-100 text-indigo-950 border border-indigo-200'
+                }`}
+                title="Kata motivasi tim dinamis (klik untuk acak kata-kata)"
+              >
+                {getDynamicTeamQuote(currentDailyData.totalPcs, dailyTarget, quoteTick)}
+              </span>
+            </div>
+            <span className="text-indigo-600 font-medium shrink-0">Oleh Mgr. Jasmine</span>
           </div>
         </div>
       </div>
@@ -509,6 +640,7 @@ export function PpicPerformanceView() {
             const personPercent = Math.round((stats.pcs / personTarget) * 100);
             const isPersonAchieved = stats.pcs >= personTarget;
             const isEditingThis = editingMemberTarget === member.name;
+            const memberQuote = getDynamicMemberQuote(member, stats, personTarget, quoteTick);
 
             return (
               <div
@@ -620,8 +752,27 @@ export function PpicPerformanceView() {
                         <div className="flex items-center justify-between text-[10.5px] mt-1 text-slate-600">
                           <span>{stats.items > 0 ? `${stats.items} sampel masuk` : 'Belum ada input'}</span>
                           <span className={`font-bold ${isPersonAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>
-                            {isPersonAchieved ? '✓ Tercapai' : `Sisa ${Math.max(0, personTarget - stats.pcs)} PCS`}
+                            {isPersonAchieved
+                              ? (stats.pcs > personTarget ? `✓ +${stats.pcs - personTarget} PCS surplus` : '✓ Tercapai')
+                              : `Sisa ${Math.max(0, personTarget - stats.pcs)} PCS`}
                           </span>
+                        </div>
+
+                        {/* Badge Kata Dinamis: Pujian / Ajakan Kejar Target */}
+                        <div
+                          onClick={() => setQuoteTick((t) => (t + 1) % 1000)}
+                          className={`mt-2 w-full text-center text-[10.5px] font-bold px-2 py-1 rounded-xl border transition-all duration-500 cursor-pointer select-none truncate ${
+                            memberQuote.type === 'praise'
+                              ? 'bg-emerald-100/90 text-emerald-950 border-emerald-300 shadow-2xs hover:bg-emerald-200/90'
+                              : memberQuote.type === 'almost'
+                                ? 'bg-amber-100 text-amber-950 border-amber-300 shadow-2xs hover:bg-amber-200'
+                                : memberQuote.type === 'progress'
+                                  ? 'bg-indigo-50 text-indigo-900 border-indigo-200 hover:bg-indigo-100/80'
+                                  : 'bg-slate-100/90 text-slate-700 border-slate-200 hover:bg-slate-200/80'
+                          }`}
+                          title="Kata motivasi dinamis (klik untuk acak kata-kata)"
+                        >
+                          {memberQuote.text}
                         </div>
                       </>
                     )}
