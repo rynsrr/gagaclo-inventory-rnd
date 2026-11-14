@@ -3,7 +3,7 @@ import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
-import { InventoryTimer } from './components/InventoryTimer';
+import { TargetTeamBanner } from './components/TargetTeamBanner';
 import { InventoryImport } from './components/InventoryImport';
 import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
 
@@ -186,10 +186,10 @@ const AppContent = () => {
   return (
     <div className={`inventory-shell min-h-screen flex flex-col font-sans ${appMode === '3d-warehouse' ? 'warehouse-screen' : ''}`}>
 
-      {/* Sticky Top Header Section: Full-Width Focused Countdown Banner + Navigation Header */}
+      {/* Sticky Top Header Section: Full-Width Target Team Banner + Navigation Header */}
       <div className="no-print sticky top-0 z-30 w-full shrink-0">
-        {/* Full-Width Countdown Timer Banner (Fokus & Bold) */}
-        <InventoryTimer fullWidth />
+        {/* Full-Width Target Team Banner (Fokus & Dinamis) */}
+        <TargetTeamBanner onOpenRekap={() => setAppMode('ppic-performance')} />
 
         {/* Top Navigation Bar */}
         <header className="inventory-header">
