@@ -205,7 +205,7 @@ export const InventoryProvider = ({ children }) => {
               ...u,
               isSuperuser: false,
               isHelper: isHelper(u),
-              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Asisten Rekap' : 'PPIC Staff')),
+              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff')),
             }));
           return ensureAllUsersIncluded(sanitized);
         }
@@ -217,7 +217,7 @@ export const InventoryProvider = ({ children }) => {
       id: p.id,
       username: p.name,
       name: p.name,
-      role: p.role || (p.isHelper ? 'Asisten Rekap' : 'PPIC Staff'),
+      role: p.role || (p.isHelper ? 'Tim Support' : 'PPIC Staff'),
       isSuperuser: false,
       isHelper: Boolean(p.isHelper),
       email: p.email || '',
@@ -243,13 +243,13 @@ export const InventoryProvider = ({ children }) => {
               ...u,
               isSuperuser: false,
               isHelper: isHelper(u),
-              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Asisten Rekap' : 'PPIC Staff')),
+              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff')),
             }))
         : ALL_INITIAL_USERS.map(p => ({
             id: p.id,
             username: p.name,
             name: p.name,
-            role: p.role || (p.isHelper ? 'Asisten Rekap' : 'PPIC Staff'),
+            role: p.role || (p.isHelper ? 'Tim Support' : 'PPIC Staff'),
             isSuperuser: false,
             isHelper: Boolean(p.isHelper),
             email: p.email || '',
@@ -1211,7 +1211,7 @@ export const InventoryProvider = ({ children }) => {
       unit: newItem.unit || 'pcs',
       picName: newItem.picName || (targetBox ? targetBox.picName : 'Royan'),
       actor: createdBy,
-      recipientOrSource: isByHelper ? `Diinput oleh ${createdBy} (Asisten Rekap)` : 'Direct Entry / Masuk Baru',
+      recipientOrSource: isByHelper ? `Diinput oleh ${createdBy} (Tim Support)` : 'Direct Entry / Masuk Baru',
       notes: newItem.description || (isByHelper ? `Direkap oleh ${createdBy} untuk ${boxOwner || 'PIC'}` : 'Barang baru ditambahkan ke inventory'),
     };
     addTransaction(trxData);
@@ -1410,7 +1410,7 @@ export const InventoryProvider = ({ children }) => {
     const itemToDelete = items.find(i => String(i.id) === idStr);
 
     if (isHelper(currentUser)) {
-      const errMsg = 'Akses ditolak: Asisten Rekap tidak memiliki izin menghapus item. Silakan hubungi PIC pemilik box.';
+      const errMsg = 'Akses ditolak: Tim Support tidak memiliki izin menghapus item. Silakan hubungi PIC pemilik box.';
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
     }
@@ -1508,7 +1508,7 @@ export const InventoryProvider = ({ children }) => {
     const idSet = new Set(idStrings);
 
     if (isHelper(currentUser)) {
-      const errMsg = 'Akses ditolak: Asisten Rekap tidak memiliki izin menghapus item. Silakan hubungi PIC pemilik box.';
+      const errMsg = 'Akses ditolak: Tim Support tidak memiliki izin menghapus item. Silakan hubungi PIC pemilik box.';
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
     }
@@ -1849,7 +1849,7 @@ export const InventoryProvider = ({ children }) => {
     const boxToDelete = boxes.find(b => Number(b.boxNumber) === boxNum);
 
     if (isHelper(currentUser)) {
-      const errMsg = 'Akses ditolak: Asisten Rekap tidak memiliki izin menghapus box.';
+      const errMsg = 'Akses ditolak: Tim Support tidak memiliki izin menghapus box.';
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
     }
@@ -1951,7 +1951,7 @@ export const InventoryProvider = ({ children }) => {
 
   const deleteRack = async (id, options = { moveBoxesToFloor: true }) => {
     if (isHelper(currentUser)) {
-      const errMsg = 'Akses ditolak: Asisten Rekap tidak memiliki izin menghapus rak.';
+      const errMsg = 'Akses ditolak: Tim Support tidak memiliki izin menghapus rak.';
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
     }
@@ -2073,7 +2073,7 @@ export const InventoryProvider = ({ children }) => {
 
   const deletePpicMember = (id, options = { reassignToDefault: true }) => {
     if (isHelper(currentUser)) {
-      throw new Error('Akses ditolak: Asisten Rekap tidak memiliki izin menghapus akun.');
+      throw new Error('Akses ditolak: Tim Support tidak memiliki izin menghapus akun.');
     }
     // ATURAN KEAMANAN: Satu user tidak bisa hapus user lain! (Kecuali Superuser / Royan)
     if (currentUser && !isSuperuser(currentUser) && String(currentUser.id).toLowerCase() !== String(id).toLowerCase()) {

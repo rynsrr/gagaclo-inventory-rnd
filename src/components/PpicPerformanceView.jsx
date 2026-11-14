@@ -868,16 +868,16 @@ export function PpicPerformanceView() {
         </div>
       </div>
 
-      {/* Tabel Riwayat Harian per Helper (Asisten Rekap) */}
+      {/* Tabel Riwayat Harian per Tim Support */}
       <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-teal-200/80 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <ClipboardList className="h-4 w-4 text-teal-600" />
-              <span>Tabel Riwayat Input Harian Asisten Rekap (PCS per Helper)</span>
+              <span>Tabel Riwayat Input Harian Tim Support (PCS per Support)</span>
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Data kontrol kuantitatif berapa PCS yang dimasukkan masing-masing helper setiap harinya
+              Data kontrol kuantitatif berapa PCS yang dimasukkan masing-masing tim support setiap harinya
             </p>
           </div>
         </div>
@@ -892,17 +892,17 @@ export function PpicPerformanceView() {
                     {hName} (PCS)
                   </th>
                 ))}
-                <th className="px-3 py-2.5 text-right font-black text-teal-950">Total Helper (PCS)</th>
+                <th className="px-3 py-2.5 text-right font-black text-teal-950">Total Support (PCS)</th>
                 <th className="px-3 py-2.5 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {/* Baris Total Akumulasi per Helper di bagian atas tabel */}
+              {/* Baris Total Akumulasi per Support di bagian atas tabel */}
               {dailyPicRecords.dates.length > 0 && (
                 <tr className="border-b-2 border-teal-300 bg-gradient-to-r from-teal-100/90 via-cyan-50/80 to-teal-100/90 font-black text-slate-900 shadow-2xs">
                   <td className="px-3 py-2.5 font-black text-teal-950 whitespace-nowrap">
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-700 text-white text-[10px] font-black tracking-wide shadow-2xs">
-                      Σ TOTAL PER HELPER
+                      Σ TOTAL PER SUPPORT
                     </span>
                   </td>
                   {DEFAULT_HELPERS.map((hName) => {
