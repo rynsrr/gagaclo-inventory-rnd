@@ -241,116 +241,157 @@ export function TargetTeamBanner({ onOpenRekap }) {
   return (
     <section
       aria-label="Target Team Inventory R&D"
-      className="w-full bg-slate-900 text-slate-100 border-b border-slate-800 px-3 sm:px-5 lg:px-6 py-2 shadow-xs no-print transition-all"
+      className="w-full bg-slate-900 text-slate-100 border-b border-slate-800 px-3 sm:px-5 lg:px-6 py-2.5 shadow-xs no-print transition-all"
     >
-      <div className="max-w-[1560px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-4">
-        {/* Kolom Kiri: Label Target Harian & Angka Real-Time (Hierarki Tipografi Jelas) */}
-        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-2xs">
-            <Target className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-              TARGET HARI INI
-            </span>
-          </div>
-
-          {/* Edit Form (untuk Manager) vs Tampilan Angka */}
-          {isEditingTarget ? (
-            <form onSubmit={handleSaveTarget} className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-md border border-slate-700">
-              <span className="text-xs font-bold text-slate-400">Target:</span>
-              <input
-                type="number"
-                min="1"
-                max="10000"
-                autoFocus
-                value={tempTarget}
-                onChange={(e) => setTempTarget(e.target.value)}
-                className="w-20 px-2 py-0.5 bg-slate-900 border border-slate-600 text-white font-mono font-bold text-xs rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
-              <span className="text-xs font-bold text-slate-400">PCS</span>
-              <button
-                type="submit"
-                className="p-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold cursor-pointer transition"
-                title="Simpan Target"
-              >
-                <Check className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsEditingTarget(false)}
-                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs cursor-pointer transition"
-                title="Batal"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </form>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="flex items-baseline gap-1">
-                {/* Angka Capaian Utama: Lebih Menonjol & Kontras */}
-                <span className="text-lg sm:text-xl font-black text-white font-mono tabular-nums tracking-tight">
-                  {todayStats.pcs.toLocaleString('id-ID')}
-                </span>
-                {/* Target Total: Kontras Terang Slate-300 */}
-                <span className="text-xs sm:text-sm font-semibold text-slate-300 font-mono">
-                  / {dailyTarget.toLocaleString('id-ID')} PCS
-                </span>
-              </div>
-
-              {/* Persentase Capaian */}
-              <span
-                className={`text-xs font-bold px-2 py-0.5 rounded-md border font-mono ${
-                  isAchieved
-                    ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/60'
-                    : 'bg-slate-800 text-slate-200 border-slate-700'
-                }`}
-              >
-                {percent}%
+      <div className="max-w-[1560px] mx-auto space-y-2">
+        {/* BARIS UTAMA (Row 1): Target KPI, Progress Bar, & Tombol Aksi */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Sisi Kiri: Label Target Harian & Angka Real-Time (Satu Kesatuan Baseline Rapi) */}
+          <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700/80 text-slate-300 shadow-2xs shrink-0">
+              <Target className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                TARGET HARI INI
               </span>
+            </div>
 
-              {isMgr && (
+            {/* Edit Form (untuk Manager) vs Tampilan Angka */}
+            {isEditingTarget ? (
+              <form onSubmit={handleSaveTarget} className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-md border border-slate-700">
+                <span className="text-xs font-bold text-slate-400">Target:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="10000"
+                  autoFocus
+                  value={tempTarget}
+                  onChange={(e) => setTempTarget(e.target.value)}
+                  className="w-20 px-2 py-0.5 bg-slate-900 border border-slate-600 text-white font-mono font-bold text-xs rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+                <span className="text-xs font-bold text-slate-400">PCS</span>
+                <button
+                  type="submit"
+                  className="p-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold cursor-pointer transition"
+                  title="Simpan Target"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setTempTarget(dailyTarget.toString());
-                    setIsEditingTarget(true);
-                  }}
-                  className="text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer"
-                  title="Ubah Target Harian"
+                  onClick={() => setIsEditingTarget(false)}
+                  className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs cursor-pointer transition"
+                  title="Batal"
                 >
-                  <Edit2 className="w-3 h-3 text-slate-400" />
-                  <span>Ubah</span>
+                  <X className="w-3.5 h-3.5" />
                 </button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-baseline gap-1">
+                  {/* Angka Capaian Utama: Menonjol & Kontras */}
+                  <span className="text-xl sm:text-2xl font-black text-white font-mono tabular-nums tracking-tight">
+                    {todayStats.pcs.toLocaleString('id-ID')}
+                  </span>
+                  {/* Target Total: Kontras Terang Slate-300 */}
+                  <span className="text-xs sm:text-sm font-semibold text-slate-300 font-mono">
+                    / {dailyTarget.toLocaleString('id-ID')} PCS
+                  </span>
+                </div>
+
+                {/* Persentase Capaian */}
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded-md border font-mono ${
+                    isAchieved
+                      ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/60'
+                      : 'bg-slate-800 text-slate-200 border-slate-700'
+                  }`}
+                >
+                  {percent}%
+                </span>
+
+                {isMgr && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempTarget(dailyTarget.toString());
+                      setIsEditingTarget(true);
+                    }}
+                    className="text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer"
+                    title="Ubah Target Harian"
+                  >
+                    <Edit2 className="w-3 h-3 text-slate-400" />
+                    <span>Ubah</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Sisi Tengah: Progress Bar Terpadu & Luas */}
+          <div className="flex items-center gap-3 flex-1 min-w-[200px] max-w-full lg:max-w-xl">
+            <div className="flex-1 bg-slate-950/90 rounded-full h-2.5 sm:h-3 overflow-hidden border border-slate-700/80 p-0.5">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isAchieved ? 'bg-emerald-400 shadow-xs shadow-emerald-500/50' : 'bg-blue-500'
+                }`}
+                style={{ width: `${Math.min(100, percent)}%` }}
+              />
+            </div>
+            <div className="text-xs font-medium text-slate-300 shrink-0 whitespace-nowrap">
+              {isAchieved ? (
+                <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Target Tercapai
+                </span>
+              ) : (
+                <span>Sisa <strong className="text-white font-mono font-bold">{remaining.toLocaleString('id-ID')}</strong> PCS</span>
               )}
             </div>
-          )}
-        </div>
-
-        {/* Kolom Tengah: Progress Bar Terintegrasi Rapi dengan Sisa Target */}
-        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-[180px] max-w-full md:max-w-md lg:max-w-lg">
-          <div className="flex-1 bg-slate-950/90 rounded-full h-2.5 sm:h-3 overflow-hidden border border-slate-700/80 p-0.5">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isAchieved ? 'bg-emerald-400 shadow-xs shadow-emerald-500/50' : 'bg-blue-500'
-              }`}
-              style={{ width: `${Math.min(100, percent)}%` }}
-            />
           </div>
-          <div className="text-xs font-medium text-slate-300 shrink-0 whitespace-nowrap">
-            {isAchieved ? (
-              <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Target Tercapai
-              </span>
-            ) : (
-              <span>Sisa <strong className="text-white font-mono font-bold">{remaining.toLocaleString('id-ID')}</strong> PCS</span>
+
+          {/* Sisi Kanan: Tombol Aksi Cepat */}
+          <div className="flex items-center gap-2 shrink-0 justify-end">
+            <button
+              type="button"
+              onClick={isDemoAllAchievedActive ? revertAllMembersAchievedDemo : applyAllMembersAchievedDemo}
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all shadow-2xs cursor-pointer active:scale-95 ${
+                isDemoAllAchievedActive
+                  ? 'bg-amber-950/80 hover:bg-amber-900 border-amber-600/60 text-amber-300'
+                  : 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 text-emerald-300'
+              }`}
+              title={isDemoAllAchievedActive ? 'Klik untuk kembalikan data asli' : 'Klik untuk contoh saat semua 8 akun mencapai target hari ini'}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isDemoAllAchievedActive ? 'Reset Contoh' : 'Contoh Semua Capai Target'}</span>
+            </button>
+
+            {onOpenRekap && (
+              <button
+                type="button"
+                onClick={onOpenRekap}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 transition-all shadow-2xs cursor-pointer active:scale-95"
+                title="Buka rincian Rekap Harian tim"
+              >
+                <span>Rekap Harian</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-300" />
+              </button>
             )}
           </div>
         </div>
 
-        {/* Kolom Kanan: Status Capaian Personil & Tombol Rekap Harian */}
-        <div className="flex items-center gap-2 flex-wrap justify-between md:justify-end">
-          {memberAchievers.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
+        {/* BARIS KEDUA (Row 2): Bilah Capaian Personel Rapi */}
+        {memberAchievers.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 shrink-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span className="text-emerald-400">
+                {memberAchievers.length === TEAM_MEMBERS.length
+                  ? 'Semua Akun Capai Target (8/8):'
+                  : `Personel Capai Target (${memberAchievers.length}):`}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap flex-1">
               {memberAchievers.map((achiever) => (
                 <button
                   type="button"
@@ -362,45 +403,16 @@ export function TargetTeamBanner({ onOpenRekap }) {
                       );
                     } catch {}
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/60 hover:border-emerald-500 text-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
-                  title={`Lihat selebrasi capaian target ${achiever.name} (${achiever.pcs} PCS)`}
+                  className="px-2.5 py-1 rounded-md bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-600/50 hover:border-emerald-400 text-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 hover:scale-[1.02]"
+                  title={`Klik untuk selebrasi capaian ${achiever.name} (${achiever.pcs}/${achiever.target} PCS)`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  <span>{achiever.name} tercapai</span>
+                  <span className="text-white font-extrabold">{achiever.name}</span>
                   <span className="text-emerald-400 font-mono font-bold">· {achiever.pcs} PCS</span>
                 </button>
               ))}
             </div>
-          )}
-
-          {/* Tombol Contoh Semua Capai Target */}
-          <button
-            type="button"
-            onClick={isDemoAllAchievedActive ? revertAllMembersAchievedDemo : applyAllMembersAchievedDemo}
-            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all shadow-2xs cursor-pointer active:scale-95 ${
-              isDemoAllAchievedActive
-                ? 'bg-amber-950/80 hover:bg-amber-900 border-amber-600/60 text-amber-300'
-                : 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 text-emerald-300'
-            }`}
-            title={isDemoAllAchievedActive ? 'Klik untuk kembalikan data asli' : 'Klik untuk contoh saat semua 8 akun mencapai target hari ini'}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">{isDemoAllAchievedActive ? 'Reset Contoh' : 'Contoh: Semua Capai Target'}</span>
-            <span className="sm:hidden">{isDemoAllAchievedActive ? 'Reset' : 'Contoh'}</span>
-          </button>
-
-          {onOpenRekap && (
-            <button
-              type="button"
-              onClick={onOpenRekap}
-              className="flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 transition-all shadow-2xs cursor-pointer active:scale-95"
-              title="Buka rincian Rekap Harian tim"
-            >
-              <span>Rekap Harian</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-300" />
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );
