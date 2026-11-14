@@ -1262,16 +1262,19 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls (Top Right): Fit View Face Side */}
+        {/* Controls (Top Right): Fit View Default */}
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
           <button
             type="button"
-            onClick={() => fitCameraRef.current?.(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10"
-            title="Posisikan kamera tepat lurus menghadap depan rak (Fit View Face Side)"
+            onClick={() => {
+              activeRackRef.current = 'ALL';
+              fitCameraRef.current?.(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10"
+            title="Kembalikan sudut pandang kamera ke posisi default (Fit View Default)"
           >
-            <Maximize2 className="h-3.5 w-3.5 text-blue-500" />
-            <span>Fit View Face Side</span>
+            <Maximize2 className="h-3.5 w-3.5 text-blue-600" />
+            <span>Fit View Default</span>
           </button>
         </div>
 
