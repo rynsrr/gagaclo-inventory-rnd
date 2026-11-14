@@ -138,6 +138,56 @@ export const PPIC_MEMBERS = [
   },
 ];
 
+export const HELPER_MEMBERS = [
+  {
+    id: 'helper-1',
+    ppicNumber: 'H1',
+    name: 'Helper 1',
+    role: 'Asisten Rekap',
+    isHelper: true,
+    email: '',
+    password: 'Helper 1',
+    totalBoxes: 0,
+    color: 'teal',
+    tagBg: 'bg-teal-50 text-teal-700 border-teal-200',
+    badgeClass: 'bg-teal-600 text-white',
+    avatarBg: 'bg-teal-600',
+  },
+  {
+    id: 'helper-2',
+    ppicNumber: 'H2',
+    name: 'Helper 2',
+    role: 'Asisten Rekap',
+    isHelper: true,
+    email: '',
+    password: 'Helper 2',
+    totalBoxes: 0,
+    color: 'cyan',
+    tagBg: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    badgeClass: 'bg-cyan-600 text-white',
+    avatarBg: 'bg-cyan-600',
+  },
+  {
+    id: 'helper-3',
+    ppicNumber: 'H3',
+    name: 'Helper 3',
+    role: 'Asisten Rekap',
+    isHelper: true,
+    email: '',
+    password: 'Helper 3',
+    totalBoxes: 0,
+    color: 'sky',
+    tagBg: 'bg-sky-50 text-sky-700 border-sky-200',
+    badgeClass: 'bg-sky-600 text-white',
+    avatarBg: 'bg-sky-600',
+  },
+];
+
+export const ALL_INITIAL_USERS = [
+  ...PPIC_MEMBERS,
+  ...HELPER_MEMBERS,
+];
+
 // Mapping helper to build all 72 boxes accurately
 export const generateInitialBoxes = () => {
   // Mapping rules from PDF:

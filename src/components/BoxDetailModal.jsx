@@ -35,6 +35,7 @@ import { CardPrintModal } from './CardPrintModal';
 import { SampleListPrintModal } from './SampleListPrintModal';
 import { DispatchModal } from './DispatchModal';
 import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
+import { isHelper } from '../utils/authUtils';
 
 export const BoxDetailModal = () => {
   const { selectedBoxNumber, getBoxDetails } = useInventory();
@@ -67,7 +68,9 @@ function BoxDetail({ box }) {
   const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
   const isSuper = isSuperuser?.(currentUser);
-  const isOwner = !currentUser || isSuper || !box.picName || String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
+  const isHelperUser = isHelper(currentUser);
+  const isRealOwner = currentUser && box.picName && String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
+  const isOwner = !currentUser || isSuper || isHelperUser || !box.picName || isRealOwner;
   const [copiedId, setCopiedId] = useState(null);
   const [dispatchModalItem, setDispatchModalItem] = useState(null);
   const [dispatchPreselectedItems, setDispatchPreselectedItems] = useState([]);
@@ -422,6 +425,11 @@ function BoxDetail({ box }) {
             {isSuper && String(currentUser?.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase() && (
               <span className="text-[10px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
                 ⚡ Mode Superuser (Akses Penuh)
+              </span>
+            )}
+            {isHelperUser && (
+              <span className="text-[10px] font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                📝 Mode Asisten Rekap (Membantu {box.picName})
               </span>
             )}
           </div>
@@ -845,17 +853,19 @@ function BoxDetail({ box }) {
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
                                   </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setDeleteError(null);
-                                      setItemToDelete(item);
-                                    }}
-                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                                    title="Hapus Item"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  {!isHelperUser && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDeleteError(null);
+                                        setItemToDelete(item);
+                                      }}
+                                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                      title="Hapus Item"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                 </>
                               ) : (
                                 <span

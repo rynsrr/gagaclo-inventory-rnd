@@ -37,7 +37,7 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { isItemDispatched, decodeDispatchData, DISPATCH_DESTINATIONS } from '../utils/dispatchUtils';
-import { isSuperuser } from '../utils/authUtils';
+import { isSuperuser, isHelper } from '../utils/authUtils';
 import { DispatchOutgoingView } from './DispatchOutgoingView';
 
 /**
@@ -160,6 +160,12 @@ export function TotalItemsSummaryView() {
           rackName: box ? box.rackName : 'NA',
           picName: item.picName || (box ? box.picName : 'NA'),
           dateIn: item.dateIn || item.tanggal || 'NA',
+          helperName: (() => {
+            if (item.helperName) return item.helperName;
+            const tags = Array.isArray(item.tags) ? item.tags : [];
+            const tag = tags.find(t => typeof t === 'string' && t.startsWith('helper:'));
+            return tag ? decodeURIComponent(tag.slice(7)) : null;
+          })(),
         };
       })
       .sort((a, b) => b.age.days - a.age.days || Number(b.boxNumber) - Number(a.boxNumber));
@@ -196,6 +202,7 @@ export function TotalItemsSummaryView() {
         item.track, item.tanggal, item.kode, item.buyerNo, item.jenisSample,
         item.style, item.sampleNo, item.size, item.color, item.satuan,
         item.place, item.boxLabel, item.rackName, item.picName, item.status,
+        item.helperName,
       ]
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(q));
@@ -619,10 +626,9 @@ export function TotalItemsSummaryView() {
                         <tbody className="divide-y divide-slate-100">
                           {group.items.map((item, idx) => {
                             const isFixing = fixingItemId === item.id;
-                            const isDeletable =
-                              !currentUser ||
-                              !item.picName ||
-                              String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
+                            const isHelperUser = isHelper(currentUser);
+                            const isPicOwner = !item.picName || String(currentUser?.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
+                            const isDeletable = !currentUser || (!isHelperUser && (isSuperuser(currentUser) || isPicOwner));
 
                             return (
                               <tr key={item.id} className="hover:bg-slate-50/70 transition">
@@ -1144,16 +1150,33 @@ export function TotalItemsSummaryView() {
                                 {item.rackName}
                                 {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
                               </div>
+                              {item.helperName && (
+                                <div className="mt-1">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-teal-50 text-teal-800 border border-teal-200 text-[9px] font-black">
+                                    📝 Input: {item.helperName}
+                                  </span>
+                                </div>
+                              )}
                             </>
                           )}
                         </td>
                         <td className="px-3 py-2.5">
-                          <div className="flex items-center justify-center gap-1.5">
-                            {!currentUser ||
-                            isSuperuser(currentUser) ||
-                            !item.picName ||
-                            String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase() ? (
-                              <>
+                          {(() => {
+                            const isHelperUser = isHelper(currentUser);
+                            const isPicOwner = !item.picName || String(currentUser?.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
+                            const canEdit = !currentUser || isSuperuser(currentUser) || isHelperUser || isPicOwner;
+                            const canDelete = !currentUser || (!isHelperUser && (isSuperuser(currentUser) || isPicOwner));
+
+                            if (!canEdit && !canDelete) {
+                              return (
+                                <div className="text-center text-[10px] text-slate-300 font-bold">
+                                  Hanya Baca
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => addToDispatchCart(item, 1)}
@@ -1167,69 +1190,66 @@ export function TotalItemsSummaryView() {
                                 >
                                   <ShoppingCart className="h-3.5 w-3.5" />
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setItemModalConfig({
-                                      isOpen: true,
-                                      item,
-                                      targetBoxNumber: Number(item.boxNumber),
-                                    })
-                                  }
-                                  className="p-1.5 rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
-                                  title="Edit item ini"
-                                  aria-label={`Edit ${item.style || item.kode}`}
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </button>
-                                {String(confirmDeleteId) === String(item.id) ? (
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={async () => {
-                                        try {
-                                          await deleteItem(item.id);
-                                        } catch (e) {
-                                          console.error('Delete item error:', e);
-                                        } finally {
-                                          setConfirmDeleteId(null);
-                                        }
-                                      }}
-                                      className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-bold transition hover:bg-red-700 cursor-pointer"
-                                      title="Konfirmasi hapus permanen"
-                                    >
-                                      Hapus?
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setConfirmDeleteId(null)}
-                                      className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold transition hover:bg-slate-200 cursor-pointer"
-                                      title="Batal"
-                                    >
-                                      Batal
-                                    </button>
-                                  </div>
-                                ) : (
+                                {canEdit && (
                                   <button
                                     type="button"
-                                    onClick={() => setConfirmDeleteId(item.id)}
-                                    className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
-                                    title="Hapus item ini"
-                                    aria-label={`Hapus ${item.style || item.kode}`}
+                                    onClick={() =>
+                                      setItemModalConfig({
+                                        isOpen: true,
+                                        item,
+                                        targetBoxNumber: Number(item.boxNumber),
+                                      })
+                                    }
+                                    className="p-1.5 rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
+                                    title="Edit item ini"
+                                    aria-label={`Edit ${item.style || item.kode}`}
                                   >
-                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <Pencil className="h-3.5 w-3.5" />
                                   </button>
                                 )}
-                              </>
-                            ) : (
-                              <span
-                                className="p-1.5 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center cursor-not-allowed"
-                                title={`Terkunci: Data sampel ini milik PIC ${item.picName}. Satu user tidak dapat mengedit data user lain.`}
-                              >
-                                <Lock className="h-3.5 w-3.5 text-slate-400" />
-                              </span>
-                            )}
-                          </div>
+                                {canDelete && (
+                                  String(confirmDeleteId) === String(item.id) ? (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          try {
+                                            await deleteItem(item.id);
+                                          } catch (e) {
+                                            console.error('Delete item error:', e);
+                                          } finally {
+                                            setConfirmDeleteId(null);
+                                          }
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-bold transition hover:bg-red-700 cursor-pointer"
+                                        title="Konfirmasi hapus permanen"
+                                      >
+                                        Hapus?
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmDeleteId(null)}
+                                        className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold transition hover:bg-slate-200 cursor-pointer"
+                                        title="Batal"
+                                      >
+                                        Batal
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmDeleteId(item.id)}
+                                      className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
+                                      title="Hapus item ini"
+                                      aria-label={`Hapus ${item.style || item.kode}`}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  )
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))

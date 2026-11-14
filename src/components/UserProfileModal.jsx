@@ -10,7 +10,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
-import { isSuperuser } from '../utils/authUtils';
+import { isSuperuser, isHelper } from '../utils/authUtils';
 
 export const UserProfileModal = ({ isOpen, onClose }) => {
   const {
@@ -135,13 +135,21 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
             <div className="rounded-xl bg-blue-50/60 border border-blue-200/80 p-3 text-xs text-blue-900 flex items-start gap-2">
               <Info className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
               <span>
-                Pilih salah satu dari 5 akun PIC di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
+                Pilih salah satu dari 5 akun PIC atau 3 Asisten Rekap di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
               </span>
             </div>
 
-            {/* List of 5 PICs */}
+            {/* SEKSI 1: Tim Utama PPIC (5 PIC) */}
             <div className="space-y-2">
-              {users.map((u) => {
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
+                  Tim Utama PPIC (5 PIC)
+                </span>
+                <span className="text-[10px] font-bold text-slate-400">Total 72 Box</span>
+              </div>
+
+              {users.filter(u => !isHelper(u)).map((u) => {
                 const isCurrent = currentUser && String(currentUser.id).toLowerCase() === String(u.id).toLowerCase();
                 const isSelected = selectedUserToLogin?.id === u.id;
                 const boxCount = boxes.filter(b => b.picName === u.name).length;
@@ -238,6 +246,127 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                           <button
                             type="submit"
                             className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-xs font-black text-white shadow-sm transition cursor-pointer"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                            <span>Login</span>
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* SEKSI 2: Tim Asisten Rekap Data (3 Helper) */}
+            <div className="space-y-2 pt-2 border-t border-slate-200/80">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-black text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-teal-500 inline-block"></span>
+                    Tim Asisten Rekap Data (3 Helper Non-PPIC)
+                  </span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Membantu input &amp; rekap data ke 72 Box milik 5 PIC. Jumlah PCS yang di-input akan terkontrol secara terpisah.
+                  </p>
+                </div>
+              </div>
+
+              {users.filter(u => isHelper(u)).map((u) => {
+                const isCurrent = currentUser && String(currentUser.id).toLowerCase() === String(u.id).toLowerCase();
+                const isSelected = selectedUserToLogin?.id === u.id;
+
+                return (
+                  <div
+                    key={u.id}
+                    className={`rounded-xl border p-3 transition ${
+                      isCurrent
+                        ? 'border-teal-400 bg-teal-50/50 shadow-xs'
+                        : isSelected
+                        ? 'border-teal-500 bg-teal-50/40 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-teal-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-black text-sm ${u.avatarBg || 'bg-teal-600'}`}>
+                          {u.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-black text-slate-900">{u.name}</span>
+                            <span className="rounded-full bg-teal-100 border border-teal-300 px-2 py-0.5 text-[9px] font-black text-teal-900 flex items-center gap-0.5">
+                              📝 Asisten Rekap
+                            </span>
+                            {isCurrent && (
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 flex items-center gap-1">
+                                <Check className="h-2.5 w-2.5" /> Aktif
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-teal-700 mt-0.5">
+                            Bantuan Input: Semua Box milik 5 PIC • (Password default: {u.name})
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        {isCurrent ? (
+                          <span className="text-xs font-bold text-teal-800 px-3 py-1.5 rounded-lg bg-teal-100/70 border border-teal-300">
+                            Sedang Digunakan
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedUserToLogin(u);
+                              setLoginPassword('');
+                              setLoginError('');
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                              isSelected
+                                ? 'bg-teal-600 text-white border-teal-600'
+                                : 'bg-white hover:bg-teal-50 text-slate-700 border-slate-300'
+                            }`}
+                          >
+                            {isSelected ? 'Sedang Dipilih' : 'Pilih Akun'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Login Password Prompt for Helper */}
+                    {isSelected && !isCurrent && (
+                      <form onSubmit={handleSwitchUser} className="mt-3 pt-3 border-t border-teal-200 space-y-2">
+                        {loginError && (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                            <span>{loginError}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <input
+                              type={showLoginPassword ? 'text' : 'password'}
+                              autoFocus
+                              required
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              placeholder={`Masukkan password ${u.name}...`}
+                              className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-10 text-xs text-slate-800 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowLoginPassword(p => !p)}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              aria-label={showLoginPassword ? 'Sembunyikan password' : 'Lihat password'}
+                            >
+                              {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                          <button
+                            type="submit"
+                            className="flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 px-4 py-2 text-xs font-black text-white shadow-sm transition cursor-pointer"
                           >
                             <Lock className="h-3.5 w-3.5" />
                             <span>Login</span>

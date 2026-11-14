@@ -147,6 +147,20 @@ export function dbItemToLocal(db) {
     dateIn: db.date_in || db.tanggal || '',
     tanggal: db.tanggal || db.date_in || '',
     tags: Array.isArray(db.tags) ? db.tags : [],
+    helperName: (() => {
+      if (db.helper_name) return db.helper_name;
+      const tags = Array.isArray(db.tags) ? db.tags : [];
+      const tag = tags.find(t => typeof t === 'string' && t.startsWith('helper:'));
+      return tag ? decodeURIComponent(tag.slice(7)) : null;
+    })(),
+    inputtedBy: (() => {
+      if (db.inputted_by) return db.inputted_by;
+      const tags = Array.isArray(db.tags) ? db.tags : [];
+      const tag = tags.find(t => typeof t === 'string' && t.startsWith('inputted_by:'));
+      if (tag) return decodeURIComponent(tag.slice(12));
+      const hTag = tags.find(t => typeof t === 'string' && t.startsWith('helper:'));
+      return hTag ? decodeURIComponent(hTag.slice(7)) : null;
+    })(),
     createdAt: db.created_at || db.createdAt || null,
     updatedAt: db.updated_at || db.updatedAt || null,
   };

@@ -52,7 +52,7 @@ import {
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 import { isItemDispatched } from './utils/dispatchUtils';
-import { isSuperuser } from './utils/authUtils';
+import { isSuperuser, isHelper } from './utils/authUtils';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
 import { DispatchModal } from './components/DispatchModal';
@@ -311,6 +311,10 @@ const AppContent = () => {
                 {isSuperuser(currentUser) ? (
                   <span className="text-[9px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
                     ⚡ Superuser
+                  </span>
+                ) : isHelper(currentUser) ? (
+                  <span className="text-[9px] font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
+                    📝 Asisten Rekap
                   </span>
                 ) : (
                   <span className="text-[9px] font-black uppercase text-blue-700 bg-white/80 border border-blue-200/70 px-1 rounded">
