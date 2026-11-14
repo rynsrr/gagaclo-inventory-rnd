@@ -54,7 +54,7 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
                 Cetak Label Stiker Box (Desain Resmi GAGACLO)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Desain 1:1 sesuai standar: Judul Box, Nomor Raksasa, Bar Lavender Nama PIC, Lokasi Rak & Unit RND.
+                Desain 1:1 sesuai standar: Judul Box, Nomor Raksasa, Bar Lavender Nama PPIC, Lokasi Rak & Unit RND.
               </p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
 
             {/* Filter PPIC */}
             <div className="flex items-center space-x-1.5">
-              <span className="font-bold text-slate-600">Pilih PIC:</span>
+              <span className="font-bold text-slate-600">Pilih PPIC:</span>
               <select
                 value={selectedPpic}
                 onChange={(e) => {
@@ -112,7 +112,7 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
                 }}
                 className="p-1.5 rounded-lg border border-slate-300 bg-white font-medium"
               >
-                <option value="ALL">Semua PIC PPIC</option>
+                <option value="ALL">Semua PPIC</option>
                 {ppicMembers.map(p => (
                   <option key={p.id} value={p.name}>
                     {p.name} ({p.totalBoxes} Box)

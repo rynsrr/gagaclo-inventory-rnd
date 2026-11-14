@@ -142,7 +142,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
           role: 'PPIC Staff',
           email: '',
         });
-        flash('ok', `${name} berhasil ditambahkan sebagai PIC.`);
+        flash('ok', `${name} berhasil ditambahkan sebagai PPIC.`);
       }
       setEditingPerson(null);
       setPersonForm(EMPTY_PERSON_FORM);
@@ -226,7 +226,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
               Kelola Box, Rak &amp; Orang
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Tambah box baru, atur penempatan rak/lantai, dan kelola data PIC.
+              Tambah box baru, atur penempatan rak/lantai, dan kelola data PPIC.
             </p>
           </div>
           <button
@@ -324,15 +324,15 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                     </select>
                   </label>
 
-                  {/* PIC */}
+                  {/* PPIC */}
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">PIC / Penanggung Jawab</span>
+                    <span className="block text-[11px] font-bold text-slate-600 mb-1">PPIC / Penanggung Jawab</span>
                     <select
                       value={boxForm.picName}
                       onChange={(e) => setBoxForm((f) => ({ ...f, picName: e.target.value }))}
                       className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="">Pilih orang / PIC</option>
+                      <option value="">Pilih orang / PPIC</option>
                       {ppicMembers.map((p) => (
                         <option key={p.id} value={p.name}>{p.name}</option>
                       ))}
@@ -455,16 +455,16 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <h4 className="text-xs font-black text-slate-800 uppercase mb-3 flex items-center gap-1.5">
                   <Plus className="w-3.5 h-3.5 text-blue-600" />
-                  {editingPerson ? `Edit ${editingPerson.name}` : 'Tambah Orang (PIC)'}
+                  {editingPerson ? `Edit ${editingPerson.name}` : 'Tambah Orang (PPIC)'}
                 </h4>
                 <div className="max-w-md">
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Nama PIC *</span>
+                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Nama PPIC *</span>
                     <input
                       type="text"
                       value={personForm.name}
                       onChange={(e) => setPersonForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="Nama PIC (contoh: Royan, Cynara...)"
+                      placeholder="Nama PPIC (contoh: Royan, Cynara...)"
                       className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none"
                     />
                   </label>

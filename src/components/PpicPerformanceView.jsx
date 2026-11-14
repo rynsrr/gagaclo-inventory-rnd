@@ -14,13 +14,13 @@ import {
   formatDateIndoFull,
 } from '../utils/dateUtils';
 
-// 8 Anggota Tim R&D Resmi (5 PIC & 3 Support)
+// 8 Anggota Tim R&D Resmi (5 PPIC & 3 Support)
 const DEFAULT_TEAM_MEMBERS = [
-  { name: 'Royan', role: 'PIC #1', type: 'PIC', tagBg: 'bg-blue-100 text-blue-800', border: 'border-blue-200', bg: 'bg-blue-50/40', textAccent: 'text-blue-900' },
-  { name: 'Cynara', role: 'PIC #2', type: 'PIC', tagBg: 'bg-purple-100 text-purple-800', border: 'border-purple-200', bg: 'bg-purple-50/40', textAccent: 'text-purple-900' },
-  { name: 'Ami', role: 'PIC #3', type: 'PIC', tagBg: 'bg-emerald-100 text-emerald-800', border: 'border-emerald-200', bg: 'bg-emerald-50/40', textAccent: 'text-emerald-900' },
-  { name: 'Ryan', role: 'PIC #4', type: 'PIC', tagBg: 'bg-amber-100 text-amber-800', border: 'border-amber-200', bg: 'bg-amber-50/40', textAccent: 'text-amber-900' },
-  { name: 'Hanami', role: 'PIC #5', type: 'PIC', tagBg: 'bg-rose-100 text-rose-800', border: 'border-rose-200', bg: 'bg-rose-50/40', textAccent: 'text-rose-900' },
+  { name: 'Royan', role: 'PPIC #1', type: 'PPIC', tagBg: 'bg-blue-100 text-blue-800', border: 'border-blue-200', bg: 'bg-blue-50/40', textAccent: 'text-blue-900' },
+  { name: 'Cynara', role: 'PPIC #2', type: 'PPIC', tagBg: 'bg-purple-100 text-purple-800', border: 'border-purple-200', bg: 'bg-purple-50/40', textAccent: 'text-purple-900' },
+  { name: 'Ami', role: 'PPIC #3', type: 'PPIC', tagBg: 'bg-emerald-100 text-emerald-800', border: 'border-emerald-200', bg: 'bg-emerald-50/40', textAccent: 'text-emerald-900' },
+  { name: 'Ryan', role: 'PPIC #4', type: 'PPIC', tagBg: 'bg-amber-100 text-amber-800', border: 'border-amber-200', bg: 'bg-amber-50/40', textAccent: 'text-amber-900' },
+  { name: 'Hanami', role: 'PPIC #5', type: 'PPIC', tagBg: 'bg-rose-100 text-rose-800', border: 'border-rose-200', bg: 'bg-rose-50/40', textAccent: 'text-rose-900' },
   { name: 'Sheva', role: 'Support #1', type: 'Support', tagBg: 'bg-teal-100 text-teal-800', border: 'border-teal-200', bg: 'bg-teal-50/40', textAccent: 'text-teal-900' },
   { name: 'Ade', role: 'Support #2', type: 'Support', tagBg: 'bg-cyan-100 text-cyan-800', border: 'border-cyan-200', bg: 'bg-cyan-50/40', textAccent: 'text-cyan-900' },
   { name: 'Tri', role: 'Support #3', type: 'Support', tagBg: 'bg-sky-100 text-sky-800', border: 'border-sky-200', bg: 'bg-sky-50/40', textAccent: 'text-sky-900' },
@@ -228,7 +228,7 @@ export function PpicPerformanceView() {
                 </span>
               </h1>
               <p className="text-xs text-slate-500">
-                Catatan kuantitatif input barang harian 8 anggota tim (5 PIC &amp; 3 Support) secara setara &amp; transparan
+                Catatan kuantitatif input barang harian 8 anggota tim (5 PPIC &amp; 3 Support) secara setara &amp; transparan
               </p>
             </div>
           </div>
@@ -335,12 +335,12 @@ export function PpicPerformanceView() {
         </div>
       </div>
 
-      {/* 8 KARTU ANGGOTA TIM: 5 PIC & 3 Support Berdampingan Setara */}
+      {/* 8 KARTU ANGGOTA TIM: 5 PPIC & 3 Support Berdampingan Setara */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
             <Users className="h-4 w-4 text-slate-600" />
-            <span>Capaian Input Harian 8 Anggota Tim (5 PIC &amp; 3 Support)</span>
+            <span>Capaian Input Harian 8 Anggota Tim (5 PPIC &amp; 3 Support)</span>
           </h2>
           <span className="text-[11px] text-slate-500 font-semibold">
             Tanggal: {formatDateIndoFull(selectedDailyDate)}
@@ -380,10 +380,10 @@ export function PpicPerformanceView() {
                     </div>
                   </div>
 
-                  {/* Keterangan jika membantu input ke box PIC lain */}
+                  {/* Keterangan jika membantu input ke box PPIC lain */}
                   {assistedList.length > 0 && (
                     <div className="mt-2.5 pt-2 border-t border-slate-200/60">
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Membantu Box PIC:</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase">Membantu Box PPIC:</div>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {assistedList.map(([pName, pPcs]) => (
                           <span key={pName} className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/90 text-slate-700 border border-slate-200">
@@ -457,7 +457,7 @@ export function PpicPerformanceView() {
         </div>
       </div>
 
-      {/* SATU TABEL UTAMA RIWAYAT: 8 Kolom Anggota Tim Sejajar (5 PIC & 3 Support) */}
+      {/* SATU TABEL UTAMA RIWAYAT: 8 Kolom Anggota Tim Sejajar (5 PPIC & 3 Support) */}
       <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -466,7 +466,7 @@ export function PpicPerformanceView() {
               <span>Tabel Riwayat Input Harian Tim R&D (PCS per Orang)</span>
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Catatan kuantitatif input harian 8 anggota tim (5 PIC &amp; 3 Support) secara setara dan transparan
+              Catatan kuantitatif input harian 8 anggota tim (5 PPIC &amp; 3 Support) secara setara dan transparan
             </p>
           </div>
         </div>

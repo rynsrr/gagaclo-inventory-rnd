@@ -145,7 +145,7 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
                             {item.sampleNo && <span>No: <strong>{item.sampleNo}</strong></span>}
                             {item.size && <span>• Size: <strong>{item.size}</strong></span>}
                             {item.color && <span>• Warna: <strong>{item.color}</strong></span>}
-                            {item.picName && <span>• PIC: <strong>{item.picName}</strong></span>}
+                            {item.picName && <span>• PPIC: <strong>{item.picName}</strong></span>}
                           </div>
                         </div>
 

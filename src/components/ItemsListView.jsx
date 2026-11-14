@@ -145,7 +145,7 @@ export const ItemsListView = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Cari nama sampel, SKU, nomor box, PIC..."
+              placeholder="Cari nama sampel, SKU, nomor box, PPIC..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
@@ -205,7 +205,7 @@ export const ItemsListView = () => {
             onChange={(e) => setFilterPpic(e.target.value)}
             className="p-1.5 rounded-lg border border-slate-300 bg-white font-medium"
           >
-            <option value="ALL">Semua PIC</option>
+            <option value="ALL">Semua PPIC</option>
             {ppicMembers.map(p => (
               <option key={p.id} value={p.name}>{p.name}</option>
             ))}
@@ -275,7 +275,7 @@ export const ItemsListView = () => {
                 </th>
                 <th className="py-3 px-4">
                   <button onClick={() => toggleSort('picName')} className="flex items-center space-x-1 hover:text-white">
-                    <span>PIC PPIC</span>
+                    <span>PPIC</span>
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </button>
                 </th>
@@ -428,7 +428,7 @@ export const ItemsListView = () => {
                           ) : (
                             <span
                               className="p-1.5 text-slate-400 inline-flex items-center"
-                              title={`Terkunci: Data item ini milik PIC ${item.picName}. Satu user tidak dapat mengedit data user lain.`}
+                              title={`Terkunci: Data item ini milik PPIC ${item.picName}. Satu user tidak dapat mengedit data user lain.`}
                             >
                               <Lock className="w-3.5 h-3.5 text-slate-400" />
                             </span>

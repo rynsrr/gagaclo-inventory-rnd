@@ -400,7 +400,7 @@ export function DispatchOutgoingView() {
                   <th className="py-3 px-3">Sampel (Style / Kode)</th>
                   <th className="py-3 px-2 text-center">Size / Color</th>
                   <th className="py-3 px-2 text-right">Qty</th>
-                  <th className="py-3 px-3">Asal Box &amp; PIC</th>
+                  <th className="py-3 px-3">Asal Box &amp; PPIC</th>
                   <th className="py-3 px-3">Tanggal &amp; Penerima</th>
                   <th className="py-3 px-3">Catatan</th>
                   <th className="py-3 px-3 text-right">Aksi</th>

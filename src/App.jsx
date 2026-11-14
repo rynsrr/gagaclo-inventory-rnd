@@ -290,24 +290,24 @@ const AppContent = () => {
                 onClick={() => setIsBoxManageOpen(true)}
                 className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-white/90 hover:bg-slate-100/90 text-slate-700 border-slate-200 hover:shadow-xs hover:-translate-y-0.5"
                 aria-label="Kelola Box, Rak & Orang"
-                title="Tambah Box, atur Rak/Lantai, kelola data Orang (PIC)"
+                title="Tambah Box, atur Rak/Lantai, kelola data Orang (PPIC)"
               >
                 <PackagePlus className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
                 <span>Kelola Box &amp; Rak</span>
               </button>
 
-              {/* Akun & Profil User PIC */}
+              {/* Akun & Profil User PPIC */}
               <button
                 type="button"
                 onClick={() => setIsUserProfileOpen(true)}
                 className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-gradient-to-r from-blue-50/90 to-indigo-50/90 hover:from-blue-100 hover:to-indigo-100 text-blue-900 border-blue-200/90 hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
-                aria-label="Akun & Profil PIC"
-                title={`Login sebagai: ${currentUser?.name || 'PIC'} • Klik untuk beralih akun PIC`}
+                aria-label="Akun & Profil PPIC"
+                title={`Login sebagai: ${currentUser?.name || 'PPIC'} • Klik untuk beralih akun PPIC`}
               >
                 <span className={`flex h-4 w-4 items-center justify-center rounded-md text-[10px] font-black text-white ${currentUser?.avatarBg || 'bg-blue-600'}`}>
                   {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
                 </span>
-                <span className="font-black text-slate-900">{currentUser?.name || 'PIC'}</span>
+                <span className="font-black text-slate-900">{currentUser?.name || 'PPIC'}</span>
                 {isSuperuser(currentUser) ? (
                   <span className="text-[9px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
                     ⚡ Superuser

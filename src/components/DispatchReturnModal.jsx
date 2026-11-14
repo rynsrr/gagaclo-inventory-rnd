@@ -121,13 +121,13 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
             >
               {boxes.map((b) => (
                 <option key={b.boxNumber} value={b.boxNumber}>
-                  BOX #{b.boxNumber} ({b.rackName || 'RACK'} - PIC: {b.picName || 'Royan'}) {b.boxNumber === defaultTargetBox ? '★ Box Asal' : ''}
+                  BOX #{b.boxNumber} ({b.rackName || 'RACK'} - PPIC: {b.picName || 'Royan'}) {b.boxNumber === defaultTargetBox ? '★ Box Asal' : ''}
                 </option>
               ))}
             </select>
             {selectedBoxObj && (
               <p className="text-[11px] text-emerald-700 font-medium">
-                Disimpan di: <strong>BOX #{selectedBoxObj.boxNumber}</strong> ({selectedBoxObj.rackName} • PIC: {selectedBoxObj.picName})
+                Disimpan di: <strong>BOX #{selectedBoxObj.boxNumber}</strong> ({selectedBoxObj.rackName} • PPIC: {selectedBoxObj.picName})
               </p>
             )}
           </div>

@@ -80,7 +80,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                 Ganti User / Login Akun
               </h3>
               <p className="text-[11px] font-medium text-slate-500">
-                5 PIC (Royan, Cynara, Ami, Ryan, Hanami) • 3 Support (Sheva, Ade, Tri)
+                5 PPIC (Royan, Cynara, Ami, Ryan, Hanami) • 3 Support (Sheva, Ade, Tri)
               </p>
             </div>
           </div>
@@ -135,16 +135,16 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
             <div className="rounded-xl bg-blue-50/60 border border-blue-200/80 p-3 text-xs text-blue-900 flex items-start gap-2">
               <Info className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
               <span>
-                Pilih salah satu dari 5 akun PIC atau 3 Tim Support (Sheva, Ade, Tri) di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
+                Pilih salah satu dari 5 akun PPIC atau 3 Tim Support (Sheva, Ade, Tri) di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
               </span>
             </div>
 
-            {/* SEKSI 1: Tim Utama PPIC (5 PIC) */}
+            {/* SEKSI 1: Tim Utama PPIC (5 PPIC) */}
             <div className="space-y-2">
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
-                  Tim Utama PPIC (5 PIC)
+                  Tim Utama PPIC (5 PPIC)
                 </span>
                 <span className="text-[10px] font-bold text-slate-400">Total 72 Box</span>
               </div>

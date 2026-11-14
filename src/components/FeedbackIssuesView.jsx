@@ -88,7 +88,7 @@ export function FeedbackIssuesView() {
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-slate-500 font-medium mr-1">PIC:</span>
+            <span className="text-xs text-slate-500 font-medium mr-1">PPIC:</span>
             {PIC_OPTIONS.map((pic) => (
               <button
                 key={pic}

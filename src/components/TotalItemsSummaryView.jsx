@@ -338,7 +338,7 @@ export function TotalItemsSummaryView() {
       Satuan: item.satuan,
       Box: item.boxLabel,
       Rak: item.rackName,
-      PIC: item.picName,
+      PPIC: item.picName,
       Place: item.place,
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -381,7 +381,7 @@ export function TotalItemsSummaryView() {
             Ringkasan Total Item &amp; Aktivitas R&D
           </h1>
           <p className="mt-0.5 text-xs text-slate-500">
-            Pelacakan umur simpan, rekap harian simpan PCS per PIC, matriks style, dan audit kode duplikat.
+            Pelacakan umur simpan, rekap harian simpan PCS per PPIC, matriks style, dan audit kode duplikat.
           </p>
         </div>
 
@@ -543,7 +543,7 @@ export function TotalItemsSummaryView() {
                 </h2>
                 <p className="mt-1 text-xs text-slate-500 max-w-lg mx-auto">
                   Seluruh <strong>{allItems.length} sampel</strong> yang tersebar di 72 box memiliki nomor kode yang
-                  valid dan unik. Tidak ada nomor kode yang bentrok antar box maupun antar PIC.
+                  valid dan unik. Tidak ada nomor kode yang bentrok antar box maupun antar PPIC.
                 </p>
               </div>
               <div className="pt-2">
@@ -724,7 +724,7 @@ export function TotalItemsSummaryView() {
                                     ) : (
                                       <span
                                         className="p-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed"
-                                        title={`Terkunci: Data milik PIC ${item.picName}`}
+                                        title={`Terkunci: Data milik PPIC ${item.picName}`}
                                       >
                                         <Lock className="h-3.5 w-3.5" />
                                       </span>
@@ -759,7 +759,7 @@ export function TotalItemsSummaryView() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Cari style, buyer, kode, box, PIC..."
+                  placeholder="Cari style, buyer, kode, box, PPIC..."
                   className="w-full rounded-xl border border-slate-200/90 bg-slate-50/80 py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
                 />
               </div>
@@ -989,7 +989,7 @@ export function TotalItemsSummaryView() {
                                   <th className="px-3 py-2">Sample No</th>
                                   <th className="px-3 py-2">Size &amp; Warna</th>
                                   <th className="px-3 py-2 text-right">Jumlah</th>
-                                  <th className="px-3 py-2">Box &amp; PIC</th>
+                                  <th className="px-3 py-2">Box &amp; PPIC</th>
                                   <th className="px-3 py-2 text-center">Aksi</th>
                                 </tr>
                               </thead>
@@ -1087,7 +1087,7 @@ export function TotalItemsSummaryView() {
                     <th className="px-3 py-2.5">Size</th>
                     <th className="px-3 py-2.5">Color</th>
                     <th className="px-3 py-2.5 text-right">Jumlah</th>
-                    <th className="px-3 py-2.5">Box &amp; PIC</th>
+                    <th className="px-3 py-2.5">Box &amp; PPIC</th>
                     <th className="px-3 py-2.5 text-center">Aksi</th>
                   </tr>
                 </thead>

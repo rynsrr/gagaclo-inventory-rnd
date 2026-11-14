@@ -320,7 +320,7 @@ const ItemModalContent = () => {
     const isSupportUser = isSupport?.(currentUser) || isHelper?.(currentUser);
     const isOwnerBox = !currentUser || isSuper || isSupportUser || !boxObj?.picName || String(currentUser.name).trim().toLowerCase() === String(boxObj.picName).trim().toLowerCase();
     if (!isOwnerBox) {
-      setSubmitError(`Akses ditolak: Box #${boxNum} adalah milik PIC "${boxObj?.picName}". Anda sedang login sebagai "${currentUser?.name}". Satu user tidak dapat mengedit data user lain.`);
+      setSubmitError(`Akses ditolak: Box #${boxNum} adalah milik PPIC "${boxObj?.picName}". Anda sedang login sebagai "${currentUser?.name}". Satu user tidak dapat mengedit data user lain.`);
       return;
     }
 
@@ -454,17 +454,17 @@ const ItemModalContent = () => {
           <div className="no-print bg-teal-50 border-b border-teal-300 text-teal-950 px-4 py-2 text-xs font-bold flex items-center gap-2.5 shrink-0">
             <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse shrink-0"></span>
             <div className="flex-1 leading-snug">
-              <strong>Mode Tim Support:</strong> Anda sedang login sebagai <strong>{currentUser?.name}</strong> untuk membantu input item di Box #{formData.boxNumber} (Milik PIC <strong>{currentBoxObj?.picName}</strong>). Stok tetap tercatat di Box {currentBoxObj?.picName}, dan kontribusi input dicatat secara Dual-Tracking.
+              <strong>Mode Tim Support:</strong> Anda sedang login sebagai <strong>{currentUser?.name}</strong> untuk membantu input item di Box #{formData.boxNumber} (Milik PPIC <strong>{currentBoxObj?.picName}</strong>). Stok tetap tercatat di Box {currentBoxObj?.picName}, dan kontribusi input dicatat secara Dual-Tracking.
             </div>
           </div>
         )}
 
-        {/* Read-Only Banner when box belongs to another PIC */}
+        {/* Read-Only Banner when box belongs to another PPIC */}
         {!isOwner && (
           <div className="no-print bg-amber-50 border-b border-amber-300 text-amber-950 px-4 py-2 text-xs font-bold flex items-center gap-2.5 shrink-0">
             <Lock className="w-4 h-4 text-amber-600 shrink-0" />
             <div className="flex-1 leading-snug">
-              Akses Terkunci: Box #{formData.boxNumber} dialokasikan untuk PIC <strong>{currentBoxObj?.picName}</strong>. Anda login sebagai <strong>{currentUser?.name}</strong>, sehingga tidak dapat menambah atau mengedit item pada box ini.
+              Akses Terkunci: Box #{formData.boxNumber} dialokasikan untuk PPIC <strong>{currentBoxObj?.picName}</strong>. Anda login sebagai <strong>{currentUser?.name}</strong>, sehingga tidak dapat menambah atau mengedit item pada box ini.
             </div>
           </div>
         )}
@@ -913,7 +913,7 @@ const ItemModalContent = () => {
                   ? 'bg-slate-400 text-white cursor-not-allowed opacity-60'
                   : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 cursor-pointer disabled:opacity-50'
               }`}
-              title={!isOwner ? `Terkunci: Box #${formData.boxNumber} milik PIC ${currentBoxObj?.picName}` : "Simpan item ke box (Ctrl+Enter)"}
+              title={!isOwner ? `Terkunci: Box #${formData.boxNumber} milik PPIC ${currentBoxObj?.picName}` : "Simpan item ke box (Ctrl+Enter)"}
             >
               {!isOwner ? <Lock className="w-4 h-4" /> : <Save className="w-4 h-4" />}
               <span>
