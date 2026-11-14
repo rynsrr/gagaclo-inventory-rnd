@@ -10,7 +10,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
-import { isSuperuser, isHelper } from '../utils/authUtils';
+import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
 
 export const UserProfileModal = ({ isOpen, onClose }) => {
   const {
@@ -80,7 +80,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                 Ganti User / Login Akun
               </h3>
               <p className="text-[11px] font-medium text-slate-500">
-                5 PPIC (Royan, Cynara, Ami, Ryan, Hanami) • 3 Support (Sheva, Ade, Tri)
+                1 Manager (Jasmine) • 5 PPIC • 3 Support (Sheva, Ade, Tri)
               </p>
             </div>
           </div>
@@ -99,9 +99,15 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
           <div className="flex items-center gap-2">
             <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-xs font-semibold text-slate-600">Login sebagai:</span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-100/80 px-2 py-0.5 text-xs font-black text-blue-800">
+            <span className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-black ${
+              isManager(currentUser)
+                ? 'bg-indigo-100 text-indigo-900'
+                : isHelper(currentUser)
+                ? 'bg-teal-100 text-teal-900'
+                : 'bg-blue-100/80 text-blue-800'
+            }`}>
               <span className={`inline-block h-2 w-2 rounded-full ${currentUser?.avatarBg || 'bg-blue-600'}`} />
-              {currentUser?.name || 'Tamu'} (#{currentUser?.ppicNumber || 1})
+              {currentUser?.name || 'Tamu'} ({isManager(currentUser) ? 'Manager' : `#${currentUser?.ppicNumber || 1}`})
             </span>
           </div>
           <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
@@ -135,12 +141,129 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
             <div className="rounded-xl bg-blue-50/60 border border-blue-200/80 p-3 text-xs text-blue-900 flex items-start gap-2">
               <Info className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
               <span>
-                Pilih salah satu dari 5 akun PPIC atau 3 Tim Support (Sheva, Ade, Tri) di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
+                Pilih akun Manager (Jasmine), 5 PPIC, atau 3 Tim Support (Sheva, Ade, Tri) di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
               </span>
             </div>
 
-            {/* SEKSI 1: Tim Utama PPIC (5 PPIC) */}
+            {/* SEKSI 0: Manajemen Inventory (Jasmine) */}
             <div className="space-y-2">
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block"></span>
+                  👑 Manajemen &amp; Pengawas Inventory
+                </span>
+                <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                  Superuser / Full Authority
+                </span>
+              </div>
+
+              {users.filter(u => isManager(u)).map((u) => {
+                const isCurrent = currentUser && String(currentUser.id).toLowerCase() === String(u.id).toLowerCase();
+                const isSelected = selectedUserToLogin?.id === u.id;
+
+                return (
+                  <div
+                    key={u.id}
+                    className={`rounded-xl border p-3 transition ${
+                      isCurrent
+                        ? 'border-indigo-400 bg-indigo-50/50 shadow-xs'
+                        : isSelected
+                        ? 'border-indigo-500 bg-indigo-50/60 shadow-xs'
+                        : 'border-indigo-200 bg-gradient-to-r from-indigo-50/40 via-white to-purple-50/30 hover:border-indigo-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-black text-sm bg-indigo-600 shadow-xs`}>
+                          👑
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-black text-indigo-950">{u.name}</span>
+                            <span className="rounded-full bg-indigo-100 border border-indigo-300 px-2 py-0.5 text-[9px] font-black text-indigo-900 flex items-center gap-0.5">
+                              Manager Inventory
+                            </span>
+                            {isCurrent && (
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 flex items-center gap-1">
+                                <Check className="h-2.5 w-2.5" /> Aktif
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-0.5">Kontrol alokasi box, target input, dan audit data 72 box</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        {isCurrent ? (
+                          <span className="text-xs font-bold text-emerald-700 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                            Sedang Digunakan
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedUserToLogin(u);
+                              setLoginPassword('');
+                              setLoginError('');
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white hover:bg-indigo-50 text-indigo-900 border-indigo-300'
+                            }`}
+                          >
+                            {isSelected ? 'Sedang Dipilih' : 'Pilih Akun'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Login Password Prompt for Manager */}
+                    {isSelected && !isCurrent && (
+                      <form onSubmit={handleSwitchUser} className="mt-3 pt-3 border-t border-indigo-200 space-y-2">
+                        {loginError && (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                            <span>{loginError}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <input
+                              type={showLoginPassword ? 'text' : 'password'}
+                              autoFocus
+                              required
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              placeholder={`Masukkan password ${u.name}...`}
+                              className="w-full rounded-xl border border-indigo-300 bg-white py-2 pl-3 pr-10 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowLoginPassword(p => !p)}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              aria-label={showLoginPassword ? 'Sembunyikan password' : 'Lihat password'}
+                            >
+                              {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                          <button
+                            type="submit"
+                            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-sm transition cursor-pointer"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                            <span>Login</span>
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* SEKSI 1: Tim Utama PPIC (5 PPIC) */}
+            <div className="space-y-2 pt-2 border-t border-slate-200/80">
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
@@ -149,7 +272,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                 <span className="text-[10px] font-bold text-slate-400">Total 72 Box</span>
               </div>
 
-              {users.filter(u => !isHelper(u)).map((u) => {
+              {users.filter(u => !isHelper(u) && !isManager(u)).map((u) => {
                 const isCurrent = currentUser && String(currentUser.id).toLowerCase() === String(u.id).toLowerCase();
                 const isSelected = selectedUserToLogin?.id === u.id;
                 const boxCount = boxes.filter(b => b.picName === u.name).length;

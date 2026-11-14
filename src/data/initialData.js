@@ -186,9 +186,29 @@ export const SUPPORT_MEMBERS = [
   },
 ];
 
+export const MANAGER_MEMBERS = [
+  {
+    id: 'manager-1',
+    ppicNumber: 'MGR',
+    name: 'Jasmine',
+    role: 'Inventory Manager',
+    isManager: true,
+    isSuperuser: true,
+    isHelper: false,
+    email: 'jasmine@gagaclo.internal',
+    password: 'Jasmine',
+    totalBoxes: 0,
+    color: 'indigo',
+    tagBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    badgeClass: 'bg-indigo-600 text-white',
+    avatarBg: 'bg-indigo-600',
+  },
+];
+
 export const HELPER_MEMBERS = SUPPORT_MEMBERS;
 
 export const ALL_INITIAL_USERS = [
+  ...MANAGER_MEMBERS,
   ...PPIC_MEMBERS,
   ...SUPPORT_MEMBERS,
 ];

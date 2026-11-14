@@ -6,6 +6,10 @@ import {
   ChevronDown,
   ChevronUp,
   Users,
+  Target,
+  Edit2,
+  Check,
+  X,
 } from 'lucide-react';
 import {
   getItemRecordDate,
@@ -13,6 +17,7 @@ import {
   formatDateIndo,
   formatDateIndoFull,
 } from '../utils/dateUtils';
+import { isManager, isSuperuser } from '../utils/authUtils';
 
 // 8 Anggota Tim R&D Resmi (5 PPIC & 3 Support)
 const DEFAULT_TEAM_MEMBERS = [
@@ -30,9 +35,33 @@ export function PpicPerformanceView() {
   const {
     boxes,
     items,
+    currentUser,
     showNotification,
     syncFromSupabase,
   } = useInventory();
+
+  const isMgr = isManager(currentUser) || isSuperuser(currentUser);
+  const [dailyTarget, setDailyTarget] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_daily_target_pcs');
+      return saved ? Math.max(1, Number(saved)) : 150;
+    } catch {
+      return 150;
+    }
+  });
+  const [isEditingTarget, setIsEditingTarget] = useState(false);
+  const [tempTarget, setTempTarget] = useState(dailyTarget.toString());
+
+  const handleSaveTarget = (e) => {
+    e?.preventDefault?.();
+    const num = Math.max(1, parseInt(tempTarget, 10) || 150);
+    setDailyTarget(num);
+    localStorage.setItem('gagaclo_daily_target_pcs', num.toString());
+    setIsEditingTarget(false);
+    if (showNotification) {
+      showNotification(`Target input harian berhasil disetel ke ${num} PCS oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
+    }
+  };
 
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const [expandedCards, setExpandedCards] = useState({});
@@ -288,50 +317,144 @@ export function PpicPerformanceView() {
         </div>
       </div>
 
-      {/* Ringkasan Total Hari Terpilih */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-4 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 rounded-2xl border border-emerald-200/80">
-          <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-            Total PCS Disimpan ({formatDateIndoFull(selectedDailyDate)})
+      {/* Ringkasan Total Hari Terpilih & Target Manager */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Card 1: Total PCS Disimpan */}
+        <div className="p-4 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 rounded-2xl border border-emerald-200/80 flex flex-col justify-between">
+          <div>
+            <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+              Total PCS Disimpan
+            </div>
+            <div className="mt-1 text-2xl font-black text-emerald-950 tabular-nums">
+              {currentDailyData.totalPcs.toLocaleString('id-ID')}{' '}
+              <span className="text-sm font-semibold text-emerald-700">PCS</span>
+            </div>
           </div>
-          <div className="mt-1 text-2xl font-black text-emerald-950 tabular-nums">
-            {currentDailyData.totalPcs.toLocaleString('id-ID')}{' '}
-            <span className="text-sm font-semibold text-emerald-700">PCS</span>
-          </div>
-          <div className="mt-0.5 text-xs text-emerald-700">
-            Dari {currentDailyData.totalItems} transaksi sampel di 8 anggota tim
+          <div className="mt-2 text-xs text-emerald-700">
+            Dari {currentDailyData.totalItems} transaksi di 8 anggota tim
           </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-2xl border border-blue-200/80">
-          <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
-            Kontributor Teraktif Hari Ini
+        {/* Card 2: Target Harian Tim (Manager Jasmine Control) */}
+        <div className="p-4 bg-gradient-to-br from-indigo-50/90 to-purple-50/60 rounded-2xl border border-indigo-200/80 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1">
+                <Target className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Target Harian</span>
+              </div>
+              {isMgr && !isEditingTarget && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempTarget(dailyTarget.toString());
+                    setIsEditingTarget(true);
+                  }}
+                  className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-white/80 hover:bg-white px-2 py-0.5 rounded-md border border-indigo-200 flex items-center gap-1 shadow-2xs cursor-pointer"
+                  title="Ubah Target Harian Tim (Wewenang Manager)"
+                >
+                  <Edit2 className="w-2.5 h-2.5" />
+                  <span>Ubah</span>
+                </button>
+              )}
+            </div>
+
+            {isEditingTarget ? (
+              <form onSubmit={handleSaveTarget} className="mt-2 flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min="1"
+                  max="10000"
+                  autoFocus
+                  value={tempTarget}
+                  onChange={(e) => setTempTarget(e.target.value)}
+                  className="w-20 px-2 py-1 bg-white border border-indigo-300 rounded-lg text-xs font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+                <span className="text-xs font-bold text-indigo-900">PCS</span>
+                <button
+                  type="submit"
+                  className="p-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer shadow-2xs"
+                  title="Simpan Target"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTarget(false)}
+                  className="p-1 rounded-md bg-white text-slate-500 hover:text-slate-800 border border-slate-200 cursor-pointer"
+                  title="Batal"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            ) : (
+              <div className="mt-1 flex items-baseline justify-between">
+                <div className="text-2xl font-black text-indigo-950 tabular-nums">
+                  {currentDailyData.totalPcs}{' '}
+                  <span className="text-xs font-bold text-indigo-700">/ {dailyTarget} PCS</span>
+                </div>
+                <span className={`text-xs font-black px-2 py-0.5 rounded-full ${
+                  currentDailyData.totalPcs >= dailyTarget
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-indigo-100 text-indigo-800'
+                }`}>
+                  {Math.round((currentDailyData.totalPcs / dailyTarget) * 100)}%
+                </span>
+              </div>
+            )}
           </div>
-          <div className="mt-1 text-2xl font-black text-blue-950 truncate">
-            {(() => {
-              let topPerson = '-';
-              let maxPcs = 0;
-              DEFAULT_TEAM_MEMBERS.forEach((m) => {
-                const pcs = currentDailyData.byPerson?.[m.name]?.pcs || 0;
-                if (pcs > maxPcs) {
-                  maxPcs = pcs;
-                  topPerson = `${m.name} (${m.role})`;
-                }
-              });
-              return maxPcs > 0 ? `${topPerson} - ${maxPcs} PCS` : 'Belum Ada Input';
-            })()}
+
+          <div className="mt-2">
+            <div className="w-full bg-indigo-100/80 rounded-full h-2 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  currentDailyData.totalPcs >= dailyTarget ? 'bg-emerald-500' : 'bg-indigo-600'
+                }`}
+                style={{ width: `${Math.min(100, Math.round((currentDailyData.totalPcs / dailyTarget) * 100))}%` }}
+              />
+            </div>
+            <div className="mt-1 flex items-center justify-between text-[10px] font-semibold text-indigo-900">
+              <span>{currentDailyData.totalPcs >= dailyTarget ? '🎉 Target Tercapai!' : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS`}</span>
+              <span className="text-indigo-600 font-medium">Oleh Mgr. Jasmine</span>
+            </div>
           </div>
-          <div className="mt-0.5 text-xs text-blue-700">Jumlah input terbanyak pada tanggal ini</div>
         </div>
 
-        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-2xl border border-slate-200/80">
-          <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-            Riwayat Hari Tercatat
+        {/* Card 3: Kontributor Teraktif */}
+        <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between">
+          <div>
+            <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
+              Kontributor Teraktif
+            </div>
+            <div className="mt-1 text-2xl font-black text-blue-950 truncate">
+              {(() => {
+                let topPerson = '-';
+                let maxPcs = 0;
+                DEFAULT_TEAM_MEMBERS.forEach((m) => {
+                  const pcs = currentDailyData.byPerson?.[m.name]?.pcs || 0;
+                  if (pcs > maxPcs) {
+                    maxPcs = pcs;
+                    topPerson = `${m.name} (${m.role})`;
+                  }
+                });
+                return maxPcs > 0 ? `${topPerson} - ${maxPcs} PCS` : 'Belum Ada Input';
+              })()}
+            </div>
           </div>
-          <div className="mt-1 text-2xl font-black text-slate-800 tabular-nums">
-            {dailyTeamRecords.dates.length} <span className="text-sm font-semibold text-slate-500">Hari</span>
+          <div className="mt-2 text-xs text-blue-700">Jumlah input terbanyak tanggal ini</div>
+        </div>
+
+        {/* Card 4: Riwayat Hari Tercatat */}
+        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-2xl border border-slate-200/80 flex flex-col justify-between">
+          <div>
+            <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+              Riwayat Hari Tercatat
+            </div>
+            <div className="mt-1 text-2xl font-black text-slate-800 tabular-nums">
+              {dailyTeamRecords.dates.length} <span className="text-sm font-semibold text-slate-500">Hari</span>
+            </div>
           </div>
-          <div className="mt-0.5 text-xs text-slate-500">Total data riwayat hari tersimpan</div>
+          <div className="mt-2 text-xs text-slate-500">Total data riwayat hari tersimpan</div>
         </div>
       </div>
 

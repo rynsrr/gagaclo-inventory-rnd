@@ -52,7 +52,7 @@ import {
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 import { isItemDispatched } from './utils/dispatchUtils';
-import { isSuperuser, isHelper } from './utils/authUtils';
+import { isSuperuser, isHelper, isManager } from './utils/authUtils';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
 import { DispatchModal } from './components/DispatchModal';
@@ -308,7 +308,11 @@ const AppContent = () => {
                   {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
                 </span>
                 <span className="font-black text-slate-900">{currentUser?.name || 'PPIC'}</span>
-                {isSuperuser(currentUser) ? (
+                {isManager(currentUser) ? (
+                  <span className="text-[9px] font-black uppercase text-indigo-900 bg-indigo-100 border border-indigo-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
+                    👑 Manager
+                  </span>
+                ) : isSuperuser(currentUser) ? (
                   <span className="text-[9px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
                     ⚡ Superuser
                   </span>

@@ -3,6 +3,7 @@ import {
   RACKS_DATA,
   PPIC_MEMBERS,
   HELPER_MEMBERS,
+  MANAGER_MEMBERS,
   ALL_INITIAL_USERS,
   generateInitialBoxes,
   INITIAL_ITEMS,
@@ -25,8 +26,8 @@ import {
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, releaseCode } from '../utils/sequenceResolver';
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
-import { isSuperuser, isHelper } from '../utils/authUtils';
-export { isSuperuser, isHelper };
+import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
+export { isSuperuser, isHelper, isManager };
 
 const InventoryContext = createContext(null);
 
@@ -173,7 +174,7 @@ export const InventoryProvider = ({ children }) => {
     });
 
     const existing = new Set(migrated.map(u => String(u.name || '').trim().toLowerCase()));
-    const missing = HELPER_MEMBERS.filter(h => !existing.has(h.name.toLowerCase())).map(h => ({
+    const missingHelper = HELPER_MEMBERS.filter(h => !existing.has(h.name.toLowerCase())).map(h => ({
       id: h.id,
       username: h.name,
       name: h.name,
@@ -181,6 +182,7 @@ export const InventoryProvider = ({ children }) => {
       isHelper: true,
       isSupport: true,
       isSuperuser: false,
+      isManager: false,
       email: h.email || '',
       password: h.name,
       ppicNumber: h.ppicNumber,
@@ -189,10 +191,27 @@ export const InventoryProvider = ({ children }) => {
       badgeClass: h.badgeClass,
       avatarBg: h.avatarBg,
     }));
-    return [...migrated, ...missing];
+    const missingManager = (MANAGER_MEMBERS || []).filter(m => !existing.has(m.name.toLowerCase())).map(m => ({
+      id: m.id,
+      username: m.name,
+      name: m.name,
+      role: 'Inventory Manager',
+      isHelper: false,
+      isSupport: false,
+      isSuperuser: true,
+      isManager: true,
+      email: m.email || '',
+      password: m.name,
+      ppicNumber: m.ppicNumber,
+      color: m.color,
+      tagBg: m.tagBg,
+      badgeClass: m.badgeClass,
+      avatarBg: m.avatarBg,
+    }));
+    return [...missingManager, ...migrated, ...missingHelper];
   };
 
-  // 5 PIC Users + 3 Helper Users (Password default sama dengan nama user)
+  // 1 Manager (Jasmine) + 5 PPIC Users + 3 Support Users (Password default sama dengan nama user)
   const [users, setUsers] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY + '_users');
@@ -201,12 +220,16 @@ export const InventoryProvider = ({ children }) => {
         if (Array.isArray(parsed) && parsed.length > 0) {
           const sanitized = parsed
             .filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
-            .map(u => ({
-              ...u,
-              isSuperuser: false,
-              isHelper: isHelper(u),
-              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff')),
-            }));
+            .map(u => {
+              const isMgr = isManager(u);
+              return {
+                ...u,
+                isManager: isMgr,
+                isSuperuser: isMgr || isSuperuser(u),
+                isHelper: isHelper(u),
+                role: isMgr ? 'Inventory Manager' : (u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff'))),
+              };
+            });
           return ensureAllUsersIncluded(sanitized);
         }
       }
@@ -218,7 +241,8 @@ export const InventoryProvider = ({ children }) => {
       username: p.name,
       name: p.name,
       role: p.role || (p.isHelper ? 'Tim Support' : 'PPIC Staff'),
-      isSuperuser: false,
+      isSuperuser: isSuperuser(p),
+      isManager: isManager(p),
       isHelper: Boolean(p.isHelper),
       email: p.email || '',
       password: p.name,
@@ -230,7 +254,7 @@ export const InventoryProvider = ({ children }) => {
     }));
   });
 
-  // Current active logged-in PIC / Helper user (default: Royan / user #1)
+  // Current active logged-in PPIC / Support user (default: Royan / user #1)
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const savedUserId = localStorage.getItem(STORAGE_KEY + '_current_user');
@@ -239,18 +263,23 @@ export const InventoryProvider = ({ children }) => {
       const rawList = Array.isArray(parsedUsers) && parsedUsers.length > 0
         ? parsedUsers
             .filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
-            .map(u => ({
-              ...u,
-              isSuperuser: false,
-              isHelper: isHelper(u),
-              role: u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff')),
-            }))
+            .map(u => {
+              const isMgr = isManager(u);
+              return {
+                ...u,
+                isManager: isMgr,
+                isSuperuser: isMgr || isSuperuser(u),
+                isHelper: isHelper(u),
+                role: isMgr ? 'Inventory Manager' : (u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff'))),
+              };
+            })
         : ALL_INITIAL_USERS.map(p => ({
             id: p.id,
             username: p.name,
             name: p.name,
             role: p.role || (p.isHelper ? 'Tim Support' : 'PPIC Staff'),
-            isSuperuser: false,
+            isSuperuser: isSuperuser(p),
+            isManager: isManager(p),
             isHelper: Boolean(p.isHelper),
             email: p.email || '',
             password: p.name,
@@ -2735,6 +2764,7 @@ export const InventoryProvider = ({ children }) => {
     logoutUser,
     updateUserProfile,
     isSuperuser,
+    isManager,
     isHelper,
     helpers: HELPER_MEMBERS,
     // Supabase Operations & State
