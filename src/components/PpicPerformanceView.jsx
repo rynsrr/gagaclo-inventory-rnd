@@ -10,6 +10,7 @@ import {
   Edit2,
   Check,
   X,
+  Eye,
 } from 'lucide-react';
 import {
   getItemRecordDate,
@@ -627,49 +628,19 @@ export function PpicPerformanceView() {
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/90 text-xs font-bold text-slate-700 uppercase">
-                <th className="px-3 py-2.5">Tanggal</th>
+              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 uppercase tracking-wide">
+                <th scope="col" className="px-4 py-3.5 sm:px-5 sm:py-4 whitespace-nowrap">Tanggal</th>
                 {DEFAULT_TEAM_MEMBERS.map((m) => (
-                  <th key={m.name} className="px-3 py-2.5 text-right whitespace-nowrap">
-                    <div>{m.name}</div>
-                    <div className="text-xs font-bold text-slate-400 lowercase">{m.role}</div>
+                  <th key={m.name} scope="col" className="px-4 py-3.5 sm:px-5 sm:py-4 text-right whitespace-nowrap min-w-[76px]">
+                    <div className="font-extrabold text-slate-900">{m.name}</div>
+                    <div className="text-xs font-semibold text-slate-400 lowercase mt-0.5">{m.role}</div>
                   </th>
                 ))}
-                <th className="px-3 py-2.5 text-right font-black text-slate-900">Total (PCS)</th>
-                <th className="px-3 py-2.5 text-center">Aksi</th>
+                <th scope="col" className="px-4 py-3.5 sm:px-5 sm:py-4 text-right font-black text-slate-900 whitespace-nowrap">Total (PCS)</th>
+                <th scope="col" className="px-4 py-3.5 sm:px-5 sm:py-4 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {/* Baris Total Akumulasi di Atas */}
-              {dailyTeamRecords.dates.length > 0 && (
-                <tr className="border-b-2 border-blue-300 bg-gradient-to-r from-blue-100/90 via-indigo-50/80 to-blue-100/90 font-black text-slate-900 shadow-2xs">
-                  <td className="px-3 py-2.5 font-black text-blue-950 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-700 text-white text-xs font-black tracking-wide shadow-2xs">
-                      Σ TOTAL PER ORANG
-                    </span>
-                  </td>
-                  {DEFAULT_TEAM_MEMBERS.map((m) => {
-                    const pcs = allTimeTeamTotals.byPerson[m.name]?.pcs || 0;
-                    return (
-                      <td
-                        key={`top-total-${m.name}`}
-                        className="px-3 py-2.5 text-right font-black tabular-nums text-blue-950"
-                      >
-                        {pcs > 0 ? pcs.toLocaleString('id-ID') : '-'}
-                      </td>
-                    );
-                  })}
-                  <td className="px-3 py-2.5 text-right font-black text-emerald-800 tabular-nums">
-                    {allTimeTeamTotals.grandTotalPcs.toLocaleString('id-ID')}
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-200/80 text-blue-900">
-                      Semua Hari
-                    </span>
-                  </td>
-                </tr>
-              )}
-
               {dailyTeamRecords.dates.length === 0 ? (
                 <tr>
                   <td colSpan={DEFAULT_TEAM_MEMBERS.length + 3} className="px-4 py-8 text-center text-slate-400">
@@ -685,13 +656,13 @@ export function PpicPerformanceView() {
                       key={dateKey}
                       onClick={() => setSelectedDailyDate(dateKey)}
                       className={`transition cursor-pointer ${
-                        isSelected ? 'bg-blue-50/70 font-semibold' : 'hover:bg-slate-50/80'
+                        isSelected ? 'bg-blue-50/80 font-semibold' : 'hover:bg-slate-50/80'
                       }`}
                     >
-                      <td className="px-3 py-2 font-bold text-slate-800 whitespace-nowrap">
-                        {formatDateIndo(dateKey)}
+                      <td className="px-4 py-3 sm:px-5 sm:py-3 font-bold text-slate-800 whitespace-nowrap">
+                        <span>{formatDateIndo(dateKey)}</span>
                         {dateKey === todayIso && (
-                          <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-xs font-black">
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-xs font-black border border-emerald-300">
                             Hari Ini
                           </span>
                         )}
@@ -701,7 +672,7 @@ export function PpicPerformanceView() {
                         return (
                           <td
                             key={`col-${dateKey}-${m.name}`}
-                            className={`px-3 py-2 text-right tabular-nums ${
+                            className={`px-4 py-3 sm:px-5 sm:py-3 text-right tabular-nums font-mono ${
                               pcs > 0 ? 'font-bold text-slate-800' : 'text-slate-300'
                             }`}
                           >
@@ -709,13 +680,36 @@ export function PpicPerformanceView() {
                           </td>
                         );
                       })}
-                      <td className="px-3 py-2 text-right font-black text-emerald-700 tabular-nums">
+                      <td className="px-4 py-3 sm:px-5 sm:py-3 text-right font-black text-emerald-700 font-mono tabular-nums text-xs sm:text-sm">
                         {record.totalPcs.toLocaleString('id-ID')}
                       </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className="text-xs text-blue-600 hover:underline">
-                          {isSelected ? '✓ Terpilih' : 'Pilih'}
-                        </span>
+                      <td className="px-4 py-3 sm:px-5 sm:py-3 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDailyDate(dateKey);
+                          }}
+                          aria-label={isSelected ? `Tanggal ${formatDateIndo(dateKey)} aktif` : `Pilih tanggal ${formatDateIndo(dateKey)}`}
+                          title={isSelected ? 'Tanggal sedang ditampilkan di kartu atas' : 'Klik untuk tampilkan rincian tanggal ini di kartu atas'}
+                          className={`inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-600 text-white shadow-xs'
+                              : 'bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 hover:border-blue-300'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span className="hidden sm:inline">Aktif</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span className="hidden sm:inline">Pilih</span>
+                            </>
+                          )}
+                        </button>
                       </td>
                     </tr>
                   );
@@ -723,10 +717,10 @@ export function PpicPerformanceView() {
               )}
             </tbody>
             {dailyTeamRecords.dates.length > 0 && (
-              <tfoot className="border-t-2 border-slate-300 bg-slate-100/90 font-black">
-                <tr className="border-t-2 border-slate-300 bg-gradient-to-r from-slate-100 via-blue-50/40 to-slate-100 text-xs font-black text-slate-900">
-                  <td className="px-3 py-2.5 font-black text-slate-900 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-white text-xs font-black tracking-wide shadow-2xs">
+              <tfoot className="border-t-2 border-slate-950 bg-slate-900 text-white font-black shadow-md">
+                <tr className="text-xs font-black text-white">
+                  <td className="px-4 py-3.5 sm:px-5 sm:py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600 text-white text-xs font-black uppercase tracking-wider shadow-xs">
                       TOTAL KESELURUHAN
                     </span>
                   </td>
@@ -735,17 +729,17 @@ export function PpicPerformanceView() {
                     return (
                       <td
                         key={`foot-total-${m.name}`}
-                        className="px-3 py-2.5 text-right font-black tabular-nums text-slate-900"
+                        className="px-4 py-3.5 sm:px-5 sm:py-4 text-right font-black font-mono tabular-nums text-white text-xs sm:text-sm"
                       >
                         {pcs > 0 ? pcs.toLocaleString('id-ID') : '-'}
                       </td>
                     );
                   })}
-                  <td className="px-3 py-2.5 text-right font-black text-emerald-800 tabular-nums">
+                  <td className="px-4 py-3.5 sm:px-5 sm:py-4 text-right font-black font-mono text-emerald-400 tabular-nums text-xs sm:text-sm">
                     {allTimeTeamTotals.grandTotalPcs.toLocaleString('id-ID')}
                   </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-700">
+                  <td className="px-4 py-3.5 sm:px-5 sm:py-4 text-center whitespace-nowrap">
+                    <span className="text-xs font-bold font-mono px-2 py-1 rounded-md bg-slate-800 text-slate-200 border border-slate-700">
                       {dailyTeamRecords.dates.length} Hari
                     </span>
                   </td>

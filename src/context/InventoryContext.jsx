@@ -28,6 +28,16 @@ import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNext
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
 export { isSuperuser, isHelper, isManager };
+import {
+  checkAndTriggerDailyAutoBackup,
+  createBackupPayload,
+  downloadBackupFile,
+  getLocalSnapshots,
+  saveLocalSnapshot,
+  getLastAutoBackupInfo,
+  isAutoBackupEnabled,
+  setAutoBackupEnabled,
+} from '../utils/autoBackupService';
 
 const InventoryContext = createContext(null);
 
@@ -394,6 +404,7 @@ export const InventoryProvider = ({ children }) => {
     error: null,
   });
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
 
   // Filter state for general browsing
   const [activeTab, setActiveTab] = useState('racks');
@@ -2257,44 +2268,97 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  // Export full JSON
+  // Export full JSON (Unduh file fisik + simpan snapshot lokal)
   const exportJsonBackup = () => {
-    const data = {
-      appName: 'GAGACLO - Storage Inventory Management RND',
-      exportDate: new Date().toISOString(),
-      racks: racks,
-      ppicMembers: ppicMembers,
-      boxes,
-      items,
-      transactions,
-    };
-    const jsonStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', jsonStr);
-    downloadAnchor.setAttribute('download', `GAGACLO_INVENTORY_BACKUP_${new Date().toISOString().slice(0, 10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    const payload = createBackupPayload({ racks, ppicMembers, boxes, items, transactions, users });
+    saveLocalSnapshot(payload);
+    return downloadBackupFile(payload);
   };
 
   // Import JSON
   const importJsonBackup = (fileContent) => {
     try {
-      const parsed = JSON.parse(fileContent);
+      const parsed = typeof fileContent === 'string' ? JSON.parse(fileContent) : fileContent;
       if (parsed.boxes && parsed.items) {
         if (parsed.racks) setRacks(parsed.racks);
         if (parsed.ppicMembers) setPpicMembers(parsed.ppicMembers);
         setBoxes(parsed.boxes);
         setItems(parsed.items);
         if (parsed.transactions) setTransactions(parsed.transactions);
-        alert('Data inventory berhasil diimpor!');
+        if (parsed.targets?.dailyTargetTeam) {
+          try {
+            localStorage.setItem('gagaclo_daily_target_pcs', String(parsed.targets.dailyTargetTeam));
+            window.dispatchEvent(new Event('gagaclo_target_updated'));
+          } catch {}
+        }
+        if (parsed.targets?.individualTargets) {
+          try {
+            localStorage.setItem('gagaclo_individual_targets', JSON.stringify(parsed.targets.individualTargets));
+          } catch {}
+        }
+        if (showNotification) {
+          showNotification('Data inventory berhasil diimpor & dipulihkan!', 'success', 3500);
+        } else {
+          alert('Data inventory berhasil diimpor!');
+        }
+        return true;
       } else {
         alert('Format file JSON tidak sesuai struktur GAGACLO Inventory.');
+        return false;
       }
     } catch (e) {
-      alert('Gagal membaca file JSON: ' + e.message);
+      alert('Gagal membaca file JSON: ' + (e?.message || e));
+      return false;
     }
   };
+
+  // Memicu backup manual seketika (file fisik + snapshot)
+  const triggerManualBackup = () => {
+    return checkAndTriggerDailyAutoBackup(
+      { racks, ppicMembers, boxes, items, transactions, users },
+      showNotification,
+      true
+    );
+  };
+
+  // Pulihkan dari snapshot lokal
+  const restoreFromSnapshotPayload = (payload) => {
+    if (!payload || !payload.boxes || !payload.items) return false;
+    if (payload.racks) setRacks(payload.racks);
+    if (payload.ppicMembers) setPpicMembers(payload.ppicMembers);
+    setBoxes(payload.boxes);
+    setItems(payload.items);
+    if (payload.transactions) setTransactions(payload.transactions);
+    if (payload.targets?.dailyTargetTeam) {
+      try {
+        localStorage.setItem('gagaclo_daily_target_pcs', String(payload.targets.dailyTargetTeam));
+        window.dispatchEvent(new Event('gagaclo_target_updated'));
+      } catch {}
+    }
+    if (payload.targets?.individualTargets) {
+      try {
+        localStorage.setItem('gagaclo_individual_targets', JSON.stringify(payload.targets.individualTargets));
+      } catch {}
+    }
+    if (showNotification) {
+      showNotification('Data inventory berhasil dipulihkan dari snapshot cadangan!', 'success', 4000);
+    }
+    return true;
+  };
+
+  // Auto-backup harian otomatis: memicu download dan snapshot 1x sehari
+  useEffect(() => {
+    if (boxes && boxes.length > 0 && items && items.length > 0) {
+      const timer = setTimeout(() => {
+        checkAndTriggerDailyAutoBackup(
+          { racks, ppicMembers, boxes, items, transactions, users },
+          showNotification,
+          false
+        );
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [boxes.length, items.length, showNotification]);
 
   // Export to Excel (.xlsx) - Lazy loaded for ultra lightweight performance
   const exportToExcel = async () => {
@@ -2756,6 +2820,10 @@ export const InventoryProvider = ({ children }) => {
     exportJsonBackup,
     importJsonBackup,
     exportToExcel,
+    triggerManualBackup,
+    restoreFromSnapshotPayload,
+    isBackupModalOpen,
+    setIsBackupModalOpen,
     // User Authentication & Management (5 PIC)
     users,
     currentUser,

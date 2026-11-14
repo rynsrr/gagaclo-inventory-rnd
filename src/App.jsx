@@ -39,6 +39,9 @@ const QuickScannerModal = lazy(() =>
 const UserProfileModal = lazy(() =>
   import('./components/UserProfileModal').then((m) => ({ default: m.UserProfileModal }))
 );
+const BackupModal = lazy(() =>
+  import('./components/BackupModal').then((m) => ({ default: m.BackupModal }))
+);
 import {
   Boxes,
   Box as BoxIcon,
@@ -56,6 +59,7 @@ import {
   Crown,
   Wrench,
   Zap,
+  ShieldCheck,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 import { isItemDispatched } from './utils/dispatchUtils';
@@ -73,6 +77,8 @@ const AppContent = () => {
     supabaseStatus,
     isSupabaseModalOpen,
     setIsSupabaseModalOpen,
+    isBackupModalOpen,
+    setIsBackupModalOpen,
     boxes,
     items,
     issues = [],
@@ -314,6 +320,18 @@ const AppContent = () => {
                 <span>Kelola Box &amp; Rak</span>
               </button>
 
+              {/* Backup & Pulihkan Data */}
+              <button
+                type="button"
+                onClick={() => setIsBackupModalOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 cursor-pointer"
+                aria-label="Backup & Pulihkan Data"
+                title="Auto-backup harian, unduh file JSON/Excel, atau pulihkan snapshot cadangan"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
+                <span>Backup &amp; Pulihkan</span>
+              </button>
+
               {/* Akun & Profil User PPIC */}
               <button
                 type="button"
@@ -431,6 +449,16 @@ const AppContent = () => {
           <UserProfileModal
             isOpen={isUserProfileOpen}
             onClose={() => setIsUserProfileOpen(false)}
+          />
+        </Suspense>
+      )}
+
+      {/* Backup & Auto-Snapshot Modal */}
+      {isBackupModalOpen && (
+        <Suspense fallback={null}>
+          <BackupModal
+            isOpen={isBackupModalOpen}
+            onClose={() => setIsBackupModalOpen(false)}
           />
         </Suspense>
       )}

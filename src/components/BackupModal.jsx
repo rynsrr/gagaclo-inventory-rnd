@@ -1,20 +1,78 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useInventory } from '../context/InventoryContext';
-import { X, HardDriveDownload, Upload, RotateCcw, ShieldAlert, Database, CheckCircle2, Trash2 } from 'lucide-react';
+import {
+  X,
+  HardDriveDownload,
+  Upload,
+  RotateCcw,
+  ShieldAlert,
+  Database,
+  CheckCircle2,
+  Trash2,
+  ShieldCheck,
+  FileSpreadsheet,
+  History,
+  Download,
+  Clock,
+  RefreshCw,
+} from 'lucide-react';
+import {
+  isAutoBackupEnabled,
+  setAutoBackupEnabled,
+  getLastAutoBackupInfo,
+  getLocalSnapshots,
+  downloadBackupFile,
+} from '../utils/autoBackupService';
 
 export const BackupModal = ({ isOpen, onClose }) => {
-  const { 
-    exportJsonBackup, 
-    importJsonBackup, 
-    resetToInitialData, 
+  const {
+    items = [],
+    boxes = [],
+    exportJsonBackup,
+    importJsonBackup,
+    exportToExcel,
+    triggerManualBackup,
+    restoreFromSnapshotPayload,
+    resetToInitialData,
     deleteAllItems,
     setIsSupabaseModalOpen,
-    supabaseStatus 
+    supabaseStatus,
   } = useInventory();
+
   const fileInputRef = useRef(null);
-  const [confirming, setConfirming] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingRestoreSnapshot, setConfirmingRestoreSnapshot] = useState(null);
+  const [autoEnabled, setAutoEnabled] = useState(isAutoBackupEnabled());
+  const [lastInfo, setLastInfo] = useState(getLastAutoBackupInfo());
+  const [snapshots, setSnapshots] = useState(getLocalSnapshots());
+
+  useEffect(() => {
+    if (isOpen) {
+      setAutoEnabled(isAutoBackupEnabled());
+      setLastInfo(getLastAutoBackupInfo());
+      setSnapshots(getLocalSnapshots());
+      setConfirmingDelete(false);
+      setConfirmingRestoreSnapshot(null);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleToggleAutoBackup = () => {
+    const nextVal = !autoEnabled;
+    setAutoEnabled(nextVal);
+    setAutoBackupEnabled(nextVal);
+  };
+
+  const handleBackupNow = () => {
+    if (triggerManualBackup) {
+      triggerManualBackup();
+    } else {
+      exportJsonBackup();
+    }
+    setLastInfo(getLastAutoBackupInfo());
+    setSnapshots(getLocalSnapshots());
+  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -31,81 +89,243 @@ export const BackupModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleRestoreSnapshot = (snapshot) => {
+    if (restoreFromSnapshotPayload && snapshot?.payload) {
+      restoreFromSnapshotPayload(snapshot.payload);
+      setConfirmingRestoreSnapshot(null);
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden text-slate-800">
         
-        {/* Header */}
-        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
-          <h3 className="text-base font-bold">Manajemen Data & Backup</h3>
+        {/* Header Dialog */}
+        <div className="inventory-dialog-heading px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-blue-600 text-white">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold tracking-tight">Pusat Cadangan &amp; Pemulihan Data (Auto-Backup)</h3>
+              <p className="text-xs text-slate-400">Proteksi data otomatis harian, unduhan fisik &amp; riwayat snapshot</p>
+            </div>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-200 transition"
+            className="text-slate-400 hover:text-white p-1 rounded-md hover:bg-slate-800 transition cursor-pointer"
+            aria-label="Tutup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-5 space-y-4 text-xs">
+        {/* Isi Dialog */}
+        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 text-xs">
           
-          {/* Cloud Supabase Sync */}
-          <div className="bg-blue-50/70 p-4 rounded-xl border border-blue-200 space-y-2">
-            <div className="flex items-center justify-between font-bold text-blue-900">
-              <div className="flex items-center space-x-2">
-                <Database className="w-4 h-4 text-blue-600" />
-                <span>Supabase Corporate Gagaclo</span>
+          {/* Card 1: Proteksi Auto-Backup Harian (Fitur Utama yang Diminta Pengguna) */}
+          <div className="p-4 rounded-lg border border-emerald-300 bg-emerald-50/60 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-emerald-600 text-white">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-emerald-950">Auto-Download &amp; Backup Harian</h4>
+                  <p className="text-emerald-800 text-xs">
+                    Mencadangkan file JSON ke folder Downloads laptop dan menyimpan snapshot lokal setiap hari baru secara otomatis.
+                  </p>
+                </div>
               </div>
-              {supabaseStatus.isConnected && (
-                <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center space-x-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Online</span>
+
+              {/* Toggle Switch */}
+              <button
+                type="button"
+                onClick={handleToggleAutoBackup}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  autoEnabled ? 'bg-emerald-600' : 'bg-slate-300'
+                }`}
+                title={autoEnabled ? 'Klik untuk nonaktifkan auto-backup' : 'Klik untuk aktifkan auto-backup'}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    autoEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Status Backup Terkini */}
+            <div className="pt-2 border-t border-emerald-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-1.5 text-emerald-900 font-medium">
+                <Clock className="w-3.5 h-3.5 text-emerald-700" />
+                <span>
+                  Backup Hari Ini: {lastInfo.isToday ? (
+                    <strong className="text-emerald-800 font-bold">Sudah Diunduh &amp; Tersimpan</strong>
+                  ) : (
+                    <span className="text-slate-600 font-semibold">Siap diunduh untuk hari ini</span>
+                  )}
                 </span>
-              )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleBackupNow}
+                className="px-3 py-1.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                title="Unduh file backup JSON hari ini sekarang juga"
+              >
+                <HardDriveDownload className="w-3.5 h-3.5" />
+                <span>Unduh Backup Hari Ini (JSON)</span>
+              </button>
             </div>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              Sinkronisasi data otomatis dengan cloud database Supabase resmi Corporate Gagaclo untuk kolaborasi real-time seluruh tim R&D.
-            </p>
-            <button
-              onClick={() => {
-                onClose();
-                setIsSupabaseModalOpen(true);
-              }}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition shadow-xs text-xs flex items-center justify-center space-x-1.5"
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span>Kelola Koneksi & Sinkronisasi Cloud</span>
-            </button>
           </div>
 
-          {/* Export JSON */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <div className="flex items-center space-x-2 font-bold text-slate-900">
-              <HardDriveDownload className="w-4 h-4 text-slate-700" />
-              <span>Export File Backup (JSON)</span>
+          {/* Card 2: Riwayat Snapshot Otomatis 7 Hari Terakhir (Pulihkan Cepat 1-Klik) */}
+          <div className="p-4 rounded-lg border border-slate-200 bg-white space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-slate-900 text-xs sm:text-sm">
+                <History className="w-4 h-4 text-blue-600" />
+                <span>Riwayat Snapshot Otomatis di Browser ({snapshots.length} Hari Tersedia)</span>
+              </div>
+              <span className="text-xs text-slate-500 font-medium">Rotasi otomatis 7 hari</span>
             </div>
-            <p className="text-slate-500 text-xs leading-relaxed">
-              Unduh salinan lengkap seluruh data master 72 box, daftar item sample/material, dan riwayat mutasi untuk disimpan di komputer Anda.
+            <p className="text-slate-500 text-xs">
+              Jika sewaktu-waktu laptop mati atau data salah input, Anda dapat memulihkan seluruh data langsung dari arsip tanggal di bawah ini tanpa perlu mencari file fisik.
             </p>
-            <button
-              onClick={() => {
-                exportJsonBackup();
-                onClose();
-              }}
-              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg transition shadow-xs text-xs"
-            >
-              Unduh Backup JSON
-            </button>
+
+            {snapshots.length === 0 ? (
+              <div className="py-4 text-center text-slate-400 bg-slate-50 rounded-md border border-dashed border-slate-200">
+                Belum ada arsip snapshot tersimpan. Klik "Unduh Backup Hari Ini" di atas untuk membuat snapshot pertama.
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {snapshots.map((snap) => (
+                  <div
+                    key={snap.id}
+                    className="flex items-center justify-between gap-2 p-2.5 rounded-md bg-slate-50 hover:bg-blue-50/60 border border-slate-200 transition text-xs"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-800 flex items-center gap-2">
+                        <span>{snap.date}</span>
+                        {snap.formattedTime && (
+                          <span className="text-slate-400 font-normal">({snap.formattedTime})</span>
+                        )}
+                      </div>
+                      <div className="text-slate-500 font-medium text-xs">
+                        Tersimpan: {snap.summary?.totalItems ?? items.length} item • {snap.summary?.totalBoxes ?? boxes.length} box
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => downloadBackupFile(snap.payload, `GAGACLO_BACKUP_${snap.date}.json`)}
+                        className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold transition flex items-center gap-1 cursor-pointer"
+                        title="Unduh file JSON untuk snapshot tanggal ini"
+                      >
+                        <Download className="w-3 h-3 text-slate-600" />
+                        <span className="hidden sm:inline">File</span>
+                      </button>
+
+                      {confirmingRestoreSnapshot === snap.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreSnapshot(snap)}
+                            className="px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold transition text-xs cursor-pointer"
+                          >
+                            Ya, Pulihkan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmingRestoreSnapshot(null)}
+                            className="px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs cursor-pointer"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingRestoreSnapshot(snap.id)}
+                          className="px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold transition flex items-center gap-1 cursor-pointer"
+                          title="Pulihkan seluruh data master ke kondisi tanggal ini"
+                        >
+                          <RefreshCw className="w-3 h-3 text-blue-600" />
+                          <span>Pulihkan</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Import JSON */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <div className="flex items-center space-x-2 font-bold text-slate-900">
-              <Upload className="w-4 h-4 text-emerald-600" />
-              <span>Pulihkan Data (Import JSON)</span>
+          {/* Card 3: Ekspor Excel & Cloud Supabase Sync */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Unduh Excel (.xlsx) */}
+            <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-2">
+              <div className="flex items-center gap-2 font-bold text-slate-900">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>Export Spreadsheet Excel</span>
+              </div>
+              <p className="text-slate-500 text-xs">
+                Ekspor seluruh item inventory ke format `.xlsx` untuk laporan fisik atau analisis offline.
+              </p>
+              <button
+                type="button"
+                onClick={exportToExcel}
+                className="w-full py-1.5 px-3 rounded-md bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>Unduh Excel (.xlsx)</span>
+              </button>
             </div>
-            <p className="text-slate-500 text-xs leading-relaxed">
-              Unggah file backup JSON yang telah Anda unduh sebelumnya untuk memulihkan seluruh data.
+
+            {/* Cloud Supabase Sync Status */}
+            <div className="p-3.5 rounded-lg border border-slate-200 bg-white space-y-2">
+              <div className="flex items-center justify-between font-bold text-slate-900">
+                <div className="flex items-center gap-2">
+                  <Database className="w-4 h-4 text-blue-600" />
+                  <span>Cloud Supabase</span>
+                </div>
+                {supabaseStatus?.isConnected && (
+                  <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Aktif</span>
+                  </span>
+                )}
+              </div>
+              <p className="text-slate-500 text-xs">
+                Data Anda juga otomatis disinkronkan ke server cloud resmi Gagaclo secara real-time.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  setIsSupabaseModalOpen(true);
+                }}
+                className="w-full py-1.5 px-3 rounded-md bg-white hover:bg-blue-50 text-blue-800 border border-blue-200 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>Status &amp; Log Cloud</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 4: Pulihkan dari File JSON Komputer */}
+          <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-2">
+            <div className="flex items-center justify-between font-bold text-slate-900">
+              <div className="flex items-center gap-2">
+                <Upload className="w-4 h-4 text-blue-600" />
+                <span>Pulihkan dari File Backup Eksternal (Upload JSON)</span>
+              </div>
+            </div>
+            <p className="text-slate-500 text-xs">
+              Punya file cadangan `GAGACLO_AUTO_BACKUP_*.json` dari komputer lain? Unggah di sini untuk memulihkan seluruh data master.
             </p>
             <input
               type="file"
@@ -115,95 +335,77 @@ export const BackupModal = ({ isOpen, onClose }) => {
               className="hidden"
             />
             <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-lg transition shadow-xs text-xs"
+              className="w-full py-2 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-md border border-slate-300 transition text-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              Pilih File Backup JSON...
+              <Upload className="w-3.5 h-3.5 text-blue-600" />
+              <span>Pilih File Backup JSON dari Komputer...</span>
             </button>
           </div>
 
-          {/* Reset to Default */}
-          <div className="bg-rose-50/70 p-4 rounded-xl border border-rose-200 space-y-2">
-            <div className="flex items-center space-x-2 font-bold text-rose-900">
-              <ShieldAlert className="w-4 h-4 text-rose-600" />
-              <span>Reset ke Data Awal Dokumen</span>
-            </div>
-            <p className="text-rose-700 text-xs leading-relaxed">
-              Mengembalikan seluruh konfigurasi Rak 1-5, master 72 Box, dan alokasi tim PPIC (Royan, Cynara, Ami, Ryan, Hanami) persis seperti dokumen awal GAGACLO 20261102.
-            </p>
+          {/* Tindakan Berbahaya: Reset & Hapus */}
+          <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
             <button
+              type="button"
               onClick={() => {
-                resetToInitialData();
-                onClose();
+                if (window.confirm('Kembalikan konfigurasi rak dan alokasi box ke dokumen awal?')) {
+                  resetToInitialData();
+                  onClose();
+                }
               }}
-              className="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg transition shadow-xs text-xs flex items-center justify-center space-x-1.5"
+              className="text-slate-500 hover:text-slate-800 font-medium transition flex items-center gap-1 cursor-pointer"
+              title="Reset struktur master box & rak ke konfigurasi awal dokumen"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset ke Konfigurasi Awal</span>
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset Struktur ke Data Awal</span>
             </button>
-          </div>
 
-          {/* Hapus Semua Item */}
-          <div className="bg-red-50/70 p-4 rounded-xl border border-red-200 space-y-2">
-            <div className="flex items-center space-x-2 font-bold text-red-900">
-              <Trash2 className="w-4 h-4 text-red-600" />
-              <span>Hapus Semua Item Tersimpan</span>
-            </div>
-            <p className="text-red-700 text-xs leading-relaxed">
-              Menghapus SELURUH data item/sample secara permanen dari database (Supabase + lokal).
-              Box, rak, dan riwayat transaksi tetap tersimpan. Tindakan ini <strong>TIDAK BISA dibatalkan</strong>.
-            </p>
-            {!confirming ? (
+            {!confirmingDelete ? (
               <button
                 type="button"
-                onClick={() => setConfirming(true)}
-                className="w-full py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition shadow-xs text-xs flex items-center justify-center space-x-1.5"
+                onClick={() => setConfirmingDelete(true)}
+                className="text-rose-600 hover:text-rose-800 font-medium transition flex items-center gap-1 cursor-pointer"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-3 h-3" />
                 <span>Hapus Semua Item</span>
               </button>
             ) : (
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-red-800">
-                  Yakin? Semua item akan hilang permanen.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const count = await deleteAllItems();
-                        setConfirming(false);
-                        onClose();
-                        console.log(`Deleted ${count} items`);
-                      } catch (e) {
-                        alert('Gagal menghapus item: ' + (e?.message || e));
-                        setConfirming(false);
-                      }
-                    }}
-                    className="flex-1 py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg transition shadow-xs text-xs"
-                  >
-                    Ya, Hapus Semua
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirming(false)}
-                    className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg transition text-xs"
-                  >
-                    Batal
-                  </button>
-                </div>
+              <div className="flex items-center gap-1">
+                <span className="text-rose-700 font-bold">Yakin hapus semua item?</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await deleteAllItems?.();
+                    setConfirmingDelete(false);
+                    onClose();
+                  }}
+                  className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white font-bold"
+                >
+                  Ya
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(false)}
+                  className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-medium"
+                >
+                  Batal
+                </button>
               </div>
             )}
           </div>
 
         </div>
 
-        {/* Footer */}
-        <div className="bg-slate-100 px-5 py-3 border-t border-slate-200 text-right">
+        {/* Footer Dialog */}
+        <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
+          <span className="text-xs text-slate-500">
+            Total master saat ini: <strong>{items.length} item</strong> di <strong>{boxes.length} box</strong>
+          </span>
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg text-xs transition"
+            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-md text-xs transition cursor-pointer"
           >
             Tutup
           </button>
