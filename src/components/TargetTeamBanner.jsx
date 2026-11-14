@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Target, Edit2, Check, X, ArrowUpRight } from 'lucide-react';
+import { Target, Edit2, Check, X, ArrowUpRight, User } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
@@ -362,44 +362,53 @@ export function TargetTeamBanner({ onOpenRekap }) {
           )}
         </div>
 
-        {/* BARIS BAWAH (Row 2): Semua 8 Nama Personel & Target Dicapai (Center Aligned) */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-800/80">
-          {allMemberTargets.map((m) => (
-            <button
-              type="button"
-              key={m.name}
-              onClick={() => {
-                if (m.isAchieved) {
-                  try {
-                    window.dispatchEvent(
-                      new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
+        {/* BARIS BAWAH (Row 2): PERSON TARGET & Semua 8 Nama Personel (Center Aligned) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2 border-t border-slate-800/80">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/90 border border-slate-700 shadow-2xs shrink-0">
+            <User className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+            <span className="text-xs font-black uppercase tracking-wider text-slate-200">
+              PERSON TARGET
+            </span>
+          </div>
+
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+            {allMemberTargets.map((m) => (
+              <button
+                type="button"
+                key={m.name}
+                onClick={() => {
+                  if (m.isAchieved) {
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
+                      );
+                    } catch {}
+                  } else if (showNotification) {
+                    showNotification(
+                      `${m.name} (${m.role}): Capaian saat ini ${m.pcs}/${m.target} PCS (kurang ${m.remaining} PCS).`,
+                      'info',
+                      3000
                     );
-                  } catch {}
-                } else if (showNotification) {
-                  showNotification(
-                    `${m.name} (${m.role}): Capaian saat ini ${m.pcs}/${m.target} PCS (kurang ${m.remaining} PCS).`,
-                    'info',
-                    3000
-                  );
-                }
-              }}
-              className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 hover:scale-[1.02] border ${
-                m.isAchieved
-                  ? 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 hover:border-emerald-400 text-emerald-200'
-                  : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 hover:border-slate-600 text-slate-300'
-              }`}
-              title={`${m.name} (${m.role}) — Target: ${m.target} PCS, Capaian: ${m.pcs} PCS (${m.percent}%)${m.isAchieved ? ' — Target Tercapai! Klik untuk selebrasi.' : ` — Kurang ${m.remaining} PCS lagi.`}`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${m.isAchieved ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
-              <span className="text-white font-extrabold">{m.name}</span>
-              <span className={`font-mono font-bold ${m.isAchieved ? 'text-emerald-400' : 'text-slate-400'}`}>
-                · {m.pcs}/{m.target} PCS
-              </span>
-              {m.isAchieved && (
-                <span className="text-[10px] text-emerald-400 font-extrabold">✓</span>
-              )}
-            </button>
-          ))}
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 hover:scale-[1.02] border ${
+                  m.isAchieved
+                    ? 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 hover:border-emerald-400 text-emerald-200'
+                    : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 hover:border-slate-600 text-slate-300'
+                }`}
+                title={`${m.name} (${m.role}) — Target: ${m.target} PCS, Capaian: ${m.pcs} PCS (${m.percent}%)${m.isAchieved ? ' — Target Tercapai! Klik untuk selebrasi.' : ` — Kurang ${m.remaining} PCS lagi.`}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${m.isAchieved ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+                <span className="text-white font-extrabold">{m.name}</span>
+                <span className={`font-mono font-bold ${m.isAchieved ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  · {m.pcs}/{m.target} PCS
+                </span>
+                {m.isAchieved && (
+                  <span className="text-[10px] text-emerald-400 font-extrabold">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
