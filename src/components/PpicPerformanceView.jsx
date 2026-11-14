@@ -317,8 +317,106 @@ export function PpicPerformanceView() {
         </div>
       </div>
 
-      {/* Ringkasan Total Hari Terpilih & Target Manager */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Target Harian Tim (Full Width di Bagian Atas) */}
+      <div className="p-4 sm:p-5 bg-gradient-to-r from-indigo-50/90 via-purple-50/60 to-blue-50/70 rounded-2xl border border-indigo-200/90 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
+              <Target className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-black text-indigo-950 uppercase tracking-wider">
+              TARGET HARIAN
+            </span>
+          </div>
+
+          {isMgr && !isEditingTarget && (
+            <button
+              type="button"
+              onClick={() => {
+                setTempTarget(dailyTarget.toString());
+                setIsEditingTarget(true);
+              }}
+              className="text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200 flex items-center gap-1.5 shadow-2xs cursor-pointer transition"
+              title="Ubah Target Harian Tim (Wewenang Manager)"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+              <span>Ubah</span>
+            </button>
+          )}
+        </div>
+
+        {isEditingTarget ? (
+          <form onSubmit={handleSaveTarget} className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+            <span className="text-xs font-bold text-indigo-900">Set Target Baru:</span>
+            <input
+              type="number"
+              min="1"
+              max="10000"
+              autoFocus
+              value={tempTarget}
+              onChange={(e) => setTempTarget(e.target.value)}
+              className="w-24 px-3 py-1.5 bg-white border border-indigo-300 rounded-xl text-sm font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+            <span className="text-xs font-bold text-indigo-900">PCS</span>
+            <button
+              type="submit"
+              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1 shadow-2xs cursor-pointer transition"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Simpan</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditingTarget(false)}
+              className="px-3 py-1.5 rounded-xl bg-white text-slate-500 hover:text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer transition"
+            >
+              Batal
+            </button>
+          </form>
+        ) : (
+          <div className="flex items-baseline justify-between flex-wrap gap-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl sm:text-4xl font-black text-slate-900 tabular-nums">
+                {currentDailyData.totalPcs}
+              </span>
+              <span className="text-base sm:text-lg font-bold text-indigo-700">
+                / {dailyTarget} PCS
+              </span>
+            </div>
+            <span className={`text-xs sm:text-sm font-black px-3 py-1 rounded-xl ${
+              currentDailyData.totalPcs >= dailyTarget
+                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                : 'bg-indigo-100 text-indigo-900'
+            }`}>
+              {Math.round((currentDailyData.totalPcs / dailyTarget) * 100)}%
+            </span>
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <div className="w-full bg-slate-200/90 rounded-full h-3 overflow-hidden p-0.5">
+            <div
+              className={`h-full rounded-full transition-all duration-500 shadow-xs ${
+                currentDailyData.totalPcs >= dailyTarget
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                  : 'bg-gradient-to-r from-indigo-600 to-purple-600'
+              }`}
+              style={{ width: `${Math.min(100, Math.round((currentDailyData.totalPcs / dailyTarget) * 100))}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+            <span>
+              {currentDailyData.totalPcs >= dailyTarget
+                ? '🎉 Luar biasa! Target input harian telah tercapai (100%+)'
+                : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS`}
+            </span>
+            <span className="text-indigo-600 font-medium">Oleh Mgr. Jasmine</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Ringkasan 3 Metrik Hari Terpilih */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Card 1: Total PCS Disimpan */}
         <div className="p-4 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 rounded-2xl border border-emerald-200/80 flex flex-col justify-between">
           <div>
@@ -335,92 +433,7 @@ export function PpicPerformanceView() {
           </div>
         </div>
 
-        {/* Card 2: Target Harian Tim (Manager Jasmine Control) */}
-        <div className="p-4 bg-gradient-to-br from-indigo-50/90 to-purple-50/60 rounded-2xl border border-indigo-200/80 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1">
-                <Target className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Target Harian</span>
-              </div>
-              {isMgr && !isEditingTarget && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTempTarget(dailyTarget.toString());
-                    setIsEditingTarget(true);
-                  }}
-                  className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-white/80 hover:bg-white px-2 py-0.5 rounded-md border border-indigo-200 flex items-center gap-1 shadow-2xs cursor-pointer"
-                  title="Ubah Target Harian Tim (Wewenang Manager)"
-                >
-                  <Edit2 className="w-2.5 h-2.5" />
-                  <span>Ubah</span>
-                </button>
-              )}
-            </div>
-
-            {isEditingTarget ? (
-              <form onSubmit={handleSaveTarget} className="mt-2 flex items-center gap-1.5">
-                <input
-                  type="number"
-                  min="1"
-                  max="10000"
-                  autoFocus
-                  value={tempTarget}
-                  onChange={(e) => setTempTarget(e.target.value)}
-                  className="w-20 px-2 py-1 bg-white border border-indigo-300 rounded-lg text-xs font-black text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                />
-                <span className="text-xs font-bold text-indigo-900">PCS</span>
-                <button
-                  type="submit"
-                  className="p-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer shadow-2xs"
-                  title="Simpan Target"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingTarget(false)}
-                  className="p-1 rounded-md bg-white text-slate-500 hover:text-slate-800 border border-slate-200 cursor-pointer"
-                  title="Batal"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </form>
-            ) : (
-              <div className="mt-1 flex items-baseline justify-between">
-                <div className="text-2xl font-black text-indigo-950 tabular-nums">
-                  {currentDailyData.totalPcs}{' '}
-                  <span className="text-xs font-bold text-indigo-700">/ {dailyTarget} PCS</span>
-                </div>
-                <span className={`text-xs font-black px-2 py-0.5 rounded-full ${
-                  currentDailyData.totalPcs >= dailyTarget
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                    : 'bg-indigo-100 text-indigo-800'
-                }`}>
-                  {Math.round((currentDailyData.totalPcs / dailyTarget) * 100)}%
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-2">
-            <div className="w-full bg-indigo-100/80 rounded-full h-2 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  currentDailyData.totalPcs >= dailyTarget ? 'bg-emerald-500' : 'bg-indigo-600'
-                }`}
-                style={{ width: `${Math.min(100, Math.round((currentDailyData.totalPcs / dailyTarget) * 100))}%` }}
-              />
-            </div>
-            <div className="mt-1 flex items-center justify-between text-[10px] font-semibold text-indigo-900">
-              <span>{currentDailyData.totalPcs >= dailyTarget ? '🎉 Target Tercapai!' : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS`}</span>
-              <span className="text-indigo-600 font-medium">Oleh Mgr. Jasmine</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Kontributor Teraktif */}
+        {/* Card 2: Kontributor Teraktif */}
         <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between">
           <div>
             <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
@@ -444,7 +457,7 @@ export function PpicPerformanceView() {
           <div className="mt-2 text-xs text-blue-700">Jumlah input terbanyak tanggal ini</div>
         </div>
 
-        {/* Card 4: Riwayat Hari Tercatat */}
+        {/* Card 3: Riwayat Hari Tercatat */}
         <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-2xl border border-slate-200/80 flex flex-col justify-between">
           <div>
             <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
