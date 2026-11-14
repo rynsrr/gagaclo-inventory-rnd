@@ -20,6 +20,9 @@ const PpicPerformanceView = lazy(() =>
 const FeedbackIssuesView = lazy(() =>
   import('./components/FeedbackIssuesView').then((m) => ({ default: m.FeedbackIssuesView }))
 );
+const DispatchOutgoingView = lazy(() =>
+  import('./components/DispatchOutgoingView').then((m) => ({ default: m.DispatchOutgoingView }))
+);
 const SupabaseModal = lazy(() =>
   import('./components/SupabaseModal').then((m) => ({ default: m.SupabaseModal }))
 );
@@ -44,8 +47,10 @@ import {
   Database,
   PackagePlus,
   X,
+  Send,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
+import { isItemDispatched } from './utils/dispatchUtils';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse' (BOX is the main tab)
@@ -117,6 +122,16 @@ const AppContent = () => {
     return `${todaySum} PCS`;
   }, [items, todayIso]);
 
+  const dispatchedSummaryCount = useMemo(() => {
+    let pcs = 0;
+    items.forEach((item) => {
+      if (isItemDispatched(item)) {
+        pcs += Number(item.jumlah ?? item.qty ?? 1);
+      }
+    });
+    return `${pcs} PCS`;
+  }, [items]);
+
   const mainTabs = [
     {
       id: '3d-warehouse',
@@ -132,6 +147,14 @@ const AppContent = () => {
       subtitle: 'Semua barang',
       icon: LayoutDashboard,
       count: items.length,
+      primary: false,
+    },
+    {
+      id: 'dispatch',
+      label: 'Kirim Keluar',
+      subtitle: 'Buyer, Anzo, RDTW, RDC, ANZOTW',
+      icon: Send,
+      count: dispatchedSummaryCount,
       primary: false,
     },
     {
@@ -292,6 +315,11 @@ const AppContent = () => {
           {appMode === 'summary' && (
             <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Ringkasan Data...</div>}>
               <TotalItemsSummaryView />
+            </Suspense>
+          )}
+          {appMode === 'dispatch' && (
+            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Pengiriman Sampel Keluar...</div>}>
+              <DispatchOutgoingView />
             </Suspense>
           )}
           {appMode === 'ppic-performance' && (

@@ -16,6 +16,7 @@ import {
 } from '../lib/supabase';
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, releaseCode } from '../utils/sequenceResolver';
+import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
 
 const InventoryContext = createContext(null);
 
@@ -2226,11 +2227,159 @@ export const InventoryProvider = ({ children }) => {
 
   // Helper selectors
   const getItemsInBox = (boxNumber) => {
-    return items.filter((item) => Number(item.boxNumber) === Number(boxNumber));
+    return items.filter((item) => Number(item.boxNumber) === Number(boxNumber) && !isItemDispatched(item));
   };
 
   const getBoxDetails = (boxNumber) => {
     return boxes.find((b) => b.boxNumber === Number(boxNumber));
+  };
+
+  // Dispatch / Outgoing sample operations (ke Buyer, Anzo, RDTW, RDC, ANZOTW)
+  const dispatchItem = async (itemOrId, dispatchData) => {
+    const item = typeof itemOrId === 'object' ? itemOrId : items.find(i => String(i.id) === String(itemOrId));
+    if (!item) throw new Error('Item tidak ditemukan');
+
+    const qtyToSend = Math.min(Number(dispatchData.qty) || Number(item.jumlah) || 1, Number(item.jumlah) || 1);
+    const originBoxNumber = Number(item.boxNumber) || 1;
+    const originRackName = item.rackName || 'RACK 1';
+    const originPic = item.picName || 'Royan';
+    const destName = dispatchData.destinationLabel || dispatchData.destinationId || 'Tujuan Luar';
+    const isPermanent = dispatchData.type === 'PERMANENT';
+    const statusText = `Dispatched: ${destName} (${isPermanent ? 'Permanen' : 'Review'})`;
+
+    const dispatchTags = encodeDispatchTags({
+      destinationId: dispatchData.destinationId,
+      destinationLabel: destName,
+      type: dispatchData.type,
+      date: dispatchData.date || new Date().toISOString().split('T')[0],
+      originBox: originBoxNumber,
+      pic: currentUser?.name || originPic,
+      recipient: dispatchData.recipient || '',
+      notes: dispatchData.notes || '',
+    }, item.tags);
+
+    // If partial dispatch (e.g. sending 2 out of 5 PCS)
+    if (qtyToSend < (Number(item.jumlah) || 1)) {
+      const remainingQty = (Number(item.jumlah) || 1) - qtyToSend;
+      // 1. Update existing item in box with reduced quantity
+      await updateItem(item.id, {
+        jumlah: remainingQty,
+        qty: remainingQty,
+      });
+
+      // 2. Create new dispatched item record
+      const newItemId = 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+      const dispatchedRecord = {
+        ...item,
+        id: newItemId,
+        jumlah: qtyToSend,
+        qty: qtyToSend,
+        status: statusText,
+        tags: dispatchTags,
+        place: `DIKIRIM: ${destName} (${isPermanent ? 'Permanen' : 'Review'}) • Asal BOX ${originBoxNumber}`,
+      };
+      await addItem(dispatchedRecord);
+    } else {
+      // Full dispatch of the item
+      await updateItem(item.id, {
+        status: statusText,
+        tags: dispatchTags,
+        place: `DIKIRIM: ${destName} (${isPermanent ? 'Permanen' : 'Review'}) • Asal BOX ${originBoxNumber}`,
+      });
+    }
+
+    // Add mutation log transaction
+    await addTransaction({
+      itemId: item.id,
+      itemName: `${item.style || item.name || item.kode} (${qtyToSend} PCS)`,
+      sku: item.kode || item.sku || '',
+      boxNumber: originBoxNumber,
+      type: 'OUT',
+      qty: qtyToSend,
+      unit: item.satuan || 'PCS',
+      picName: currentUser?.name || originPic,
+      notes: `PENGIRIMAN KELUAR R&D ke ${destName} [${isPermanent ? 'Keluar Permanen' : 'Review Sementara'}]. Penerima/Catatan: ${dispatchData.recipient || dispatchData.notes || '-'}`,
+    });
+
+    showNotification?.(
+      `📦 Sampel ${item.style || item.kode} (${qtyToSend} PCS) berhasil dicatat dikirim ke ${destName} [${isPermanent ? 'Permanen' : 'Review'}].`,
+      'success',
+      4500
+    );
+  };
+
+  const returnDispatchedItem = async (itemOrId, returnData = {}) => {
+    const item = typeof itemOrId === 'object' ? itemOrId : items.find(i => String(i.id) === String(itemOrId));
+    if (!item) throw new Error('Item tidak ditemukan');
+
+    const dispatchInfo = decodeDispatchData(item);
+    const targetBoxNum = Number(returnData.targetBoxNumber || dispatchInfo?.originBox || item.boxNumber || 1);
+    const targetBoxObj = boxes.find(b => Number(b.boxNumber) === targetBoxNum);
+    const targetRack = targetBoxObj?.rackName || 'RACK 1';
+    const targetPic = targetBoxObj?.picName || currentUser?.name || 'Royan';
+    const returnDate = returnData.date || new Date().toISOString().split('T')[0];
+    const fromDest = dispatchInfo?.destinationLabel || 'Review';
+
+    // Clean dispatch tags and mark as returned
+    const cleanTags = (Array.isArray(item.tags) ? item.tags : []).filter(
+      t => !String(t).startsWith('dispatch') && !String(t).startsWith('dispatch_') && t !== 'DISPATCH'
+    );
+    cleanTags.push(`returned_from:${encodeURIComponent(fromDest)}`);
+    cleanTags.push(`return_date:${returnDate}`);
+
+    await updateItem(item.id, {
+      status: 'In Storage',
+      boxNumber: targetBoxNum,
+      rackName: targetRack,
+      picName: targetPic,
+      place: `BOX ${targetBoxNum} (${targetRack} - ${targetPic})`,
+      tags: cleanTags,
+    });
+
+    // Add incoming mutation transaction
+    await addTransaction({
+      itemId: item.id,
+      itemName: `${item.style || item.name || item.kode} (${item.jumlah || 1} PCS)`,
+      sku: item.kode || item.sku || '',
+      boxNumber: targetBoxNum,
+      type: 'IN',
+      qty: Number(item.jumlah) || 1,
+      unit: item.satuan || 'PCS',
+      picName: currentUser?.name || targetPic,
+      notes: `TERIMA KEMBALI dari review ${fromDest} ke BOX #${targetBoxNum}. Catatan: ${returnData.notes || 'Selesai review, kondisi baik.'}`,
+    });
+
+    showNotification?.(
+      `📥 Sampel ${item.style || item.kode} berhasil diterima kembali dan disimpan di Box #${targetBoxNum}!`,
+      'success',
+      4500
+    );
+  };
+
+  const cancelDispatch = async (itemOrId) => {
+    const item = typeof itemOrId === 'object' ? itemOrId : items.find(i => String(i.id) === String(itemOrId));
+    if (!item) throw new Error('Item tidak ditemukan');
+
+    const dispatchInfo = decodeDispatchData(item);
+    const originBoxNum = Number(dispatchInfo?.originBox || item.boxNumber || 1);
+    const targetBoxObj = boxes.find(b => Number(b.boxNumber) === originBoxNum);
+    const targetRack = targetBoxObj?.rackName || 'RACK 1';
+    const targetPic = targetBoxObj?.picName || currentUser?.name || 'Royan';
+
+    const cleanTags = (Array.isArray(item.tags) ? item.tags : []).filter(
+      t => !String(t).startsWith('dispatch') && !String(t).startsWith('dispatch_') && t !== 'DISPATCH'
+    );
+
+    await updateItem(item.id, {
+      status: 'In Storage',
+      boxNumber: originBoxNum,
+      rackName: targetRack,
+      picName: targetPic,
+      place: `BOX ${originBoxNum} (${targetRack} - ${targetPic})`,
+      tags: cleanTags,
+    });
+
+    showNotification?.(`Pengiriman untuk ${item.style || item.kode} dibatalkan. Item kembali ke Box #${originBoxNum}.`, 'info', 3500);
   };
 
   const getStats = () => {
@@ -2278,6 +2427,10 @@ export const InventoryProvider = ({ children }) => {
     addTransaction,
     updateBoxNotes,
     setBoxFull,
+    // Dispatch / Outgoing Sample Operations (Buyer, Anzo, RDTW, RDC, ANZOTW)
+    dispatchItem,
+    returnDispatchedItem,
+    cancelDispatch,
     // Box Management
     addBox,
     updateBox,

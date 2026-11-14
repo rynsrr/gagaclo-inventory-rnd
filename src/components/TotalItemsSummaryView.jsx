@@ -31,7 +31,12 @@ import {
   Check,
   RotateCcw,
   RefreshCw,
+  Send,
+  Truck,
+  Building2,
 } from 'lucide-react';
+import { isItemDispatched, decodeDispatchData, DISPATCH_DESTINATIONS } from '../utils/dispatchUtils';
+import { DispatchOutgoingView } from './DispatchOutgoingView';
 
 /**
  * Menghitung umur simpan item secara presisi berdasarkan tanggal masuk
@@ -332,6 +337,28 @@ export function TotalItemsSummaryView() {
 
   const SAMPLE_TYPES = ['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARCHIVE'];
 
+  const dispatchedStats = useMemo(() => {
+    let count = 0;
+    let pcs = 0;
+    let permPcs = 0;
+    let revPcs = 0;
+    const destBreakdown = {};
+    items.forEach(it => {
+      if (isItemDispatched(it)) {
+        count++;
+        const q = Number(it.jumlah ?? it.qty ?? 1);
+        pcs += q;
+        const d = decodeDispatchData(it);
+        if (d?.type === 'PERMANENT') permPcs += q;
+        else revPcs += q;
+
+        const dest = d?.destinationLabel || 'Lainnya';
+        destBreakdown[dest] = (destBreakdown[dest] || 0) + q;
+      }
+    });
+    return { count, pcs, permPcs, revPcs, destBreakdown };
+  }, [items]);
+
   return (
     <div className="space-y-5">
       {/* Page Header */}
@@ -418,9 +445,75 @@ export function TotalItemsSummaryView() {
               {duplicateCodeGroups.length > 0 ? `${duplicateCodeGroups.length} Duplikat` : '✓ 0'}
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('dispatch')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'dispatch'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Kirim Keluar</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              viewMode === 'dispatch' ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+            }`}>
+              {dispatchedStats.pcs} PCS
+            </span>
+          </button>
         </div>
       </div>
     </div>
+
+      {/* Top Banner Widget: Kotak Sampel Terkirim Keluar (Buyer, Anzo, RDTW, RDC, ANZOTW) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-blue-500/20 border border-blue-400/30 text-blue-300 shrink-0">
+            <Truck className="w-5 h-5" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-black text-white">
+                Kotak Pengiriman Keluar R&amp;D
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30">
+                Buyer • Anzo • RDTW • RDC • ANZOTW
+              </span>
+            </div>
+            <p className="text-xs text-slate-300">
+              Total <strong>{dispatchedStats.pcs} PCS</strong> ({dispatchedStats.count} item) terkirim keluar:
+              <span className="text-rose-300 font-bold ml-1.5">• {dispatchedStats.permPcs} PCS Permanen</span>
+              <span className="text-amber-300 font-bold ml-1.5">• {dispatchedStats.revPcs} PCS Review (Bisa Kembali)</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setViewMode(viewMode === 'dispatch' ? 'styles' : 'dispatch')}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md cursor-pointer ${
+              viewMode === 'dispatch'
+                ? 'bg-white text-slate-900 hover:bg-slate-100 shadow-white/10'
+                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30'
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>{viewMode === 'dispatch' ? 'Tutup Panel Pengiriman' : 'Buka Kotak Pengiriman'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* SUB-VIEW: PENGIRIMAN KELUAR R&D (BUYER / ANZO / RDTW / RDC / ANZOTW)      */}
+      {/* ========================================================================= */}
+      {viewMode === 'dispatch' && (
+        <div className="space-y-4">
+          <DispatchOutgoingView />
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* SUB-VIEW: KODE SAMA / DUPLIKAT & PERBAIKAN OTOMATIS                      */}
@@ -918,8 +1011,19 @@ export function TotalItemsSummaryView() {
                                       {item.jumlah} <span className="text-[10px] text-slate-400 font-normal">{item.satuan}</span>
                                     </td>
                                     <td className="px-3 py-2">
-                                      <div className="font-bold text-blue-700">{item.boxLabel}</div>
-                                      <div className="text-[10px] text-slate-400">{item.picName}</div>
+                                      {isItemDispatched(item) ? (
+                                        <div className="space-y-0.5">
+                                          <span className="inline-block px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[9px]">
+                                            🚀 Dikirim ({decodeDispatchData(item)?.destinationLabel || 'Luar'})
+                                          </span>
+                                          <div className="text-[10px] text-slate-400">Asal {item.boxLabel}</div>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <div className="font-bold text-blue-700">{item.boxLabel}</div>
+                                          <div className="text-[10px] text-slate-400">{item.picName}</div>
+                                        </>
+                                      )}
                                     </td>
                                     <td className="px-3 py-2">
                                       <div className="flex items-center justify-center gap-1">
@@ -1021,11 +1125,22 @@ export function TotalItemsSummaryView() {
                           <span className="text-[11px] font-normal text-slate-400">{item.satuan}</span>
                         </td>
                         <td className="px-3 py-2.5">
-                          <div className="text-xs font-bold text-blue-700">{item.boxLabel}</div>
-                          <div className="mt-0.5 text-[11px] text-slate-500">
-                            {item.rackName}
-                            {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
-                          </div>
+                          {isItemDispatched(item) ? (
+                            <div className="space-y-0.5">
+                              <span className="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px]">
+                                🚀 Dikirim ke {decodeDispatchData(item)?.destinationLabel || 'Luar'}
+                              </span>
+                              <div className="text-[10px] text-slate-400">Asal: {item.boxLabel} • {item.picName}</div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-xs font-bold text-blue-700">{item.boxLabel}</div>
+                              <div className="mt-0.5 text-[11px] text-slate-500">
+                                {item.rackName}
+                                {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
+                              </div>
+                            </>
+                          )}
                         </td>
                         <td className="px-3 py-2.5">
                           <div className="flex items-center justify-center gap-1.5">

@@ -27,10 +27,12 @@ import {
   Lock,
   ShieldAlert,
   FileText,
+  Send,
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
 import { SampleListPrintModal } from './SampleListPrintModal';
+import { DispatchModal } from './DispatchModal';
 import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
 
 export const BoxDetailModal = () => {
@@ -60,6 +62,8 @@ function BoxDetail({ box }) {
   const itemsInBox = getItemsInBox(selectedBoxNumber);
   const isOwner = !currentUser || !box.picName || String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
   const [copiedId, setCopiedId] = useState(null);
+  const [dispatchModalItem, setDispatchModalItem] = useState(null);
+  const [dispatchPreselectedItems, setDispatchPreselectedItems] = useState([]);
 
   const handleCopyCode = (e, code, id) => {
     e?.stopPropagation();
@@ -502,6 +506,22 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
+              {/* Bulk Dispatch Items (Buyer, Anzo, RDTW, RDC, ANZOTW) */}
+              {selectedItemIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDispatchPreselectedItems(itemsInBox.filter(i => selectedItemIds.has(i.id)));
+                    setDispatchModalItem(null);
+                  }}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                  title="Kirim semua item yang dicentang ke luar (Buyer / Anzo / RDTW / RDC / ANZOTW)"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Kirim Terpilih ({selectedItemIds.size})</span>
+                </button>
+              )}
+
               {/* Bulk Move Items to another Box (Only Owner) */}
               {isOwner && selectedItemIds.size > 0 && (
                 <button
@@ -733,6 +753,19 @@ function BoxDetail({ box }) {
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDispatchModalItem(item);
+                                    setDispatchPreselectedItems([]);
+                                  }}
+                                  className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
+                                  title="Kirim Keluar (Buyer / Anzo / RDTW / RDC / ANZOTW)"
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                               {isOwner && (
                                 <button
                                   type="button"
@@ -1031,6 +1064,18 @@ function BoxDetail({ box }) {
             </div>
           </div>
         </div>
+      )}
+      {/* Outgoing Dispatch Modal (Buyer, Anzo, RDTW, RDC, ANZOTW) */}
+      {Boolean(dispatchModalItem || dispatchPreselectedItems.length > 0) && (
+        <DispatchModal
+          isOpen={Boolean(dispatchModalItem || dispatchPreselectedItems.length > 0)}
+          onClose={() => {
+            setDispatchModalItem(null);
+            setDispatchPreselectedItems([]);
+          }}
+          item={dispatchModalItem}
+          preselectedItems={dispatchPreselectedItems}
+        />
       )}
     </div>
   );
