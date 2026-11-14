@@ -116,7 +116,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in no-print">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="relative w-full max-w-lg bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="px-5 py-4 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -127,7 +127,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
               <h3 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
                 Catat Pengiriman Sampel Keluar R&D
               </h3>
-              <p className="text-[11px] text-blue-200 font-medium">
+              <p className="text-xs text-blue-200 font-medium">
                 Kirim sampel ke Buyer, ANZO QC, ANZO TW, ANZO QC CHINA, RDTW, atau RDC
               </p>
             </div>
@@ -152,7 +152,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
           {/* Item Preview Card */}
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-500">
               <span>{isSingle ? 'Item yang Akan Dikirim:' : `${itemsToDispatch.length} Item Terpilih:`}</span>
               <span className="font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                 {isSingle ? `BOX #${singleItem.boxNumber}` : 'Multi-Box'}
@@ -164,23 +164,23 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                 <div className="text-sm font-black text-slate-900">
                   {singleItem.style || singleItem.name || 'Sample R&D'}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 font-mono">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 font-mono">
                   <span>Kode: <strong>{singleItem.kode || singleItem.sku}</strong></span>
                   {singleItem.sampleNo && <span>• No: <strong>{singleItem.sampleNo}</strong></span>}
                   {singleItem.size && <span>• Size: <strong>{singleItem.size}</strong></span>}
                   {singleItem.color && <span>• Color: <strong>{singleItem.color}</strong></span>}
                 </div>
-                <div className="text-[11px] text-emerald-700 font-bold">
+                <div className="text-xs text-emerald-700 font-bold">
                   Stok Tersedia di Box #{singleItem.boxNumber}: {maxQty} PCS
                 </div>
               </div>
             ) : (
               <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
                 {itemsToDispatch.map((it) => (
-                  <div key={it.id} className="flex justify-between items-center text-[11px] bg-white p-2 rounded-lg border border-slate-200">
+                  <div key={it.id} className="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-slate-200">
                     <div className="min-w-0 pr-2">
                       <div className="font-bold text-slate-800 truncate">{it.style || it.kode}</div>
-                      <div className="text-[10px] text-slate-500">
+                      <div className="text-xs text-slate-500">
                         Box #{it.boxNumber} {it.buyerNo && `• Buyer: ${it.buyerNo}`}
                       </div>
                     </div>
@@ -200,7 +200,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                 <Building2 className="w-3.5 h-3.5 text-blue-600" />
                 Tujuan Pengiriman <span className="text-rose-500">*</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-normal">Pilih salah satu</span>
+              <span className="text-xs text-slate-400 font-normal">Pilih salah satu</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {DISPATCH_DESTINATIONS.map((dest) => {
@@ -247,7 +247,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                     <span>Pilih Nama Buyer Tujuan</span>
                     <span className="text-rose-500 font-black text-sm">*</span>
                   </label>
-                  <span className="text-[10px] text-rose-700 font-semibold bg-rose-100/80 px-2 py-0.5 rounded-full border border-rose-200">
+                  <span className="text-xs text-rose-700 font-semibold bg-rose-100/80 px-2 py-0.5 rounded-full border border-rose-200">
                     Wajib Diisi Sesuai List Buyer No
                   </span>
                 </div>
@@ -275,7 +275,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                 {/* Quick Selection Buttons from Buyer List */}
                 {buyerList.length > 0 && (
                   <div className="pt-1">
-                    <span className="text-[10px] font-bold text-rose-900 block mb-1">
+                    <span className="text-xs font-bold text-rose-900 block mb-1">
                       Pilihan Cepat dari List Buyer No:
                     </span>
                     <div className="flex flex-wrap items-center gap-1.5 max-h-24 overflow-y-auto pr-1">
@@ -287,7 +287,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                             setSelectedBuyer(b);
                             if (error) setError(null);
                           }}
-                          className={`px-2 py-0.5 rounded text-[10px] font-black transition cursor-pointer border ${
+                          className={`px-2 py-0.5 rounded text-xs font-black transition cursor-pointer border ${
                             selectedBuyer === b
                               ? 'bg-rose-600 text-white border-rose-700 shadow-2xs'
                               : 'bg-white hover:bg-rose-100 text-rose-900 border-rose-200'
@@ -342,7 +342,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                         <span className="w-4 h-4 rounded-full border border-slate-300" />
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-600 leading-tight">
+                    <p className="text-xs text-slate-600 leading-tight">
                       {t.description}
                     </p>
                   </div>
@@ -368,7 +368,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                   <button
                     type="button"
                     onClick={() => setQty(maxQty)}
-                    className="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-700 whitespace-nowrap cursor-pointer"
+                    className="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 whitespace-nowrap cursor-pointer"
                   >
                     Kirim Semua
                   </button>
@@ -421,7 +421,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           </div>
 
           {/* PIC Info */}
-          <div className="text-[11px] text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
+          <div className="text-xs text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
             <span>PIC Pengirim: <strong>{currentUser?.name || singleItem?.picName || 'Royan'}</strong></span>
             <span>Stok Box #{singleItem?.boxNumber || '-'} akan berkurang otomatis</span>
           </div>

@@ -214,7 +214,7 @@ export function FeedbackIssuesView() {
                   >
                     {issue.description || issue.title}
                   </p>
-                  <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400">
                     <span className="font-medium text-slate-600">
                       @{issue.reporterName || 'Anonim'}
                     </span>

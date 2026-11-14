@@ -73,7 +73,7 @@ export const BoxLabel = ({ box, isPrintMode = false }) => {
 
         {/* Organization / Unit Footer */}
         <div className="pt-0.5 pb-0.5">
-          <p className="text-[10px] sm:text-xs font-black tracking-widest text-black uppercase">
+          <p className="text-xs sm:text-xs font-black tracking-widest text-black uppercase">
             INVENTORY MANAGEMENT RND
           </p>
         </div>

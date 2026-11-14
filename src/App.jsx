@@ -50,6 +50,12 @@ import {
   X,
   Send,
   ShoppingCart,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  Crown,
+  Wrench,
+  Zap,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 import { isItemDispatched } from './utils/dispatchUtils';
@@ -209,12 +215,12 @@ const AppContent = () => {
             <div className="inventory-header-row">
 
               <div className="inventory-header-brand flex shrink-0 items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white shadow-md shadow-blue-500/25 ring-1 ring-white/30">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm ring-1 ring-white/20">
                   <Boxes className="h-4 w-4" />
                 </div>
                 <span className="inventory-brand text-xs font-black tracking-tight text-slate-900 flex items-center gap-1.5">
-                  GAGACLO <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">R&amp;D</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.2 rounded-full">v2.0</span>
+                  GAGACLO <span className="text-blue-600 font-black">R&amp;D</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-md">v2.0</span>
                 </span>
               </div>
 
@@ -229,17 +235,17 @@ const AppContent = () => {
                     type="button"
                     onClick={() => setAppMode(tab.id)}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border cursor-pointer ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
                       isActive
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20 scale-[1.02]'
-                        : 'bg-white/90 hover:bg-slate-100 text-slate-700 border-slate-200/90 hover:-translate-y-0.5'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300'
                     }`}
                     title={tab.subtitle}
                   >
                     <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} aria-hidden="true" />
                     <span>{tab.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                      isActive ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600 border border-slate-200/80'
+                    <span className={`text-xs px-2 py-0.5 rounded-md font-bold tabular-nums ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
                     }`}>
                       {tab.count}
                     </span>
@@ -253,9 +259,9 @@ const AppContent = () => {
 
               {/* Supabase Corporate Gagaclo Status Badge (Display Only - Tidak Dapat Diklik untuk Keamanan Data) */}
               <div
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs border cursor-default select-none ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border cursor-default select-none ${
                   supabaseStatus.isConnected
-                    ? 'bg-emerald-50/90 text-emerald-800 border-emerald-200/90'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                     : 'bg-slate-50 text-slate-600 border-slate-200'
                 }`}
                 aria-label={connected ? `Supabase Gagaclo, ${usageLabel}` : 'Status Cloud Supabase'}
@@ -279,10 +285,10 @@ const AppContent = () => {
               <button
                 type="button"
                 onClick={() => setIsCartOpen(true)}
-                className={`relative flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border hover:shadow-xs hover:-translate-y-0.5 cursor-pointer ${
+                className={`relative flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
                   dispatchCart?.length > 0
-                    ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 shadow-rose-100'
-                    : 'bg-white/90 hover:bg-slate-100/90 text-slate-700 border-slate-200'
+                    ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
                 aria-label="Keranjang Pengiriman Sampel"
                 title="Buka Keranjang Pengiriman Sampel (Model Marketplace)"
@@ -290,7 +296,7 @@ const AppContent = () => {
                 <ShoppingCart className="h-3.5 w-3.5 text-rose-600" aria-hidden="true" />
                 <span>Keranjang</span>
                 {dispatchCart?.length > 0 && (
-                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-2xs">
+                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-xs font-black text-white">
                     {dispatchCart.length}
                   </span>
                 )}
@@ -300,7 +306,7 @@ const AppContent = () => {
               <button
                 type="button"
                 onClick={() => setIsBoxManageOpen(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-white/90 hover:bg-slate-100/90 text-slate-700 border-slate-200 hover:shadow-xs hover:-translate-y-0.5"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
                 aria-label="Kelola Box, Rak & Orang"
                 title="Tambah Box, atur Rak/Lantai, kelola data Orang (PPIC)"
               >
@@ -312,28 +318,28 @@ const AppContent = () => {
               <button
                 type="button"
                 onClick={() => setIsUserProfileOpen(true)}
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border bg-gradient-to-r from-blue-50/90 to-indigo-50/90 hover:from-blue-100 hover:to-indigo-100 text-blue-900 border-blue-200/90 hover:shadow-xs hover:-translate-y-0.5 cursor-pointer"
+                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-50 text-slate-800 border-slate-200 cursor-pointer"
                 aria-label="Akun & Profil PPIC"
                 title={`Login sebagai: ${currentUser?.name || 'PPIC'} • Klik untuk beralih akun PPIC`}
               >
-                <span className={`flex h-4 w-4 items-center justify-center rounded-md text-[10px] font-black text-white ${currentUser?.avatarBg || 'bg-blue-600'}`}>
+                <span className={`flex h-4 w-4 items-center justify-center rounded text-xs font-black text-white ${currentUser?.avatarBg || 'bg-blue-600'}`}>
                   {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
                 </span>
-                <span className="font-black text-slate-900">{currentUser?.name || 'PPIC'}</span>
+                <span className="font-bold text-slate-900">{currentUser?.name || 'PPIC'}</span>
                 {isManager(currentUser) ? (
-                  <span className="text-[9px] font-black uppercase text-indigo-900 bg-indigo-100 border border-indigo-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
-                    👑 Manager
+                  <span className="text-xs font-bold uppercase text-indigo-900 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Crown className="w-3 h-3 text-indigo-600" /> Manager
                   </span>
                 ) : isSuperuser(currentUser) ? (
-                  <span className="text-[9px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
-                    ⚡ Superuser
+                  <span className="text-xs font-bold uppercase text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-600" /> Superuser
                   </span>
                 ) : isHelper(currentUser) ? (
-                  <span className="text-[9px] font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
-                    🛠️ Tim Support
+                  <span className="text-xs font-bold uppercase text-teal-900 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Wrench className="w-3 h-3 text-teal-600" /> Support
                   </span>
                 ) : (
-                  <span className="text-[9px] font-black uppercase text-blue-700 bg-white/80 border border-blue-200/70 px-1 rounded">
+                  <span className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">
                     #{currentUser?.ppicNumber || 1}
                   </span>
                 )}
@@ -352,7 +358,7 @@ const AppContent = () => {
           {appMode === '3d-warehouse' && (
             <Suspense
               fallback={
-                <div className="flex flex-col items-center justify-center min-h-[460px] rounded-2xl bg-slate-900/40 border border-slate-800 text-slate-400 gap-3">
+                <div className="flex flex-col items-center justify-center min-h-[460px] rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 gap-3">
                   <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
                   <span className="text-xs font-semibold text-slate-300">Memuat Visualisasi 3D Rak...</span>
                 </div>
@@ -453,28 +459,34 @@ const AppContent = () => {
 
       {/* Global Floating Toast Notification (Multi-user concurrency & auto-sequence alerts) */}
       {systemNotification && (
-        <aside aria-label="Notifikasi sistem" className="fixed top-5 left-1/2 -translate-x-1/2 z-50 animate-fade-in max-w-lg w-[92%] sm:w-auto pointer-events-auto shadow-2xl">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-white shadow-2xl border backdrop-blur-md text-xs sm:text-sm font-semibold ${
+        <aside aria-label="Notifikasi sistem" className="fixed bottom-5 right-5 z-50 animate-fade-in max-w-sm w-[calc(100%-2.5rem)] sm:w-auto pointer-events-auto shadow-lg">
+          <div className={`flex items-start gap-3 px-4 py-3 rounded-lg text-white border text-xs sm:text-sm font-medium ${
             systemNotification.type === 'target'
-              ? 'bg-slate-900/98 border-emerald-500/70 shadow-emerald-950/50 ring-1 ring-emerald-500/30'
+              ? 'bg-slate-900 border-emerald-500/80 shadow-emerald-950/40'
               : systemNotification.type === 'error'
-                ? 'bg-slate-900/98 border-rose-500/70 shadow-rose-950/50 ring-1 ring-rose-500/30'
-                : 'bg-slate-900/95 border-white/20'
+                ? 'bg-slate-900 border-rose-500/80 shadow-rose-950/40'
+                : 'bg-slate-900 border-slate-700 shadow-slate-950/40'
           }`}>
-            <span className={`flex h-6 w-6 items-center justify-center rounded-lg shrink-0 font-bold text-xs ${
+            <span className={`flex h-5 w-5 items-center justify-center rounded shrink-0 font-bold text-xs mt-0.5 ${
               systemNotification.type === 'target'
-                ? 'bg-emerald-400 text-slate-950'
+                ? 'text-emerald-400'
                 : systemNotification.type === 'error'
-                  ? 'bg-rose-500 text-white'
-                  : 'bg-amber-400 text-slate-950'
+                  ? 'text-rose-400'
+                  : 'text-amber-400'
             }`}>
-              {systemNotification.type === 'target' ? '🎉' : systemNotification.type === 'error' ? '⚠️' : '⚡'}
+              {systemNotification.type === 'target' ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+              ) : systemNotification.type === 'error' ? (
+                <AlertTriangle className="w-5 h-5 text-rose-400" aria-hidden="true" />
+              ) : (
+                <Info className="w-5 h-5 text-amber-400" aria-hidden="true" />
+              )}
             </span>
             <span className="flex-1 text-slate-100 leading-snug">{systemNotification.message}</span>
             <button
               type="button"
               onClick={() => setSystemNotification(null)}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 hover:bg-white/20 active:bg-white/30 rounded-lg text-slate-300 hover:text-white transition cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              className="min-h-[32px] min-w-[32px] flex items-center justify-center p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
               aria-label="Tutup notifikasi"
               title="Tutup notifikasi"
             >

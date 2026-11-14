@@ -94,9 +94,9 @@ export const Navbar = ({ onOpenBackupModal }) => {
               <Database className="w-3.5 h-3.5 text-sky-400" />
               <span className="hidden sm:inline">Supabase</span>
               {supabaseStatus?.isConnected ? (
-                <span className="text-[10px] bg-emerald-800 text-emerald-200 px-1.5 py-0.2 rounded font-mono">ON</span>
+                <span className="text-xs bg-emerald-800 text-emerald-200 px-1.5 py-0.5 rounded font-mono">ON</span>
               ) : (
-                <span className="text-[10px] bg-blue-900/60 text-blue-300 px-1.5 py-0.2 rounded">Setup</span>
+                <span className="text-xs bg-blue-900/60 text-blue-300 px-1.5 py-0.5 rounded">Setup</span>
               )}
             </button>
 
@@ -142,7 +142,7 @@ export const Navbar = ({ onOpenBackupModal }) => {
             </span>
           </div>
 
-          <div className="text-[11px] text-slate-400 font-mono hidden lg:block">
+          <div className="text-xs text-slate-400 font-mono hidden lg:block">
             5 PPIC: Royan (16) • Cynara (14) • Ami (14) • Ryan (14) • Hanami (14)
           </div>
         </div>

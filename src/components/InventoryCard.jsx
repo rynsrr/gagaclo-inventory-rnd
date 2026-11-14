@@ -49,14 +49,14 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
       }`}
       style={{ width: isPrintMode ? '85.6mm' : undefined, minWidth: isPrintMode ? '85.6mm' : undefined }}
     >
-      <table className="w-full h-full border-collapse border-[1.5px] border-black text-[9px] leading-[1.15] text-left">
+      <table className="w-full h-full border-collapse border-[1.5px] border-black text-xs leading-[1.15] text-left">
         <tbody>
           {/* Track */}
           <tr className="border-b border-black">
             <td className="w-[28%] py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Track
             </td>
-            <td className="py-[1px] px-1.5 font-medium align-middle text-black break-all font-mono text-[8px] leading-tight">
+            <td className="py-[1px] px-1.5 font-medium align-middle text-black break-all font-mono text-xs leading-tight">
               {track}
             </td>
           </tr>
@@ -66,7 +66,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Tanggal Sample
             </td>
-            <td className="py-[1px] px-1.5 font-medium align-middle text-black text-[8px] leading-tight">
+            <td className="py-[1px] px-1.5 font-medium align-middle text-black text-xs leading-tight">
               {tanggal}
             </td>
           </tr>
@@ -78,10 +78,10 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             </td>
             <td className="p-0 align-middle text-black">
               <div className="grid grid-cols-2 gap-0 items-center w-full h-full">
-                <div className="py-[1px] px-1.5 border-r border-black font-black tracking-tight font-mono text-[9px] leading-tight truncate">
+                <div className="py-[1px] px-1.5 border-r border-black font-black tracking-tight font-mono text-xs leading-tight truncate">
                   {kode}
                 </div>
-                <div className="py-[1px] px-1.5 flex items-center justify-between font-mono text-[8px] leading-tight truncate">
+                <div className="py-[1px] px-1.5 flex items-center justify-between font-mono text-xs leading-tight truncate">
                   <span className="font-bold text-slate-600">Buyer:</span>
                   <span className="font-black text-black ml-1 truncate">
                     {buyerNo}
@@ -131,28 +131,28 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             <td className="py-[1.5px] px-1.5 font-medium align-middle text-black leading-tight break-words">
               {item.style ? (
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold text-[8.5px] leading-tight break-words text-black">
+                  <span className="font-bold text-xs leading-tight break-words text-black">
                     {styleDisplay}
                   </span>
                   <div className="flex items-center gap-1 flex-wrap mt-0.5">
-                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-xs bg-slate-50 whitespace-nowrap">
                       SAMPLE NO: {sampleNoDisplay}
                     </span>
-                    <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                    <span className="px-1 py-0 border border-black font-black uppercase text-xs bg-slate-50 whitespace-nowrap">
                       SIZE: {sizeDisplay}
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold text-[8.5px] leading-tight break-words text-black">
+                  <span className="font-bold text-xs leading-tight break-words text-black">
                     {deskripsi}
                   </span>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                    <span className="px-1 py-0 border border-black font-mono font-bold uppercase text-xs bg-slate-50 whitespace-nowrap">
                       SAMPLE NO: {sampleNoDisplay}
                     </span>
-                    <span className="px-1 py-0 border border-black font-black uppercase text-[7px] bg-slate-50 whitespace-nowrap">
+                    <span className="px-1 py-0 border border-black font-black uppercase text-xs bg-slate-50 whitespace-nowrap">
                       SIZE: {sizeDisplay}
                     </span>
                   </div>
@@ -166,7 +166,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Color
             </td>
-            <td className="py-[1px] px-1.5 font-bold align-middle text-black break-words text-[8px] leading-tight">
+            <td className="py-[1px] px-1.5 font-bold align-middle text-black break-words text-xs leading-tight">
               {color}
             </td>
           </tr>
@@ -178,8 +178,8 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             </td>
             <td className="py-[1px] px-1.5 align-middle text-black leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-[9px]">{jumlah}</span>
-                <span className="font-bold uppercase text-[8px] text-slate-800">{satuan}</span>
+                <span className="font-black text-xs">{jumlah}</span>
+                <span className="font-bold uppercase text-xs text-slate-800">{satuan}</span>
               </div>
             </td>
           </tr>
@@ -189,7 +189,7 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
             <td className="py-[1px] px-1.5 font-bold border-r border-black align-middle text-black whitespace-nowrap bg-slate-50/50">
               Place
             </td>
-            <td className="py-[1px] px-1.5 font-black align-middle text-black uppercase text-[8px] break-words leading-tight">
+            <td className="py-[1px] px-1.5 font-black align-middle text-black uppercase text-xs break-words leading-tight">
               {place}
             </td>
           </tr>

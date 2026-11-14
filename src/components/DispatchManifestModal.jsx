@@ -20,7 +20,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh]">
+      <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh]">
         {/* Header - Screen only */}
         <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between no-print">
           <div className="flex items-center gap-2.5">
@@ -31,7 +31,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
               <h3 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
                 Surat Jalan / Tanda Terima Pengiriman Sampel R&D
               </h3>
-              <p className="text-[11px] text-slate-300">
+              <p className="text-xs text-slate-300">
                 Format resmi cetak bukti serah terima sampel keluar
               </p>
             </div>
@@ -64,14 +64,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
                 <span className="text-xl font-black tracking-tight text-slate-900">
                   GAGACLO <span className="text-blue-600">R&amp;D</span>
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
                   Sample &amp; Material Studio
                 </span>
               </div>
               <p className="text-xs font-bold text-slate-700 mt-1">
                 SURAT JALAN &amp; TANDA TERIMA PENGIRIMAN SAMPEL
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 Divisi Research &amp; Development (R&amp;D), PT. Gagaclo Internasional
               </p>
             </div>
@@ -91,7 +91,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
           {/* Meta Info Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
             <div className="space-y-1">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tujuan Pengiriman:</div>
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tujuan Pengiriman:</div>
               <div className="text-base font-black text-slate-900 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-600" />
                 <span>{destinationName}</span>
@@ -102,7 +102,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
             </div>
 
             <div className="space-y-1">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">PIC Pengirim (R&amp;D):</div>
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">PIC Pengirim (R&amp;D):</div>
               <div className="text-base font-black text-slate-900 flex items-center gap-2">
                 <User className="w-4 h-4 text-emerald-600" />
                 <span>{picName}</span>
@@ -117,7 +117,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
           <div className="overflow-x-auto rounded-xl border border-slate-300">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold uppercase text-[10px] tracking-wider">
+                <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold uppercase text-xs tracking-wider">
                   <th className="py-2.5 px-3 text-center w-10">No</th>
                   <th className="py-2.5 px-3">Kode Sample</th>
                   <th className="py-2.5 px-3">Style / Deskripsi</th>
@@ -140,7 +140,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
                       <td className="py-2.5 px-3 font-bold text-slate-900">
                         {it.style || it.name || it.deskripsi || '-'}
                         {itDispatch?.originBox && (
-                          <span className="block text-[10px] font-normal text-slate-500">
+                          <span className="block text-xs font-normal text-slate-500">
                             Asal: Box #{itDispatch.originBox}
                           </span>
                         )}
@@ -152,13 +152,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
                         {it.jumlah ?? it.qty ?? 1} {it.satuan || 'PCS'}
                       </td>
                       <td className="py-2.5 px-3 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black ${
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-black ${
                           isPermanent ? 'bg-slate-800 text-white' : 'bg-amber-100 text-amber-900 border border-amber-300'
                         }`}>
                           {isPermanent ? 'Permanen' : 'Review'}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 text-[11px]">
+                      <td className="py-2.5 px-3 text-slate-600 text-xs">
                         {itDispatch?.notes || it.description || it.deskripsi || '-'}
                       </td>
                     </tr>
@@ -167,13 +167,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
               </tbody>
               <tfoot>
                 <tr className="bg-slate-100/80 font-bold border-t border-slate-300 text-slate-900">
-                  <td colSpan={6} className="py-2.5 px-3 text-right uppercase text-[10px] tracking-wider">
+                  <td colSpan={6} className="py-2.5 px-3 text-right uppercase text-xs tracking-wider">
                     Total Keseluruhan Sampel:
                   </td>
                   <td className="py-2.5 px-3 text-right font-mono font-black text-sm text-blue-800">
                     {totalPcs} PCS
                   </td>
-                  <td colSpan={2} className="py-2.5 px-3 text-[11px] text-slate-600">
+                  <td colSpan={2} className="py-2.5 px-3 text-xs text-slate-600">
                     ({items.length} item)
                   </td>
                 </tr>
@@ -182,7 +182,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
           </div>
 
           {/* Catatan Sifat Pengiriman */}
-          <div className="p-3 rounded-lg bg-blue-50/60 border border-blue-200 text-[11px] text-blue-900 leading-relaxed">
+          <div className="p-3 rounded-lg bg-blue-50/60 border border-blue-200 text-xs text-blue-900 leading-relaxed">
             <strong>Catatan Operasional R&amp;D:</strong>
             <ul className="list-disc list-inside mt-0.5 space-y-0.5 text-blue-800">
               <li>Item bertanda <strong>Permanen</strong> diserahkan ke Buyer/Anzo (stok R&amp;D dikurangi permanen).</li>
@@ -193,32 +193,32 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
           {/* Kolom Tanda Tangan */}
           <div className="grid grid-cols-3 gap-6 pt-6 text-center text-xs">
             <div className="flex flex-col justify-between h-32 border border-slate-200 rounded-xl p-3 bg-white">
-              <span className="font-bold text-slate-700 text-[11px]">Yang Menyerahkan (R&amp;D)</span>
+              <span className="font-bold text-slate-700 text-xs">Yang Menyerahkan (R&amp;D)</span>
               <div>
                 <div className="font-bold text-slate-900 border-b border-slate-400 mx-4 pb-1">
                   ( {picName} )
                 </div>
-                <div className="text-[10px] text-slate-500 mt-1">PIC Sample Studio</div>
+                <div className="text-xs text-slate-500 mt-1">PIC Sample Studio</div>
               </div>
             </div>
 
             <div className="flex flex-col justify-between h-32 border border-slate-200 rounded-xl p-3 bg-white">
-              <span className="font-bold text-slate-700 text-[11px]">Yang Membawa (Driver/Kurir)</span>
+              <span className="font-bold text-slate-700 text-xs">Yang Membawa (Driver/Kurir)</span>
               <div>
                 <div className="font-bold text-slate-900 border-b border-slate-400 mx-4 pb-1">
                   ( ..................................... )
                 </div>
-                <div className="text-[10px] text-slate-500 mt-1">Ekspedisi / Internal</div>
+                <div className="text-xs text-slate-500 mt-1">Ekspedisi / Internal</div>
               </div>
             </div>
 
             <div className="flex flex-col justify-between h-32 border border-slate-200 rounded-xl p-3 bg-white">
-              <span className="font-bold text-slate-700 text-[11px]">Yang Menerima ({destinationName})</span>
+              <span className="font-bold text-slate-700 text-xs">Yang Menerima ({destinationName})</span>
               <div>
                 <div className="font-bold text-slate-900 border-b border-slate-400 mx-4 pb-1">
                   ( {recipientName !== '-' ? recipientName : '.....................................'} )
                 </div>
-                <div className="text-[10px] text-slate-500 mt-1">Nama Jelas &amp; Cap</div>
+                <div className="text-xs text-slate-500 mt-1">Nama Jelas &amp; Cap</div>
               </div>
             </div>
           </div>

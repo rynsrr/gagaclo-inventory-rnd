@@ -175,7 +175,7 @@ export function DispatchOutgoingView() {
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Top Header Card */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-800">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-lg p-5 sm:p-6 shadow-xl border border-slate-800">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold">
@@ -228,7 +228,7 @@ export function DispatchOutgoingView() {
         {/* 4 Quick Stat Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t border-slate-800">
           <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Sampel Keluar</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Sampel Keluar</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-2xl font-black text-white">{stats.totalPcs}</span>
               <span className="text-xs font-bold text-slate-400">PCS ({stats.totalItems} item)</span>
@@ -236,7 +236,7 @@ export function DispatchOutgoingView() {
           </div>
 
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 backdrop-blur-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 block">Keluar Permanen</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-rose-300 block">Keluar Permanen</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-2xl font-black text-rose-300">{stats.permanentPcs}</span>
               <span className="text-xs font-bold text-rose-400">PCS (Stok R&amp;D Berkurang)</span>
@@ -244,7 +244,7 @@ export function DispatchOutgoingView() {
           </div>
 
           <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 backdrop-blur-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">Review Sementara</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-300 block">Review Sementara</span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-2xl font-black text-amber-300">{stats.reviewPcs}</span>
               <span className="text-xs font-bold text-amber-400">PCS (Pending Kembali)</span>
@@ -252,17 +252,17 @@ export function DispatchOutgoingView() {
           </div>
 
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Tujuan Teraktif</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-300 block">Tujuan Teraktif</span>
             <div className="text-sm font-black text-emerald-300 mt-1 truncate">
               Buyer: {stats.destCounts.BUYER || 0} • ANZO QC: {stats.destCounts.ANZO_QC || 0}
             </div>
-            <span className="text-[10px] text-emerald-400/80">ANZO TW: {stats.destCounts.ANZO_TW || 0} • ANZO QC CHINA: {stats.destCounts.ANZO_QC_CHINA || 0} • RDTW: {stats.destCounts.RDTW || 0} • RDC: {stats.destCounts.RDC || 0}</span>
+            <span className="text-xs text-emerald-400/80">ANZO TW: {stats.destCounts.ANZO_TW || 0} • ANZO QC CHINA: {stats.destCounts.ANZO_QC_CHINA || 0} • RDTW: {stats.destCounts.RDTW || 0} • RDC: {stats.destCounts.RDC || 0}</span>
           </div>
         </div>
       </div>
 
       {/* Destination Pills Filter */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-slate-200 shadow-2xs">
         <span className="text-xs font-black text-slate-700 flex items-center gap-1.5 px-2">
           <Building2 className="w-3.5 h-3.5 text-blue-600" />
           Filter Tujuan:
@@ -294,7 +294,7 @@ export function DispatchOutgoingView() {
               }`}
             >
               <span>{dest.label}</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/70 font-mono">
+              <span className="px-1.5 py-0.5 rounded-full text-xs bg-white/70 font-mono">
                 {count} PCS
               </span>
             </button>
@@ -303,7 +303,7 @@ export function DispatchOutgoingView() {
       </div>
 
       {/* Controls Bar: Search & Nature Filter */}
-      <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -356,10 +356,10 @@ export function DispatchOutgoingView() {
       </div>
 
       {/* Dispatched Items Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
         {filteredItems.length === 0 ? (
           <div className="p-12 text-center space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
+            <div className="w-14 h-14 rounded-lg bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
               <Truck className="w-7 h-7" />
             </div>
             <h3 className="text-base font-black text-slate-900">
@@ -387,7 +387,7 @@ export function DispatchOutgoingView() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-slate-50 text-slate-700 border-b border-slate-200 font-bold uppercase text-[10px] tracking-wider">
+                <tr className="bg-slate-50 text-slate-700 border-b border-slate-200 font-bold uppercase text-xs tracking-wider">
                   <th className="py-3 px-3 text-center w-8">
                     <input
                       type="checkbox"
@@ -429,12 +429,12 @@ export function DispatchOutgoingView() {
 
                       {/* Tujuan & Sifat */}
                       <td className="py-3 px-3 space-y-1">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black border ${getDestinationColor(dInfo?.destinationId)}`}>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black border ${getDestinationColor(dInfo?.destinationId)}`}>
                           <Building2 className="w-3 h-3" />
                           <span>{dInfo?.destinationLabel || 'Luar'}</span>
                         </span>
                         <div>
-                          <span className={`inline-block px-2 py-0.2 rounded text-[10px] font-black ${
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-black ${
                             isPermanent
                               ? 'bg-slate-900 text-white'
                               : 'bg-amber-100 text-amber-900 border border-amber-300'
@@ -449,8 +449,8 @@ export function DispatchOutgoingView() {
                         <div className="font-black text-slate-900 text-xs">
                           {item.style || item.name || 'Sample'}
                         </div>
-                        <div className="flex items-center gap-2 font-mono text-[11px] text-slate-600 pt-0.5">
-                          <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
+                        <div className="flex items-center gap-2 font-mono text-xs text-slate-600 pt-0.5">
+                          <span className="font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
                             {item.kode || item.sku || '-'}
                           </span>
                           {item.sampleNo && (
@@ -460,10 +460,10 @@ export function DispatchOutgoingView() {
                       </td>
 
                       {/* Size / Color */}
-                      <td className="py-3 px-2 text-center text-[11px]">
+                      <td className="py-3 px-2 text-center text-xs">
                         <span className="font-bold text-slate-800">{item.size || '-'}</span>
                         {item.color && item.color !== '-' && (
-                          <span className="block text-[10px] text-slate-500">{item.color}</span>
+                          <span className="block text-xs text-slate-500">{item.color}</span>
                         )}
                       </td>
 
@@ -472,37 +472,37 @@ export function DispatchOutgoingView() {
                         <span className="font-mono font-black text-sm text-slate-900">
                           {item.jumlah ?? item.qty ?? 1}
                         </span>
-                        <span className="text-[10px] text-slate-500 block font-bold">
+                        <span className="text-xs text-slate-500 block font-bold">
                           {item.satuan || 'PCS'}
                         </span>
                       </td>
 
                       {/* Asal Box & PIC */}
-                      <td className="py-3 px-3 text-[11px]">
+                      <td className="py-3 px-3 text-xs">
                         <div className="font-black text-slate-800">
                           BOX #{dInfo?.originBox || item.boxNumber}
                         </div>
-                        <div className="text-[10px] text-slate-500 flex items-center gap-1 pt-0.5">
+                        <div className="text-xs text-slate-500 flex items-center gap-1 pt-0.5">
                           <User className="w-3 h-3 text-slate-400" />
                           <span>{dInfo?.pic || item.picName || 'Royan'}</span>
                         </div>
                       </td>
 
                       {/* Tanggal & Penerima */}
-                      <td className="py-3 px-3 text-[11px]">
+                      <td className="py-3 px-3 text-xs">
                         <div className="font-bold text-slate-800 flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-slate-400" />
                           <span>{dInfo?.date || '-'}</span>
                         </div>
                         {dInfo?.recipient && (
-                          <div className="text-[10px] text-slate-600 pt-0.5">
+                          <div className="text-xs text-slate-600 pt-0.5">
                             Penerima: <strong>{dInfo.recipient}</strong>
                           </div>
                         )}
                       </td>
 
                       {/* Catatan */}
-                      <td className="py-3 px-3 text-[11px] text-slate-600 max-w-[200px] truncate" title={dInfo?.notes || item.description || ''}>
+                      <td className="py-3 px-3 text-xs text-slate-600 max-w-[200px] truncate" title={dInfo?.notes || item.description || ''}>
                         {dInfo?.notes || item.description || item.deskripsi || '-'}
                       </td>
 
@@ -514,7 +514,7 @@ export function DispatchOutgoingView() {
                             <button
                               type="button"
                               onClick={() => setReturnItem(item)}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] transition flex items-center gap-1 shadow-xs cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition flex items-center gap-1 shadow-xs cursor-pointer"
                               title="Terima kembali sampel ini dari review ke dalam box R&D"
                             >
                               <RotateCcw className="w-3 h-3" />
@@ -635,7 +635,7 @@ function StandaloneDispatchSelector({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in no-print">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
         <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Send className="w-4 h-4 text-blue-400" />

@@ -45,46 +45,44 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
   }, [picStats]);
 
   return (
-    <div className="inventory-panel p-3 sm:p-3.5 space-y-2 border border-slate-200/80 shadow-2xs bg-white/95 backdrop-blur-md rounded-2xl">
-      {/* Header bar */}
-      <div className="flex items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+    <div className="inventory-panel p-3 space-y-2.5 border border-slate-200 bg-white rounded-lg">
+      {/* Header bar: flattened */}
+      <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 shadow-2xs shrink-0">
-            <Users className="w-3.5 h-3.5" />
+          <div className="p-1.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100 shrink-0">
+            <Users className="w-4 h-4" />
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-              Rekap Kurang &amp; Status PIC
-            </h2>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${
-              totalKurang > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            }`}>
-              {totalKurang > 0 ? `Total Kurang: ${totalKurang} Box` : 'Semua Box Terisi! 🎉'}
-            </span>
-          </div>
+          <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+            Rekap Box Kurang per PIC
+          </h2>
         </div>
+        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
+          totalKurang > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+        }`}>
+          {totalKurang > 0 ? `Total Kurang: ${totalKurang} Box` : 'Semua Box Terisi'}
+        </span>
       </div>
 
-      {/* Mini Inline Summary Chips */}
+      {/* Inline Summary Chips */}
       <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none text-xs text-slate-600">
-        <span className="text-[11px] font-semibold text-slate-500 shrink-0">Kurang per PIC:</span>
-        {picStats.map(pic => (
+        <span className="text-xs font-semibold text-slate-500 shrink-0">Pilih PIC:</span>
+        {picStats.map((pic) => (
           <button
             key={pic.id}
             type="button"
             onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition cursor-pointer shrink-0 ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition cursor-pointer shrink-0 ${
               activePic === pic.name
-                ? 'bg-blue-100 border-blue-300 text-blue-900 font-bold'
-                : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-700'
+                ? 'bg-blue-50 border-blue-300 text-blue-900 font-bold'
+                : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
             }`}
             title={`Klik untuk sorot box milik @${pic.name}`}
           >
-            <span className={`w-4 h-4 rounded text-white font-bold text-[9px] flex items-center justify-center ${pic.avatarBg}`}>
+            <span className={`w-4 h-4 rounded text-white font-bold text-xs flex items-center justify-center ${pic.avatarBg}`}>
               {pic.name.charAt(0)}
             </span>
             <span>@{pic.name}</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${pic.countKurang > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${pic.countKurang > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
               {pic.countKurang > 0 ? `${pic.countKurang} box` : 'Lengkap'}
             </span>
           </button>

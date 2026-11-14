@@ -40,7 +40,7 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-fade-in no-print">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* Header (E-Commerce Cart Style) */}
         <div className="px-5 py-4 bg-gradient-to-r from-rose-900 via-rose-950 to-slate-900 text-white flex items-center justify-between">
@@ -53,11 +53,11 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
                 <h3 className="text-base font-black tracking-tight text-white">
                   Keranjang Pengiriman Sampel
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-2xs">
+                <span className="px-2 py-0.5 rounded-full text-xs font-black bg-rose-500 text-white shadow-2xs">
                   {totalItems} Item
                 </span>
               </div>
-              <p className="text-[11px] text-rose-200 font-medium">
+              <p className="text-xs text-rose-200 font-medium">
                 Model Marketplace: Masukkan sampel dari berbagai box ke keranjang sebelum dikirim
               </p>
             </div>
@@ -76,7 +76,7 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
           {dispatchCart.length === 0 ? (
             <div className="text-center py-12 px-4 space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-400 mx-auto flex items-center justify-center">
+              <div className="w-16 h-16 rounded-lg bg-rose-50 text-rose-400 mx-auto flex items-center justify-center">
                 <ShoppingCart className="w-8 h-8" />
               </div>
               <h4 className="text-sm font-black text-slate-800">
@@ -105,7 +105,7 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
                     {originBoxes.map(b => `Box #${b}`).join(', ')}
                   </span>
                 </div>
-                <div className="text-[11px] font-semibold text-slate-500">
+                <div className="text-xs font-semibold text-slate-500">
                   Total: <strong className="text-rose-700 font-black">{totalPcs} PCS</strong>
                 </div>
               </div>
@@ -124,15 +124,15 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-black font-mono bg-blue-100 text-blue-800 border border-blue-200">
+                            <span className="px-2 py-0.5 rounded text-xs font-black font-mono bg-blue-100 text-blue-800 border border-blue-200">
                               BOX #{item.boxNumber}
                             </span>
                             {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                              <span className="px-2 py-0.5 rounded text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
                                 {item.buyerNo}
                               </span>
                             )}
-                            <span className="text-[10px] font-mono font-bold text-slate-500">
+                            <span className="text-xs font-mono font-bold text-slate-500">
                               Kode: {item.kode || item.sku || '-'}
                             </span>
                           </div>
@@ -141,7 +141,7 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
                             {item.style || item.name || 'Sample R&D'}
                           </h4>
 
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 font-medium mt-0.5">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 font-medium mt-0.5">
                             {item.sampleNo && <span>No: <strong>{item.sampleNo}</strong></span>}
                             {item.size && <span>• Size: <strong>{item.size}</strong></span>}
                             {item.color && <span>• Warna: <strong>{item.color}</strong></span>}
@@ -162,12 +162,12 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
 
                       {/* Quantity Selector Bar (Marketplace Stepper) */}
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                        <span className="text-[11px] font-semibold text-slate-500">
+                        <span className="text-xs font-semibold text-slate-500">
                           Stok Tersedia di Box: <strong className="text-slate-800">{available} PCS</strong>
                         </span>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-slate-600">Kirim:</span>
+                          <span className="text-xs font-bold text-slate-600">Kirim:</span>
                           <div className="flex items-center rounded-lg border border-slate-300 bg-slate-50 overflow-hidden shadow-2xs">
                             <button
                               type="button"
@@ -246,7 +246,7 @@ export function DispatchCartModal({ isOpen, onClose, onProceedToDispatch }) {
               )}
 
               <div className="text-right sm:text-left sm:pl-4 sm:border-l sm:border-slate-300">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Pengiriman</span>
+                <span className="text-xs uppercase font-bold text-slate-400 block">Total Pengiriman</span>
                 <span className="text-base font-black text-slate-900">
                   {totalItems} Item <span className="text-rose-600 font-mono">({totalPcs} PCS)</span>
                 </span>

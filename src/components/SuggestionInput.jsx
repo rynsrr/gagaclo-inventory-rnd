@@ -172,30 +172,30 @@ export const SuggestionInput = ({
         <div 
           id={listboxId}
           role="listbox"
-          className="no-print absolute top-full left-0 mt-1 min-w-[220px] w-full max-w-[340px] bg-white rounded-xl shadow-2xl border-2 border-blue-400 ring-4 ring-blue-100 overflow-hidden z-50 text-xs animate-fade-in"
+          className="no-print absolute top-full left-0 mt-1 min-w-[220px] w-full max-w-[340px] bg-white rounded-xl shadow-lg border-2 border-blue-400 ring-4 ring-blue-100 overflow-hidden z-50 text-xs animate-fade-in"
           style={{ maxHeight: '240px' }}
         >
           {/* Header Info */}
-          <div className="bg-slate-900 text-white px-2.5 py-1.5 flex items-center justify-between text-[10px] font-bold tracking-wider uppercase border-b border-slate-800">
+          <div className="bg-slate-900 text-white px-2.5 py-1.5 flex items-center justify-between text-xs font-bold tracking-wider uppercase border-b border-slate-800">
             <span className="flex items-center gap-1 text-blue-300">
               <Clock className="w-3 h-3" />
               List Tersimpan ({filteredSuggestions.length})
             </span>
-            <span className="text-slate-400 font-normal lowercase text-[9px]">
+            <span className="text-slate-400 font-normal lowercase text-xs">
               klik utk pakai
             </span>
           </div>
 
           {/* New Value Indicator (if typing something not yet in suggestions) */}
           {stringVal.trim() && !isExactMatch && (
-            <div className="p-1.5 bg-blue-50/80 border-b border-blue-100 text-[11px] flex items-center justify-between text-blue-900">
+            <div className="p-1.5 bg-blue-50/80 border-b border-blue-100 text-xs flex items-center justify-between text-blue-900">
               <div className="flex items-center gap-1 min-w-0">
                 <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
                 <span className="font-semibold truncate">
                   Data Baru: <span className="font-mono font-bold text-blue-700 underline">"{stringVal.trim()}"</span>
                 </span>
               </div>
-              <span className="text-[9px] bg-blue-200 text-blue-900 font-bold px-1.5 py-0.5 rounded shrink-0 ml-1">
+              <span className="text-xs bg-blue-200 text-blue-900 font-bold px-1.5 py-0.5 rounded shrink-0 ml-1">
                 + Auto Simpan
               </span>
             </div>
@@ -265,7 +265,7 @@ export const SuggestionInput = ({
           </div>
 
           {/* Quick Helper Footer */}
-          <div className="bg-slate-50 px-2 py-1 text-[9px] text-slate-500 border-t border-slate-200 flex items-center justify-between">
+          <div className="bg-slate-50 px-2 py-1 text-xs text-slate-500 border-t border-slate-200 flex items-center justify-between">
             <span>💡 Ketik baru = otomatis menambah ke list</span>
             <button
               type="button"

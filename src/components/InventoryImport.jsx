@@ -55,7 +55,7 @@ export function InventoryImport() {
       </button>
       <dialog ref={dialogRef} onCancel={event => { if (busy) event.preventDefault(); }}
         aria-labelledby="inventory-import-title"
-        className="no-print m-auto w-[min(92vw,28rem)] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl backdrop:bg-black/45">
+        className="no-print m-auto w-[min(92vw,28rem)] rounded-lg border border-slate-200 bg-white p-5 shadow-xl backdrop:bg-black/45">
         <div className="flex items-center justify-between">
           <h2 id="inventory-import-title" className="text-base font-bold">Impor Excel</h2>
           <button type="button" aria-label="Tutup" disabled={busy}

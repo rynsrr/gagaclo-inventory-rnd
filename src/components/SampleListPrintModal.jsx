@@ -67,7 +67,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-300 w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
         
         {/* Top Control Bar (Hidden on print) */}
         <div className="no-print bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
@@ -78,11 +78,11 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
             <div>
               <h2 className="text-sm font-black tracking-wide flex items-center gap-2">
                 <span>Print List Sample: BOX #{box.boxNumber}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
                   {box.rackName}
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 Format Lembar Manifest / Daftar Isi Box resmi untuk arsip & stock opname fisik
               </p>
             </div>
@@ -159,10 +159,10 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                 <h1 className="text-base font-black tracking-tight text-slate-950 uppercase">
                   PT GAGACLO INDONESIA
                 </h1>
-                <p className="text-[11px] font-bold text-slate-700 tracking-wider uppercase">
+                <p className="text-xs font-bold text-slate-700 tracking-wider uppercase">
                   RESEARCH &amp; DEVELOPMENT DIVISION : INVENTORY SYSTEM
                 </p>
-                <p className="text-[10px] text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Dokumen Manifest & Daftar Isi Sampel Box Fisik
                 </p>
               </div>
@@ -171,7 +171,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                 <span className="inline-block px-3 py-1 bg-slate-900 text-white font-black text-sm rounded tracking-wide">
                   BOX #{box.boxNumber}
                 </span>
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Dicetak: {printDateStr} WIB
                 </p>
               </div>
@@ -180,27 +180,27 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
             {/* Box Metadata Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4 print:bg-white print:border-slate-300 text-xs">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Kategori Box</span>
+                <span className="text-xs uppercase font-bold text-slate-400 block">Kategori Box</span>
                 <span className="font-extrabold text-slate-900">{box.category || 'SAMPLE'}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Lokasi / Rak</span>
+                <span className="text-xs uppercase font-bold text-slate-400 block">Lokasi / Rak</span>
                 <span className="font-extrabold text-slate-900">{box.rackName || 'RACK'}</span>
                 {box.rackDescription && (
-                  <span className="text-[10px] text-slate-500 block truncate">{box.rackDescription}</span>
+                  <span className="text-xs text-slate-500 block truncate">{box.rackDescription}</span>
                 )}
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">PIC Pengelola</span>
+                <span className="text-xs uppercase font-bold text-slate-400 block">PIC Pengelola</span>
                 <span className="font-extrabold text-slate-900">#{box.ppicNumber} {box.picName}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Isi</span>
+                <span className="text-xs uppercase font-bold text-slate-400 block">Total Isi</span>
                 <span className="font-extrabold text-slate-900">{activeItems.length} Item ({totalUnits} Unit)</span>
               </div>
               {box.notes && (
                 <div className="col-span-2 sm:col-span-4 pt-1 border-t border-slate-200 print:border-slate-300">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Catatan Box</span>
+                  <span className="text-xs uppercase font-bold text-slate-400 block">Catatan Box</span>
                   <span className="text-slate-700 italic">{box.notes}</span>
                 </div>
               )}
@@ -209,9 +209,9 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
             {/* Table of Samples */}
             {activeItems.length > 0 ? (
               <div className="border border-slate-300 rounded-md overflow-hidden mb-6 print:border-slate-400">
-                <table className="w-full text-left border-collapse text-[11px]">
+                <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-slate-100 print:bg-slate-200 text-slate-900 border-b border-slate-300 print:border-slate-400 font-bold uppercase text-[10px]">
+                    <tr className="bg-slate-100 print:bg-slate-200 text-slate-900 border-b border-slate-300 print:border-slate-400 font-bold uppercase text-xs">
                       <th className="py-2 px-2.5 w-10 text-center border-r border-slate-300 print:border-slate-400">No.</th>
                       <th className="py-2 px-3 w-32 border-r border-slate-300 print:border-slate-400">Kode Sample</th>
                       <th className="py-2 px-3 border-r border-slate-300 print:border-slate-400">Style & Deskripsi</th>
@@ -238,7 +238,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                             {item.style || item.deskripsi || item.name || 'Sample'}
                           </div>
                           {(item.sampleNo || item.buyerNo) && (
-                            <div className="text-[10px] text-slate-500 mt-0.5">
+                            <div className="text-xs text-slate-500 mt-0.5">
                               {item.sampleNo ? `Sample No: ${item.sampleNo}` : ''}
                               {item.sampleNo && item.buyerNo ? ' • ' : ''}
                               {item.buyerNo ? `Buyer: ${item.buyerNo}` : ''}
@@ -248,7 +248,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                         <td className="py-1.5 px-3 border-r border-slate-300 print:border-slate-300 text-slate-700">
                           <span className="font-semibold">{item.size || '-'}</span>
                           {(item.color || item.warna) && (
-                            <span className="text-slate-500 block text-[10px]">
+                            <span className="text-slate-500 block text-xs">
                               {item.color || item.warna}
                             </span>
                           )}
@@ -256,7 +256,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                         <td className="py-1.5 px-2.5 text-center font-bold text-slate-900 border-r border-slate-300 print:border-slate-300 whitespace-nowrap">
                           {item.qty || item.jumlah || 1} {item.satuan || item.unit || 'PCS'}
                         </td>
-                        <td className="py-1.5 px-2.5 text-center border-r border-slate-300 print:border-slate-300 text-[10px]">
+                        <td className="py-1.5 px-2.5 text-center border-r border-slate-300 print:border-slate-300 text-xs">
                           <span className={`inline-block px-1.5 py-0.5 rounded font-bold ${
                             item.borrowStatus === 'BORROWED'
                               ? 'bg-amber-100 text-amber-800 border border-amber-300'
@@ -282,21 +282,21 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
             {/* Signature & Verification Block */}
             <div className="grid grid-cols-2 gap-8 pt-4 border-t border-slate-300 text-xs print:break-inside-avoid">
               <div className="text-center">
-                <p className="text-[10px] uppercase font-bold text-slate-500 mb-12">
+                <p className="text-xs uppercase font-bold text-slate-500 mb-12">
                   Dibuat / Disiapkan Oleh (PIC Box)
                 </p>
                 <div className="w-48 mx-auto border-b border-slate-800 mb-1"></div>
                 <p className="font-bold text-slate-900">#{box.ppicNumber} {box.picName}</p>
-                <p className="text-[10px] text-slate-500">Tim R&D Gagaclo</p>
+                <p className="text-xs text-slate-500">Tim R&D Gagaclo</p>
               </div>
 
               <div className="text-center">
-                <p className="text-[10px] uppercase font-bold text-slate-500 mb-12">
+                <p className="text-xs uppercase font-bold text-slate-500 mb-12">
                   Diperiksa & Diverifikasi Oleh
                 </p>
                 <div className="w-48 mx-auto border-b border-slate-800 mb-1"></div>
                 <p className="font-bold text-slate-900">( Supervisor / Leader R&D )</p>
-                <p className="text-[10px] text-slate-500">Tanggal: _____ / _____ / 2026</p>
+                <p className="text-xs text-slate-500">Tanggal: _____ / _____ / 2026</p>
               </div>
             </div>
 

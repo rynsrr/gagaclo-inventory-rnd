@@ -110,7 +110,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 type="button"
                 aria-haspopup="dialog"
                 onClick={() => dialogRef.current?.showModal()}
-                className="group flex items-center gap-2 sm:gap-3 bg-slate-950/90 hover:bg-slate-950 border-2 border-blue-500/70 hover:border-blue-400 px-3.5 py-1.5 rounded-2xl shadow-lg shadow-blue-950/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="group flex items-center gap-2 sm:gap-3 bg-slate-950/90 hover:bg-slate-950 border-2 border-blue-500/70 hover:border-blue-400 px-3.5 py-1.5 rounded-lg shadow-lg shadow-blue-950/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
                 title="Klik untuk atur durasi target countdown & catatan"
               >
                 {finished ? (
@@ -123,7 +123,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                       <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-amber-300 to-amber-400 bg-clip-text text-transparent">
                         {countdown[0][1]}
                       </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">h</span>
+                      <span className="text-xs sm:text-xs font-bold text-slate-400 uppercase">h</span>
                     </div>
                     <span className="text-slate-600 font-black text-sm select-none">:</span>
 
@@ -131,7 +131,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                       <span className="text-base sm:text-lg md:text-xl font-black text-white">
                         {String(countdown[1][1]).padStart(2, '0')}
                       </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">j</span>
+                      <span className="text-xs sm:text-xs font-bold text-slate-400 uppercase">j</span>
                     </div>
                     <span className="text-slate-600 font-black text-sm select-none">:</span>
 
@@ -139,7 +139,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                       <span className="text-base sm:text-lg md:text-xl font-black text-white">
                         {String(countdown[2][1]).padStart(2, '0')}
                       </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">m</span>
+                      <span className="text-xs sm:text-xs font-bold text-slate-400 uppercase">m</span>
                     </div>
                     <span className="text-slate-600 font-black text-sm select-none">:</span>
 
@@ -147,7 +147,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                       <span className="text-base sm:text-lg md:text-xl font-black bg-gradient-to-br from-cyan-300 to-cyan-400 bg-clip-text text-transparent">
                         {String(countdown[3][1]).padStart(2, '0')}
                       </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">s</span>
+                      <span className="text-xs sm:text-xs font-bold text-slate-400 uppercase">s</span>
                     </div>
                   </div>
                 )}
@@ -198,7 +198,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
       ) : (
         <section 
           aria-label="Hitung mundur pendataan" 
-          className="inventory-panel relative overflow-hidden w-fit mx-auto bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(37,99,235,0.08)] rounded-2xl p-3 sm:px-6 sm:py-3.5 transition-all duration-300 hover:shadow-md hover:border-blue-300/80"
+          className="inventory-panel relative overflow-hidden w-fit mx-auto bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(37,99,235,0.08)] rounded-lg p-3 sm:px-6 sm:py-3.5 transition-all duration-300 hover:shadow-md hover:border-blue-300/80"
         >
           {/* Subtle ambient gradient accent line at top */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 opacity-90" />
@@ -213,7 +213,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 <div className="flex items-center gap-1.5">
                   <h2 className="text-xs sm:text-sm font-black tracking-tight text-slate-900 leading-tight">Hitung Mundur</h2>
                   <span
-                    className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200"
                     title="Tersinkronisasi otomatis real-time"
                   >
                     <span className="relative flex h-1.5 w-1.5">
@@ -223,11 +223,11 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                     <span>Cloud Sync</span>
                   </span>
                 </div>
-                <p className="text-[10px] font-medium text-slate-500 leading-tight">
+                <p className="text-xs font-medium text-slate-500 leading-tight">
                   {finished ? '⚠️ Waktu telah berakhir' : deadline ? 'Sisa waktu pengerjaan real-time' : 'Durasi belum diatur'}
                 </p>
                 {timerNote && (
-                  <p className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 mt-1 max-w-[260px] truncate" title={timerNote}>
+                  <p className="text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 mt-1 max-w-[260px] truncate" title={timerNote}>
                     📌 {timerNote}
                   </p>
                 )}
@@ -254,7 +254,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                   <div className="text-lg sm:text-xl font-black tabular-nums tracking-tight bg-gradient-to-br from-blue-700 to-indigo-700 bg-clip-text text-transparent">
                     {String(value).padStart(2, '0')}
                   </div>
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 -mt-0.5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 -mt-0.5">
                     {label}
                   </div>
                 </div>
@@ -272,12 +272,12 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
         ref={dialogRef}
         onClose={lock}
         aria-labelledby="inventory-timer-title"
-        className="no-print m-auto w-[min(92vw,26rem)] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl backdrop:bg-black/45"
+        className="no-print m-auto w-[min(92vw,26rem)] rounded-lg border border-slate-200 bg-white p-5 shadow-xl backdrop:bg-black/45"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 id="inventory-timer-title" className="text-base font-bold text-slate-900">Timer &amp; Note Target</h2>
-            <span className="text-[10px] bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded-full border border-blue-200 flex items-center gap-1">
+            <span className="text-xs bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded-full border border-blue-200 flex items-center gap-1">
               <Globe className="w-3 h-3" />
               <span>Cloud Realtime</span>
             </span>
@@ -322,7 +322,7 @@ export function InventoryTimer({ compact = false, fullWidth = false }) {
                 placeholder="Contoh: Selesaikan target pendataan seluruh rak & box R&D sebelum audit"
                 className="mt-1 block w-full rounded-lg border border-slate-200 p-2.5 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
-              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+              <span className="text-xs text-slate-400 font-medium block mt-0.5">
                 Catatan ini akan tampil di banner atas dan tersinkronisasi ke semua komputer tim.
               </span>
             </label>

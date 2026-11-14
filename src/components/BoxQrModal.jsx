@@ -77,7 +77,7 @@ export const BoxQrModal = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto print:block">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden print:max-w-none print:shadow-none print:border-none print:rounded-none print:block">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden print:max-w-none print:shadow-none print:border-none print:rounded-none print:block">
         
         {/* Header */}
         <div className="no-print inventory-dialog-heading px-5 py-4 flex items-center justify-between">
@@ -108,7 +108,7 @@ export const BoxQrModal = () => {
               BOX #{qrModalBox.boxNumber}
             </h2>
 
-            <p className="text-[11px] font-semibold text-slate-700">
+            <p className="text-xs font-semibold text-slate-700">
               {qrModalBox.rackDescription}
             </p>
 
@@ -129,10 +129,10 @@ export const BoxQrModal = () => {
 
             <div className="border-t-2 border-black pt-2 space-y-0.5 text-xs">
               <div>
-                <span className="text-slate-500 font-bold uppercase text-[10px]">PENANGGUNG JAWAB PPIC:</span>
+                <span className="text-slate-500 font-bold uppercase text-xs">PENANGGUNG JAWAB PPIC:</span>
                 <p className="font-black text-sm text-black">#{qrModalBox.ppicNumber} {qrModalBox.picName}</p>
               </div>
-              <div className="text-[10px] text-slate-500 pt-1">
+              <div className="text-xs text-slate-500 pt-1">
                 GAGACLO - Storage - 20261102 • INVENTORY MANAGEMENT RND
               </div>
             </div>
@@ -146,7 +146,7 @@ export const BoxQrModal = () => {
               <span>{items.length} jenis item</span>
             </div>
             {items.length > 0 ? (
-              <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-600">
+              <ul className="list-disc list-inside space-y-0.5 text-xs text-slate-600">
                 {items.slice(0, 3).map((item, idx) => (
                   <li key={idx} className="truncate">{item.name} ({item.qty} {item.unit})</li>
                 ))}
@@ -155,7 +155,7 @@ export const BoxQrModal = () => {
                 )}
               </ul>
             ) : (
-              <p className="text-slate-400 italic text-[11px]">Belum ada item tercatat di dalam box ini.</p>
+              <p className="text-slate-400 italic text-xs">Belum ada item tercatat di dalam box ini.</p>
             )}
           </div>
 

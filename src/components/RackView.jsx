@@ -236,7 +236,7 @@ export const RackView = () => {
           return (
             <div 
               key={rack.id} 
-              className={`bg-white rounded-2xl shadow-sm border overflow-hidden transition ${
+              className={`bg-white rounded-lg shadow-sm border overflow-hidden transition ${
                 isBlueRack ? 'border-blue-300 shadow-blue-50' : 'border-slate-300'
               }`}
             >
@@ -307,19 +307,19 @@ export const RackView = () => {
                             <span className="text-lg font-black text-slate-900 tracking-tight">
                               #{box.boxNumber}
                             </span>
-                            <span className="text-[10px] font-mono text-slate-400">
+                            <span className="text-xs font-mono text-slate-400">
                               {box.code}
                             </span>
                           </div>
                           
                           {/* Item status badge */}
                           {hasItems ? (
-                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center space-x-0.5">
+                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-1.5 py-0.5 rounded-full flex items-center space-x-0.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                               <span>{itemCount}</span>
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-400 font-medium italic">
+                            <span className="text-xs text-slate-400 font-medium italic">
                               Kosong
                             </span>
                           )}
@@ -334,7 +334,7 @@ export const RackView = () => {
                           
                           {/* Item Preview list */}
                           {hasItems && (
-                            <p className="text-[11px] text-slate-600 line-clamp-1 mt-1.5 font-medium" title={boxItems[0]?.name}>
+                            <p className="text-xs text-slate-600 line-clamp-1 mt-1.5 font-medium" title={boxItems[0]?.name}>
                               {boxItems[0]?.name}
                               {itemCount > 1 && ` (+${itemCount - 1} lainnya)`}
                             </p>
@@ -342,7 +342,7 @@ export const RackView = () => {
                         </div>
 
                         {/* Footer & Quick Hover Actions */}
-                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                           <span>
                             {hasItems ? `${totalQty} unit` : '0 unit'}
                           </span>
@@ -390,7 +390,7 @@ export const RackView = () => {
         })}
 
         {filteredBoxes.length === 0 && (
-          <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+          <div className="bg-white rounded-lg p-12 text-center border border-slate-200">
             <BoxIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <h3 className="text-base font-bold text-slate-800">Tidak ada box yang cocok</h3>
             <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">

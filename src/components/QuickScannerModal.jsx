@@ -46,7 +46,7 @@ export const QuickScannerModal = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
@@ -125,11 +125,11 @@ export const QuickScannerModal = () => {
                   }`}
                 >
                   <span className="text-sm font-black">#{b.boxNumber}</span>
-                  <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full">
+                  <span className="text-xs text-slate-500 font-medium mt-0.5 truncate w-full">
                     {b.picName}
                   </span>
                   {hasItems && (
-                    <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1 rounded-full font-bold mt-1">
+                    <span className="text-xs bg-emerald-100 text-emerald-800 px-1 rounded-full font-bold mt-1">
                       {items.length} item
                     </span>
                   )}

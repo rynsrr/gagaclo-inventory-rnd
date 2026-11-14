@@ -28,7 +28,7 @@ export const PpicDashboardView = () => {
     <div className="space-y-6">
       
       {/* Intro Header */}
-      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-sm border border-slate-800">
+      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-lg p-6 shadow-sm border border-slate-800">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2">
@@ -48,11 +48,11 @@ export const PpicDashboardView = () => {
           <div className="flex items-center space-x-3 text-center">
             <div className="bg-white/10 backdrop-blur-xs px-4 py-3 rounded-xl border border-white/10">
               <div className="text-2xl font-black text-amber-300">5</div>
-              <div className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold">Anggota PPIC</div>
+              <div className="text-xs text-slate-300 uppercase tracking-wider font-semibold">Anggota PPIC</div>
             </div>
             <div className="bg-white/10 backdrop-blur-xs px-4 py-3 rounded-xl border border-white/10">
               <div className="text-2xl font-black text-emerald-300">72</div>
-              <div className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold">Total Box</div>
+              <div className="text-xs text-slate-300 uppercase tracking-wider font-semibold">Total Box</div>
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@ export const PpicDashboardView = () => {
           return (
             <div 
               key={pic.id}
-              className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:border-slate-300 transition duration-200"
+              className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:border-slate-300 transition duration-200"
             >
               {/* Member Card Header */}
               <div className="p-5 border-b border-slate-100">
@@ -97,21 +97,21 @@ export const PpicDashboardView = () => {
                 {/* Box Breakdown Metric */}
                 <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
                   <div className="bg-amber-50/70 border border-amber-200/80 p-2.5 rounded-xl">
-                    <span className="text-amber-800 font-medium text-[11px] block">Box Sample</span>
+                    <span className="text-amber-800 font-medium text-xs block">Box Sample</span>
                     <strong className="text-base font-black text-amber-950">{sampleBoxes.length} Box</strong>
-                    <span className="text-[10px] text-amber-700 block mt-0.5">Rak 1 - 2</span>
+                    <span className="text-xs text-amber-700 block mt-0.5">Rak 1 - 2</span>
                   </div>
 
                   <div className="bg-emerald-50/70 border border-emerald-200/80 p-2.5 rounded-xl">
-                    <span className="text-emerald-800 font-medium text-[11px] block">Box Material</span>
+                    <span className="text-emerald-800 font-medium text-xs block">Box Material</span>
                     <strong className="text-base font-black text-emerald-950">{materialBoxes.length} Box</strong>
-                    <span className="text-[10px] text-emerald-700 block mt-0.5">Rak 3 - 5</span>
+                    <span className="text-xs text-emerald-700 block mt-0.5">Rak 3 - 5</span>
                   </div>
                 </div>
 
                 {/* Utilization meter */}
                 <div className="mt-3">
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                     <span>Okupansi Box ({occupiedBoxes.length}/{picBoxes.length})</span>
                     <span className="font-bold text-slate-700">
                       {Math.round((occupiedBoxes.length / picBoxes.length) * 100)}%
@@ -136,7 +136,7 @@ export const PpicDashboardView = () => {
 
               {/* Box badges list */}
               <div className="p-5 flex-1 bg-slate-50/50">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">
                   Daftar Nomor Box Milik {pic.name}:
                 </label>
                 <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">

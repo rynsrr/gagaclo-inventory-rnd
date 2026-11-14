@@ -49,7 +49,7 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in no-print">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="px-5 py-4 bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -60,7 +60,7 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
               <h3 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
                 Terima Kembali Sampel ke Box
               </h3>
-              <p className="text-[11px] text-emerald-200 font-medium">
+              <p className="text-xs text-emerald-200 font-medium">
                 Selesai review dari {dispatchInfo?.destinationLabel || 'Review Luar'}
               </p>
             </div>
@@ -85,7 +85,7 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
 
           {/* Item Details Summary */}
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-500">
               <span>Sampel yang Diterima Kembali:</span>
               <span className="font-mono text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-300">
                 {item.jumlah ?? item.qty ?? 1} PCS
@@ -94,13 +94,13 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
             <div className="text-sm font-black text-slate-900">
               {item.style || item.name || 'Sample R&D'}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 font-mono">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 font-mono">
               <span>Kode: <strong>{item.kode || item.sku}</strong></span>
               {item.sampleNo && <span>• No: <strong>{item.sampleNo}</strong></span>}
               {item.size && <span>• Size: <strong>{item.size}</strong></span>}
               {item.color && <span>• Color: <strong>{item.color}</strong></span>}
             </div>
-            <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200">
+            <div className="text-xs text-slate-500 pt-1 border-t border-slate-200">
               Asal pengiriman: <strong>{dispatchInfo?.destinationLabel || 'Review'}</strong> • Asal Box awal: <strong>BOX #{defaultTargetBox}</strong>
             </div>
           </div>
@@ -112,7 +112,7 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
                 <BoxIcon className="w-3.5 h-3.5 text-emerald-600" />
                 Simpan Kembali ke Box Target <span className="text-rose-500">*</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-normal">Pilih Box 1 - 72</span>
+              <span className="text-xs text-slate-400 font-normal">Pilih Box 1 - 72</span>
             </label>
             <select
               value={targetBoxNumber}
@@ -126,7 +126,7 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
               ))}
             </select>
             {selectedBoxObj && (
-              <p className="text-[11px] text-emerald-700 font-medium">
+              <p className="text-xs text-emerald-700 font-medium">
                 Disimpan di: <strong>BOX #{selectedBoxObj.boxNumber}</strong> ({selectedBoxObj.rackName} • PPIC: {selectedBoxObj.picName})
               </p>
             )}
@@ -161,7 +161,7 @@ export function DispatchReturnModal({ isOpen, onClose, item }) {
             />
           </div>
 
-          <div className="text-[11px] text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
+          <div className="text-xs text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
             <span>PIC Penerima: <strong>{currentUser?.name || 'Royan'}</strong></span>
             <span>Stok Box #{targetBoxNumber} akan bertambah</span>
           </div>

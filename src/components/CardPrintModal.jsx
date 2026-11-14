@@ -73,7 +73,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
     <div className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto">
       
       {/* Container */}
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-300 w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
         
         {/* Top Control Bar (Hidden when printing) */}
         <div className="no-print inventory-dialog-heading px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
@@ -86,7 +86,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
                 <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase">
                   Cetak Multi-Kartu A4 (Ukuran KTP)
                 </h3>
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded uppercase">
+                <span className="bg-amber-400 text-slate-950 text-xs font-black px-1.5 py-0.5 rounded uppercase">
                   85.6 × 54 mm
                 </span>
               </div>
@@ -128,7 +128,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
               <strong>PENGINGAT WAJIB:</strong> Tempelkan kartu sampel cetak ini pada fisik barang, ATAU tambahkan keterangan <strong>Kode Sample & Place</strong> di kartu lama jika tidak mencetak kartu baru!
             </span>
           </div>
-          <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase shrink-0">
+          <span className="bg-rose-600 text-white text-xs font-black px-1.5 py-0.5 rounded uppercase shrink-0">
             Wajib
           </span>
         </div>
@@ -142,7 +142,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
                 <span className="text-xs font-bold text-slate-800">
                   Ceklist Kartu yang Mau Dicetak:
                 </span>
-                <span className="bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                   {selectedItemIds.size} dari {itemsToPrint.length} kartu terpilih
                 </span>
               </div>
@@ -185,11 +185,11 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
                       onChange={() => toggleItemSelection(itemId)}
                       className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                     />
-                    <span className="font-mono text-[11px] bg-slate-900 text-white px-1.5 py-0.5 rounded font-bold">
+                    <span className="font-mono text-xs bg-slate-900 text-white px-1.5 py-0.5 rounded font-bold">
                       {item.kode || item.sku || `SAMPLE-${idx + 1}`}
                     </span>
                     {item.jenisSample && (
-                      <span className="text-[10px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded">
+                      <span className="text-xs font-black uppercase px-1 py-0.5 bg-amber-400 text-slate-950 rounded">
                         {item.jenisSample}
                       </span>
                     )}
@@ -197,12 +197,12 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
                       {item.style || item.deskripsi || item.name}
                     </span>
                     {item.size && (
-                      <span className="text-[10px] bg-slate-200 text-slate-700 px-1 rounded font-bold uppercase">
+                      <span className="text-xs bg-slate-200 text-slate-700 px-1 rounded font-bold uppercase">
                         {item.size}
                       </span>
                     )}
                     {item.color && (
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-xs text-slate-500">
                         • {item.color}
                       </span>
                     )}
@@ -235,7 +235,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-200 print:bg-white print:p-0 print:overflow-visible">
           
           {cardsToPrint.length === 0 ? (
-            <div className="max-w-md mx-auto text-center py-16 px-4 bg-white rounded-2xl shadow-md border border-slate-300 text-slate-500 space-y-3">
+            <div className="max-w-md mx-auto text-center py-16 px-4 bg-white rounded-lg shadow-md border border-slate-300 text-slate-500 space-y-3">
               <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto border border-amber-200">
                 <CheckSquare className="w-6 h-6" />
               </div>

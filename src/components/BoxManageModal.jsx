@@ -217,7 +217,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in no-print">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-300 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
 
         {/* Header */}
         <div className="inventory-dialog-heading px-5 py-3.5 flex items-center justify-between shrink-0">
@@ -255,7 +255,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
               >
                 <Icon className="w-3.5 h-3.5" />
                 {t.label}
-                <span className="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-full text-[10px] font-black">
+                <span className="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-full text-xs font-black">
                   {t.count}
                 </span>
               </button>
@@ -287,7 +287,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                 </h4>
 
                 {!hasRacks && !editingBox && (
-                  <div className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-300 px-3 py-2 text-[11px] text-amber-900">
+                  <div className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-300 px-3 py-2 text-xs text-amber-900">
                     <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                     <span>
                       Belum ada rak tersedia. Box baru otomatis akan ditempatkan di <strong>LANTAI</strong>.
@@ -298,7 +298,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Rack */}
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Penempatan</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">Penempatan</span>
                     <select
                       value={boxForm.rackId}
                       onChange={(e) => setBoxForm((f) => ({ ...f, rackId: e.target.value }))}
@@ -313,7 +313,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
 
                   {/* Category */}
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Kategori</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">Kategori</span>
                     <select
                       value={boxForm.category}
                       onChange={(e) => setBoxForm((f) => ({ ...f, category: e.target.value }))}
@@ -326,7 +326,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
 
                   {/* PPIC */}
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">PPIC / Penanggung Jawab</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">PPIC / Penanggung Jawab</span>
                     <select
                       value={boxForm.picName}
                       onChange={(e) => setBoxForm((f) => ({ ...f, picName: e.target.value }))}
@@ -341,7 +341,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
 
                   {/* Notes */}
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Catatan (opsional)</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">Catatan (opsional)</span>
                     <input
                       type="text"
                       value={boxForm.notes}
@@ -376,7 +376,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
 
               {/* Floor boxes summary */}
               {floorBoxes.length > 0 && (
-                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   <MapPin className="w-3.5 h-3.5 shrink-0" />
                   <span>
                     <strong>{floorBoxes.length} box</strong> berada di <strong>LANTAI</strong> (belum punya rak): {floorBoxes.map(b => `#${b.boxNumber}`).join(', ')}
@@ -407,10 +407,10 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                             <tr key={box.boxNumber} className="hover:bg-slate-50">
                               <td className="px-3 py-2">
                                 <span className="font-mono font-black text-slate-800">#{box.boxNumber}</span>
-                                <span className="ml-1.5 text-[10px] text-slate-400">{box.category}</span>
+                                <span className="ml-1.5 text-xs text-slate-400">{box.category}</span>
                               </td>
                               <td className="px-3 py-2">
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                                   isFloor ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
                                 }`}>
                                   {box.rackName || 'LANTAI'}
@@ -459,7 +459,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                 </h4>
                 <div className="max-w-md">
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Nama PPIC *</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">Nama PPIC *</span>
                     <input
                       type="text"
                       value={personForm.name}
@@ -494,7 +494,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <h4 className="text-xs font-black text-slate-800 uppercase">Daftar Orang ({ppicMembers.length})</h4>
                   {currentUser && (
-                    <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                    <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
                       Login: <strong className="text-blue-700">{currentUser.name}</strong>
                     </span>
@@ -518,22 +518,22 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs font-black text-slate-800 truncate">{p.name}</span>
-                            <span className="text-[10px] font-bold text-slate-400">#{p.ppicNumber}</span>
+                            <span className="text-xs font-bold text-slate-400">#{p.ppicNumber}</span>
                             {isSelf ? (
-                              <span className="rounded-full bg-emerald-100 px-1.5 py-0.2 text-[9px] font-black text-emerald-700">
+                              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-black text-emerald-700">
                                 Akun Anda
                               </span>
                             ) : isSuper ? (
-                              <span className="rounded-full bg-amber-100 px-1.5 py-0.2 text-[9px] font-black text-amber-800">
+                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-black text-amber-800">
                                 ⚡ Superuser
                               </span>
                             ) : (
-                              <span className="rounded-full bg-slate-100 px-1.5 py-0.2 text-[9px] font-bold text-slate-500 flex items-center gap-0.5">
+                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-500 flex items-center gap-0.5">
                                 <Lock className="w-2.5 h-2.5" /> Terkunci
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] font-semibold text-slate-500 mt-1">
+                          <div className="text-xs font-semibold text-slate-500 mt-1">
                             {boxCount} box alokasi
                           </div>
                         </div>
@@ -586,7 +586,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Nama Rak *</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">Nama Rak *</span>
                     <input
                       type="text"
                       value={rackForm.name}
@@ -596,7 +596,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                     />
                   </label>
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Kategori</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">Kategori</span>
                     <select
                       value={rackForm.category}
                       onChange={(e) => setRackForm((f) => ({ ...f, category: e.target.value }))}
@@ -607,7 +607,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                     </select>
                   </label>
                   <label className="block">
-                    <span className="block text-[11px] font-bold text-slate-600 mb-1">Lokasi</span>
+                    <span className="block text-xs font-bold text-slate-600 mb-1">Lokasi</span>
                     <input
                       type="text"
                       value={rackForm.location}
@@ -634,7 +634,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                   <Layers className="w-3.5 h-3.5 text-blue-600" />
                   Daftar Rak ({racks.length})
                 </h4>
-                <p className="text-[11px] text-slate-500 mb-3">
+                <p className="text-xs text-slate-500 mb-3">
                   Jika tidak ada rak, box baru otomatis ditempatkan di <strong>LANTAI</strong>. Rak yang masih memiliki box tidak bisa dihapus (pindahkan box-nya ke rak lain atau ke Lantai terlebih dahulu).
                 </p>
                 {racks.length === 0 ? (
@@ -649,10 +649,10 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                         <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
                           <div className="min-w-0">
                             <div className="text-xs font-black text-slate-800">{r.name}</div>
-                            <div className="text-[11px] text-slate-500 truncate">{r.location} • {r.category}</div>
+                            <div className="text-xs text-slate-500 truncate">{r.location} • {r.category}</div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[11px] font-bold text-slate-600">{boxCount} box</span>
+                            <span className="text-xs font-bold text-slate-600">{boxCount} box</span>
                             <button
                               type="button"
                               onClick={() => setConfirmDelete({ type: 'rack', id: r.id, label: r.name })}
@@ -682,7 +682,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
               {confirmDelete.type === 'box' && (() => {
                 const count = items.filter(i => Number(i.boxNumber) === Number(confirmDelete.id)).length;
                 return count > 0 ? (
-                  <span className="text-[10px] text-rose-600 font-semibold">
+                  <span className="text-xs text-rose-600 font-semibold">
                     ({count} item di dalamnya otomatis dipindahkan ke Lantai)
                   </span>
                 ) : null;
@@ -690,7 +690,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
               {confirmDelete.type === 'rack' && (() => {
                 const count = boxes.filter(b => Number(b.rackId) === Number(confirmDelete.id)).length;
                 return count > 0 ? (
-                  <span className="text-[10px] text-rose-600 font-semibold">
+                  <span className="text-xs text-rose-600 font-semibold">
                     ({count} box di dalamnya otomatis dipindahkan ke Lantai)
                   </span>
                 ) : null;
@@ -700,7 +700,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={() => setConfirmDelete(null)}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-[11px] font-bold hover:bg-white"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-bold hover:bg-white"
               >
                 Batal
               </button>
@@ -708,7 +708,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={handleDelete}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50"
               >
                 Ya, Hapus
               </button>
@@ -718,7 +718,7 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="bg-slate-50 px-4 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <span className="text-[11px] text-slate-500">
+          <span className="text-xs text-slate-500">
             {boxes.length} box • {racks.length} rak • {floorBoxes.length} di lantai
           </span>
           <button

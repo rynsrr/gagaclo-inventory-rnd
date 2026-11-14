@@ -136,7 +136,7 @@ export function CelebrationFlareOverlay({ achiever, onClose }) {
 
       {/* Kartu Hero Flare di Tengah */}
       <div
-        className="relative z-20 max-w-md w-full bg-gradient-to-b from-slate-900 via-slate-900/98 to-slate-950 border-2 border-emerald-500/80 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-500/20 text-center space-y-4 text-white ring-1 ring-white/20 transform transition-all animate-scale-up"
+        className="relative z-20 max-w-md w-full bg-gradient-to-b from-slate-900 via-slate-900/98 to-slate-950 border-2 border-emerald-500/80 rounded-xl p-6 sm:p-8 shadow-2xl shadow-emerald-500/20 text-center space-y-4 text-white ring-1 ring-white/20 transform transition-all animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Tombol Tutup X di Sudut */}
@@ -152,7 +152,7 @@ export function CelebrationFlareOverlay({ achiever, onClose }) {
         {/* Halo Glow di Belakang Ikon */}
         <div className="relative mx-auto w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
           <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500 to-amber-400 blur-xl opacity-60 animate-ping" />
-          <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-amber-400 via-emerald-400 to-teal-300 text-slate-950 flex items-center justify-center shadow-2xl shadow-emerald-500/40 ring-4 ring-white/30 transform hover:rotate-6 transition">
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-tr from-amber-400 via-emerald-400 to-teal-300 text-slate-950 flex items-center justify-center shadow-2xl shadow-emerald-500/40 ring-4 ring-white/30 transform hover:rotate-6 transition">
             <Trophy className="w-10 h-10 sm:w-12 sm:h-12 text-slate-950" />
           </div>
         </div>
@@ -174,8 +174,8 @@ export function CelebrationFlareOverlay({ achiever, onClose }) {
         </div>
 
         {/* Skor Angka Capaian (PCS) */}
-        <div className="p-3.5 rounded-2xl bg-slate-950/90 border border-emerald-500/40 space-y-1 shadow-inner">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+        <div className="p-3.5 rounded-lg bg-slate-950/90 border border-emerald-500/40 space-y-1 shadow-inner">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">
             Capaian Input Hari Ini:
           </div>
           <div className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-tight tabular-nums">
@@ -205,7 +205,7 @@ export function CelebrationFlareOverlay({ achiever, onClose }) {
           >
             Luar Biasa, Lanjutkan!
           </button>
-          <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+          <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
             <span>Klik di mana saja atau tekan Esc</span>
             <span>Tutup otomatis ({timeLeft}s)</span>
           </div>

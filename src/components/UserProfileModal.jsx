@@ -8,6 +8,9 @@ import {
   EyeOff,
   Lock,
   Info,
+  Crown,
+  Zap,
+  Wrench,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
@@ -67,7 +70,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-xl max-h-[92vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-slate-200/90 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-xl max-h-[92vh] flex flex-col rounded-lg bg-white shadow-lg border border-slate-200/90 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-gradient-to-r from-slate-50 via-white to-blue-50/40">
@@ -79,7 +82,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
               <h3 id="user-profile-modal-title" className="text-sm sm:text-base font-black text-slate-900">
                 Ganti User / Login Akun
               </h3>
-              <p className="text-[11px] font-medium text-slate-500">
+              <p className="text-xs font-medium text-slate-500">
                 1 Manager (Jasmine) • 5 PPIC • 3 Support (Sheva, Ade, Tri)
               </p>
             </div>
@@ -110,7 +113,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
               {currentUser?.name || 'Tamu'} ({isManager(currentUser) ? 'Manager' : `#${currentUser?.ppicNumber || 1}`})
             </span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
+          <div className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
             <Check className="h-3.5 w-3.5" />
             <span>Akun Aktif</span>
           </div>
@@ -150,9 +153,9 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block"></span>
-                  👑 Manajemen &amp; Pengawas Inventory
+                  <Crown className="w-3.5 h-3.5 text-indigo-600" /> Manajemen &amp; Pengawas Inventory
                 </span>
-                <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
                   Superuser / Full Authority
                 </span>
               </div>
@@ -169,27 +172,27 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                         ? 'border-indigo-400 bg-indigo-50/50 shadow-xs'
                         : isSelected
                         ? 'border-indigo-500 bg-indigo-50/60 shadow-xs'
-                        : 'border-indigo-200 bg-gradient-to-r from-indigo-50/40 via-white to-purple-50/30 hover:border-indigo-300'
+                        : 'border-slate-200 bg-white hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-black text-sm bg-indigo-600 shadow-xs`}>
-                          👑
+                          <Crown className="w-5 h-5 text-white" />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-indigo-950">{u.name}</span>
-                            <span className="rounded-full bg-indigo-100 border border-indigo-300 px-2 py-0.5 text-[9px] font-black text-indigo-900 flex items-center gap-0.5">
+                            <span className="rounded-full bg-indigo-100 border border-indigo-300 px-2 py-0.5 text-xs font-black text-indigo-900 flex items-center gap-0.5">
                               Manager Inventory
                             </span>
                             {isCurrent && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 flex items-center gap-1">
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-black text-emerald-800 flex items-center gap-1">
                                 <Check className="h-2.5 w-2.5" /> Aktif
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-slate-500 mt-0.5">Kontrol alokasi box, target input, dan audit data 72 box</p>
+                          <p className="text-xs text-slate-500 mt-0.5">Kontrol alokasi box, target input, dan audit data 72 box</p>
                         </div>
                       </div>
 
@@ -269,7 +272,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                   <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
                   Tim Utama PPIC (5 PPIC)
                 </span>
-                <span className="text-[10px] font-bold text-slate-400">Total 72 Box</span>
+                <span className="text-xs font-bold text-slate-400">Total 72 Box</span>
               </div>
 
               {users.filter(u => !isHelper(u) && !isManager(u)).map((u) => {
@@ -296,19 +299,19 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-slate-900">{u.name}</span>
-                            <span className="text-[10px] font-bold text-slate-400">#{u.ppicNumber}</span>
+                            <span className="text-xs font-bold text-slate-400">#{u.ppicNumber}</span>
                             {isSuperuser(u) && (
-                              <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-black text-amber-900 flex items-center gap-0.5 shadow-2xs">
-                                ⚡ Superuser
+                              <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-xs font-black text-amber-900 flex items-center gap-1 shadow-2xs">
+                                <Zap className="w-3 h-3 text-amber-600" /> Superuser
                               </span>
                             )}
                             {isCurrent && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 flex items-center gap-1">
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-black text-emerald-800 flex items-center gap-1">
                                 <Check className="h-2.5 w-2.5" /> Aktif
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-slate-400 mt-0.5">{boxCount} Box alokasi</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{boxCount} Box alokasi</p>
                         </div>
                       </div>
 
@@ -389,7 +392,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                     <span className="w-2 h-2 rounded-full bg-teal-500 inline-block"></span>
                     Tim Support Data (Sheva, Ade, Tri)
                   </span>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Membantu input &amp; rekap data ke 72 Box milik 5 PIC. Jumlah PCS yang di-input akan terkontrol secara terpisah (Dual-Tracking).
                   </p>
                 </div>
@@ -418,16 +421,16 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-slate-900">{u.name}</span>
-                            <span className="rounded-full bg-teal-100 border border-teal-300 px-2 py-0.5 text-[9px] font-black text-teal-900 flex items-center gap-0.5">
-                              🛠️ Tim Support
+                            <span className="rounded-full bg-teal-100 border border-teal-300 px-2 py-0.5 text-xs font-black text-teal-900 flex items-center gap-1">
+                              <Wrench className="w-3 h-3 text-teal-600" /> Tim Support
                             </span>
                             {isCurrent && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 flex items-center gap-1">
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-black text-emerald-800 flex items-center gap-1">
                                 <Check className="h-2.5 w-2.5" /> Aktif
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-teal-700 mt-0.5">
+                          <p className="text-xs text-teal-700 mt-0.5">
                             Bantuan Input: Semua Box milik 5 PIC • (Password default: {u.name})
                           </p>
                         </div>
@@ -507,7 +510,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <Lock className="h-3.5 w-3.5 text-slate-400" />
             <span>Hak Akses: Setiap PIC mengelola alokasi box dan sampel masing-masing.</span>
           </div>

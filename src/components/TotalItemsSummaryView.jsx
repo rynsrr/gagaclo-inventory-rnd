@@ -415,7 +415,7 @@ export function TotalItemsSummaryView() {
           >
             <Shirt className="w-3.5 h-3.5" />
             <span>Pengelompokan Style</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200/60">
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200/60">
               {styleGroups.length}
             </span>
           </button>
@@ -431,7 +431,7 @@ export function TotalItemsSummaryView() {
           >
             <List className="w-3.5 h-3.5" />
             <span>Daftar Tabel &amp; Umur</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200/80 text-slate-700 font-bold">
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700 font-bold">
               {filteredItems.length}
             </span>
           </button>
@@ -448,7 +448,7 @@ export function TotalItemsSummaryView() {
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>Kode Sama &amp; Perbaikan</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
                 duplicateCodeGroups.length > 0
                   ? 'bg-amber-100 text-amber-900 border border-amber-300'
                   : 'bg-emerald-100 text-emerald-800'
@@ -469,7 +469,7 @@ export function TotalItemsSummaryView() {
           >
             <Send className="w-3.5 h-3.5" />
             <span>Kirim Keluar</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
               viewMode === 'dispatch' ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
             }`}>
               {dispatchedStats.pcs} PCS
@@ -480,7 +480,7 @@ export function TotalItemsSummaryView() {
     </div>
 
       {/* Top Banner Widget: Kotak Sampel Terkirim Keluar (Buyer, Anzo, RDTW, RDC, ANZOTW) */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-lg bg-slate-900 border border-slate-800 text-white border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
           <div className="p-2.5 rounded-xl bg-blue-500/20 border border-blue-400/30 text-blue-300 shrink-0">
             <Truck className="w-5 h-5" />
@@ -490,7 +490,7 @@ export function TotalItemsSummaryView() {
               <span className="text-sm font-black text-white">
                 Kotak Pengiriman Keluar R&amp;D
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30">
                 Buyer • ANZO QC • ANZO TW • ANZO QC CHINA • RDTW • RDC
               </span>
             </div>
@@ -533,8 +533,8 @@ export function TotalItemsSummaryView() {
       {viewMode === 'duplicates' && (
         <div className="space-y-4">
           {duplicateCodeGroups.length === 0 ? (
-            <div className="inventory-panel p-8 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs text-center space-y-3">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+            <div className="inventory-panel p-8 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-2xs text-center space-y-3">
+              <div className="w-14 h-14 mx-auto rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center">
                 <ShieldCheck className="w-8 h-8 text-emerald-600" />
               </div>
               <div>
@@ -559,7 +559,7 @@ export function TotalItemsSummaryView() {
           ) : (
             <div className="space-y-4">
               {/* Alert Banner */}
-              <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="p-4 rounded-lg bg-amber-50/90 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-amber-200/60 text-amber-900 shrink-0 mt-0.5">
                     <AlertTriangle className="h-5 w-5" />
@@ -586,7 +586,7 @@ export function TotalItemsSummaryView() {
                 {duplicateCodeGroups.map((group) => (
                   <div
                     key={group.code}
-                    className="p-4 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-2xs space-y-3"
+                    className="p-4 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/90 shadow-2xs space-y-3"
                   >
                     {/* Card Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
@@ -598,7 +598,7 @@ export function TotalItemsSummaryView() {
                           Digunakan {group.count} Kali
                         </span>
                         {group.differentBoxes && (
-                          <span className="text-[11px] text-slate-500 font-medium">
+                          <span className="text-xs text-slate-500 font-medium">
                             (Tersebar di {group.items.map((i) => `BOX ${i.boxNumber}`).join(', ')})
                           </span>
                         )}
@@ -613,7 +613,7 @@ export function TotalItemsSummaryView() {
                     <div className="overflow-x-auto rounded-xl border border-slate-200">
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="border-b border-slate-200 bg-slate-50/90 text-[11px] font-bold text-slate-700 uppercase">
+                          <tr className="border-b border-slate-200 bg-slate-50/90 text-xs font-bold text-slate-700 uppercase">
                             <th className="px-3 py-2">No</th>
                             <th className="px-3 py-2">Lokasi Box</th>
                             <th className="px-3 py-2">Style &amp; Buyer</th>
@@ -635,19 +635,19 @@ export function TotalItemsSummaryView() {
                                 <td className="px-3 py-2.5 font-bold text-slate-400">{idx + 1}</td>
                                 <td className="px-3 py-2.5">
                                   <div className="font-bold text-blue-700">{item.boxLabel}</div>
-                                  <div className="text-[10px] text-slate-400">{item.rackName}</div>
+                                  <div className="text-xs text-slate-400">{item.rackName}</div>
                                 </td>
                                 <td className="px-3 py-2.5">
                                   <div className="font-bold text-slate-900">{item.style}</div>
-                                  <div className="text-[10px] text-slate-500">Buyer: {item.buyerNo}</div>
+                                  <div className="text-xs text-slate-500">Buyer: {item.buyerNo}</div>
                                 </td>
                                 <td className="px-3 py-2.5">
-                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px]">
+                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-xs">
                                     {item.jenisSample}
                                   </span>
                                 </td>
                                 <td className="px-3 py-2.5 text-right font-black text-slate-800 tabular-nums">
-                                  {item.jumlah} <span className="text-[10px] text-slate-400 font-normal">PCS</span>
+                                  {item.jumlah} <span className="text-xs text-slate-400 font-normal">PCS</span>
                                 </td>
                                 <td className="px-3 py-2.5 font-semibold text-slate-700">
                                   {item.picName}
@@ -659,7 +659,7 @@ export function TotalItemsSummaryView() {
                                       type="button"
                                       disabled={isFixing}
                                       onClick={() => handleAutoFixCode(item)}
-                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
                                       title="Generate kode unik baru untuk item ini agar tidak bentrok lagi"
                                     >
                                       <Zap className="h-3 w-3" />
@@ -698,14 +698,14 @@ export function TotalItemsSummaryView() {
                                                 setConfirmDeleteId(null);
                                               }
                                             }}
-                                            className="px-2 py-0.5 rounded bg-red-600 text-white text-[10px] font-bold cursor-pointer"
+                                            className="px-2 py-0.5 rounded bg-red-600 text-white text-xs font-bold cursor-pointer"
                                           >
                                             Hapus?
                                           </button>
                                           <button
                                             type="button"
                                             onClick={() => setConfirmDeleteId(null)}
-                                            className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] cursor-pointer"
+                                            className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-xs cursor-pointer"
                                           >
                                             Batal
                                           </button>
@@ -749,7 +749,7 @@ export function TotalItemsSummaryView() {
       {/* SUB-VIEW 3 & 4: PENGELOMPOKAN STYLE & DAFTAR TABEL & UMUR                */}
       {/* ========================================================================= */}
       {(viewMode === 'styles' || viewMode === 'table') && (
-        <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+        <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-2xs space-y-4">
           {/* Controls: Search, Aging Filter Chips, Actions */}
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1">
@@ -872,7 +872,7 @@ export function TotalItemsSummaryView() {
                   return (
                     <div
                       key={group.styleKey}
-                      className="border border-slate-200/90 rounded-2xl bg-white shadow-2xs hover:border-slate-300 transition overflow-hidden"
+                      className="border border-slate-200/90 rounded-lg bg-white shadow-2xs hover:border-slate-300 transition overflow-hidden"
                     >
                       {/* Style Summary Header Bar */}
                       <div className="p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 via-white to-white">
@@ -891,10 +891,10 @@ export function TotalItemsSummaryView() {
                               <h2 className="font-bold text-sm sm:text-base text-slate-900 tracking-tight">
                                 {group.styleName}
                               </h2>
-                              <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                                 Buyer: {buyerDisplay}
                               </span>
-                              <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
                                 {group.items.length} Sampel • {group.totalPcs} PCS
                               </span>
                             </div>
@@ -912,7 +912,7 @@ export function TotalItemsSummaryView() {
                                 <Clock className="h-3.5 w-3.5 text-slate-400" />
                                 <span>Sampel Tertua:</span>
                                 <span
-                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                                     group.oldestTier === 'critical'
                                       ? 'bg-rose-100 text-rose-800'
                                       : group.oldestTier === 'aged'
@@ -932,7 +932,7 @@ export function TotalItemsSummaryView() {
                         {/* Checklist Kelengkapan & Aksi Cepat Tambah Sampel */}
                         <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
                           {/* Checklist Tahapan Sample */}
-                          <div className="flex items-center gap-1 p-1 bg-slate-100/80 rounded-xl border border-slate-200/80 text-[10px] font-bold">
+                          <div className="flex items-center gap-1 p-1 bg-slate-100/80 rounded-xl border border-slate-200/80 text-xs font-bold">
                             {SAMPLE_TYPES.map((type) => {
                               const exists = group.sampleTypes.has(type);
                               return (
@@ -981,7 +981,7 @@ export function TotalItemsSummaryView() {
                           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
                             <table className="w-full text-left text-xs">
                               <thead>
-                                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-600 uppercase">
+                                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 uppercase">
                                   <th className="px-3 py-2">Kode</th>
                                   <th className="px-3 py-2">Tanggal</th>
                                   <th className="px-3 py-2">Umur Simpan</th>
@@ -1000,7 +1000,7 @@ export function TotalItemsSummaryView() {
                                     <td className="px-3 py-2 text-slate-600">{item.tanggal}</td>
                                     <td className="px-3 py-2">
                                       <span
-                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${
+                                        className={`px-2 py-0.5 rounded-full text-xs font-bold inline-block ${
                                           item.age.tier === 'critical'
                                             ? 'bg-rose-100 text-rose-800'
                                             : item.age.tier === 'aged'
@@ -1019,20 +1019,20 @@ export function TotalItemsSummaryView() {
                                       {item.size} {item.color && item.color !== 'NA' ? `• ${item.color}` : ''}
                                     </td>
                                     <td className="px-3 py-2 text-right font-black text-slate-900 tabular-nums">
-                                      {item.jumlah} <span className="text-[10px] text-slate-400 font-normal">{item.satuan}</span>
+                                      {item.jumlah} <span className="text-xs text-slate-400 font-normal">{item.satuan}</span>
                                     </td>
                                     <td className="px-3 py-2">
                                       {isItemDispatched(item) ? (
                                         <div className="space-y-0.5">
-                                          <span className="inline-block px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[9px]">
+                                          <span className="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs">
                                             🚀 Dikirim ({decodeDispatchData(item)?.destinationLabel || 'Luar'})
                                           </span>
-                                          <div className="text-[10px] text-slate-400">Asal {item.boxLabel}</div>
+                                          <div className="text-xs text-slate-400">Asal {item.boxLabel}</div>
                                         </div>
                                       ) : (
                                         <>
                                           <div className="font-bold text-blue-700">{item.boxLabel}</div>
-                                          <div className="text-[10px] text-slate-400">{item.picName}</div>
+                                          <div className="text-xs text-slate-400">{item.picName}</div>
                                         </>
                                       )}
                                     </td>
@@ -1074,7 +1074,7 @@ export function TotalItemsSummaryView() {
             <div className="overflow-x-auto rounded-xl border border-slate-200">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-600 uppercase">
+                  <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 uppercase">
                     <th className="px-3 py-2.5">No</th>
                     <th className="px-3 py-2.5">Tanggal</th>
                     <th className="px-3 py-2.5">Umur Simpan</th>
@@ -1103,14 +1103,14 @@ export function TotalItemsSummaryView() {
                       <tr key={item.id} className="hover:bg-slate-50/70 transition">
                         <td className="px-3 py-2.5 font-bold text-slate-400">{i + 1}</td>
                         <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">
-                          <div className="flex items-center gap-1 font-mono text-[11px]">
+                          <div className="flex items-center gap-1 font-mono text-xs">
                             <Calendar className="h-3 w-3 text-slate-400" />
                             <span>{item.tanggal}</span>
                           </div>
                         </td>
                         <td className="px-3 py-2.5 whitespace-nowrap">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block shadow-2xs ${
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-bold inline-block shadow-2xs ${
                               item.age.tier === 'critical'
                                 ? 'bg-rose-100 text-rose-800 border border-rose-200'
                                 : item.age.tier === 'aged'
@@ -1133,26 +1133,26 @@ export function TotalItemsSummaryView() {
                         <td className="px-3 py-2.5 text-slate-600">{item.color}</td>
                         <td className="px-3 py-2.5 text-right font-black text-slate-900 tabular-nums whitespace-nowrap">
                           {item.jumlah.toLocaleString('id-ID')}{' '}
-                          <span className="text-[11px] font-normal text-slate-400">{item.satuan}</span>
+                          <span className="text-xs font-normal text-slate-400">{item.satuan}</span>
                         </td>
                         <td className="px-3 py-2.5">
                           {isItemDispatched(item) ? (
                             <div className="space-y-0.5">
-                              <span className="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px]">
+                              <span className="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs">
                                 🚀 Dikirim ke {decodeDispatchData(item)?.destinationLabel || 'Luar'}
                               </span>
-                              <div className="text-[10px] text-slate-400">Asal: {item.boxLabel} • {item.picName}</div>
+                              <div className="text-xs text-slate-400">Asal: {item.boxLabel} • {item.picName}</div>
                             </div>
                           ) : (
                             <>
                               <div className="text-xs font-bold text-blue-700">{item.boxLabel}</div>
-                              <div className="mt-0.5 text-[11px] text-slate-500">
+                              <div className="mt-0.5 text-xs text-slate-500">
                                 {item.rackName}
                                 {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
                               </div>
                               {item.helperName && (
                                 <div className="mt-1">
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-teal-50 text-teal-800 border border-teal-200 text-[9px] font-black">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 text-xs font-black">
                                     📝 Input: {item.helperName}
                                   </span>
                                 </div>
@@ -1169,7 +1169,7 @@ export function TotalItemsSummaryView() {
 
                             if (!canEdit && !canDelete) {
                               return (
-                                <div className="text-center text-[10px] text-slate-300 font-bold">
+                                <div className="text-center text-xs text-slate-300 font-bold">
                                   Hanya Baca
                                 </div>
                               );
@@ -1221,7 +1221,7 @@ export function TotalItemsSummaryView() {
                                             setConfirmDeleteId(null);
                                           }
                                         }}
-                                        className="px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-bold transition hover:bg-red-700 cursor-pointer"
+                                        className="px-2 py-1 rounded-lg bg-red-600 text-white text-xs font-bold transition hover:bg-red-700 cursor-pointer"
                                         title="Konfirmasi hapus permanen"
                                       >
                                         Hapus?
@@ -1229,7 +1229,7 @@ export function TotalItemsSummaryView() {
                                       <button
                                         type="button"
                                         onClick={() => setConfirmDeleteId(null)}
-                                        className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold transition hover:bg-slate-200 cursor-pointer"
+                                        className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold transition hover:bg-slate-200 cursor-pointer"
                                         title="Batal"
                                       >
                                         Batal

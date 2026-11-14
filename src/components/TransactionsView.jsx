@@ -133,7 +133,7 @@ export const TransactionsView = ({ onOpenTransactionModal }) => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-900 text-slate-200 font-bold uppercase tracking-wider text-[11px] border-b border-slate-800">
+            <thead className="bg-slate-900 text-slate-200 font-bold uppercase tracking-wider text-xs border-b border-slate-800">
               <tr>
                 <th className="py-3 px-4">Waktu</th>
                 <th className="py-3 px-4">Tipe Mutasi</th>
@@ -166,10 +166,10 @@ export const TransactionsView = ({ onOpenTransactionModal }) => {
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-slate-700">
                       BOX #{t.boxNumber}
-                      {t.rackName && <span className="text-[10px] text-slate-400 block font-normal">{t.rackName}</span>}
+                      {t.rackName && <span className="text-xs text-slate-400 block font-normal">{t.rackName}</span>}
                     </td>
                     <td className="py-3.5 px-4 text-center font-bold text-slate-900">
-                      {t.qty} <span className="text-[10px] font-normal text-slate-500">{t.unit || 'pcs'}</span>
+                      {t.qty} <span className="text-xs font-normal text-slate-500">{t.unit || 'pcs'}</span>
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-slate-800">
                       {t.picName}
@@ -177,7 +177,7 @@ export const TransactionsView = ({ onOpenTransactionModal }) => {
                     <td className="py-3.5 px-4 text-slate-600 max-w-xs">
                       {t.recipientOrSource || '-'}
                     </td>
-                    <td className="py-3.5 px-4 text-slate-500 text-[11px] max-w-xs">
+                    <td className="py-3.5 px-4 text-slate-500 text-xs max-w-xs">
                       {t.notes || '-'}
                     </td>
                   </tr>

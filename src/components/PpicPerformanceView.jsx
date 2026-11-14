@@ -257,7 +257,7 @@ export function PpicPerformanceView() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
       {/* Header Controls: Date Picker & Refresh */}
-      <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
@@ -266,7 +266,7 @@ export function PpicPerformanceView() {
             <div>
               <h1 className="text-base font-bold text-slate-800 flex items-center gap-2">
                 Rekap Harian Penyimpanan Tim R&D
-                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                   {currentDailyData.totalPcs} PCS
                 </span>
               </h1>
@@ -284,7 +284,7 @@ export function PpicPerformanceView() {
             title="Klik untuk memilih tanggal dari kalender"
           >
             <Calendar className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-600 transition shrink-0" />
-            <span className="text-slate-500 text-[11px]">Tanggal:</span>
+            <span className="text-slate-500 text-xs">Tanggal:</span>
             <span className="text-slate-900 font-bold tracking-tight">
               {formatDateIndoFull(selectedDailyDate)}
             </span>
@@ -334,9 +334,9 @@ export function PpicPerformanceView() {
       {/* Ringkasan 2 Metrik Pendukung */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Card 1: Kontributor Teraktif */}
-        <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between">
+        <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-lg border border-blue-200/80 flex flex-col justify-between">
           <div>
-            <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
+            <div className="text-xs font-bold text-blue-800 uppercase tracking-wider">
               Kontributor Teraktif
             </div>
             <div className="mt-1 text-2xl font-black text-blue-950 truncate">
@@ -358,9 +358,9 @@ export function PpicPerformanceView() {
         </div>
 
         {/* Card 2: Riwayat Hari Tercatat */}
-        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-2xl border border-slate-200/80 flex flex-col justify-between">
+        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-lg border border-slate-200/80 flex flex-col justify-between">
           <div>
-            <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+            <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
               Riwayat Hari Tercatat
             </div>
             <div className="mt-1 text-2xl font-black text-slate-800 tabular-nums">
@@ -378,7 +378,7 @@ export function PpicPerformanceView() {
             <Users className="h-4 w-4 text-slate-600" />
             <span>Capaian Input Harian 8 Anggota Tim (5 PPIC &amp; 3 Support)</span>
           </h2>
-          <span className="text-[11px] text-slate-500 font-semibold">
+          <span className="text-xs text-slate-500 font-semibold">
             Tanggal: {formatDateIndoFull(selectedDailyDate)}
           </span>
         </div>
@@ -400,19 +400,19 @@ export function PpicPerformanceView() {
             return (
               <div
                 key={member.name}
-                className={`p-4 rounded-2xl border ${member.border} ${member.bg} backdrop-blur-md flex flex-col justify-between transition shadow-2xs hover:shadow-xs`}
+                className={`p-4 rounded-lg border ${member.border} ${member.bg} backdrop-blur-md flex flex-col justify-between transition shadow-2xs hover:shadow-xs`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-200/60">
                     <span className="font-black text-sm text-slate-900">{member.name}</span>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${member.tagBg}`}>
+                    <span className={`text-xs font-black px-2 py-0.5 rounded-full ${member.tagBg}`}>
                       {member.role}
                     </span>
                   </div>
 
                   {/* Bagian Capaian & Target Harian Individu */}
                   <div className="mt-1">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wide">
                       <span>Di-Input Hari Ini:</span>
                       {isMgr && (
                         <button
@@ -425,7 +425,7 @@ export function PpicPerformanceView() {
                               setTempMemberTarget(String(personTarget));
                             }
                           }}
-                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer lowercase"
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer lowercase"
                           title={`Ubah target harian ${member.name} (Wewenang Manager)`}
                         >
                           <Edit2 className="w-2.5 h-2.5" />
@@ -442,7 +442,7 @@ export function PpicPerformanceView() {
                         }}
                         className="mt-1.5 p-2 bg-white/95 rounded-xl border border-indigo-200 shadow-2xs space-y-1.5"
                       >
-                        <div className="flex items-center justify-between text-[10px] font-bold text-indigo-950">
+                        <div className="flex items-center justify-between text-xs font-bold text-indigo-950">
                           <span>Set Target {member.name}:</span>
                           <button
                             type="button"
@@ -462,10 +462,10 @@ export function PpicPerformanceView() {
                             onChange={(e) => setTempMemberTarget(e.target.value)}
                             className="w-full px-2 py-1 text-xs font-black text-slate-900 border border-indigo-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
                           />
-                          <span className="text-[10px] font-bold text-slate-600 shrink-0">PCS</span>
+                          <span className="text-xs font-bold text-slate-600 shrink-0">PCS</span>
                           <button
                             type="submit"
-                            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold cursor-pointer shrink-0"
+                            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold cursor-pointer shrink-0"
                           >
                             Simpan
                           </button>
@@ -483,7 +483,7 @@ export function PpicPerformanceView() {
                             </span>
                           </div>
                           <span
-                            className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${
+                            className={`text-xs font-black px-1.5 py-0.5 rounded-md ${
                               isPersonAchieved
                                 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                 : 'bg-indigo-100 text-indigo-900'
@@ -504,7 +504,7 @@ export function PpicPerformanceView() {
                         </div>
 
                         {/* Sub-keterangan: status target & sampel */}
-                        <div className="flex items-center justify-between text-[10.5px] mt-1 text-slate-600">
+                        <div className="flex items-center justify-between text-xs mt-1 text-slate-600">
                           <span>{stats.items > 0 ? `${stats.items} sampel masuk` : 'Belum ada input'}</span>
                           <span className={`font-bold ${isPersonAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>
                             {isPersonAchieved
@@ -516,7 +516,7 @@ export function PpicPerformanceView() {
                         {/* Badge Kata Dinamis: Pujian / Ajakan Kejar Target */}
                         <div
                           onClick={() => setQuoteTick((t) => (t + 1) % 1000)}
-                          className={`mt-2 w-full text-center text-[10.5px] font-bold px-2 py-1 rounded-xl border transition-all duration-500 cursor-pointer select-none truncate ${
+                          className={`mt-2 w-full text-center text-xs font-bold px-2 py-1 rounded-xl border transition-all duration-500 cursor-pointer select-none truncate ${
                             memberQuote.type === 'praise'
                               ? 'bg-emerald-100/90 text-emerald-950 border-emerald-300 shadow-2xs hover:bg-emerald-200/90'
                               : memberQuote.type === 'almost'
@@ -536,10 +536,10 @@ export function PpicPerformanceView() {
                   {/* Keterangan jika membantu input ke box PPIC lain */}
                   {assistedList.length > 0 && (
                     <div className="mt-2.5 pt-2 border-t border-slate-200/60">
-                      <div className="text-[10px] font-bold text-slate-500 uppercase">Membantu Box PPIC:</div>
+                      <div className="text-xs font-bold text-slate-500 uppercase">Membantu Box PPIC:</div>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {assistedList.map(([pName, pPcs]) => (
-                          <span key={pName} className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/90 text-slate-700 border border-slate-200">
+                          <span key={pName} className="text-xs font-bold px-1.5 py-0.5 rounded bg-white/90 text-slate-700 border border-slate-200">
                             {pName}: <strong>{pPcs} PCS</strong>
                           </span>
                         ))}
@@ -548,7 +548,7 @@ export function PpicPerformanceView() {
                   )}
 
                   {/* Total Akumulasi Semua Hari */}
-                  <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                  <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-medium">Total Akumulasi:</span>
                     <span className="font-black text-slate-900 tabular-nums">
                       {allTime.pcs.toLocaleString('id-ID')} PCS
@@ -566,7 +566,7 @@ export function PpicPerformanceView() {
                           [member.name]: !prev[member.name],
                         }))
                       }
-                      className="w-full text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center justify-between cursor-pointer"
+                      className="w-full text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center justify-between cursor-pointer"
                     >
                       <span>{isExpanded ? 'Tutup Rincian' : `Lihat ${stats.itemsList.length} Sampel`}</span>
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -577,18 +577,18 @@ export function PpicPerformanceView() {
                         {stats.itemsList.map((it, itemIdx) => (
                           <div
                             key={itemIdx}
-                            className="text-[11px] p-2 rounded-lg bg-white/95 border border-slate-200/80 leading-tight shadow-2xs"
+                            className="text-xs p-2 rounded-lg bg-white/95 border border-slate-200/80 leading-tight shadow-2xs"
                           >
                             <div className="font-bold text-slate-900 truncate">{it.style}</div>
-                            <div className="text-[10px] text-slate-600 flex justify-between items-center mt-1">
+                            <div className="text-xs text-slate-600 flex justify-between items-center mt-1">
                               <span className="font-mono font-semibold">
                                 {it.boxLabel} ({it.boxPic}) • {it.kode}
                               </span>
-                              <span className="font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                              <span className="font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                                 {it.jumlah} PCS
                               </span>
                             </div>
-                            <div className="text-[9.5px] text-slate-400 mt-1 flex justify-between items-center border-t border-slate-100 pt-1">
+                            <div className="text-xs text-slate-400 mt-1 flex justify-between items-center border-t border-slate-100 pt-1">
                               <span>
                                 Tgl Sample: <strong className="text-slate-600">{it.tanggal || 'NA'}</strong>
                               </span>
@@ -611,14 +611,14 @@ export function PpicPerformanceView() {
       </div>
 
       {/* SATU TABEL UTAMA RIWAYAT: 8 Kolom Anggota Tim Sejajar (5 PPIC & 3 Support) */}
-      <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+      <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <Users className="h-4 w-4 text-blue-600" />
               <span>Tabel Riwayat Input Harian Tim R&D (PCS per Orang)</span>
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Catatan kuantitatif input harian 8 anggota tim (5 PPIC &amp; 3 Support) secara setara dan transparan
             </p>
           </div>
@@ -627,12 +627,12 @@ export function PpicPerformanceView() {
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/90 text-[11px] font-bold text-slate-700 uppercase">
+              <tr className="border-b border-slate-200 bg-slate-50/90 text-xs font-bold text-slate-700 uppercase">
                 <th className="px-3 py-2.5">Tanggal</th>
                 {DEFAULT_TEAM_MEMBERS.map((m) => (
                   <th key={m.name} className="px-3 py-2.5 text-right whitespace-nowrap">
                     <div>{m.name}</div>
-                    <div className="text-[9px] font-bold text-slate-400 lowercase">{m.role}</div>
+                    <div className="text-xs font-bold text-slate-400 lowercase">{m.role}</div>
                   </th>
                 ))}
                 <th className="px-3 py-2.5 text-right font-black text-slate-900">Total (PCS)</th>
@@ -644,7 +644,7 @@ export function PpicPerformanceView() {
               {dailyTeamRecords.dates.length > 0 && (
                 <tr className="border-b-2 border-blue-300 bg-gradient-to-r from-blue-100/90 via-indigo-50/80 to-blue-100/90 font-black text-slate-900 shadow-2xs">
                   <td className="px-3 py-2.5 font-black text-blue-950 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-700 text-white text-[10px] font-black tracking-wide shadow-2xs">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-700 text-white text-xs font-black tracking-wide shadow-2xs">
                       Σ TOTAL PER ORANG
                     </span>
                   </td>
@@ -663,7 +663,7 @@ export function PpicPerformanceView() {
                     {allTimeTeamTotals.grandTotalPcs.toLocaleString('id-ID')}
                   </td>
                   <td className="px-3 py-2.5 text-center">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-200/80 text-blue-900">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-200/80 text-blue-900">
                       Semua Hari
                     </span>
                   </td>
@@ -691,7 +691,7 @@ export function PpicPerformanceView() {
                       <td className="px-3 py-2 font-bold text-slate-800 whitespace-nowrap">
                         {formatDateIndo(dateKey)}
                         {dateKey === todayIso && (
-                          <span className="ml-1.5 px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                          <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-xs font-black">
                             Hari Ini
                           </span>
                         )}
@@ -713,7 +713,7 @@ export function PpicPerformanceView() {
                         {record.totalPcs.toLocaleString('id-ID')}
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <span className="text-[11px] text-blue-600 hover:underline">
+                        <span className="text-xs text-blue-600 hover:underline">
                           {isSelected ? '✓ Terpilih' : 'Pilih'}
                         </span>
                       </td>
@@ -724,9 +724,9 @@ export function PpicPerformanceView() {
             </tbody>
             {dailyTeamRecords.dates.length > 0 && (
               <tfoot className="border-t-2 border-slate-300 bg-slate-100/90 font-black">
-                <tr className="border-t-2 border-slate-300 bg-gradient-to-r from-slate-100 via-blue-50/40 to-slate-100 text-[11px] font-black text-slate-900">
+                <tr className="border-t-2 border-slate-300 bg-gradient-to-r from-slate-100 via-blue-50/40 to-slate-100 text-xs font-black text-slate-900">
                   <td className="px-3 py-2.5 font-black text-slate-900 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-white text-[10px] font-black tracking-wide shadow-2xs">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-white text-xs font-black tracking-wide shadow-2xs">
                       TOTAL KESELURUHAN
                     </span>
                   </td>
@@ -745,7 +745,7 @@ export function PpicPerformanceView() {
                     {allTimeTeamTotals.grandTotalPcs.toLocaleString('id-ID')}
                   </td>
                   <td className="px-3 py-2.5 text-center">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-700">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-700">
                       {dailyTeamRecords.dates.length} Hari
                     </span>
                   </td>

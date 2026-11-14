@@ -284,7 +284,7 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col">
         
         {/* Modal Header */}
         <div className="inventory-dialog-heading p-5 flex items-center justify-between border-b border-slate-800">
@@ -298,12 +298,12 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
                   Database Supabase Corporate Gagaclo
                 </h3>
                 {supabaseStatus.isConnected ? (
-                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">
+                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span>ONLINE</span>
                   </span>
                 ) : (
-                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
                     <span>OFFLINE LOKAL</span>
                   </span>
                 )}
@@ -375,7 +375,7 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
                 required
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
               />
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Dapat dilihat di Supabase Dashboard → Project Settings → API → Project URL.
               </p>
             </div>
@@ -394,7 +394,7 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
                 required
                 className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition resize-none"
               />
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Gunakan kunci <code className="font-bold text-slate-700">anon public</code> (bukan service role).
               </p>
             </div>
@@ -453,7 +453,7 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
                   <UploadCloud className="w-4 h-4 text-blue-600" />
                   <span>Upload Data Lokal ke Cloud</span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Kirim {items.length} item & 72 box lokal ke database Supabase (berguna saat setup awal).
                 </p>
               </button>
@@ -469,7 +469,7 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
                   <DownloadCloud className="w-4 h-4 text-emerald-600" />
                   <span>Tarik Data dari Cloud</span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Ambil pembaruan item terbaru dari server Supabase ke browser ini.
                 </p>
               </button>
@@ -503,7 +503,7 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
                 </div>
 
                 <div className="relative">
-                  <pre className="text-[11px] font-mono bg-slate-950 p-3 rounded-lg overflow-x-auto text-emerald-400 max-h-48 border border-slate-800">
+                  <pre className="text-xs font-mono bg-slate-950 p-3 rounded-lg overflow-x-auto text-emerald-400 max-h-48 border border-slate-800">
                     {sqlSchemaCode}
                   </pre>
                   <button

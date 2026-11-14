@@ -33,7 +33,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
         
         {/* Header */}
         <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
@@ -57,13 +57,13 @@ export const BackupModal = ({ isOpen, onClose }) => {
                 <span>Supabase Corporate Gagaclo</span>
               </div>
               {supabaseStatus.isConnected && (
-                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center space-x-1">
+                <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center space-x-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Online</span>
                 </span>
               )}
             </div>
-            <p className="text-slate-600 text-[11px] leading-relaxed">
+            <p className="text-slate-600 text-xs leading-relaxed">
               Sinkronisasi data otomatis dengan cloud database Supabase resmi Corporate Gagaclo untuk kolaborasi real-time seluruh tim R&D.
             </p>
             <button
@@ -84,7 +84,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
               <HardDriveDownload className="w-4 h-4 text-slate-700" />
               <span>Export File Backup (JSON)</span>
             </div>
-            <p className="text-slate-500 text-[11px] leading-relaxed">
+            <p className="text-slate-500 text-xs leading-relaxed">
               Unduh salinan lengkap seluruh data master 72 box, daftar item sample/material, dan riwayat mutasi untuk disimpan di komputer Anda.
             </p>
             <button
@@ -104,7 +104,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
               <Upload className="w-4 h-4 text-emerald-600" />
               <span>Pulihkan Data (Import JSON)</span>
             </div>
-            <p className="text-slate-500 text-[11px] leading-relaxed">
+            <p className="text-slate-500 text-xs leading-relaxed">
               Unggah file backup JSON yang telah Anda unduh sebelumnya untuk memulihkan seluruh data.
             </p>
             <input
@@ -128,7 +128,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
               <ShieldAlert className="w-4 h-4 text-rose-600" />
               <span>Reset ke Data Awal Dokumen</span>
             </div>
-            <p className="text-rose-700 text-[11px] leading-relaxed">
+            <p className="text-rose-700 text-xs leading-relaxed">
               Mengembalikan seluruh konfigurasi Rak 1-5, master 72 Box, dan alokasi tim PPIC (Royan, Cynara, Ami, Ryan, Hanami) persis seperti dokumen awal GAGACLO 20261102.
             </p>
             <button
@@ -149,7 +149,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
               <Trash2 className="w-4 h-4 text-red-600" />
               <span>Hapus Semua Item Tersimpan</span>
             </div>
-            <p className="text-red-700 text-[11px] leading-relaxed">
+            <p className="text-red-700 text-xs leading-relaxed">
               Menghapus SELURUH data item/sample secara permanen dari database (Supabase + lokal).
               Box, rak, dan riwayat transaksi tetap tersimpan. Tindakan ini <strong>TIDAK BISA dibatalkan</strong>.
             </p>
@@ -164,7 +164,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
               </button>
             ) : (
               <div className="space-y-2">
-                <p className="text-[11px] font-bold text-red-800">
+                <p className="text-xs font-bold text-red-800">
                   Yakin? Semua item akan hilang permanen.
                 </p>
                 <div className="flex gap-2">

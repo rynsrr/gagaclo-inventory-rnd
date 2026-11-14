@@ -286,28 +286,28 @@ function BoxDetail({ box }) {
     switch (status) {
       case 'In Storage':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             <span>Tersimpan</span>
           </span>
         );
       case 'Borrowed':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
             <span>Dipinjam</span>
           </span>
         );
       case 'In Review':
         return (
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
             <span>Review</span>
           </span>
         );
       default:
         return (
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
             {status}
           </span>
         );
@@ -316,7 +316,7 @@ function BoxDetail({ box }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-1 sm:p-3 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
-      <div className={`bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal || showSampleListPrintModal ? 'no-print' : ''}`}>
+      <div className={`bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal || showSampleListPrintModal ? 'no-print' : ''}`}>
         
         {/* Header */}
         <div className="inventory-dialog-heading p-5 flex items-start justify-between border-b border-slate-800">
@@ -423,12 +423,12 @@ function BoxDetail({ box }) {
               <span>#{box.ppicNumber} {box.picName}</span>
             </div>
             {isSuper && String(currentUser?.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase() && (
-              <span className="text-[10px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+              <span className="text-xs font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
                 ⚡ Mode Superuser (Akses Penuh)
               </span>
             )}
             {isHelperUser && (
-              <span className="text-[10px] font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+              <span className="text-xs font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
                 🛠️ Tim Support (Membantu {box.picName})
               </span>
             )}
@@ -654,7 +654,7 @@ function BoxDetail({ box }) {
             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white w-full">
               <div className="overflow-x-hidden overflow-y-auto max-h-[66vh] scrollbar-thin w-full">
                 <table className="w-full table-fixed text-left border-collapse text-xs">
-                  <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200">
+                  <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-xs tracking-wider sticky top-0 z-10 border-b border-slate-200">
                     <tr>
                       <th className="py-2.5 px-2 w-9 text-center">
                         <input
@@ -702,7 +702,7 @@ function BoxDetail({ box }) {
                               <button
                                 type="button"
                                 onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
-                                className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 px-1.5 py-0.5 rounded-md border border-slate-200 text-[11px] flex items-center gap-1 transition cursor-pointer shadow-2xs shrink-0"
+                                className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 px-1.5 py-0.5 rounded-md border border-slate-200 text-xs flex items-center gap-1 transition cursor-pointer shadow-2xs shrink-0"
                                 title="Klik untuk Salin Kode ke Clipboard"
                               >
                                 <span>{item.kode || item.sku || '-'}</span>
@@ -713,12 +713,12 @@ function BoxDetail({ box }) {
                                 )}
                               </button>
                               {item.jenisSample && (
-                                <span className="text-[9px] font-black uppercase px-1 py-0.2 bg-amber-400 text-slate-950 rounded shrink-0">
+                                <span className="text-xs font-black uppercase px-1 py-0.5 bg-amber-400 text-slate-950 rounded shrink-0">
                                   {item.jenisSample}
                                 </span>
                               )}
                               {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
-                                <span className="text-[10px] text-slate-500 font-mono truncate" title={`Buyer: ${item.buyerNo}`}>
+                                <span className="text-xs text-slate-500 font-mono truncate" title={`Buyer: ${item.buyerNo}`}>
                                   ({item.buyerNo})
                                 </span>
                               )}
@@ -731,7 +731,7 @@ function BoxDetail({ box }) {
                               {item.style || item.deskripsi || item.name}
                             </div>
                             {item.sampleNo && item.sampleNo !== '' && (
-                              <div className="text-[10px] text-slate-500 font-mono truncate" title={`Sample No: ${item.sampleNo}`}>
+                              <div className="text-xs text-slate-500 font-mono truncate" title={`Sample No: ${item.sampleNo}`}>
                                 Sample No: <strong>{item.sampleNo}</strong>
                               </div>
                             )}
@@ -741,11 +741,11 @@ function BoxDetail({ box }) {
                           <td className="py-2 px-2 min-w-0">
                             <div className="flex items-center space-x-1 text-xs truncate">
                               {item.size ? (
-                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1 py-0.2 rounded text-[10px] uppercase shrink-0">
+                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-xs uppercase shrink-0">
                                   {item.size}
                                 </span>
                               ) : (
-                                <span className="text-slate-400 text-[10px]">-</span>
+                                <span className="text-slate-400 text-xs">-</span>
                               )}
                               {item.color && item.color !== '-' && item.color !== 'NA' && (
                                 <span className="text-slate-700 text-xs font-medium truncate" title={`Color: ${item.color}`}>
@@ -758,7 +758,7 @@ function BoxDetail({ box }) {
                           {/* Qty & Satuan */}
                           <td className="py-2 px-1.5 text-center font-mono font-black text-slate-900 text-xs">
                             {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
-                            <span className="text-[9px] font-normal text-slate-500 uppercase">
+                            <span className="text-xs font-normal text-slate-500 uppercase">
                               {item.satuan || item.unit || 'PCS'}
                             </span>
                           </td>
@@ -833,7 +833,7 @@ function BoxDetail({ box }) {
                                     const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
                                     updateItem(item.id, { status: newStatus });
                                   }}
-                                  className={`px-1.5 py-0.5 text-[9px] font-black rounded transition cursor-pointer ${
+                                  className={`px-1.5 py-0.5 text-xs font-black rounded transition cursor-pointer ${
                                     item.status === 'In Storage'
                                       ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
                                       : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
@@ -892,7 +892,7 @@ function BoxDetail({ box }) {
       {/* Box Label Print Modal Preview */}
       {showBoxLabelModal && (
         <div className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 print:p-0 print:bg-transparent print:block">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full max-h-[92vh] overflow-y-auto flex flex-col items-center animate-fade-in print:p-0 print:max-w-none print:max-h-none print:shadow-none print:rounded-none print:w-full">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full max-h-[92vh] overflow-y-auto flex flex-col items-center animate-fade-in print:p-0 print:max-w-none print:max-h-none print:shadow-none print:rounded-none print:w-full">
             <div className="no-print w-full flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
               <h3 className="font-black text-slate-900 text-sm">Preview Label Box #{box.boxNumber}</h3>
               <button onClick={() => setShowBoxLabelModal(false)} className="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-200 transition">
@@ -945,7 +945,7 @@ function BoxDetail({ box }) {
       {/* Quick Move Item(s) to Another Box Modal */}
       {movingItems && (
         <div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in no-print">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-md w-full overflow-hidden flex flex-col">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-300 max-w-md w-full overflow-hidden flex flex-col">
             <div className="inventory-dialog-heading px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center space-x-2">
                 <ArrowRightLeft className="w-4 h-4 text-amber-400" />
@@ -968,14 +968,14 @@ function BoxDetail({ box }) {
                 <span className="block font-bold text-slate-600 mb-1">Item yang akan dipindahkan:</span>
                 <div className="max-h-36 overflow-y-auto space-y-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
                   {movingItems.map((it) => (
-                    <div key={it.id} className="flex items-center justify-between text-[11px] font-semibold text-slate-800 py-0.5">
-                      <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-300 text-[10px]">
+                    <div key={it.id} className="flex items-center justify-between text-xs font-semibold text-slate-800 py-0.5">
+                      <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-300 text-xs">
                         {it.kode || it.sku || '-'}
                       </span>
                       <span className="truncate max-w-[190px] text-slate-700 ml-2">
                         {it.style || it.deskripsi || it.name}
                       </span>
-                      <span className="text-slate-500 ml-auto whitespace-nowrap text-[10px]">
+                      <span className="text-slate-500 ml-auto whitespace-nowrap text-xs">
                         {it.jumlah || it.qty} {it.satuan || it.unit || 'PCS'}
                       </span>
                     </div>
@@ -1013,7 +1013,7 @@ function BoxDetail({ box }) {
                 </div>
 
                 {/* Quick Box Chips */}
-                <div className="flex items-center gap-1 mt-2 flex-wrap text-[11px]">
+                <div className="flex items-center gap-1 mt-2 flex-wrap text-xs">
                   <span className="text-slate-400 font-semibold mr-0.5">Pilihan Box:</span>
                   {boxes
                     .filter(b => Number(b.boxNumber) !== Number(box.boxNumber) && Number(b.boxNumber) <= 72)
@@ -1069,7 +1069,7 @@ function BoxDetail({ box }) {
       {/* Delete Item Confirmation Modal */}
       {itemToDelete && (
         <div className="fixed inset-0 z-[75] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in no-print">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-sm w-full overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-300 max-w-sm w-full overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
             <div className="p-5 text-center">
               <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
                 <Trash2 className="w-6 h-6" />
