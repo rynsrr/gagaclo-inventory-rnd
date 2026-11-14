@@ -493,7 +493,7 @@ export function PpicPerformanceView() {
                     {pic} (PCS)
                   </th>
                 ))}
-                <th className="px-3 py-2.5 text-right font-black text-emerald-800">Total Harian</th>
+                <th className="px-3 py-2.5 text-right font-black text-emerald-800">Total Harian (PCS)</th>
                 <th className="px-3 py-2.5 text-center">Aksi</th>
               </tr>
             </thead>
@@ -513,12 +513,12 @@ export function PpicPerformanceView() {
                         key={`top-total-${pic}`}
                         className="px-3 py-2.5 text-right font-black tabular-nums text-blue-950"
                       >
-                        {pcs > 0 ? `${pcs.toLocaleString('id-ID')} PCS` : '-'}
+                        {pcs > 0 ? pcs.toLocaleString('id-ID') : '-'}
                       </td>
                     );
                   })}
                   <td className="px-3 py-2.5 text-right font-black text-emerald-800 tabular-nums">
-                    {allTimePicTotals.grandTotalPcs.toLocaleString('id-ID')} PCS
+                    {allTimePicTotals.grandTotalPcs.toLocaleString('id-ID')}
                   </td>
                   <td className="px-3 py-2.5 text-center">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-200/80 text-blue-900">
@@ -563,12 +563,12 @@ export function PpicPerformanceView() {
                               pcs > 0 ? 'font-bold text-slate-800' : 'text-slate-300'
                             }`}
                           >
-                            {pcs > 0 ? `${pcs.toLocaleString('id-ID')} PCS` : '-'}
+                            {pcs > 0 ? pcs.toLocaleString('id-ID') : '-'}
                           </td>
                         );
                       })}
                       <td className="px-3 py-2 text-right font-black text-emerald-700 tabular-nums">
-                        {record.totalPcs.toLocaleString('id-ID')} PCS
+                        {record.totalPcs.toLocaleString('id-ID')}
                       </td>
                       <td className="px-3 py-2 text-center">
                         <span className="text-[11px] text-blue-600 hover:underline">
@@ -595,12 +595,12 @@ export function PpicPerformanceView() {
                         key={`foot-total-${pic}`}
                         className="px-3 py-2.5 text-right font-black tabular-nums text-slate-900"
                       >
-                        {pcs > 0 ? `${pcs.toLocaleString('id-ID')} PCS` : '-'}
+                        {pcs > 0 ? pcs.toLocaleString('id-ID') : '-'}
                       </td>
                     );
                   })}
                   <td className="px-3 py-2.5 text-right font-black text-emerald-800 tabular-nums">
-                    {allTimePicTotals.grandTotalPcs.toLocaleString('id-ID')} PCS
+                    {allTimePicTotals.grandTotalPcs.toLocaleString('id-ID')}
                   </td>
                   <td className="px-3 py-2.5 text-center">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-700">
