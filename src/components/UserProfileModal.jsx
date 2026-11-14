@@ -10,6 +10,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { isSuperuser } from '../utils/authUtils';
 
 export const UserProfileModal = ({ isOpen, onClose }) => {
   const {
@@ -162,9 +163,14 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                           {u.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-slate-900">{u.name}</span>
                             <span className="text-[10px] font-bold text-slate-400">#{u.ppicNumber}</span>
+                            {isSuperuser(u) && (
+                              <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-black text-amber-900 flex items-center gap-0.5 shadow-2xs">
+                                ⚡ Superuser
+                              </span>
+                            )}
                             {isCurrent && (
                               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 flex items-center gap-1">
                                 <Check className="h-2.5 w-2.5" /> Aktif

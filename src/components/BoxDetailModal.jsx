@@ -57,10 +57,12 @@ function BoxDetail({ box }) {
     items,
     showNotification,
     currentUser,
+    isSuperuser,
   } = useInventory();
   const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
-  const isOwner = !currentUser || !box.picName || String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
+  const isSuper = isSuperuser?.(currentUser);
+  const isOwner = !currentUser || isSuper || !box.picName || String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
   const [copiedId, setCopiedId] = useState(null);
   const [dispatchModalItem, setDispatchModalItem] = useState(null);
   const [dispatchPreselectedItems, setDispatchPreselectedItems] = useState([]);
@@ -412,6 +414,11 @@ function BoxDetail({ box }) {
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
               <span>#{box.ppicNumber} {box.picName}</span>
             </div>
+            {isSuper && String(currentUser?.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase() && (
+              <span className="text-[10px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                ⚡ Mode Superuser (Akses Penuh)
+              </span>
+            )}
           </div>
 
           <div className="flex items-center space-x-4 text-slate-600">

@@ -36,6 +36,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { isItemDispatched, decodeDispatchData, DISPATCH_DESTINATIONS } from '../utils/dispatchUtils';
+import { isSuperuser } from '../utils/authUtils';
 import { DispatchOutgoingView } from './DispatchOutgoingView';
 
 /**
@@ -1145,6 +1146,7 @@ export function TotalItemsSummaryView() {
                         <td className="px-3 py-2.5">
                           <div className="flex items-center justify-center gap-1.5">
                             {!currentUser ||
+                            isSuperuser(currentUser) ||
                             !item.picName ||
                             String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase() ? (
                               <>

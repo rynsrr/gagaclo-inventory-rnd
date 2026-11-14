@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 import { isItemDispatched } from './utils/dispatchUtils';
+import { isSuperuser } from './utils/authUtils';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse' (BOX is the main tab)
@@ -279,9 +280,15 @@ const AppContent = () => {
                   {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
                 </span>
                 <span className="font-black text-slate-900">{currentUser?.name || 'PIC'}</span>
-                <span className="text-[9px] font-black uppercase text-blue-700 bg-white/80 border border-blue-200/70 px-1 rounded">
-                  #{currentUser?.ppicNumber || 1}
-                </span>
+                {isSuperuser(currentUser) ? (
+                  <span className="text-[9px] font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
+                    ⚡ Superuser
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-black uppercase text-blue-700 bg-white/80 border border-blue-200/70 px-1 rounded">
+                    #{currentUser?.ppicNumber || 1}
+                  </span>
+                )}
               </button>
 
             </div>

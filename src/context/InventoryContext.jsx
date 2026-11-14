@@ -17,6 +17,8 @@ import {
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, releaseCode } from '../utils/sequenceResolver';
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
+import { isSuperuser } from '../utils/authUtils';
+export { isSuperuser };
 
 const InventoryContext = createContext(null);
 
@@ -153,7 +155,13 @@ export const InventoryProvider = ({ children }) => {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter(u => String(u.name).trim().toLowerCase() !== 'anzo');
+          return parsed
+            .filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
+            .map(u => ({
+              ...u,
+              isSuperuser: String(u.name).trim().toLowerCase() === 'royan' || u.isSuperuser === true,
+              role: String(u.name).trim().toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : u.role,
+            }));
         }
       }
     } catch (e) {
@@ -163,7 +171,8 @@ export const InventoryProvider = ({ children }) => {
       id: p.id,
       username: p.name,
       name: p.name,
-      role: p.role,
+      role: p.name.toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : p.role,
+      isSuperuser: p.name.toLowerCase() === 'royan' || p.isSuperuser === true,
       email: p.email,
       password: p.name, // Password default sama dengan nama PIC
       ppicNumber: p.ppicNumber,
@@ -181,12 +190,19 @@ export const InventoryProvider = ({ children }) => {
       const savedUsers = localStorage.getItem(STORAGE_KEY + '_users');
       const parsedUsers = savedUsers ? JSON.parse(savedUsers) : null;
       const list = Array.isArray(parsedUsers) && parsedUsers.length > 0
-        ? parsedUsers.filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
+        ? parsedUsers
+            .filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
+            .map(u => ({
+              ...u,
+              isSuperuser: String(u.name).trim().toLowerCase() === 'royan' || u.isSuperuser === true,
+              role: String(u.name).trim().toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : u.role,
+            }))
         : PPIC_MEMBERS.map(p => ({
             id: p.id,
             username: p.name,
             name: p.name,
-            role: p.role,
+            role: p.name.toLowerCase() === 'royan' ? 'PPIC Lead & Superuser' : p.role,
+            isSuperuser: p.name.toLowerCase() === 'royan' || p.isSuperuser === true,
             email: p.email,
             password: p.name,
             ppicNumber: p.ppicNumber,
@@ -1235,10 +1251,10 @@ export const InventoryProvider = ({ children }) => {
     const oldItem = items.find((i) => String(i.id) === String(itemId));
     if (!oldItem) return null;
 
-    // ATURAN KEAMANAN: Satu user tidak dapat mengedit data user lain
+    // ATURAN KEAMANAN: Satu user tidak dapat mengedit data user lain (Kecuali Superuser / Royan)
     const oldBoxObj = boxes.find(b => Number(b.boxNumber) === Number(oldItem.boxNumber));
     const oldOwner = oldBoxObj?.picName || oldItem.picName;
-    if (currentUser && oldOwner && String(currentUser.name).trim().toLowerCase() !== String(oldOwner).trim().toLowerCase()) {
+    if (currentUser && !isSuperuser(currentUser) && oldOwner && String(currentUser.name).trim().toLowerCase() !== String(oldOwner).trim().toLowerCase()) {
       const errMsg = `Akses ditolak: Data sampel ini berada di Box #${oldItem.boxNumber} milik PIC "${oldOwner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
@@ -1246,7 +1262,7 @@ export const InventoryProvider = ({ children }) => {
     if (updatedData.boxNumber && Number(updatedData.boxNumber) !== Number(oldItem.boxNumber)) {
       const destBox = boxes.find(b => Number(b.boxNumber) === Number(updatedData.boxNumber));
       const destOwner = destBox?.picName;
-      if (currentUser && destOwner && String(currentUser.name).trim().toLowerCase() !== String(destOwner).trim().toLowerCase()) {
+      if (currentUser && !isSuperuser(currentUser) && destOwner && String(currentUser.name).trim().toLowerCase() !== String(destOwner).trim().toLowerCase()) {
         const errMsg = `Akses ditolak: Box tujuan #${updatedData.boxNumber} milik PIC "${destOwner}". Satu user tidak dapat memindahkan data ke box user lain.`;
         showNotification(errMsg, 'error', 6000);
         throw new Error(errMsg);
@@ -1326,11 +1342,11 @@ export const InventoryProvider = ({ children }) => {
     const idStr = String(itemId);
     const itemToDelete = items.find(i => String(i.id) === idStr);
 
-    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain (Kecuali Superuser / Royan)
     if (itemToDelete) {
       const box = boxes.find(b => Number(b.boxNumber) === Number(itemToDelete.boxNumber));
       const owner = box?.picName || itemToDelete.picName;
-      if (currentUser && owner && String(currentUser.name).trim().toLowerCase() !== String(owner).trim().toLowerCase()) {
+      if (currentUser && !isSuperuser(currentUser) && owner && String(currentUser.name).trim().toLowerCase() !== String(owner).trim().toLowerCase()) {
         const errMsg = `Akses ditolak: Data sampel ini milik PIC "${owner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus data user lain.`;
         showNotification(errMsg, 'error', 6000);
         throw new Error(errMsg);
@@ -1418,8 +1434,8 @@ export const InventoryProvider = ({ children }) => {
     const idStrings = itemIds.map(id => String(id));
     const idSet = new Set(idStrings);
 
-    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain
-    if (currentUser) {
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus data user lain (Kecuali Superuser / Royan)
+    if (currentUser && !isSuperuser(currentUser)) {
       const forbidden = items.find(i => {
         if (!idSet.has(String(i.id))) return false;
         const box = boxes.find(b => Number(b.boxNumber) === Number(i.boxNumber));
@@ -1559,8 +1575,8 @@ export const InventoryProvider = ({ children }) => {
     const box = boxes.find(entry => entry.boxNumber === boxNumber);
     if (!box) throw new Error('Box tidak ditemukan.');
 
-    // ATURAN KEAMANAN: Satu user tidak dapat mengubah status box user lain
-    if (currentUser && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
+    // ATURAN KEAMANAN: Satu user tidak dapat mengubah status box user lain (Kecuali Superuser / Royan)
+    if (currentUser && !isSuperuser(currentUser) && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
       const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${box.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
@@ -1581,7 +1597,7 @@ export const InventoryProvider = ({ children }) => {
 
   const updateBoxNotes = async (boxNumber, notes) => {
     const targetBox = boxes.find(b => Number(b.boxNumber) === Number(boxNumber));
-    if (currentUser && targetBox?.picName && String(currentUser.name).trim().toLowerCase() !== String(targetBox.picName).trim().toLowerCase()) {
+    if (currentUser && !isSuperuser(currentUser) && targetBox?.picName && String(currentUser.name).trim().toLowerCase() !== String(targetBox.picName).trim().toLowerCase()) {
       const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${targetBox.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
@@ -1661,8 +1677,8 @@ export const InventoryProvider = ({ children }) => {
     const box = boxes.find(b => Number(b.boxNumber) === num);
     if (!box) throw new Error(`Box #${boxNumber} tidak ditemukan.`);
 
-    // ATURAN KEAMANAN: Satu user tidak dapat mengedit box user lain
-    if (currentUser && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
+    // ATURAN KEAMANAN: Satu user tidak dapat mengedit box user lain (Kecuali Superuser / Royan)
+    if (currentUser && !isSuperuser(currentUser) && box.picName && String(currentUser.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase()) {
       const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${box.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
@@ -1753,8 +1769,8 @@ export const InventoryProvider = ({ children }) => {
     const boxNum = Number(boxNumber);
     const boxToDelete = boxes.find(b => Number(b.boxNumber) === boxNum);
 
-    // ATURAN KEAMANAN: Satu user tidak dapat menghapus box user lain
-    if (currentUser && boxToDelete?.picName && String(currentUser.name).trim().toLowerCase() !== String(boxToDelete.picName).trim().toLowerCase()) {
+    // ATURAN KEAMANAN: Satu user tidak dapat menghapus box user lain (Kecuali Superuser / Royan)
+    if (currentUser && !isSuperuser(currentUser) && boxToDelete?.picName && String(currentUser.name).trim().toLowerCase() !== String(boxToDelete.picName).trim().toLowerCase()) {
       const errMsg = `Akses ditolak: Box #${boxNumber} adalah milik PIC "${boxToDelete.picName}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus box user lain.`;
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);
@@ -1901,8 +1917,8 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const updatePpicMember = (id, updates) => {
-    // ATURAN KEAMANAN: Satu user tidak bisa edit user lain!
-    if (currentUser && String(currentUser.id).toLowerCase() !== String(id).toLowerCase()) {
+    // ATURAN KEAMANAN: Satu user tidak bisa edit user lain! (Kecuali Superuser / Royan)
+    if (currentUser && !isSuperuser(currentUser) && String(currentUser.id).toLowerCase() !== String(id).toLowerCase()) {
       throw new Error(`Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`);
     }
 
@@ -1966,8 +1982,8 @@ export const InventoryProvider = ({ children }) => {
   };
 
   const deletePpicMember = (id, options = { reassignToDefault: true }) => {
-    // ATURAN KEAMANAN: Satu user tidak bisa hapus user lain!
-    if (currentUser && String(currentUser.id).toLowerCase() !== String(id).toLowerCase()) {
+    // ATURAN KEAMANAN: Satu user tidak bisa hapus user lain! (Kecuali Superuser / Royan)
+    if (currentUser && !isSuperuser(currentUser) && String(currentUser.id).toLowerCase() !== String(id).toLowerCase()) {
       throw new Error(`Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat menghapus akun user lain.`);
     }
 
@@ -2039,9 +2055,9 @@ export const InventoryProvider = ({ children }) => {
       throw new Error('Anda belum login. Silakan login terlebih dahulu sebagai PIC.');
     }
 
-    // ATURAN MUTLAK: Satu user tidak bisa edit user lain!
-    if (String(currentUser.id).toLowerCase() !== String(targetUserId).toLowerCase()) {
-      throw new Error(`Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit profil user lain.`);
+    // ATURAN KEAMANAN: Satu user tidak bisa edit user lain! (Kecuali Superuser / Royan)
+    if (!isSuperuser(currentUser) && String(currentUser.id).toLowerCase() !== String(targetUserId).toLowerCase()) {
+      throw new Error(`Akses ditolak: Anda sedang login sebagai "${currentUser.name}". Hanya Superuser yang dapat mengedit profil user lain.`);
     }
 
     const user = users.find(u => String(u.id).toLowerCase() === String(targetUserId).toLowerCase());
@@ -2494,6 +2510,7 @@ export const InventoryProvider = ({ children }) => {
     loginUser,
     logoutUser,
     updateUserProfile,
+    isSuperuser,
     // Supabase Operations & State
     supabaseStatus,
     supabaseConfig: supabaseConfigState,
