@@ -52,6 +52,31 @@ export function PpicPerformanceView() {
   const [isEditingTarget, setIsEditingTarget] = useState(false);
   const [tempTarget, setTempTarget] = useState(dailyTarget.toString());
 
+  // Target Harian per Individu (5 PPIC & 3 Support)
+  const [individualTargets, setIndividualTargets] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_individual_targets');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [editingMemberTarget, setEditingMemberTarget] = useState(null);
+  const [tempMemberTarget, setTempMemberTarget] = useState('');
+
+  const handleSaveIndividualTarget = (memberName, val) => {
+    const num = Math.max(1, parseInt(val, 10) || 20);
+    const updated = { ...individualTargets, [memberName]: num };
+    setIndividualTargets(updated);
+    try {
+      localStorage.setItem('gagaclo_individual_targets', JSON.stringify(updated));
+    } catch {}
+    setEditingMemberTarget(null);
+    if (showNotification) {
+      showNotification(`Target harian untuk ${memberName} disetel ke ${num} PCS.`, 'success', 2500);
+    }
+  };
+
   const handleSaveTarget = (e) => {
     e?.preventDefault?.();
     const num = Math.max(1, parseInt(tempTarget, 10) || 150);
@@ -474,6 +499,12 @@ export function PpicPerformanceView() {
             const isExpanded = Boolean(expandedCards[member.name]);
             const assistedList = Object.entries(stats.assistedBoxes || {}).filter(([_, pcs]) => pcs > 0);
 
+            // Perhitungan Target Individu
+            const personTarget = Number(individualTargets[member.name]) > 0 ? Number(individualTargets[member.name]) : 20;
+            const personPercent = Math.round((stats.pcs / personTarget) * 100);
+            const isPersonAchieved = stats.pcs >= personTarget;
+            const isEditingThis = editingMemberTarget === member.name;
+
             return (
               <div
                 key={member.name}
@@ -487,17 +518,108 @@ export function PpicPerformanceView() {
                     </span>
                   </div>
 
+                  {/* Bagian Capaian & Target Harian Individu */}
                   <div className="mt-1">
-                    <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                      Di-Input Hari Ini:
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                      <span>Di-Input Hari Ini:</span>
+                      {isMgr && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isEditingThis) {
+                              setEditingMemberTarget(null);
+                            } else {
+                              setEditingMemberTarget(member.name);
+                              setTempMemberTarget(String(personTarget));
+                            }
+                          }}
+                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer lowercase"
+                          title={`Ubah target harian ${member.name} (Wewenang Manager)`}
+                        >
+                          <Edit2 className="w-2.5 h-2.5" />
+                          <span>{isEditingThis ? 'batal' : 'target'}</span>
+                        </button>
+                      )}
                     </div>
-                    <div className="mt-0.5 text-2xl font-black text-slate-900 tabular-nums">
-                      {stats.pcs.toLocaleString('id-ID')}{' '}
-                      <span className="text-xs font-semibold text-slate-500">PCS</span>
-                    </div>
-                    <div className="text-xs text-slate-600 mt-0.5">
-                      {stats.items > 0 ? `${stats.items} sampel masuk` : 'Belum ada input'}
-                    </div>
+
+                    {isEditingThis ? (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSaveIndividualTarget(member.name, tempMemberTarget);
+                        }}
+                        className="mt-1.5 p-2 bg-white/95 rounded-xl border border-indigo-200 shadow-2xs space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between text-[10px] font-bold text-indigo-950">
+                          <span>Set Target {member.name}:</span>
+                          <button
+                            type="button"
+                            onClick={() => setEditingMemberTarget(null)}
+                            className="text-slate-400 hover:text-slate-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min="1"
+                            max="1000"
+                            autoFocus
+                            value={tempMemberTarget}
+                            onChange={(e) => setTempMemberTarget(e.target.value)}
+                            className="w-full px-2 py-1 text-xs font-black text-slate-900 border border-indigo-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
+                          />
+                          <span className="text-[10px] font-bold text-slate-600 shrink-0">PCS</span>
+                          <button
+                            type="submit"
+                            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold cursor-pointer shrink-0"
+                          >
+                            Simpan
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <>
+                        <div className="mt-0.5 flex items-baseline justify-between gap-1">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-slate-900 tabular-nums">
+                              {stats.pcs.toLocaleString('id-ID')}
+                            </span>
+                            <span className="text-xs font-bold text-indigo-700">
+                              / {personTarget} PCS
+                            </span>
+                          </div>
+                          <span
+                            className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${
+                              isPersonAchieved
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-indigo-100 text-indigo-900'
+                            }`}
+                          >
+                            {personPercent}%
+                          </span>
+                        </div>
+
+                        {/* Mini Progress Bar Target */}
+                        <div className="w-full bg-slate-200/90 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isPersonAchieved ? 'bg-emerald-500' : 'bg-indigo-600'
+                            }`}
+                            style={{ width: `${Math.min(100, personPercent)}%` }}
+                          />
+                        </div>
+
+                        {/* Sub-keterangan: status target & sampel */}
+                        <div className="flex items-center justify-between text-[10.5px] mt-1 text-slate-600">
+                          <span>{stats.items > 0 ? `${stats.items} sampel masuk` : 'Belum ada input'}</span>
+                          <span className={`font-bold ${isPersonAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            {isPersonAchieved ? '✓ Tercapai' : `Sisa ${Math.max(0, personTarget - stats.pcs)} PCS`}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Keterangan jika membantu input ke box PPIC lain */}
