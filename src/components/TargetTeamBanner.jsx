@@ -217,7 +217,14 @@ export function TargetTeamBanner({ onOpenRekap }) {
           );
         }
 
-        // 2. Browser Desktop Notification (jika diizinkan)
+        // 2. Full-Page Flare Perayaan Layar Penuh
+        try {
+          window.dispatchEvent(
+            new CustomEvent('gagaclo_trigger_celebration_flare', { detail: achiever })
+          );
+        } catch {}
+
+        // 3. Browser Desktop Notification (jika diizinkan)
         try {
           if (typeof window !== 'undefined' && 'Notification' in window) {
             if (Notification.permission === 'granted') {
@@ -337,14 +344,22 @@ export function TargetTeamBanner({ onOpenRekap }) {
             </span>
             <div className="flex items-center gap-1.5 flex-wrap">
               {memberAchievers.map((achiever) => (
-                <span
+                <button
+                  type="button"
                   key={achiever.name}
-                  className="px-2 py-0.5 rounded-md bg-emerald-900/90 border border-emerald-500/60 text-white font-mono text-[11px] font-black flex items-center gap-1"
-                  title={`${achiever.name} (${achiever.role}): ${achiever.pcs}/${achiever.target} PCS (${achiever.surplus > 0 ? `+${achiever.surplus} surplus` : 'pas target'})`}
+                  onClick={() => {
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('gagaclo_trigger_celebration_flare', { detail: achiever })
+                      );
+                    } catch {}
+                  }}
+                  className="px-2 py-0.5 rounded-md bg-emerald-900/90 hover:bg-emerald-800 border border-emerald-500/60 hover:border-emerald-400 text-white font-mono text-[11px] font-black flex items-center gap-1 transition cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                  title={`Klik untuk lihat perayaan flare layar penuh untuk ${achiever.name}`}
                 >
                   <span>{achiever.name}</span>
                   <span className="text-emerald-300 font-semibold text-[10px]">({achiever.pcs} PCS)</span>
-                </span>
+                </button>
               ))}
             </div>
           </div>

@@ -4,6 +4,7 @@ import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { BoxDetailModal } from './components/BoxDetailModal';
 import { ItemModal } from './components/ItemModal';
 import { TargetTeamBanner } from './components/TargetTeamBanner';
+import { CelebrationFlareOverlay } from './components/CelebrationFlareOverlay';
 import { InventoryImport } from './components/InventoryImport';
 import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
 
@@ -80,7 +81,18 @@ const AppContent = () => {
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartCheckoutItems, setCartCheckoutItems] = useState(null);
+  const [celebrationAchiever, setCelebrationAchiever] = useState(null);
   const connected = supabaseStatus.isConnected;
+
+  useEffect(() => {
+    const handleTriggerFlare = (e) => {
+      if (e?.detail) setCelebrationAchiever(e.detail);
+    };
+    window.addEventListener('gagaclo_trigger_celebration_flare', handleTriggerFlare);
+    return () => {
+      window.removeEventListener('gagaclo_trigger_celebration_flare', handleTriggerFlare);
+    };
+  }, []);
 
   const activeIssuesCount = issues.filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS').length;
 
@@ -470,6 +482,14 @@ const AppContent = () => {
             </button>
           </div>
         </aside>
+      )}
+
+      {/* Full-Page Celebratory Flare Overlay */}
+      {celebrationAchiever && (
+        <CelebrationFlareOverlay
+          achiever={celebrationAchiever}
+          onClose={() => setCelebrationAchiever(null)}
+        />
       )}
 
     </div>
