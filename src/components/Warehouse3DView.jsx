@@ -22,7 +22,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-// Indigo, purple, emerald, amber, rose — the original five PPIC colors,
+// Indigo, purple, emerald, amber, rose: the original five PPIC colors,
 // followed by extra shades for PICs added at runtime.
 const PPIC_COLOR_PALETTE = [
   0x4f46e5, 0x9333ea, 0x059669, 0xd97706, 0xe11d48,

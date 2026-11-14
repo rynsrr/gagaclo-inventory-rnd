@@ -72,7 +72,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [] }) {
                 SURAT JALAN &amp; TANDA TERIMA PENGIRIMAN SAMPEL
               </p>
               <p className="text-[11px] text-slate-500">
-                Divisi Research &amp; Development (R&amp;D) — PT. Gagaclo Internasional
+                Divisi Research &amp; Development (R&amp;D), PT. Gagaclo Internasional
               </p>
             </div>
 

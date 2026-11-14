@@ -55,7 +55,7 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
     return selectedItemIds.has(id);
   });
 
-  // One card per selected item (no copies/salinan option — each prints once)
+  // One card per selected item (no copies/salinan option, each prints once)
   const cardsToPrint = activeItems.map((item, itemIdx) => ({
     ...item,
     _printUniqueId: `${item.id || item.kode || itemIdx}-card`

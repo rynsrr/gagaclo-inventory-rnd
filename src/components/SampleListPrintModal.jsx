@@ -77,7 +77,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
             </div>
             <div>
               <h2 className="text-sm font-black tracking-wide flex items-center gap-2">
-                <span>Print List Sample — BOX #{box.boxNumber}</span>
+                <span>Print List Sample: BOX #{box.boxNumber}</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
                   {box.rackName}
                 </span>
@@ -160,7 +160,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                   PT GAGACLO INDONESIA
                 </h1>
                 <p className="text-[11px] font-bold text-slate-700 tracking-wider uppercase">
-                  RESEARCH & DEVELOPMENT DIVISION — INVENTORY SYSTEM
+                  RESEARCH &amp; DEVELOPMENT DIVISION : INVENTORY SYSTEM
                 </p>
                 <p className="text-[10px] text-slate-500 mt-0.5">
                   Dokumen Manifest & Daftar Isi Sampel Box Fisik

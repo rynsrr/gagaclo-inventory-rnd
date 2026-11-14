@@ -161,10 +161,10 @@ export function TargetTeamBanner({ onOpenRekap }) {
                     setTempTarget(dailyTarget.toString());
                     setIsEditingTarget(true);
                   }}
-                  className="text-[10px] text-slate-400 hover:text-indigo-300 flex items-center gap-0.5 px-1.5 py-0.5 rounded-md hover:bg-slate-800 transition cursor-pointer"
+                  className="text-[10px] font-bold text-slate-300 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                   title="Ubah Target Team (Wewenang Manager Jasmine)"
                 >
-                  <Edit2 className="w-2.5 h-2.5" />
+                  <Edit2 className="w-2.5 h-2.5 text-indigo-400" />
                   <span>Ubah</span>
                 </button>
               )}
