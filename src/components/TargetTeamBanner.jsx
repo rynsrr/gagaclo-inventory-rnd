@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Target, Edit2, Check, X, ArrowUpRight } from 'lucide-react';
+import { Target, Edit2, Check, X, ArrowUpRight, Sparkles } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
@@ -17,7 +17,15 @@ const TEAM_MEMBERS = [
 ];
 
 export function TargetTeamBanner({ onOpenRekap }) {
-  const { items = [], boxes = [], currentUser, showNotification } = useInventory();
+  const {
+    items = [],
+    boxes = [],
+    currentUser,
+    showNotification,
+    isDemoAllAchievedActive,
+    applyAllMembersAchievedDemo,
+    revertAllMembersAchievedDemo,
+  } = useInventory();
   const isMgr = isManager(currentUser) || isSuperuser(currentUser);
 
   // Target Harian Tim (disimpan di localStorage agar persisten)
@@ -364,6 +372,22 @@ export function TargetTeamBanner({ onOpenRekap }) {
               ))}
             </div>
           )}
+
+          {/* Tombol Contoh Semua Capai Target */}
+          <button
+            type="button"
+            onClick={isDemoAllAchievedActive ? revertAllMembersAchievedDemo : applyAllMembersAchievedDemo}
+            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all shadow-2xs cursor-pointer active:scale-95 ${
+              isDemoAllAchievedActive
+                ? 'bg-amber-950/80 hover:bg-amber-900 border-amber-600/60 text-amber-300'
+                : 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 text-emerald-300'
+            }`}
+            title={isDemoAllAchievedActive ? 'Klik untuk kembalikan data asli' : 'Klik untuk contoh saat semua 8 akun mencapai target hari ini'}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">{isDemoAllAchievedActive ? 'Reset Contoh' : 'Contoh: Semua Capai Target'}</span>
+            <span className="sm:hidden">{isDemoAllAchievedActive ? 'Reset' : 'Contoh'}</span>
+          </button>
 
           {onOpenRekap && (
             <button

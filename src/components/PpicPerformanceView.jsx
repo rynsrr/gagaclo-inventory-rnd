@@ -10,6 +10,8 @@ import {
   Check,
   X,
   Eye,
+  Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 import {
   getItemRecordDate,
@@ -39,6 +41,9 @@ export function PpicPerformanceView() {
     currentUser,
     showNotification,
     syncFromSupabase,
+    isDemoAllAchievedActive,
+    applyAllMembersAchievedDemo,
+    revertAllMembersAchievedDemo,
   } = useInventory();
 
   const isMgr = isManager(currentUser) || isSuperuser(currentUser);
@@ -315,6 +320,30 @@ export function PpicPerformanceView() {
             }`}
           >
             Hari Ini
+          </button>
+
+          {/* Tombol Contoh / Reset Simulasi Semua Capai Target */}
+          <button
+            type="button"
+            onClick={isDemoAllAchievedActive ? revertAllMembersAchievedDemo : applyAllMembersAchievedDemo}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs border ${
+              isDemoAllAchievedActive
+                ? 'bg-amber-600 hover:bg-amber-500 text-white border-amber-600'
+                : 'bg-blue-600 hover:bg-blue-500 text-white border-blue-600'
+            }`}
+            title={isDemoAllAchievedActive ? 'Kembalikan data ke kondisi asli sebelum simulasi' : 'Tampilkan contoh langsung saat seluruh 8 personil mencapai target hari ini'}
+          >
+            {isDemoAllAchievedActive ? (
+              <>
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Contoh Target</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Contoh: Semua Capai Target</span>
+              </>
+            )}
           </button>
 
           {/* Refresh Data Real-Time */}

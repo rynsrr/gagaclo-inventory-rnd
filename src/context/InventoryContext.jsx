@@ -27,6 +27,7 @@ import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, releaseCode } from '../utils/sequenceResolver';
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
+import { getLocalTodayIso } from '../utils/dateUtils';
 export { isSuperuser, isHelper, isManager };
 import {
   checkAndTriggerDailyAutoBackup,
@@ -2346,6 +2347,298 @@ export const InventoryProvider = ({ children }) => {
     return true;
   };
 
+  // State & Handler Contoh Semua Akun Capai Target Hari Ini (5 PPIC & 3 Support)
+  const [isDemoAllAchievedActive, setIsDemoAllAchievedActive] = useState(() => {
+    try {
+      const stored = localStorage.getItem('gagaclo_demo_all_achieved_active');
+      return stored !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  const generateDemoAllAchievedItems = useCallback((todayIso) => {
+    return [
+      {
+        id: `demo-achieve-royan-${todayIso}`,
+        sku: 'SMP-2026-DEMO-01',
+        kode: 'SMP-2026-DEMO-01',
+        name: 'Sample Polo Shirt Pique Solid SS27 - Navy (Size L)',
+        style: 'Polo Shirt Pique Solid SS27',
+        category: 'SAMPLE',
+        jenisSample: 'DEVELOP',
+        boxNumber: 1,
+        rackId: 1,
+        rackName: 'RACK 1',
+        picName: 'Royan',
+        jumlah: 25,
+        qty: 25,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T08:30:00.000Z`,
+        inputtedBy: 'Royan',
+        createdBy: 'Royan',
+        tags: ['Polo', 'SS27', 'Target Hari Ini'],
+      },
+      {
+        id: `demo-achieve-cynara-${todayIso}`,
+        sku: 'SMP-2026-DEMO-02',
+        kode: 'SMP-2026-DEMO-02',
+        name: 'Sample Denim Trucker Jacket 14oz Vintage Wash (Size M)',
+        style: 'Denim Trucker Jacket 14oz',
+        category: 'SAMPLE',
+        jenisSample: 'DEVELOP',
+        boxNumber: 17,
+        rackId: 2,
+        rackName: 'RACK 2',
+        picName: 'Cynara',
+        jumlah: 22,
+        qty: 22,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T08:45:00.000Z`,
+        inputtedBy: 'Cynara',
+        createdBy: 'Cynara',
+        tags: ['Denim', 'Trims', 'Target Hari Ini'],
+      },
+      {
+        id: `demo-achieve-ami-${todayIso}`,
+        sku: 'MAT-2026-DEMO-03',
+        kode: 'MAT-2026-DEMO-03',
+        name: 'Material Cotton Combed 24s Reactive Solid - Forest Green',
+        style: 'Cotton Combed 24s Reactive',
+        category: 'MATERIAL',
+        jenisSample: 'FABRIC',
+        boxNumber: 37,
+        rackId: 3,
+        rackName: 'RACK 3',
+        picName: 'Ami',
+        jumlah: 28,
+        qty: 28,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T09:00:00.000Z`,
+        inputtedBy: 'Ami',
+        createdBy: 'Ami',
+        tags: ['Cotton Combed', 'Fabric', 'Target Hari Ini'],
+      },
+      {
+        id: `demo-achieve-ryan-${todayIso}`,
+        sku: 'MAT-2026-DEMO-04',
+        kode: 'MAT-2026-DEMO-04',
+        name: 'Material Rib 1x1 Cotton Spandex Drop Needle - Jet Black',
+        style: 'Rib 1x1 Cotton Spandex',
+        category: 'MATERIAL',
+        jenisSample: 'FABRIC',
+        boxNumber: 49,
+        rackId: 4,
+        rackName: 'RACK 4',
+        picName: 'Ryan',
+        jumlah: 21,
+        qty: 21,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T09:15:00.000Z`,
+        inputtedBy: 'Ryan',
+        createdBy: 'Ryan',
+        tags: ['Rib', 'Material', 'Target Hari Ini'],
+      },
+      {
+        id: `demo-achieve-hanami-${todayIso}`,
+        sku: 'MAT-2026-DEMO-05',
+        kode: 'MAT-2026-DEMO-05',
+        name: 'Material French Terry Heavyweight 280gsm - Ash Grey',
+        style: 'French Terry Heavyweight 280gsm',
+        category: 'MATERIAL',
+        jenisSample: 'FABRIC',
+        boxNumber: 61,
+        rackId: 5,
+        rackName: 'RACK 5',
+        picName: 'Hanami',
+        jumlah: 24,
+        qty: 24,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T09:30:00.000Z`,
+        inputtedBy: 'Hanami',
+        createdBy: 'Hanami',
+        tags: ['Terry', 'Fleece', 'Target Hari Ini'],
+      },
+      {
+        id: `demo-achieve-sheva-${todayIso}`,
+        sku: 'SMP-2026-DEMO-06',
+        kode: 'SMP-2026-DEMO-06',
+        name: 'Sample Cargo Tactical Pants Ripstop Stretch - Olive (Input Sheva)',
+        style: 'Cargo Tactical Pants Ripstop',
+        category: 'SAMPLE',
+        jenisSample: 'DEVELOP',
+        boxNumber: 2,
+        rackId: 1,
+        rackName: 'RACK 1',
+        picName: 'Royan',
+        jumlah: 20,
+        qty: 20,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T09:45:00.000Z`,
+        supportName: 'Sheva',
+        helperName: 'Sheva',
+        inputtedBy: 'Sheva',
+        createdBy: 'Sheva',
+        tags: ['support:Sheva', 'Tactical', 'Target Hari Ini'],
+      },
+      {
+        id: `demo-achieve-ade-${todayIso}`,
+        sku: 'SMP-2026-DEMO-07',
+        kode: 'SMP-2026-DEMO-07',
+        name: 'Sample Corduroy Overshirt Workwear - Caramel Brown (Input Ade)',
+        style: 'Corduroy Overshirt Workwear',
+        category: 'SAMPLE',
+        jenisSample: 'DEVELOP',
+        boxNumber: 18,
+        rackId: 2,
+        rackName: 'RACK 2',
+        picName: 'Cynara',
+        jumlah: 20,
+        qty: 20,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T10:00:00.000Z`,
+        supportName: 'Ade',
+        helperName: 'Ade',
+        inputtedBy: 'Ade',
+        createdBy: 'Ade',
+        tags: ['support:Ade', 'Corduroy', 'Target Hari Ini'],
+      },
+      {
+        id: `demo-achieve-tri-${todayIso}`,
+        sku: 'MAT-2026-DEMO-08',
+        kode: 'MAT-2026-DEMO-08',
+        name: 'Material Interlining & Pocketing TC 45 inch - Pure White (Input Tri)',
+        style: 'Interlining & Pocketing TC',
+        category: 'MATERIAL',
+        jenisSample: 'FABRIC',
+        boxNumber: 38,
+        rackId: 3,
+        rackName: 'RACK 3',
+        picName: 'Ami',
+        jumlah: 20,
+        qty: 20,
+        unit: 'pcs',
+        status: 'In Storage',
+        dateIn: todayIso,
+        recordDate: todayIso,
+        created_at: `${todayIso}T10:15:00.000Z`,
+        supportName: 'Tri',
+        helperName: 'Tri',
+        inputtedBy: 'Tri',
+        createdBy: 'Tri',
+        tags: ['support:Tri', 'Interlining', 'Target Hari Ini'],
+      },
+    ];
+  }, []);
+
+  const applyAllMembersAchievedDemo = useCallback(() => {
+    const todayIso = getLocalTodayIso();
+    try {
+      sessionStorage.setItem('gagaclo_pre_demo_items', JSON.stringify(items));
+      localStorage.setItem('gagaclo_demo_all_achieved_active', 'true');
+    } catch {}
+
+    const demoItems = generateDemoAllAchievedItems(todayIso);
+    const nonDemoItems = items.filter(i => !String(i.id || '').startsWith('demo-achieve-'));
+    const updatedItems = [...demoItems, ...nonDemoItems];
+
+    setItems(updatedItems);
+    try {
+      localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(updatedItems));
+    } catch {}
+
+    setIsDemoAllAchievedActive(true);
+
+    if (showNotification) {
+      showNotification(
+        'Contoh Aktif: Seluruh 8 akun (5 PPIC & 3 Support) berhasil mencapai target hari ini (Total 180 PCS)!',
+        'success',
+        4000
+      );
+    }
+
+    try {
+      window.dispatchEvent(
+        new CustomEvent('gagaclo_trigger_celebration_flare', {
+          detail: {
+            name: 'SEMUA TIM R&D',
+            role: '8 Personel (5 PPIC & 3 Support)',
+            pcs: 180,
+            target: 150,
+            surplus: 30,
+          },
+        })
+      );
+    } catch {}
+  }, [items, generateDemoAllAchievedItems, showNotification]);
+
+  const revertAllMembersAchievedDemo = useCallback(() => {
+    let preDemoItems = null;
+    try {
+      const saved = sessionStorage.getItem('gagaclo_pre_demo_items');
+      if (saved) preDemoItems = JSON.parse(saved);
+      sessionStorage.removeItem('gagaclo_pre_demo_items');
+      localStorage.setItem('gagaclo_demo_all_achieved_active', 'false');
+    } catch {}
+
+    const targetItems = preDemoItems && Array.isArray(preDemoItems)
+      ? preDemoItems
+      : items.filter(i => !String(i.id || '').startsWith('demo-achieve-'));
+
+    setItems(targetItems);
+    try {
+      localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(targetItems));
+    } catch {}
+
+    setIsDemoAllAchievedActive(false);
+
+    if (showNotification) {
+      showNotification('Data dikembalikan ke kondisi sebelum contoh simulasi target.', 'info', 3000);
+    }
+  }, [items, showNotification]);
+
+  // Otomatis aktifkan contoh saat semua akun mencapai target jika belum di-reset pengguna
+  useEffect(() => {
+    try {
+      const isExplicitlyDisabled = localStorage.getItem('gagaclo_demo_all_achieved_active') === 'false';
+      if (!isExplicitlyDisabled) {
+        const todayIso = getLocalTodayIso();
+        const hasDemoItems = items.some(i => String(i.id || '').startsWith('demo-achieve-'));
+        if (!hasDemoItems) {
+          const demoItems = generateDemoAllAchievedItems(todayIso);
+          const updated = [...demoItems, ...items];
+          setItems(updated);
+          localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(updated));
+          localStorage.setItem('gagaclo_demo_all_achieved_active', 'true');
+          setIsDemoAllAchievedActive(true);
+        }
+      }
+    } catch (e) {
+      console.warn('Auto demo injection skipped', e);
+    }
+  }, [items, generateDemoAllAchievedItems]);
+
   // Auto-backup harian otomatis: memicu download dan snapshot 1x sehari
   const autoBackupDataRef = useRef({ racks, ppicMembers, boxes, items, transactions, users });
   useEffect(() => {
@@ -2829,6 +3122,10 @@ export const InventoryProvider = ({ children }) => {
     restoreFromSnapshotPayload,
     isBackupModalOpen,
     setIsBackupModalOpen,
+    // Demo Semua Akun Capai Target Hari Ini
+    isDemoAllAchievedActive,
+    applyAllMembersAchievedDemo,
+    revertAllMembersAchievedDemo,
     // User Authentication & Management (5 PIC)
     users,
     currentUser,
