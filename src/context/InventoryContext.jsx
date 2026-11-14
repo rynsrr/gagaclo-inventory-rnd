@@ -134,7 +134,12 @@ export const InventoryProvider = ({ children }) => {
   const [ppicMembers, setPpicMembers] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY + '_ppic');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter(p => String(p.name).trim().toLowerCase() !== 'anzo');
+        }
+      }
     } catch (e) {
       console.error('Failed to load ppic from localStorage', e);
     }
@@ -147,7 +152,9 @@ export const InventoryProvider = ({ children }) => {
       const saved = localStorage.getItem(STORAGE_KEY + '_users');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter(u => String(u.name).trim().toLowerCase() !== 'anzo');
+        }
       }
     } catch (e) {
       console.error('Failed to load users from localStorage', e);
@@ -174,7 +181,7 @@ export const InventoryProvider = ({ children }) => {
       const savedUsers = localStorage.getItem(STORAGE_KEY + '_users');
       const parsedUsers = savedUsers ? JSON.parse(savedUsers) : null;
       const list = Array.isArray(parsedUsers) && parsedUsers.length > 0
-        ? parsedUsers
+        ? parsedUsers.filter(u => String(u.name).trim().toLowerCase() !== 'anzo')
         : PPIC_MEMBERS.map(p => ({
             id: p.id,
             username: p.name,
@@ -204,7 +211,18 @@ export const InventoryProvider = ({ children }) => {
   const [boxes, setBoxes] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY + '_boxes');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(b => (
+            Number(b.boxNumber) > 0 &&
+            Number(b.boxNumber) !== 73 &&
+            b.code !== 'DELETED' &&
+            b.rackName !== 'DELETED' &&
+            String(b.picName).trim().toLowerCase() !== 'anzo'
+          ));
+        }
+      }
     } catch (e) {
       console.error('Failed to load boxes from localStorage', e);
     }
@@ -702,21 +720,44 @@ export const InventoryProvider = ({ children }) => {
       }
 
       if (dbBoxes && dbBoxes.length > 0) {
+        const deletedBoxNumbers = new Set(
+          dbBoxes
+            .filter(b => (
+              b.code === 'DELETED' ||
+              b.rack_name === 'DELETED' ||
+              b.pic_name === 'DELETED' ||
+              String(b.pic_name || '').trim().toLowerCase() === 'anzo' ||
+              Number(b.box_number) === 73
+            ))
+            .map(b => Number(b.box_number))
+        );
+
         const userDbBoxes = dbBoxes.filter(b => (
           Number(b.box_number) !== 999999 &&
           Number(b.box_number) !== 999998 &&
           Number(b.box_number) > 0 &&
           Number(b.box_number) < 900000 &&
           b.code !== 'DELETED' &&
-          b.rack_name !== 'DELETED'
+          b.rack_name !== 'DELETED' &&
+          b.pic_name !== 'DELETED' &&
+          String(b.pic_name || '').trim().toLowerCase() !== 'anzo' &&
+          Number(b.box_number) !== 73
         ));
+
         setBoxes(prev => {
-          const updated = prev.map(box => {
+          // Remove any deleted box, box 73, or box with PIC Anzo
+          const cleanedPrev = prev.filter(b => (
+            !deletedBoxNumbers.has(Number(b.boxNumber)) &&
+            Number(b.boxNumber) !== 73 &&
+            String(b.picName).trim().toLowerCase() !== 'anzo'
+          ));
+
+          const updated = cleanedPrev.map(box => {
             const remoteBox = userDbBoxes.find(b => b.box_number === box.boxNumber);
             return remoteBox ? dbBoxToLocal(remoteBox, [box]) : box;
           });
           // Include boxes that exist remotely but not locally (added on another device)
-          const knownNumbers = new Set(prev.map(b => b.boxNumber));
+          const knownNumbers = new Set(updated.map(b => b.boxNumber));
           const extra = userDbBoxes
             .filter(b => !knownNumbers.has(Number(b.box_number)))
             .map(b => dbBoxToLocal(b, []));
