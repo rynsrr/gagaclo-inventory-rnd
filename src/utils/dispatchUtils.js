@@ -1,15 +1,16 @@
 /**
  * Utility functions for R&D Sample Dispatch / Outgoing tracking.
- * Destinations: BUYER, ANZO, RDTW, RDC, ANZOTW, or CUSTOM
+ * Destinations: BUYER, ANZO_QC, ANZO_TW, ANZO_QC_CHINA, RDTW, RDC, or CUSTOM
  * Types: PERMANENT (Keluar Permanen), REVIEW (Review Sementara / Bisa Kembali)
  */
 
 export const DISPATCH_DESTINATIONS = [
   { id: 'BUYER', label: 'Buyer', color: 'bg-rose-100 text-rose-800 border-rose-300' },
-  { id: 'ANZO', label: 'Anzo', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+  { id: 'ANZO_QC', label: 'ANZO QC', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+  { id: 'ANZO_TW', label: 'ANZO TW', color: 'bg-amber-100 text-amber-800 border-amber-300' },
+  { id: 'ANZO_QC_CHINA', label: 'ANZO QC CHINA', color: 'bg-cyan-100 text-cyan-800 border-cyan-300' },
   { id: 'RDTW', label: 'RDTW', color: 'bg-purple-100 text-purple-800 border-purple-300' },
   { id: 'RDC', label: 'RDC', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
-  { id: 'ANZOTW', label: 'ANZOTW', color: 'bg-amber-100 text-amber-800 border-amber-300' },
 ];
 
 export const DISPATCH_TYPES = [
@@ -22,7 +23,7 @@ export const DISPATCH_TYPES = [
   {
     id: 'REVIEW',
     label: 'Review Sementara',
-    description: 'Kirim untuk review ke RDC/RDTW/ANZOTW, ditunggu kembali ke R&D.',
+    description: 'Kirim untuk review ke ANZO QC/TW/CHINA/RDC/RDTW, ditunggu kembali ke R&D.',
     badge: 'bg-amber-100 text-amber-900 border border-amber-300',
   },
 ];
@@ -54,17 +55,27 @@ export function decodeDispatchData(item) {
     return match ? decodeURIComponent(match.slice(prefix.length)) : null;
   };
 
-  const destinationId = getTagValue('dispatch_dest:') || (
-    String(item.status || '').toLowerCase().includes('buyer') ? 'BUYER' :
-    String(item.status || '').toLowerCase().includes('anzotw') ? 'ANZOTW' :
-    String(item.status || '').toLowerCase().includes('anzo') ? 'ANZO' :
-    String(item.status || '').toLowerCase().includes('rdtw') ? 'RDTW' :
-    String(item.status || '').toLowerCase().includes('rdc') ? 'RDC' : 'LAINNYA'
-  );
+  let destinationId = getTagValue('dispatch_dest:');
+  if (destinationId === 'ANZO') destinationId = 'ANZO_QC';
+  if (destinationId === 'ANZOTW') destinationId = 'ANZO_TW';
+
+  if (!destinationId) {
+    const s = String(item.status || '').toLowerCase();
+    if (s.includes('buyer')) destinationId = 'BUYER';
+    else if (s.includes('anzo qc china')) destinationId = 'ANZO_QC_CHINA';
+    else if (s.includes('anzo qc')) destinationId = 'ANZO_QC';
+    else if (s.includes('anzo tw') || s.includes('anzotw')) destinationId = 'ANZO_TW';
+    else if (s.includes('anzo')) destinationId = 'ANZO_QC';
+    else if (s.includes('rdtw')) destinationId = 'RDTW';
+    else if (s.includes('rdc')) destinationId = 'RDC';
+    else destinationId = 'LAINNYA';
+  }
 
   const destinationLabel = getTagValue('dispatch_dest_name:') || (
     DISPATCH_DESTINATIONS.find(d => d.id === destinationId)?.label || destinationId || 'Lainnya'
   );
+
+  const buyerName = getTagValue('dispatch_buyer:') || '';
 
   const type = getTagValue('dispatch_type:') || (
     String(item.status || '').toLowerCase().includes('permanent') ||
@@ -80,6 +91,7 @@ export function decodeDispatchData(item) {
   return {
     destinationId,
     destinationLabel,
+    buyerName,
     type, // 'PERMANENT' | 'REVIEW'
     date,
     originBox,
@@ -92,12 +104,12 @@ export function decodeDispatchData(item) {
 /**
  * Encodes dispatch metadata into an array of tags safe for Supabase storage.
  */
-export function encodeDispatchTags({ destinationId, destinationLabel, type, date, originBox, pic, recipient, notes }, existingTags = []) {
+export function encodeDispatchTags({ destinationId, destinationLabel, type, date, originBox, pic, recipient, notes, buyerName }, existingTags = []) {
   const cleanExisting = (Array.isArray(existingTags) ? existingTags : []).filter(
     t => !String(t).startsWith('dispatch') && !String(t).startsWith('dispatch_')
   );
 
-  return [
+  const tags = [
     ...cleanExisting,
     'DISPATCH',
     `dispatch_dest:${encodeURIComponent(destinationId || 'LAINNYA')}`,
@@ -109,12 +121,21 @@ export function encodeDispatchTags({ destinationId, destinationLabel, type, date
     `dispatch_recipient:${encodeURIComponent(recipient || '')}`,
     `dispatch_notes:${encodeURIComponent(notes || '')}`,
   ];
+
+  if (buyerName) {
+    tags.push(`dispatch_buyer:${encodeURIComponent(buyerName)}`);
+  }
+
+  return tags;
 }
 
 /**
  * Gets color class for a destination.
  */
 export function getDestinationColor(destId) {
-  const found = DISPATCH_DESTINATIONS.find(d => d.id === String(destId).toUpperCase());
+  const cleanId = String(destId || '').toUpperCase();
+  if (cleanId === 'ANZO') return 'bg-blue-100 text-blue-800 border-blue-300';
+  if (cleanId === 'ANZOTW') return 'bg-amber-100 text-amber-800 border-amber-300';
+  const found = DISPATCH_DESTINATIONS.find(d => d.id === cleanId);
   return found ? found.color : 'bg-slate-100 text-slate-800 border-slate-300';
 }

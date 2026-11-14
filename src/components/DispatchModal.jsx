@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import {
   X,
@@ -14,12 +14,13 @@ import {
 import { DISPATCH_DESTINATIONS, DISPATCH_TYPES } from '../utils/dispatchUtils';
 
 export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) {
-  const { dispatchItem, currentUser } = useInventory();
+  const { dispatchItem, currentUser, suggestions, items } = useInventory();
 
   // If single item or multiple items
   const itemsToDispatch = item ? [item] : preselectedItems;
 
   const [destinationId, setDestinationId] = useState('BUYER');
+  const [selectedBuyer, setSelectedBuyer] = useState('');
   const [customDestination, setCustomDestination] = useState('');
   const [dispatchType, setDispatchType] = useState('PERMANENT'); // 'PERMANENT' | 'REVIEW'
   const [dispatchDate, setDispatchDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -34,20 +35,49 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  if (!isOpen || itemsToDispatch.length === 0) return null;
-
   const isSingle = itemsToDispatch.length === 1;
   const singleItem = itemsToDispatch[0];
   const maxQty = Number(singleItem?.jumlah ?? singleItem?.qty ?? 1);
 
+  // Unified list of Buyer No from suggestions store and inventory items
+  const buyerList = useMemo(() => {
+    const set = new Set();
+    (suggestions?.buyerNo || []).forEach(b => {
+      const s = String(b || '').trim().toUpperCase();
+      if (s && s !== 'NA' && s !== '-') set.add(s);
+    });
+    (items || []).forEach(it => {
+      const b = String(it.buyerNo || it.buyerNumber || '').trim().toUpperCase();
+      if (b && b !== 'NA' && b !== '-') set.add(b);
+    });
+    return Array.from(set).sort();
+  }, [suggestions, items]);
+
+  // Set default buyer from singleItem if available
+  useEffect(() => {
+    if (singleItem?.buyerNo && singleItem.buyerNo !== 'NA' && singleItem.buyerNo !== '-') {
+      setSelectedBuyer(String(singleItem.buyerNo).trim().toUpperCase());
+    }
+  }, [singleItem]);
+
+  if (!isOpen || itemsToDispatch.length === 0) return null;
+
   const selectedDest = DISPATCH_DESTINATIONS.find(d => d.id === destinationId);
-  const destinationLabel = destinationId === 'LAINNYA'
-    ? (customDestination.trim() || 'Tujuan Khusus')
-    : (selectedDest?.label || destinationId);
+  let destinationLabel = selectedDest?.label || destinationId;
+  if (destinationId === 'BUYER') {
+    destinationLabel = selectedBuyer.trim() ? `Buyer (${selectedBuyer.trim()})` : 'Buyer';
+  } else if (destinationId === 'LAINNYA') {
+    destinationLabel = customDestination.trim() || 'Tujuan Khusus';
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    if (destinationId === 'BUYER' && !selectedBuyer.trim()) {
+      setError('Wajib memilih atau mengisi nama Buyer tujuan pengiriman sesuai list Buyer No.');
+      return;
+    }
 
     if (destinationId === 'LAINNYA' && !customDestination.trim()) {
       setError('Harap masukkan nama tujuan pengiriman.');
@@ -66,6 +96,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
         await dispatchItem(it, {
           destinationId,
           destinationLabel,
+          buyerName: destinationId === 'BUYER' ? selectedBuyer.trim() : '',
           type: dispatchType,
           date: dispatchDate,
           qty: itemQty,
@@ -96,7 +127,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                 Catat Pengiriman Sampel Keluar R&D
               </h3>
               <p className="text-[11px] text-blue-200 font-medium">
-                Kirim sampel ke Buyer, Anzo, RDTW, RDC, atau ANZOTW
+                Kirim sampel ke Buyer, ANZO QC, ANZO TW, ANZO QC CHINA, RDTW, atau RDC
               </p>
             </div>
           </div>
@@ -155,7 +186,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           </div>
 
           {/* 1. Tujuan Pengiriman */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <label className="font-bold text-slate-800 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5 text-blue-600" />
@@ -163,17 +194,20 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
               </span>
               <span className="text-[10px] text-slate-400 font-normal">Pilih salah satu</span>
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {DISPATCH_DESTINATIONS.map((dest) => {
                 const isSelected = destinationId === dest.id;
                 return (
                   <button
                     key={dest.id}
                     type="button"
-                    onClick={() => setDestinationId(dest.id)}
-                    className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    onClick={() => {
+                      setDestinationId(dest.id);
+                      if (error) setError(null);
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       isSelected
-                        ? `${dest.color} ring-2 ring-blue-400 font-black shadow-xs`
+                        ? `${dest.color} ring-2 ring-blue-500 font-black shadow-xs`
                         : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
                     }`}
                   >
@@ -183,16 +217,82 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
               })}
               <button
                 type="button"
-                onClick={() => setDestinationId('LAINNYA')}
-                className={`p-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                onClick={() => {
+                  setDestinationId('LAINNYA');
+                  if (error) setError(null);
+                }}
+                className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                   destinationId === 'LAINNYA'
-                    ? 'bg-slate-800 text-white border-slate-800 ring-2 ring-slate-400 shadow-xs'
+                    ? 'bg-slate-800 text-white border-slate-800 ring-2 ring-slate-400 shadow-xs font-black'
                     : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
                 }`}
               >
                 <span>Lainnya</span>
               </button>
             </div>
+
+            {/* WAJIB PILIH BUYER JIKA TUJUAN = BUYER */}
+            {destinationId === 'BUYER' && (
+              <div className="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 space-y-2 mt-2 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
+                    <span>Pilih Nama Buyer Tujuan</span>
+                    <span className="text-rose-500 font-black text-sm">*</span>
+                  </label>
+                  <span className="text-[10px] text-rose-700 font-semibold bg-rose-100/80 px-2 py-0.5 rounded-full border border-rose-200">
+                    Wajib Diisi Sesuai List Buyer No
+                  </span>
+                </div>
+                
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="dispatch-buyer-options"
+                    value={selectedBuyer}
+                    onChange={(e) => {
+                      setSelectedBuyer(e.target.value.toUpperCase());
+                      if (error) setError(null);
+                    }}
+                    placeholder="Ketik atau pilih nama Buyer (misal: UNIQLO, GAP, H&M, ZARA...)"
+                    className="w-full px-3 py-2 rounded-lg border-2 border-rose-300 bg-white text-xs font-black text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 uppercase tracking-wide font-mono"
+                    required
+                  />
+                  <datalist id="dispatch-buyer-options">
+                    {buyerList.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </datalist>
+                </div>
+
+                {/* Quick Selection Buttons from Buyer List */}
+                {buyerList.length > 0 && (
+                  <div className="pt-1">
+                    <span className="text-[10px] font-bold text-rose-900 block mb-1">
+                      Pilihan Cepat dari List Buyer No:
+                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5 max-h-24 overflow-y-auto pr-1">
+                      {buyerList.slice(0, 15).map((b) => (
+                        <button
+                          key={b}
+                          type="button"
+                          onClick={() => {
+                            setSelectedBuyer(b);
+                            if (error) setError(null);
+                          }}
+                          className={`px-2 py-0.5 rounded text-[10px] font-black transition cursor-pointer border ${
+                            selectedBuyer === b
+                              ? 'bg-rose-600 text-white border-rose-700 shadow-2xs'
+                              : 'bg-white hover:bg-rose-100 text-rose-900 border-rose-200'
+                          }`}
+                        >
+                          {b}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {destinationId === 'LAINNYA' && (
               <input

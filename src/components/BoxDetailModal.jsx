@@ -522,7 +522,7 @@ function BoxDetail({ box }) {
                     setDispatchModalItem(null);
                   }}
                   className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
-                  title="Kirim semua item yang dicentang ke luar (Buyer / Anzo / RDTW / RDC / ANZOTW)"
+                  title="Kirim semua item yang dicentang ke luar (Buyer / ANZO QC / ANZO TW / ANZO QC CHINA / RDTW / RDC)"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Kirim Terpilih ({selectedItemIds.size})</span>
@@ -768,7 +768,7 @@ function BoxDetail({ box }) {
                                     setDispatchPreselectedItems([]);
                                   }}
                                   className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
-                                  title="Kirim Keluar (Buyer / Anzo / RDTW / RDC / ANZOTW)"
+                                  title="Kirim Keluar (Buyer / ANZO QC / ANZO TW / ANZO QC CHINA / RDTW / RDC)"
                                 >
                                   <Send className="w-3.5 h-3.5" />
                                 </button>

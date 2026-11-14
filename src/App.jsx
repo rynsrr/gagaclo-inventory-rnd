@@ -153,7 +153,7 @@ const AppContent = () => {
     {
       id: 'dispatch',
       label: 'Kirim Keluar',
-      subtitle: 'Buyer, Anzo, RDTW, RDC, ANZOTW',
+      subtitle: 'Buyer, ANZO QC/TW/CHINA, RDTW, RDC',
       icon: Send,
       count: dispatchedSummaryCount,
       primary: false,

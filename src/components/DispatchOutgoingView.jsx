@@ -65,10 +65,11 @@ export function DispatchOutgoingView() {
     let reviewPcs = 0;
     const destCounts = {
       BUYER: 0,
-      ANZO: 0,
+      ANZO_QC: 0,
+      ANZO_TW: 0,
+      ANZO_QC_CHINA: 0,
       RDTW: 0,
       RDC: 0,
-      ANZOTW: 0,
       LAINNYA: 0,
     };
 
@@ -81,7 +82,10 @@ export function DispatchOutgoingView() {
         reviewPcs += q;
       }
 
-      const dest = it.dispatchInfo?.destinationId || 'LAINNYA';
+      let dest = it.dispatchInfo?.destinationId || 'LAINNYA';
+      if (dest === 'ANZO') dest = 'ANZO_QC';
+      if (dest === 'ANZOTW') dest = 'ANZO_TW';
+
       if (destCounts[dest] !== undefined) {
         destCounts[dest] += q;
       } else {
@@ -104,7 +108,10 @@ export function DispatchOutgoingView() {
     return dispatchedItems.filter(it => {
       // 1. Destination Filter
       if (selectedDestination !== 'ALL') {
-        if (it.dispatchInfo?.destinationId !== selectedDestination) return false;
+        let dest = it.dispatchInfo?.destinationId;
+        if (dest === 'ANZO') dest = 'ANZO_QC';
+        if (dest === 'ANZOTW') dest = 'ANZO_TW';
+        if (dest !== selectedDestination) return false;
       }
 
       // 2. Type Filter
@@ -120,7 +127,8 @@ export function DispatchOutgoingView() {
         const matchRecipient = String(it.dispatchInfo?.recipient || '').toLowerCase().includes(q);
         const matchNotes = String(it.dispatchInfo?.notes || '').toLowerCase().includes(q);
         const matchDest = String(it.dispatchInfo?.destinationLabel || '').toLowerCase().includes(q);
-        return matchKode || matchStyle || matchSampleNo || matchRecipient || matchNotes || matchDest;
+        const matchBuyer = String(it.buyerNo || it.buyerNumber || it.dispatchInfo?.buyerName || '').toLowerCase().includes(q);
+        return matchKode || matchStyle || matchSampleNo || matchRecipient || matchNotes || matchDest || matchBuyer;
       }
 
       return true;
@@ -174,7 +182,7 @@ export function DispatchOutgoingView() {
               Daftar Sampel Terkirim Keluar
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl">
-              Memantau sampel yang dikirim ke <strong>Buyer</strong>, <strong>Anzo</strong>, <strong>RDTW</strong>, <strong>RDC</strong>, dan <strong>ANZOTW</strong>. Sampel keluar permanen mengurangi stok box, sedangkan sampel review dapat diterima kembali.
+              Memantau sampel yang dikirim ke <strong>Buyer</strong>, <strong>ANZO QC</strong>, <strong>ANZO TW</strong>, <strong>ANZO QC CHINA</strong>, <strong>RDTW</strong>, dan <strong>RDC</strong>. Sampel keluar permanen mengurangi stok box, sedangkan sampel review dapat diterima kembali.
             </p>
           </div>
 
@@ -229,9 +237,9 @@ export function DispatchOutgoingView() {
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-xs">
             <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Tujuan Teraktif</span>
             <div className="text-sm font-black text-emerald-300 mt-1 truncate">
-              Buyer: {stats.destCounts.BUYER} • Anzo: {stats.destCounts.ANZO}
+              Buyer: {stats.destCounts.BUYER || 0} • ANZO QC: {stats.destCounts.ANZO_QC || 0}
             </div>
-            <span className="text-[10px] text-emerald-400/80">RDC: {stats.destCounts.RDC} • RDTW: {stats.destCounts.RDTW} • ANZOTW: {stats.destCounts.ANZOTW}</span>
+            <span className="text-[10px] text-emerald-400/80">ANZO TW: {stats.destCounts.ANZO_TW || 0} • ANZO QC CHINA: {stats.destCounts.ANZO_QC_CHINA || 0} • RDTW: {stats.destCounts.RDTW || 0} • RDC: {stats.destCounts.RDC || 0}</span>
           </div>
         </div>
       </div>
@@ -344,7 +352,7 @@ export function DispatchOutgoingView() {
             </h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
               {dispatchedItems.length === 0
-                ? 'Sampel yang dikirim ke Buyer, Anzo, RDTW, RDC, atau ANZOTW dapat dicatat langsung lewat tombol di bawah atau dari menu detail Box.'
+                ? 'Sampel yang dikirim ke Buyer, ANZO QC, ANZO TW, ANZO QC CHINA, RDTW, atau RDC dapat dicatat langsung lewat tombol di bawah atau dari menu detail Box.'
                 : 'Coba ubah kata kunci pencarian atau sesuaikan filter tujuan/sifat pengiriman.'}
             </p>
             {dispatchedItems.length === 0 && (

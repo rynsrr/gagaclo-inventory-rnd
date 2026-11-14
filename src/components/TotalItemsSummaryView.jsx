@@ -480,7 +480,7 @@ export function TotalItemsSummaryView() {
                 Kotak Pengiriman Keluar R&amp;D
               </span>
               <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30">
-                Buyer • Anzo • RDTW • RDC • ANZOTW
+                Buyer • ANZO QC • ANZO TW • ANZO QC CHINA • RDTW • RDC
               </span>
             </div>
             <p className="text-xs text-slate-300">
