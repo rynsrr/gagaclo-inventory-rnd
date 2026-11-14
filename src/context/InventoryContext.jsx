@@ -2618,27 +2618,6 @@ export const InventoryProvider = ({ children }) => {
     }
   }, [items, showNotification]);
 
-  // Otomatis aktifkan contoh saat semua akun mencapai target jika belum di-reset pengguna
-  useEffect(() => {
-    try {
-      const isExplicitlyDisabled = localStorage.getItem('gagaclo_demo_all_achieved_active') === 'false';
-      if (!isExplicitlyDisabled) {
-        const todayIso = getLocalTodayIso();
-        const hasDemoItems = items.some(i => String(i.id || '').startsWith('demo-achieve-'));
-        if (!hasDemoItems) {
-          const demoItems = generateDemoAllAchievedItems(todayIso);
-          const updated = [...demoItems, ...items];
-          setItems(updated);
-          localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(updated));
-          localStorage.setItem('gagaclo_demo_all_achieved_active', 'true');
-          setIsDemoAllAchievedActive(true);
-        }
-      }
-    } catch (e) {
-      console.warn('Auto demo injection skipped', e);
-    }
-  }, [items, generateDemoAllAchievedItems]);
-
   // Auto-backup harian otomatis: memicu download dan snapshot 1x sehari
   const autoBackupDataRef = useRef({ racks, ppicMembers, boxes, items, transactions, users });
   useEffect(() => {

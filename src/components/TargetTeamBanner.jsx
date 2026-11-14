@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Target, Edit2, Check, X, ArrowUpRight, Sparkles, Users } from 'lucide-react';
+import { Target, Edit2, Check, X, ArrowUpRight, Users } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
@@ -22,9 +22,6 @@ export function TargetTeamBanner({ onOpenRekap }) {
     boxes = [],
     currentUser,
     showNotification,
-    isDemoAllAchievedActive,
-    applyAllMembersAchievedDemo,
-    revertAllMembersAchievedDemo,
   } = useInventory();
   const isMgr = isManager(currentUser) || isSuperuser(currentUser);
 
@@ -352,22 +349,8 @@ export function TargetTeamBanner({ onOpenRekap }) {
           </div>
 
           {/* Tombol Aksi Cepat */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={isDemoAllAchievedActive ? revertAllMembersAchievedDemo : applyAllMembersAchievedDemo}
-              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all shadow-2xs cursor-pointer active:scale-95 ${
-                isDemoAllAchievedActive
-                  ? 'bg-amber-950/80 hover:bg-amber-900 border-amber-600/60 text-amber-300'
-                  : 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 text-emerald-300'
-              }`}
-              title={isDemoAllAchievedActive ? 'Klik untuk kembalikan data asli' : 'Klik untuk contoh saat semua 8 akun mencapai target hari ini'}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isDemoAllAchievedActive ? 'Reset Contoh' : 'Contoh Semua Capai Target'}</span>
-            </button>
-
-            {onOpenRekap && (
+          {onOpenRekap && (
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={onOpenRekap}
@@ -377,8 +360,8 @@ export function TargetTeamBanner({ onOpenRekap }) {
                 <span>Rekap Harian</span>
                 <ArrowUpRight className="w-3.5 h-3.5 text-slate-300" />
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* BARIS BAWAH (Row 2): TARGET INDIVIDU (Center Aligned, Semua 8 Nama & Target Dicapai) */}
