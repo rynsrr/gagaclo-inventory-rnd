@@ -10,7 +10,7 @@ import {
   Info,
   Crown,
   Zap,
-  Wrench,
+  User,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
@@ -422,7 +422,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-slate-900">{u.name}</span>
                             <span className="rounded-full bg-teal-100 border border-teal-300 px-2 py-0.5 text-xs font-black text-teal-900 flex items-center gap-1">
-                              <Wrench className="w-3 h-3 text-teal-600" /> Tim Support
+                              <User className="w-3 h-3 text-teal-600" /> Tim Support
                             </span>
                             {isCurrent && (
                               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-black text-emerald-800 flex items-center gap-1">

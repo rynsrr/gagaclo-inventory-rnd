@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState, useRef } from 'react';
 import { supabase } from './lib/supabase';
 import { InventoryProvider, useInventory } from './context/InventoryContext';
 import { BoxDetailModal } from './components/BoxDetailModal';
@@ -52,14 +52,16 @@ import {
   PackagePlus,
   X,
   Send,
-  ShoppingCart,
+  ShoppingBasket,
   CheckCircle2,
   AlertTriangle,
   Info,
   Crown,
-  Wrench,
+  User,
   Zap,
   ShieldCheck,
+  Settings,
+  ChevronDown,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 import { isItemDispatched } from './utils/dispatchUtils';
@@ -92,9 +94,25 @@ const AppContent = () => {
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef(null);
   const [cartCheckoutItems, setCartCheckoutItems] = useState(null);
   const [celebrationAchiever, setCelebrationAchiever] = useState(null);
   const connected = supabaseStatus.isConnected;
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
+        setIsSettingsOpen(false);
+      }
+    };
+    if (isSettingsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSettingsOpen]);
 
   useEffect(() => {
     const handleTriggerFlare = (e) => {
@@ -299,7 +317,7 @@ const AppContent = () => {
                 aria-label="Keranjang Pengiriman Sampel"
                 title="Buka Keranjang Pengiriman Sampel (Model Marketplace)"
               >
-                <ShoppingCart className="h-3.5 w-3.5 text-rose-600" aria-hidden="true" />
+                <ShoppingBasket className="h-3.5 w-3.5 text-rose-600" aria-hidden="true" />
                 <span>Keranjang</span>
                 {dispatchCart?.length > 0 && (
                   <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-xs font-black text-white">
@@ -308,29 +326,58 @@ const AppContent = () => {
                 )}
               </button>
 
-              {/* Kelola Box / Rak / Orang */}
-              <button
-                type="button"
-                onClick={() => setIsBoxManageOpen(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
-                aria-label="Kelola Box, Rak & Orang"
-                title="Tambah Box, atur Rak/Lantai, kelola data Orang (PPIC)"
-              >
-                <PackagePlus className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
-                <span>Kelola Box &amp; Rak</span>
-              </button>
+              {/* Menu Tab Setting Dropdown (Kelola Box & Rak + Backup & Pulihkan) */}
+              <div className="relative" ref={settingsRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsSettingsOpen((prev) => !prev)}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                    isSettingsOpen
+                      ? 'bg-slate-100 text-slate-900 border-slate-300 shadow-xs'
+                      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                  }`}
+                  aria-label="Menu Setting & Pengaturan"
+                  title="Menu Setting: Kelola Box & Rak, Backup & Pulihkan"
+                >
+                  <Settings className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
+                  <span>Setting</span>
+                  <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${isSettingsOpen ? 'rotate-180 text-slate-600' : ''}`} />
+                </button>
 
-              {/* Backup & Pulihkan Data */}
-              <button
-                type="button"
-                onClick={() => setIsBackupModalOpen(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 cursor-pointer"
-                aria-label="Backup & Pulihkan Data"
-                title="Auto-backup harian, unduh file JSON/Excel, atau pulihkan snapshot cadangan"
-              >
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
-                <span>Backup &amp; Pulihkan</span>
-              </button>
+                {isSettingsOpen && (
+                  <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsBoxManageOpen(true);
+                        setIsSettingsOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-700 flex items-center gap-2.5 transition cursor-pointer"
+                    >
+                      <PackagePlus className="h-4 w-4 text-blue-600 shrink-0" />
+                      <div>
+                        <div className="font-bold text-slate-900">Kelola Box &amp; Rak</div>
+                        <div className="text-[10px] text-slate-500 font-normal">Atur box, rak &amp; denah gudang</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsBackupModalOpen(true);
+                        setIsSettingsOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-emerald-700 flex items-center gap-2.5 transition cursor-pointer border-t border-slate-100"
+                    >
+                      <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <div className="font-bold text-slate-900">Backup &amp; Pulihkan</div>
+                        <div className="text-[10px] text-slate-500 font-normal">Cadangan &amp; snapshot data</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* Akun & Profil User PPIC */}
               <button
@@ -354,7 +401,7 @@ const AppContent = () => {
                   </span>
                 ) : isHelper(currentUser) ? (
                   <span className="text-xs font-bold uppercase text-teal-900 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    <Wrench className="w-3 h-3 text-teal-600" /> Support
+                    <User className="w-3 h-3 text-teal-600" /> Support
                   </span>
                 ) : (
                   <span className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">
