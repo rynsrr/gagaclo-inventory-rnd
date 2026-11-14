@@ -251,7 +251,7 @@ export function TargetTeamBanner({ onOpenRekap }) {
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-950/90 border border-blue-600/70 text-blue-300 shadow-2xs shrink-0">
               <Target className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span className="text-xs font-black uppercase tracking-wider text-blue-200">
-                TARGET TEAM HARI INI
+                TEAM TARGET
               </span>
             </div>
 
