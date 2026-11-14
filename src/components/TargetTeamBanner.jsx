@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Target, Edit2, Check, X, ArrowUpRight, Trophy } from 'lucide-react';
+import { Target, Edit2, Check, X, ArrowUpRight } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
-import { getDynamicTeamQuote } from '../data/motivationalQuotes';
 
 // 8 Anggota Tim Resmi
 const TEAM_MEMBERS = [
@@ -79,19 +78,9 @@ export function TargetTeamBanner({ onOpenRekap }) {
     return { pcs: sum, samples: sampleCount };
   }, [items, todayIso]);
 
-  // Rotasi kata-kata dinamis setiap 7 detik
-  const [quoteTick, setQuoteTick] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setQuoteTick((t) => (t + 1) % 1000);
-    }, 7000);
-    return () => clearInterval(timer);
-  }, []);
-
   const isAchieved = todayStats.pcs >= dailyTarget;
   const percent = Math.round((todayStats.pcs / dailyTarget) * 100);
   const remaining = Math.max(0, dailyTarget - todayStats.pcs);
-  const dynamicQuote = getDynamicTeamQuote(todayStats.pcs, dailyTarget, quoteTick);
 
   // Map box ke PIC untuk deteksi penginput
   const boxRackMap = useMemo(() => {

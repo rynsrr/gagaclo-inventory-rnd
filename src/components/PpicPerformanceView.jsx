@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronUp,
   Users,
-  Target,
   Edit2,
   Check,
   X,
@@ -615,12 +614,12 @@ export function PpicPerformanceView() {
       <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
               <Users className="h-4 w-4 text-blue-600" />
-              <span>Tabel Riwayat Input Harian Tim R&D (PCS per Orang)</span>
+              <span>Log Aktivitas &amp; Riwayat Input Harian R&amp;D</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Catatan kuantitatif input harian 8 anggota tim (5 PPIC &amp; 3 Support) secara setara dan transparan
+              Rekapitulasi kuantitatif produktivitas 8 personel (5 PPIC &amp; 3 Support) secara berkala dan terukur.
             </p>
           </div>
         </div>

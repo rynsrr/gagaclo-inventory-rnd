@@ -2347,11 +2347,16 @@ export const InventoryProvider = ({ children }) => {
   };
 
   // Auto-backup harian otomatis: memicu download dan snapshot 1x sehari
+  const autoBackupDataRef = useRef({ racks, ppicMembers, boxes, items, transactions, users });
+  useEffect(() => {
+    autoBackupDataRef.current = { racks, ppicMembers, boxes, items, transactions, users };
+  }, [racks, ppicMembers, boxes, items, transactions, users]);
+
   useEffect(() => {
     if (boxes && boxes.length > 0 && items && items.length > 0) {
       const timer = setTimeout(() => {
         checkAndTriggerDailyAutoBackup(
-          { racks, ppicMembers, boxes, items, transactions, users },
+          autoBackupDataRef.current,
           showNotification,
           false
         );
