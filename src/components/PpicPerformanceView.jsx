@@ -21,7 +21,7 @@ import {
 import { isHelper } from '../utils/authUtils';
 
 const DEFAULT_PICS = ['Royan', 'Cynara', 'Ami', 'Ryan', 'Hanami'];
-const DEFAULT_HELPERS = ['Helper 1', 'Helper 2', 'Helper 3'];
+const DEFAULT_HELPERS = ['Sheva', 'Ade', 'Tri'];
 
 export function PpicPerformanceView() {
   const {
@@ -92,17 +92,26 @@ export function PpicPerformanceView() {
       const pcs = Number(item.jumlah) || 0;
       const pic = String(item.picName || (box ? box.picName : 'Lainnya')).trim();
 
-      // Deteksi apakah item di-input oleh Helper (Asisten Rekap)
+      // Deteksi apakah item di-input oleh Tim Support (Sheva, Ade, Tri)
       const tags = Array.isArray(item.tags) ? item.tags : [];
-      const helperTag = tags.find(t => typeof t === 'string' && t.startsWith('helper:'));
+      const supportTag = tags.find(t => typeof t === 'string' && (t.startsWith('support:') || t.startsWith('helper:')));
       const inputtedByTag = tags.find(t => typeof t === 'string' && t.startsWith('inputted_by:'));
-      const rawHelper = item.helperName ||
-        (helperTag ? decodeURIComponent(helperTag.slice(7)) : null) ||
+      const rawSupport = item.supportName || item.helperName ||
+        (supportTag ? decodeURIComponent(supportTag.slice(supportTag.indexOf(':') + 1)) : null) ||
         (inputtedByTag ? decodeURIComponent(inputtedByTag.slice(12)) : null) ||
-        (item.inputtedBy && String(item.inputtedBy).toLowerCase().startsWith('helper') ? item.inputtedBy : null) ||
-        (item.createdBy && String(item.createdBy).toLowerCase().startsWith('helper') ? item.createdBy : null);
+        (item.inputtedBy && ['sheva', 'ade', 'tri', 'helper 1', 'helper 2', 'helper 3'].some(n => String(item.inputtedBy).toLowerCase().includes(n)) ? item.inputtedBy : null) ||
+        (item.createdBy && ['sheva', 'ade', 'tri', 'helper 1', 'helper 2', 'helper 3'].some(n => String(item.createdBy).toLowerCase().includes(n)) ? item.createdBy : null);
 
-      const helperName = rawHelper ? String(rawHelper).trim() : null;
+      let helperName = rawSupport ? String(rawSupport).trim() : null;
+      if (helperName) {
+        if (/helper\s*1/i.test(helperName)) helperName = 'Sheva';
+        else if (/helper\s*2/i.test(helperName)) helperName = 'Ade';
+        else if (/helper\s*3/i.test(helperName)) helperName = 'Tri';
+        else {
+          const match = ['Sheva', 'Ade', 'Tri'].find(s => s.toLowerCase() === helperName.toLowerCase());
+          if (match) helperName = match;
+        }
+      }
 
       const enrichedItem = {
         ...item,
@@ -174,9 +183,9 @@ export function PpicPerformanceView() {
   const allTimeHelperTotals = useMemo(() => {
     const totals = {
       byHelper: {
-        'Helper 1': { pcs: 0, items: 0, byPic: {} },
-        'Helper 2': { pcs: 0, items: 0, byPic: {} },
-        'Helper 3': { pcs: 0, items: 0, byPic: {} },
+        'Sheva': { pcs: 0, items: 0, byPic: {} },
+        'Ade': { pcs: 0, items: 0, byPic: {} },
+        'Tri': { pcs: 0, items: 0, byPic: {} },
       },
       grandTotalHelperPcs: 0,
       grandTotalHelperItems: 0,
@@ -247,7 +256,7 @@ export function PpicPerformanceView() {
           return `- ${hName}: ${stats.pcs} PCS (${stats.items} sampel) [Bantu: ${picBreakdownStr || '-'}]`;
         })
         .join('\n');
-      helperSection = `\n━━━━━━━━━━━━━━━━━━━━\n📝 KONTROL INPUT ASISTEN REKAP (HELPER):\n${helperLines}`;
+      helperSection = `\n━━━━━━━━━━━━━━━━━━━━\n🛠️ KONTROL INPUT TIM SUPPORT:\n${helperLines}`;
     }
 
     const text = `📊 REKAP PENYIMPANAN HARIAN R&D GAGACLO\n📅 Tanggal: ${dateFormatted}\n━━━━━━━━━━━━━━━━━━━━\n📦 ALOKASI PENYIMPANAN SESUAI BOX PIC:\n${picLines}${helperSection}\n━━━━━━━━━━━━━━━━━━━━\n📦 TOTAL HARIAN: ${currentDailyData.totalPcs} PCS (${currentDailyData.totalItems} sampel)`;
@@ -507,7 +516,7 @@ export function PpicPerformanceView() {
         })}
       </div>
 
-      {/* SEKSI KHUSUS: KONTROL INPUT ASISTEN REKAP (3 HELPER DATA) */}
+      {/* SEKSI KHUSUS: KONTROL INPUT TIM SUPPORT (3 SUPPORT DATA) */}
       <div className="p-4 sm:p-5 bg-gradient-to-br from-teal-50/70 via-cyan-50/40 to-slate-50/80 rounded-2xl border border-teal-200/80 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-teal-200/60 pb-3">
           <div className="flex items-center gap-2.5">
@@ -516,7 +525,7 @@ export function PpicPerformanceView() {
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2 flex-wrap">
-                Kontrol Input Asisten Rekap (Helper Data)
+                Kontrol Input Tim Support (Support Data)
                 <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-300">
                   Dual-Tracking
                 </span>
@@ -527,19 +536,19 @@ export function PpicPerformanceView() {
                 )}
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
-                Kontrol akurat berapa PCS dan berapa sampel yang di-input oleh 3 Asisten Rekap ke box 5 PIC. Stok tetap tercatat di Box PIC yang bersangkutan.
+                Kontrol akurat berapa PCS dan berapa sampel yang di-input oleh 3 Tim Support ke box 5 PIC. Stok tetap tercatat di Box PIC yang bersangkutan.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs">
             <span className="text-[11px] font-bold text-teal-800 bg-white/80 border border-teal-200 px-2.5 py-1 rounded-xl shadow-2xs">
-              Akumulasi Helper: <strong className="text-teal-950 font-black">{allTimeHelperTotals.grandTotalHelperPcs.toLocaleString('id-ID')} PCS</strong> ({allTimeHelperTotals.grandTotalHelperItems} sampel)
+              Akumulasi Support: <strong className="text-teal-950 font-black">{allTimeHelperTotals.grandTotalHelperPcs.toLocaleString('id-ID')} PCS</strong> ({allTimeHelperTotals.grandTotalHelperItems} sampel)
             </span>
           </div>
         </div>
 
-        {/* 3 Kartu Helper */}
+        {/* 3 Kartu Support: Sheva, Ade, Tri */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {DEFAULT_HELPERS.map((helperName, hIdx) => {
             const hToday = currentDailyData.byHelper?.[helperName] || { pcs: 0, items: 0, byPic: {}, itemsList: [] };
@@ -563,15 +572,15 @@ export function PpicPerformanceView() {
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                       <div className={`w-7 h-7 rounded-lg ${theme.badge} flex items-center justify-center font-black text-xs shadow-2xs`}>
-                        H{hIdx + 1}
+                        S{hIdx + 1}
                       </div>
                       <div>
                         <span className="font-black text-sm text-slate-900">{helperName}</span>
-                        <span className="text-[10px] text-slate-500 block">Asisten Rekap Data</span>
+                        <span className="text-[10px] text-slate-500 block">Tim Support Data</span>
                       </div>
                     </div>
                     <span className="text-[10px] font-black uppercase text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
-                      Cross-Box
+                      CROSS-BOX
                     </span>
                   </div>
 

@@ -314,7 +314,7 @@ const AppContent = () => {
                   </span>
                 ) : isHelper(currentUser) ? (
                   <span className="text-[9px] font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shadow-2xs">
-                    📝 Asisten Rekap
+                    🛠️ Tim Support
                   </span>
                 ) : (
                   <span className="text-[9px] font-black uppercase text-blue-700 bg-white/80 border border-blue-200/70 px-1 rounded">

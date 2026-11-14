@@ -157,15 +157,31 @@ export const InventoryProvider = ({ children }) => {
   });
 
   const ensureAllUsersIncluded = (list) => {
-    const existing = new Set((list || []).map(u => String(u.name || '').trim().toLowerCase()));
+    // Migrate legacy 'Helper 1' -> 'Sheva', 'Helper 2' -> 'Ade', 'Helper 3' -> 'Tri'
+    const migrated = (list || []).map(u => {
+      const lower = String(u.name || '').trim().toLowerCase();
+      if (lower === 'helper 1') {
+        return { ...u, id: 'support-1', username: 'Sheva', name: 'Sheva', password: 'Sheva', role: 'Tim Support', isHelper: true, isSupport: true, ppicNumber: 'S1' };
+      }
+      if (lower === 'helper 2') {
+        return { ...u, id: 'support-2', username: 'Ade', name: 'Ade', password: 'Ade', role: 'Tim Support', isHelper: true, isSupport: true, ppicNumber: 'S2' };
+      }
+      if (lower === 'helper 3') {
+        return { ...u, id: 'support-3', username: 'Tri', name: 'Tri', password: 'Tri', role: 'Tim Support', isHelper: true, isSupport: true, ppicNumber: 'S3' };
+      }
+      return u;
+    });
+
+    const existing = new Set(migrated.map(u => String(u.name || '').trim().toLowerCase()));
     const missing = HELPER_MEMBERS.filter(h => !existing.has(h.name.toLowerCase())).map(h => ({
       id: h.id,
       username: h.name,
       name: h.name,
-      role: 'Asisten Rekap',
+      role: 'Tim Support',
       isHelper: true,
+      isSupport: true,
       isSuperuser: false,
-      email: '',
+      email: h.email || '',
       password: h.name,
       ppicNumber: h.ppicNumber,
       color: h.color,
@@ -173,7 +189,7 @@ export const InventoryProvider = ({ children }) => {
       badgeClass: h.badgeClass,
       avatarBg: h.avatarBg,
     }));
-    return [...list, ...missing];
+    return [...migrated, ...missing];
   };
 
   // 5 PIC Users + 3 Helper Users (Password default sama dengan nama user)
@@ -248,7 +264,10 @@ export const InventoryProvider = ({ children }) => {
       const list = ensureAllUsersIncluded(rawList);
 
       if (savedUserId) {
-        const found = list.find(u => String(u.id).toLowerCase() === String(savedUserId).toLowerCase());
+        const found = list.find(u =>
+          String(u.id).toLowerCase() === String(savedUserId).toLowerCase() ||
+          String(u.name).toLowerCase() === String(savedUserId).toLowerCase()
+        );
         if (found) return found;
       }
       return list[0] || null;

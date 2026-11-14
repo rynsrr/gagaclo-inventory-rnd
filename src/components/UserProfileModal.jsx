@@ -77,10 +77,10 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h3 id="user-profile-modal-title" className="text-sm sm:text-base font-black text-slate-900">
-                Ganti User / Login PIC
+                Ganti User / Login Akun
               </h3>
               <p className="text-[11px] font-medium text-slate-500">
-                5 PIC: Royan • Cynara • Ami • Ryan • Hanami
+                5 PIC (Royan, Cynara, Ami, Ryan, Hanami) • 3 Support (Sheva, Ade, Tri)
               </p>
             </div>
           </div>
@@ -135,7 +135,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
             <div className="rounded-xl bg-blue-50/60 border border-blue-200/80 p-3 text-xs text-blue-900 flex items-start gap-2">
               <Info className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
               <span>
-                Pilih salah satu dari 5 akun PIC atau 3 Asisten Rekap di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
+                Pilih salah satu dari 5 akun PIC atau 3 Tim Support (Sheva, Ade, Tri) di bawah untuk beralih login. Masukkan password akun untuk otentikasi.
               </span>
             </div>
 
@@ -258,16 +258,16 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
               })}
             </div>
 
-            {/* SEKSI 2: Tim Asisten Rekap Data (3 Helper) */}
+            {/* SEKSI 2: Tim Support Data (Sheva, Ade, Tri) */}
             <div className="space-y-2 pt-2 border-t border-slate-200/80">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-black text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-teal-500 inline-block"></span>
-                    Tim Asisten Rekap Data (3 Helper Non-PPIC)
+                    Tim Support Data (Sheva, Ade, Tri)
                   </span>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    Membantu input &amp; rekap data ke 72 Box milik 5 PIC. Jumlah PCS yang di-input akan terkontrol secara terpisah.
+                    Membantu input &amp; rekap data ke 72 Box milik 5 PIC. Jumlah PCS yang di-input akan terkontrol secara terpisah (Dual-Tracking).
                   </p>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-slate-900">{u.name}</span>
                             <span className="rounded-full bg-teal-100 border border-teal-300 px-2 py-0.5 text-[9px] font-black text-teal-900 flex items-center gap-0.5">
-                              📝 Asisten Rekap
+                              🛠️ Tim Support
                             </span>
                             {isCurrent && (
                               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 flex items-center gap-1">

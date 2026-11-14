@@ -429,7 +429,7 @@ function BoxDetail({ box }) {
             )}
             {isHelperUser && (
               <span className="text-[10px] font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                📝 Mode Asisten Rekap (Membantu {box.picName})
+                🛠️ Tim Support (Membantu {box.picName})
               </span>
             )}
           </div>

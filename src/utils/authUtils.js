@@ -1,7 +1,7 @@
 /**
  * Authentication and authorization utilities for Gagaclo R&D Inventory.
  * All 5 PICs (including Royan) are regular users with equal access privileges.
- * 3 Helpers (Asisten Rekap) have cross-box input rights with attribution logging.
+ * 3 Support team members (Sheva, Ade, Tri) have cross-box input rights with attribution logging.
  */
 
 export function isSuperuser(user) {
@@ -13,16 +13,22 @@ export function isSuperuser(user) {
   return user.isSuperuser === true || role.includes('super');
 }
 
-export function isHelper(user) {
+export function isSupport(user) {
   if (!user) return false;
   const role = String(user.role || '').toLowerCase();
   const name = String(user.name || user.username || '').toLowerCase();
   return (
+    user.isSupport === true ||
     user.isHelper === true ||
+    role.includes('support') ||
     role.includes('helper') ||
     role.includes('asisten') ||
     role.includes('rekap') ||
+    name.startsWith('support') ||
     name.startsWith('helper') ||
-    name.includes('asisten')
+    name.includes('asisten') ||
+    ['sheva', 'ade', 'tri'].includes(name)
   );
 }
+
+export const isHelper = isSupport;
