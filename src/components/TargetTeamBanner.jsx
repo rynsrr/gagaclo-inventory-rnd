@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Target, Edit2, Check, X, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Target, Edit2, Check, X, ArrowUpRight, Sparkles, Users } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
@@ -99,8 +99,8 @@ export function TargetTeamBanner({ onOpenRekap }) {
     return map;
   }, [boxes]);
 
-  // Deteksi personil yang telah berhasil mencapai target harian individu hari ini
-  const memberAchievers = useMemo(() => {
+  // Hitung target harian individu untuk seluruh 8 personil tim R&D
+  const allMemberTargets = useMemo(() => {
     let savedTargets = {};
     try {
       const saved = localStorage.getItem('gagaclo_individual_targets');
@@ -167,23 +167,28 @@ export function TargetTeamBanner({ onOpenRekap }) {
       }
     });
 
-    const achievers = [];
-    TEAM_MEMBERS.forEach((m) => {
+    return TEAM_MEMBERS.map((m) => {
       const target = Number(savedTargets[m.name]) > 0 ? Number(savedTargets[m.name]) : 20;
       const currentPcs = pcsMap[m.name] || 0;
-      if (currentPcs >= target) {
-        achievers.push({
-          name: m.name,
-          role: m.role,
-          pcs: currentPcs,
-          target,
-          surplus: currentPcs - target,
-        });
-      }
+      const isAchieved = currentPcs >= target;
+      return {
+        name: m.name,
+        role: m.role,
+        pcs: currentPcs,
+        target,
+        isAchieved,
+        surplus: isAchieved ? currentPcs - target : 0,
+        remaining: Math.max(0, target - currentPcs),
+        percent: Math.round((currentPcs / target) * 100),
+      };
     });
-
-    return achievers;
   }, [items, boxRackMap, todayIso]);
+
+  const memberAchievers = useMemo(() => {
+    return allMemberTargets.filter((m) => m.isAchieved);
+  }, [allMemberTargets]);
+
+  const achievedCount = memberAchievers.length;
 
   // Web Notification & In-App Notification saat ada orang yang capai target
   useEffect(() => {
@@ -243,15 +248,15 @@ export function TargetTeamBanner({ onOpenRekap }) {
       aria-label="Target Team Inventory R&D"
       className="w-full bg-slate-900 text-slate-100 border-b border-slate-800 px-3 sm:px-5 lg:px-6 py-2.5 shadow-xs no-print transition-all"
     >
-      <div className="max-w-[1560px] mx-auto space-y-2">
-        {/* BARIS UTAMA (Row 1): Target KPI, Progress Bar, & Tombol Aksi */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Sisi Kiri: Label Target Harian & Angka Real-Time (Satu Kesatuan Baseline Rapi) */}
-          <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700/80 text-slate-300 shadow-2xs shrink-0">
+      <div className="max-w-[1560px] mx-auto space-y-2.5">
+        {/* BARIS ATAS (Row 1): TARGET TEAM (Center Aligned, Rapi & Seimbang) */}
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6">
+          {/* Keterangan Target Team & Angka Real-Time */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-950/90 border border-blue-600/70 text-blue-300 shadow-2xs shrink-0">
               <Target className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                TARGET HARI INI
+              <span className="text-xs font-black uppercase tracking-wider text-blue-200">
+                TARGET TEAM HARI INI
               </span>
             </div>
 
@@ -272,7 +277,7 @@ export function TargetTeamBanner({ onOpenRekap }) {
                 <button
                   type="submit"
                   className="p-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold cursor-pointer transition"
-                  title="Simpan Target"
+                  title="Simpan Target Team"
                 >
                   <Check className="w-3.5 h-3.5" />
                 </button>
@@ -288,17 +293,14 @@ export function TargetTeamBanner({ onOpenRekap }) {
             ) : (
               <div className="flex items-center gap-2 shrink-0">
                 <div className="flex items-baseline gap-1">
-                  {/* Angka Capaian Utama: Menonjol & Kontras */}
                   <span className="text-xl sm:text-2xl font-black text-white font-mono tabular-nums tracking-tight">
                     {todayStats.pcs.toLocaleString('id-ID')}
                   </span>
-                  {/* Target Total: Kontras Terang Slate-300 */}
                   <span className="text-xs sm:text-sm font-semibold text-slate-300 font-mono">
                     / {dailyTarget.toLocaleString('id-ID')} PCS
                   </span>
                 </div>
 
-                {/* Persentase Capaian */}
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded-md border font-mono ${
                     isAchieved
@@ -317,7 +319,7 @@ export function TargetTeamBanner({ onOpenRekap }) {
                       setIsEditingTarget(true);
                     }}
                     className="text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer"
-                    title="Ubah Target Harian"
+                    title="Ubah Target Team Harian"
                   >
                     <Edit2 className="w-3 h-3 text-slate-400" />
                     <span>Ubah</span>
@@ -327,8 +329,8 @@ export function TargetTeamBanner({ onOpenRekap }) {
             )}
           </div>
 
-          {/* Sisi Tengah: Progress Bar Terpadu & Luas */}
-          <div className="flex items-center gap-3 flex-1 min-w-[200px] max-w-full lg:max-w-xl">
+          {/* Progress Bar Target Team (Tengah, Terpadu & Luas) */}
+          <div className="flex items-center gap-2.5 flex-1 min-w-[200px] max-w-md sm:max-w-lg">
             <div className="flex-1 bg-slate-950/90 rounded-full h-2.5 sm:h-3 overflow-hidden border border-slate-700/80 p-0.5">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
@@ -341,7 +343,7 @@ export function TargetTeamBanner({ onOpenRekap }) {
               {isAchieved ? (
                 <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Target Tercapai
+                  Target Team Tercapai
                 </span>
               ) : (
                 <span>Sisa <strong className="text-white font-mono font-bold">{remaining.toLocaleString('id-ID')}</strong> PCS</span>
@@ -349,8 +351,8 @@ export function TargetTeamBanner({ onOpenRekap }) {
             </div>
           </div>
 
-          {/* Sisi Kanan: Tombol Aksi Cepat */}
-          <div className="flex items-center gap-2 shrink-0 justify-end">
+          {/* Tombol Aksi Cepat */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={isDemoAllAchievedActive ? revertAllMembersAchievedDemo : applyAllMembersAchievedDemo}
@@ -379,40 +381,52 @@ export function TargetTeamBanner({ onOpenRekap }) {
           </div>
         </div>
 
-        {/* BARIS KEDUA (Row 2): Bilah Capaian Personel Rapi */}
-        {memberAchievers.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-slate-800/80">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span className="text-emerald-400">
-                {memberAchievers.length === TEAM_MEMBERS.length
-                  ? 'Semua Akun Capai Target (8/8):'
-                  : `Personel Capai Target (${memberAchievers.length}):`}
-              </span>
-            </div>
+        {/* BARIS BAWAH (Row 2): TARGET INDIVIDU (Center Aligned, Semua 8 Nama & Target Dicapai) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2 border-t border-slate-800/80">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/90 border border-slate-700 text-xs font-black uppercase tracking-wider text-slate-300 shrink-0">
+            <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>TARGET INDIVIDU ({achievedCount}/8 TERCAPAI):</span>
+          </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap flex-1">
-              {memberAchievers.map((achiever) => (
-                <button
-                  type="button"
-                  key={achiever.name}
-                  onClick={() => {
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+            {allMemberTargets.map((m) => (
+              <button
+                type="button"
+                key={m.name}
+                onClick={() => {
+                  if (m.isAchieved) {
                     try {
                       window.dispatchEvent(
-                        new CustomEvent('gagaclo_trigger_celebration_flare', { detail: achiever })
+                        new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
                       );
                     } catch {}
-                  }}
-                  className="px-2.5 py-1 rounded-md bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-600/50 hover:border-emerald-400 text-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 hover:scale-[1.02]"
-                  title={`Klik untuk selebrasi capaian ${achiever.name} (${achiever.pcs}/${achiever.target} PCS)`}
-                >
-                  <span className="text-white font-extrabold">{achiever.name}</span>
-                  <span className="text-emerald-400 font-mono font-bold">· {achiever.pcs} PCS</span>
-                </button>
-              ))}
-            </div>
+                  } else if (showNotification) {
+                    showNotification(
+                      `${m.name} (${m.role}): Capaian saat ini ${m.pcs}/${m.target} PCS (kurang ${m.remaining} PCS).`,
+                      'info',
+                      3000
+                    );
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 hover:scale-[1.02] border ${
+                  m.isAchieved
+                    ? 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 hover:border-emerald-400 text-emerald-200'
+                    : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 hover:border-slate-600 text-slate-300'
+                }`}
+                title={`${m.name} (${m.role}) — Target: ${m.target} PCS, Capaian: ${m.pcs} PCS (${m.percent}%)${m.isAchieved ? ' — Target Tercapai! Klik untuk selebrasi.' : ` — Kurang ${m.remaining} PCS lagi.`}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${m.isAchieved ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+                <span className="text-white font-extrabold">{m.name}</span>
+                <span className={`font-mono font-bold ${m.isAchieved ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  · {m.pcs}/{m.target} PCS
+                </span>
+                {m.isAchieved && (
+                  <span className="text-[10px] text-emerald-400 font-extrabold">✓</span>
+                )}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
       </div>
     </section>
   );
