@@ -442,9 +442,21 @@ const AppContent = () => {
       {/* Global Floating Toast Notification (Multi-user concurrency & auto-sequence alerts) */}
       {systemNotification && (
         <aside aria-label="Notifikasi sistem" className="fixed top-5 left-1/2 -translate-x-1/2 z-50 animate-fade-in max-w-lg w-[92%] sm:w-auto pointer-events-auto shadow-2xl">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-white/20 backdrop-blur-md text-xs sm:text-sm font-semibold">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-400 text-slate-950 shrink-0 font-bold text-xs">
-              ⚡
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-white shadow-2xl border backdrop-blur-md text-xs sm:text-sm font-semibold ${
+            systemNotification.type === 'target'
+              ? 'bg-slate-900/98 border-emerald-500/70 shadow-emerald-950/50 ring-1 ring-emerald-500/30'
+              : systemNotification.type === 'error'
+                ? 'bg-slate-900/98 border-rose-500/70 shadow-rose-950/50 ring-1 ring-rose-500/30'
+                : 'bg-slate-900/95 border-white/20'
+          }`}>
+            <span className={`flex h-6 w-6 items-center justify-center rounded-lg shrink-0 font-bold text-xs ${
+              systemNotification.type === 'target'
+                ? 'bg-emerald-400 text-slate-950'
+                : systemNotification.type === 'error'
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-amber-400 text-slate-950'
+            }`}>
+              {systemNotification.type === 'target' ? '🎉' : systemNotification.type === 'error' ? '⚠️' : '⚡'}
             </span>
             <span className="flex-1 text-slate-100 leading-snug">{systemNotification.message}</span>
             <button
