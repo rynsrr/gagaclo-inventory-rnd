@@ -34,6 +34,7 @@ import {
   Send,
   Truck,
   Building2,
+  ShoppingCart,
 } from 'lucide-react';
 import { isItemDispatched, decodeDispatchData, DISPATCH_DESTINATIONS } from '../utils/dispatchUtils';
 import { isSuperuser } from '../utils/authUtils';
@@ -98,6 +99,9 @@ export function TotalItemsSummaryView() {
     ppicMembers,
     showNotification,
     syncFromSupabase,
+    dispatchCart,
+    addToDispatchCart,
+    isItemInDispatchCart,
   } = useInventory();
 
   const [isManualSyncing, setIsManualSyncing] = useState(false);
@@ -1150,6 +1154,19 @@ export function TotalItemsSummaryView() {
                             !item.picName ||
                             String(currentUser.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase() ? (
                               <>
+                                <button
+                                  type="button"
+                                  onClick={() => addToDispatchCart(item, 1)}
+                                  className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                    isItemInDispatchCart(item.id)
+                                      ? 'bg-rose-100 text-rose-700 font-bold'
+                                      : 'bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600'
+                                  }`}
+                                  title={isItemInDispatchCart(item.id) ? "Sudah ada di keranjang kirim (+1)" : "Tambah ke Keranjang Pengiriman"}
+                                  aria-label={`Tambah ${item.style || item.kode} ke Keranjang`}
+                                >
+                                  <ShoppingCart className="h-3.5 w-3.5" />
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() =>

@@ -48,10 +48,14 @@ import {
   PackagePlus,
   X,
   Send,
+  ShoppingCart,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
 import { isItemDispatched } from './utils/dispatchUtils';
 import { isSuperuser } from './utils/authUtils';
+import { DispatchCartModal } from './components/DispatchCartModal';
+import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
+import { DispatchModal } from './components/DispatchModal';
 
 const AppContent = () => {
   // Mode selection: default to '3d-warehouse' (BOX is the main tab)
@@ -68,11 +72,14 @@ const AppContent = () => {
     systemNotification,
     setSystemNotification,
     currentUser,
+    dispatchCart,
   } = useInventory();
 
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartCheckoutItems, setCartCheckoutItems] = useState(null);
   const connected = supabaseStatus.isConnected;
 
   const activeIssuesCount = issues.filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS').length;
@@ -256,6 +263,27 @@ const AppContent = () => {
 
               <InventoryImport />
 
+              {/* Keranjang Pengiriman (Marketplace Model) */}
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(true)}
+                className={`relative flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border hover:shadow-xs hover:-translate-y-0.5 cursor-pointer ${
+                  dispatchCart?.length > 0
+                    ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 shadow-rose-100'
+                    : 'bg-white/90 hover:bg-slate-100/90 text-slate-700 border-slate-200'
+                }`}
+                aria-label="Keranjang Pengiriman Sampel"
+                title="Buka Keranjang Pengiriman Sampel (Model Marketplace)"
+              >
+                <ShoppingCart className="h-3.5 w-3.5 text-rose-600" aria-hidden="true" />
+                <span>Keranjang</span>
+                {dispatchCart?.length > 0 && (
+                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-2xs">
+                    {dispatchCart.length}
+                  </span>
+                )}
+              </button>
+
               {/* Kelola Box / Rak / Orang */}
               <button
                 type="button"
@@ -379,6 +407,28 @@ const AppContent = () => {
             onClose={() => setIsUserProfileOpen(false)}
           />
         </Suspense>
+      )}
+
+      {/* Keranjang Pengiriman (Marketplace Model) */}
+      <DispatchCartModal
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        onProceedToDispatch={(cartItems) => {
+          setIsCartOpen(false);
+          setCartCheckoutItems(cartItems);
+        }}
+      />
+
+      {/* Floating Bottom-Right Sticky Cart Button */}
+      <DispatchCartFloatingBar onOpenCart={() => setIsCartOpen(true)} />
+
+      {/* Checkout Dispatch Modal (Triggered from Cart) */}
+      {cartCheckoutItems && (
+        <DispatchModal
+          isOpen={true}
+          onClose={() => setCartCheckoutItems(null)}
+          preselectedItems={cartCheckoutItems}
+        />
       )}
 
       {/* Global Floating Toast Notification (Multi-user concurrency & auto-sequence alerts) */}

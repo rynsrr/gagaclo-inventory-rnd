@@ -14,7 +14,7 @@ import {
 import { DISPATCH_DESTINATIONS, DISPATCH_TYPES } from '../utils/dispatchUtils';
 
 export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) {
-  const { dispatchItem, currentUser, suggestions, items } = useInventory();
+  const { dispatchItem, currentUser, suggestions, items, clearDispatchCart } = useInventory();
 
   // If single item or multiple items
   const itemsToDispatch = item ? [item] : preselectedItems;
@@ -92,7 +92,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     setIsSubmitting(true);
     try {
       for (const it of itemsToDispatch) {
-        const itemQty = isSingle ? Number(qty) : Number(it.jumlah ?? it.qty ?? 1);
+        const itemQty = isSingle ? Number(qty) : Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
         await dispatchItem(it, {
           destinationId,
           destinationLabel,
@@ -104,6 +104,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           notes: notes.trim(),
         });
       }
+      clearDispatchCart();
       onClose();
     } catch (err) {
       console.error('Dispatch error:', err);
@@ -174,11 +175,18 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                 </div>
               </div>
             ) : (
-              <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
+              <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
                 {itemsToDispatch.map((it) => (
-                  <div key={it.id} className="flex justify-between items-center text-[11px] bg-white p-1.5 rounded border border-slate-200">
-                    <span className="font-bold text-slate-800 truncate max-w-[260px]">{it.style || it.kode}</span>
-                    <span className="font-mono font-black text-emerald-700">{it.jumlah ?? it.qty ?? 1} PCS</span>
+                  <div key={it.id} className="flex justify-between items-center text-[11px] bg-white p-2 rounded-lg border border-slate-200">
+                    <div className="min-w-0 pr-2">
+                      <div className="font-bold text-slate-800 truncate">{it.style || it.kode}</div>
+                      <div className="text-[10px] text-slate-500">
+                        Box #{it.boxNumber} {it.buyerNo && `• Buyer: ${it.buyerNo}`}
+                      </div>
+                    </div>
+                    <span className="font-mono font-black text-rose-700 shrink-0 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                      {it.dispatchQty ?? it.jumlah ?? it.qty ?? 1} PCS
+                    </span>
                   </div>
                 ))}
               </div>

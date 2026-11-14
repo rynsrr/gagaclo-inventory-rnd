@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   FileText,
   Send,
+  ShoppingCart,
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
@@ -58,6 +59,10 @@ function BoxDetail({ box }) {
     showNotification,
     currentUser,
     isSuperuser,
+    dispatchCart,
+    addToDispatchCart,
+    addMultipleToDispatchCart,
+    isItemInDispatchCart,
   } = useInventory();
   const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
@@ -513,7 +518,23 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
-              {/* Bulk Dispatch Items (Buyer, Anzo, RDTW, RDC, ANZOTW) */}
+              {/* Bulk Dispatch: Add to Cart (Marketplace Model) */}
+              {selectedItemIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selected = itemsInBox.filter(i => selectedItemIds.has(i.id));
+                    addMultipleToDispatchCart(selected);
+                  }}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                  title="Masukkan semua item yang dicentang ke Keranjang Pengiriman"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  <span>+ Keranjang Kirim ({selectedItemIds.size})</span>
+                </button>
+              )}
+
+              {/* Bulk Dispatch Items Direct */}
               {selectedItemIds.size > 0 && (
                 <button
                   type="button"
@@ -760,6 +781,20 @@ function BoxDetail({ box }) {
                               >
                                 <Printer className="w-3.5 h-3.5" />
                               </button>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => addToDispatchCart(item, 1)}
+                                  className={`p-1 rounded transition cursor-pointer flex items-center gap-1 ${
+                                    isItemInDispatchCart(item.id)
+                                      ? 'text-rose-600 bg-rose-100/90 font-black'
+                                      : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
+                                  }`}
+                                  title={isItemInDispatchCart(item.id) ? "Sudah di Keranjang (Klik untuk tambah)" : "Masukkan ke Keranjang Pengiriman (Model Marketplace)"}
+                                >
+                                  <ShoppingCart className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                               {isOwner && (
                                 <button
                                   type="button"

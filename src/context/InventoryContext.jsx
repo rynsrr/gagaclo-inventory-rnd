@@ -2439,6 +2439,129 @@ export const InventoryProvider = ({ children }) => {
     showNotification?.(`Pengiriman untuk ${item.style || item.kode} dibatalkan. Item kembali ke Box #${originBoxNum}.`, 'info', 3500);
   };
 
+  // =========================================================================
+  // DISPATCH CART (MODEL MARKETPLACE: MASUKKAN KE KERANJANG DULU)
+  // =========================================================================
+  const CART_STORAGE_KEY = 'gagaclo_dispatch_cart_v1';
+
+  const [dispatchCart, setDispatchCart] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load dispatchCart from localStorage', e);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(dispatchCart));
+    } catch {}
+  }, [dispatchCart]);
+
+  const addToDispatchCart = (item, qty = 1) => {
+    if (!item) return;
+    const available = Number(item.jumlah ?? item.qty ?? 1);
+    setDispatchCart((prev) => {
+      const existingIdx = prev.findIndex((c) => String(c.id) === String(item.id));
+      if (existingIdx >= 0) {
+        const updated = [...prev];
+        const newQty = Math.min(available, updated[existingIdx].dispatchQty + Number(qty));
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          ...item,
+          availableQty: available,
+          dispatchQty: newQty,
+        };
+        showNotification?.(
+          `Jumlah ${item.style || item.kode} di keranjang diperbarui: ${newQty} PCS.`,
+          'success',
+          2500
+        );
+        return updated;
+      } else {
+        const initialQty = Math.min(available, Math.max(1, Number(qty)));
+        showNotification?.(
+          `🛒 ${item.style || item.kode} dimasukkan ke Keranjang Pengiriman (${initialQty} PCS).`,
+          'success',
+          2500
+        );
+        return [
+          ...prev,
+          {
+            ...item,
+            availableQty: available,
+            dispatchQty: initialQty,
+          },
+        ];
+      }
+    });
+  };
+
+  const addMultipleToDispatchCart = (itemsToAdd) => {
+    if (!Array.isArray(itemsToAdd) || itemsToAdd.length === 0) return;
+    setDispatchCart((prev) => {
+      const map = new Map(prev.map(c => [String(c.id), { ...c }]));
+      itemsToAdd.forEach((item) => {
+        const available = Number(item.jumlah ?? item.qty ?? 1);
+        if (map.has(String(item.id))) {
+          const existing = map.get(String(item.id));
+          map.set(String(item.id), {
+            ...existing,
+            ...item,
+            availableQty: available,
+            dispatchQty: Math.min(available, existing.dispatchQty + 1),
+          });
+        } else {
+          map.set(String(item.id), {
+            ...item,
+            availableQty: available,
+            dispatchQty: Math.min(available, Math.max(1, Number(item.jumlah ?? item.qty ?? 1))),
+          });
+        }
+      });
+      showNotification?.(
+        `🛒 ${itemsToAdd.length} item berhasil dimasukkan ke Keranjang Pengiriman.`,
+        'success',
+        3000
+      );
+      return Array.from(map.values());
+    });
+  };
+
+  const removeFromDispatchCart = (itemId) => {
+    setDispatchCart((prev) => {
+      const filtered = prev.filter((c) => String(c.id) !== String(itemId));
+      showNotification?.('Item dikeluarkan dari keranjang pengiriman.', 'info', 2000);
+      return filtered;
+    });
+  };
+
+  const updateDispatchCartQty = (itemId, qty) => {
+    setDispatchCart((prev) =>
+      prev.map((c) => {
+        if (String(c.id) === String(itemId)) {
+          const available = Number(c.availableQty ?? c.jumlah ?? c.qty ?? 1);
+          const safeQty = Math.min(available, Math.max(1, Number(qty) || 1));
+          return { ...c, dispatchQty: safeQty };
+        }
+        return c;
+      })
+    );
+  };
+
+  const clearDispatchCart = () => {
+    setDispatchCart([]);
+  };
+
+  const isItemInDispatchCart = (itemId) => {
+    return dispatchCart.some((c) => String(c.id) === String(itemId));
+  };
+
   const getStats = () => {
     const totalBoxes = boxes.length;
     const occupiedBoxesCount = boxes.filter((b) => getItemsInBox(b.boxNumber).length > 0).length;
@@ -2484,10 +2607,18 @@ export const InventoryProvider = ({ children }) => {
     addTransaction,
     updateBoxNotes,
     setBoxFull,
-    // Dispatch / Outgoing Sample Operations (Buyer, Anzo, RDTW, RDC, ANZOTW)
+    // Dispatch / Outgoing Sample Operations (Buyer, ANZO QC, ANZO TW, ANZO QC CHINA, RDTW, RDC)
     dispatchItem,
     returnDispatchedItem,
     cancelDispatch,
+    // Dispatch Cart (Model Marketplace)
+    dispatchCart,
+    addToDispatchCart,
+    addMultipleToDispatchCart,
+    removeFromDispatchCart,
+    updateDispatchCartQty,
+    clearDispatchCart,
+    isItemInDispatchCart,
     // Box Management
     addBox,
     updateBox,

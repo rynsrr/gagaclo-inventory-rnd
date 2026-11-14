@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Plus,
   Truck,
+  ShoppingCart,
 } from 'lucide-react';
 import {
   DISPATCH_DESTINATIONS,
@@ -22,9 +23,10 @@ import {
 import { DispatchModal } from './DispatchModal';
 import { DispatchReturnModal } from './DispatchReturnModal';
 import { DispatchManifestModal } from './DispatchManifestModal';
+import { DispatchCartModal } from './DispatchCartModal';
 
 export function DispatchOutgoingView() {
-  const { items, cancelDispatch } = useInventory();
+  const { items, cancelDispatch, dispatchCart } = useInventory();
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +35,8 @@ export function DispatchOutgoingView() {
 
   // Modals state
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+  const [cartCheckoutItems, setCartCheckoutItems] = useState(null);
   const [returnItem, setReturnItem] = useState(null);
   const [manifestItems, setManifestItems] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
@@ -197,6 +201,19 @@ export function DispatchOutgoingView() {
                 <span>Cetak Surat Jalan ({selectedItemIds.size})</span>
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setCartModalOpen(true)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 shadow-lg cursor-pointer ${
+                dispatchCart?.length > 0
+                  ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 animate-pulse-subtle'
+                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+              }`}
+              title="Buka Keranjang Pengiriman (Model Marketplace)"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>Keranjang ({dispatchCart?.length || 0})</span>
+            </button>
             <button
               type="button"
               onClick={() => setDispatchModalOpen(true)}
@@ -541,6 +558,25 @@ export function DispatchOutgoingView() {
         <StandaloneDispatchSelector
           isOpen={dispatchModalOpen}
           onClose={() => setDispatchModalOpen(false)}
+        />
+      )}
+
+      {/* Dispatch Cart Modal (Model Marketplace) */}
+      <DispatchCartModal
+        isOpen={cartModalOpen}
+        onClose={() => setCartModalOpen(false)}
+        onProceedToDispatch={(cartItems) => {
+          setCartModalOpen(false);
+          setCartCheckoutItems(cartItems);
+        }}
+      />
+
+      {/* Checkout Dispatch Modal (Triggered from Cart) */}
+      {cartCheckoutItems && (
+        <DispatchModal
+          isOpen={true}
+          onClose={() => setCartCheckoutItems(null)}
+          preselectedItems={cartCheckoutItems}
         />
       )}
 
