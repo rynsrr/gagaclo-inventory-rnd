@@ -84,7 +84,7 @@ export function PpicPerformanceView() {
     localStorage.setItem('gagaclo_daily_target_pcs', num.toString());
     setIsEditingTarget(false);
     if (showNotification) {
-      showNotification(`Target input harian berhasil disetel ke ${num} PCS oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
+      showNotification(`Target team berhasil disetel ke ${num} PCS oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
     }
   };
 
@@ -342,16 +342,21 @@ export function PpicPerformanceView() {
         </div>
       </div>
 
-      {/* Target Harian Tim (Full Width di Bagian Atas) */}
+      {/* Target Team (Full Width di Bagian Atas) */}
       <div className="p-4 sm:p-5 bg-gradient-to-r from-indigo-50/90 via-purple-50/60 to-blue-50/70 rounded-2xl border border-indigo-200/90 shadow-2xs space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
               <Target className="w-4 h-4" />
             </div>
-            <span className="text-xs font-black text-indigo-950 uppercase tracking-wider">
-              TARGET HARIAN
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-indigo-950 uppercase tracking-wider">
+                TARGET TEAM
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                Akumulasi Tim R&D
+              </span>
+            </div>
           </div>
 
           {isMgr && !isEditingTarget && (
@@ -362,7 +367,7 @@ export function PpicPerformanceView() {
                 setIsEditingTarget(true);
               }}
               className="text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200 flex items-center gap-1.5 shadow-2xs cursor-pointer transition"
-              title="Ubah Target Harian Tim (Wewenang Manager)"
+              title="Ubah Target Team (Wewenang Manager)"
             >
               <Edit2 className="w-3.5 h-3.5" />
               <span>Ubah</span>
@@ -372,7 +377,7 @@ export function PpicPerformanceView() {
 
         {isEditingTarget ? (
           <form onSubmit={handleSaveTarget} className="flex flex-wrap items-center gap-2 pt-1 pb-1">
-            <span className="text-xs font-bold text-indigo-900">Set Target Baru:</span>
+            <span className="text-xs font-bold text-indigo-900">Set Target Team Baru:</span>
             <input
               type="number"
               min="1"
@@ -432,7 +437,7 @@ export function PpicPerformanceView() {
           <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
             <span>
               {currentDailyData.totalPcs >= dailyTarget
-                ? `🎉 Target input tercapai! (${currentDailyData.totalItems} transaksi sampel)`
+                ? `🎉 Target team tercapai! (${currentDailyData.totalItems} transaksi sampel)`
                 : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS lagi (${currentDailyData.totalItems} transaksi sampel)`}
             </span>
             <span className="text-indigo-600 font-medium">Oleh Mgr. Jasmine</span>
