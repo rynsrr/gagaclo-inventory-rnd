@@ -407,33 +407,17 @@ export function PpicPerformanceView() {
           <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
             <span>
               {currentDailyData.totalPcs >= dailyTarget
-                ? '🎉 Luar biasa! Target input harian telah tercapai (100%+)'
-                : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS`}
+                ? `🎉 Target input tercapai! (${currentDailyData.totalItems} transaksi sampel)`
+                : `Sisa ${Math.max(0, dailyTarget - currentDailyData.totalPcs)} PCS lagi (${currentDailyData.totalItems} transaksi sampel)`}
             </span>
             <span className="text-indigo-600 font-medium">Oleh Mgr. Jasmine</span>
           </div>
         </div>
       </div>
 
-      {/* Ringkasan 3 Metrik Hari Terpilih */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Card 1: Total PCS Disimpan */}
-        <div className="p-4 bg-gradient-to-br from-emerald-50/80 to-emerald-100/40 rounded-2xl border border-emerald-200/80 flex flex-col justify-between">
-          <div>
-            <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-              Total PCS Disimpan
-            </div>
-            <div className="mt-1 text-2xl font-black text-emerald-950 tabular-nums">
-              {currentDailyData.totalPcs.toLocaleString('id-ID')}{' '}
-              <span className="text-sm font-semibold text-emerald-700">PCS</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-emerald-700">
-            Dari {currentDailyData.totalItems} transaksi di 8 anggota tim
-          </div>
-        </div>
-
-        {/* Card 2: Kontributor Teraktif */}
+      {/* Ringkasan 2 Metrik Pendukung */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Card 1: Kontributor Teraktif */}
         <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between">
           <div>
             <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">
@@ -454,10 +438,10 @@ export function PpicPerformanceView() {
               })()}
             </div>
           </div>
-          <div className="mt-2 text-xs text-blue-700">Jumlah input terbanyak tanggal ini</div>
+          <div className="mt-2 text-xs text-blue-700">Jumlah input terbanyak pada tanggal ini</div>
         </div>
 
-        {/* Card 3: Riwayat Hari Tercatat */}
+        {/* Card 2: Riwayat Hari Tercatat */}
         <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-2xl border border-slate-200/80 flex flex-col justify-between">
           <div>
             <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
