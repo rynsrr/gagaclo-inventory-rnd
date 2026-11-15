@@ -110,7 +110,33 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in font-apple">
-      <div className="relative w-full max-w-6xl bg-white rounded-[26px] shadow-2xl border border-black/[0.08] overflow-hidden flex flex-col max-h-[96vh]">
+      {/* Explicit A4 Landscape Print Directives */}
+      <style>{`
+        @page {
+          size: A4 landscape !important;
+          margin: 6mm 8mm !important;
+        }
+        @media print {
+          html, body {
+            width: 297mm !important;
+            height: 210mm !important;
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .dispatch-invoice-sheet {
+            width: 100% !important;
+            max-width: none !important;
+            min-height: auto !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+        }
+      `}</style>
+
+      <div className="relative w-[98vw] max-w-[1280px] bg-white rounded-[26px] shadow-2xl border border-black/[0.08] overflow-hidden flex flex-col max-h-[96vh]">
         {/* ================================================================= */}
         {/* HEADER TOOLBAR (Screen Only - Hidden in Print)                    */}
         {/* ================================================================= */}
@@ -375,7 +401,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
             /* =============================================================== */
             /* FORMAT 1: INVOICE & PACKING LIST (EXACT IMAGE 2 PDF LAYOUT)     */
             /* =============================================================== */
-            <div className="dispatch-invoice-sheet w-full max-w-5xl bg-white text-black p-6 sm:p-8 shadow-sm border border-slate-300 print:shadow-none print:border-none print:p-0 font-sans text-xs">
+            <div className="dispatch-invoice-sheet w-[280mm] max-w-full min-h-[195mm] bg-white text-black p-5 sm:p-7 shadow-md border border-slate-300 print:shadow-none print:border-none print:p-0 font-sans text-xs">
               {/* Outer Border Box */}
               <div className="border border-black">
                 {/* Header 1: Company Info */}

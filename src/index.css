@@ -56,6 +56,11 @@
     page: dispatch-invoice;
   }
 
+  body:has(.dispatch-invoice-sheet) {
+    width: 297mm !important;
+    height: 210mm !important;
+  }
+
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
