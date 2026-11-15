@@ -264,7 +264,8 @@ export const Warehouse3DView = ({
     sceneRef.current = scene;
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.5, 200);
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.5, 500);
+    camera.position.set(-80.0, 42.2, -77.3);
     cameraRef.current = camera;
 
     // Renderer with multi-tier resilient WebGL check
@@ -311,7 +312,7 @@ export const Warehouse3DView = ({
     controls.maxPolarAngle = Math.PI / 2.05; // Keep camera above ground level
     controls.minDistance = 4;
     controls.maxDistance = 240;
-    controls.target.set(10, 2, 0);
+    controls.target.set(-25.1, 1.5, -34.4);
     controls.addEventListener('start', () => {
       isUserInteractingRef.current = true;
       flyCameraTargetRef.current = null;
@@ -926,14 +927,11 @@ export const Warehouse3DView = ({
       camera.far = Math.max(450, distance * 4);
       camera.updateProjectionMatrix();
 
+      const lookTarget = isAll ? new THREE.Vector3(-25.1, 1.5, -34.4) : center.clone();
       let targetPos;
       if (isAll) {
-        // Default fit view: Sudut pandang isometrik arsitektural ideal membingkai seluruh denah & 5 rak
-        targetPos = new THREE.Vector3(
-          center.x - 82,
-          63,
-          center.z - 64
-        );
+        // Sudut pandang default persis referensi visual pengguna (overview denah arsitektur & seluruh rak)
+        targetPos = new THREE.Vector3(-80.0, 42.2, -77.3);
       } else {
         const curRackId = Number(activeRackRef.current);
         if (curRackId === 1) {
@@ -948,10 +946,10 @@ export const Warehouse3DView = ({
       }
 
       if (smooth) {
-        flyControlsTargetRef.current = center.clone();
+        flyControlsTargetRef.current = lookTarget.clone();
         flyCameraTargetRef.current = targetPos;
       } else {
-        controls.target.copy(center);
+        controls.target.copy(lookTarget);
         camera.position.copy(targetPos);
         controls.update();
       }
