@@ -104,8 +104,10 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
   const [fromLocation, setFromLocation] = useState('SEMARANG, INDONESIA');
   const [orderNo, setOrderNo] = useState(() => defaultOrderNo);
   const [paymentBy, setPaymentBy] = useState('FREIGHT COLLECT (RECEIVER PAY)');
-  const [shipmentBy, setShipmentBy] = useState('COURIER / AIR FREIGHT');
-  const [invoiceValue, setInvoiceValue] = useState('SAMPLES OF NO COMMERCIAL VALUE');
+  const [courierName, setCourierName] = useState('DHL');
+  const [courierAccount, setCourierAccount] = useState('968 123 456');
+  const [shipmentBy, setShipmentBy] = useState('DHL');
+  const [invoiceValue, setInvoiceValue] = useState('USD 1.00');
 
   useEffect(() => {
     if (firstDispatch?.invoiceNo) {
@@ -149,6 +151,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     }
     if (!email.trim()) {
       alert('Wajib mengisi ATTN Email sebelum mencetak invoice.');
+      return;
+    }
+    if (!courierName.trim()) {
+      alert('Wajib mengisi Nama Kurir sebelum mencetak invoice.');
+      return;
+    }
+    if (!courierAccount.trim()) {
+      alert('Wajib mengisi Account No kurir sebelum mencetak invoice.');
       return;
     }
     window.print();
@@ -442,12 +452,25 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">Shipment By</label>
+                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">Kurir</label>
                 <input
                   type="text"
-                  value={shipmentBy}
-                  onChange={(e) => setShipmentBy(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs text-[#1d1d1f]"
+                  list="manifest-courier-options"
+                  value={courierName}
+                  onChange={(e) => {
+                    setCourierName(e.target.value.toUpperCase());
+                    setShipmentBy(e.target.value.toUpperCase());
+                  }}
+                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs font-semibold text-[#1d1d1f]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">Account No</label>
+                <input
+                  type="text"
+                  value={courierAccount}
+                  onChange={(e) => setCourierAccount(e.target.value.toUpperCase())}
+                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs font-semibold text-[#1d1d1f]"
                 />
               </div>
               <div>
@@ -456,7 +479,8 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                   type="text"
                   value={invoiceValue}
                   onChange={(e) => setInvoiceValue(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs text-[#1d1d1f]"
+                  placeholder="USD 1.00"
+                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs font-semibold text-[#1d1d1f]"
                 />
               </div>
               <div>
@@ -743,17 +767,62 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
                           <div className="flex items-center justify-between">
-                            <span>SHIPMENT BY</span>
+                            <span className="flex items-center">
+                              SHIPMENT BY
+                              <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                            </span>
                             <span>:</span>
                           </div>
                         </td>
                         <td className="p-0 text-left">
-                          <input
-                            type="text"
-                            value={shipmentBy}
-                            onChange={(e) => setShipmentBy(e.target.value.toUpperCase())}
-                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                          />
+                          {/* Screen: Dua input terpisah dalam satu baris (Nama Kurir & Account No) */}
+                          <div className="flex items-center w-full h-full divide-x divide-black no-print">
+                            {/* Nama Kurir (Wajib) */}
+                            <div className="w-[40%] min-w-0 h-full">
+                              <input
+                                type="text"
+                                list="manifest-courier-options"
+                                value={courierName}
+                                onChange={(e) => {
+                                  setCourierName(e.target.value.toUpperCase());
+                                  setShipmentBy(e.target.value.toUpperCase());
+                                }}
+                                placeholder="NAMA KURIR (DHL / FEDEX / UPS) *"
+                                required
+                                className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                  !courierName.trim() ? 'placeholder:text-rose-400' : ''
+                                }`}
+                                title="Nama Kurir Pengiriman (Wajib diisi)"
+                              />
+                              <datalist id="manifest-courier-options">
+                                <option value="DHL" />
+                                <option value="FEDEX" />
+                                <option value="UPS" />
+                                <option value="SF EXPRESS" />
+                                <option value="TNT" />
+                                <option value="COURIER / AIR FREIGHT" />
+                              </datalist>
+                            </div>
+                            {/* Account No (Wajib) */}
+                            <div className="w-[60%] min-w-0 h-full">
+                              <input
+                                type="text"
+                                value={courierAccount}
+                                onChange={(e) => setCourierAccount(e.target.value.toUpperCase())}
+                                placeholder="ACCOUNT NO (WAJIB) *"
+                                required
+                                className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                  !courierAccount.trim() ? 'placeholder:text-rose-400' : ''
+                                }`}
+                                title="Nomor Akun Kurir (Wajib diisi)"
+                              />
+                            </div>
+                          </div>
+                          {/* Print: Teks resmi cetak */}
+                          <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
+                            <span>{courierName}</span>
+                            {courierAccount && <span className="ml-4 font-mono">ACC NO: {courierAccount}</span>}
+                          </div>
                         </td>
                       </tr>
                       <tr className="border-b border-black">
@@ -768,7 +837,9 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             type="text"
                             value={invoiceValue}
                             onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
+                            placeholder="USD 1.00"
                             className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
+                            title="Nilai Invoice dalam mata uang USD"
                           />
                         </td>
                       </tr>

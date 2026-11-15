@@ -161,6 +161,8 @@ export function parseSendingInfoText(text) {
   let attn = '';
   let email = '';
   let tel = '';
+  let courier = '';
+  let accountNo = '';
 
   for (const line of lines) {
     // Check for Email
@@ -183,6 +185,18 @@ export function parseSendingInfoText(text) {
     if (addrMatch) {
       address = addrMatch[1].trim();
     }
+    // Check for Courier
+    if (/DHL/i.test(line)) courier = 'DHL';
+    else if (/FEDEX/i.test(line)) courier = 'FEDEX';
+    else if (/UPS/i.test(line)) courier = 'UPS';
+    else if (/SF\s*EXPRESS/i.test(line)) courier = 'SF EXPRESS';
+    else if (/TNT/i.test(line)) courier = 'TNT';
+
+    // Check for Account No
+    const accMatch = line.match(/(?:A\/C|ACC(?:OUNT)?(?:\s*NO\.?)?)\s*:\s*([^\n|;]+)/i);
+    if (accMatch) {
+      accountNo = accMatch[1].trim();
+    }
   }
 
   // If address wasn't prefixed with "Address:", take line 2 if available
@@ -198,5 +212,5 @@ export function parseSendingInfoText(text) {
     name = name.replace(/^BUYER:\s*/i, '').trim();
   }
 
-  return { name, address, attn, email, tel };
+  return { name, address, attn, email, tel, courier, accountNo };
 }

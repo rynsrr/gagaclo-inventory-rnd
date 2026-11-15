@@ -74,8 +74,10 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   const [shippingDate, setShippingDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [fromLocation, setFromLocation] = useState('SEMARANG, INDONESIA');
   const [paymentBy, setPaymentBy] = useState('FREIGHT COLLECT (RECEIVER PAY)');
-  const [shipmentBy, setShipmentBy] = useState('COURIER / AIR FREIGHT');
-  const [invoiceValue, setInvoiceValue] = useState('SAMPLES OF NO COMMERCIAL VALUE');
+  const [courierName, setCourierName] = useState('DHL');
+  const [courierAccount, setCourierAccount] = useState('968 123 456');
+  const [shipmentBy, setShipmentBy] = useState('DHL');
+  const [invoiceValue, setInvoiceValue] = useState('USD 1.00');
 
   // Interactive Item Rows in the 12-Column Table
   const [itemRows, setItemRows] = useState(() => {
@@ -191,6 +193,8 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     if (parsed.attn) setAttn(parsed.attn);
     if (parsed.email) setEmail(parsed.email);
     if (parsed.tel) setTel(parsed.tel);
+    if (parsed.courier) setCourierName(parsed.courier);
+    if (parsed.accountNo) setCourierAccount(parsed.accountNo);
   };
 
   // Preset buyer selector helper
@@ -206,6 +210,8 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
       a = 'WAN LIN';
       em = 'wanlin@flink.com';
       t = '+41 81 511 23 20';
+      setCourierName('DHL');
+      setCourierAccount('968 123 456');
     } else {
       addr = `Industrial Park Zone, Destination ${name}`;
       if (attn === 'WAN LIN') a = 'Receiving Dept / Sample Review';
@@ -254,6 +260,16 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
     if (!email.trim()) {
       setError('Wajib mengisi ATTN Email pada invoice.');
+      return;
+    }
+
+    if (!courierName.trim()) {
+      setError('Wajib mengisi Nama Kurir (misal DHL, FEDEX, UPS) pada baris Shipment By.');
+      return;
+    }
+
+    if (!courierAccount.trim()) {
+      setError('Wajib mengisi Account No kurir pada baris Shipment By.');
       return;
     }
 
@@ -742,17 +758,66 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                     <tr className="border-b border-black">
                       <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
                         <div className="flex items-center justify-between">
-                          <span>SHIPMENT BY</span>
+                          <span className="flex items-center">
+                            SHIPMENT BY
+                            <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                          </span>
                           <span>:</span>
                         </div>
                       </td>
                       <td className="p-0 text-left">
-                        <input
-                          type="text"
-                          value={shipmentBy}
-                          onChange={(e) => setShipmentBy(e.target.value.toUpperCase())}
-                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                        />
+                        {/* Screen: Dua input terpisah dalam satu baris (Nama Kurir & Account No) */}
+                        <div className="flex items-center w-full h-full divide-x divide-black no-print">
+                          {/* Nama Kurir (Wajib) */}
+                          <div className="w-[40%] min-w-0 h-full">
+                            <input
+                              type="text"
+                              list="courier-list-options"
+                              value={courierName}
+                              onChange={(e) => {
+                                setCourierName(e.target.value.toUpperCase());
+                                setShipmentBy(e.target.value.toUpperCase());
+                                if (error) setError(null);
+                              }}
+                              placeholder="NAMA KURIR (DHL / FEDEX / UPS) *"
+                              required
+                              className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                !courierName.trim() ? 'placeholder:text-rose-400' : ''
+                              }`}
+                              title="Nama Kurir Pengiriman (Wajib diisi)"
+                            />
+                            <datalist id="courier-list-options">
+                              <option value="DHL" />
+                              <option value="FEDEX" />
+                              <option value="UPS" />
+                              <option value="SF EXPRESS" />
+                              <option value="TNT" />
+                              <option value="COURIER / AIR FREIGHT" />
+                            </datalist>
+                          </div>
+                          {/* Account No (Wajib) */}
+                          <div className="w-[60%] min-w-0 h-full">
+                            <input
+                              type="text"
+                              value={courierAccount}
+                              onChange={(e) => {
+                                setCourierAccount(e.target.value.toUpperCase());
+                                if (error) setError(null);
+                              }}
+                              placeholder="ACCOUNT NO (WAJIB) *"
+                              required
+                              className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                !courierAccount.trim() ? 'placeholder:text-rose-400' : ''
+                              }`}
+                              title="Nomor Akun Kurir (Wajib diisi)"
+                            />
+                          </div>
+                        </div>
+                        {/* Print: Teks resmi cetak */}
+                        <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
+                          <span>{courierName}</span>
+                          {courierAccount && <span className="ml-4 font-mono">ACC NO: {courierAccount}</span>}
+                        </div>
                       </td>
                     </tr>
                     <tr className="border-b border-black">
@@ -767,7 +832,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           type="text"
                           value={invoiceValue}
                           onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
+                          placeholder="USD 1.00"
                           className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
+                          title="Nilai Invoice dalam mata uang USD"
                         />
                       </td>
                     </tr>
