@@ -61,6 +61,7 @@ import {
   Settings,
   ChevronDown,
   FileSpreadsheet,
+  Upload,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -92,6 +93,7 @@ const AppContent = () => {
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const settingsRef = useRef(null);
   const [cartCheckoutItems, setCartCheckoutItems] = useState(null);
   const [celebrationAchiever, setCelebrationAchiever] = useState(null);
@@ -162,39 +164,34 @@ const AppContent = () => {
       id: '3d-warehouse',
       label: 'BOX',
       subtitle: 'Rak & box 3D',
-      icon: BoxIcon,
       count: boxes.length,
       primary: true,
     },
     {
       id: 'summary',
-      label: 'Ringkasan',
+      label: 'RINGKASAN',
       subtitle: 'Semua barang',
-      icon: LayoutDashboard,
       count: items.length,
       primary: false,
     },
     {
       id: 'dispatch',
-      label: 'Kirim Keluar',
+      label: 'KIRIM KELUAR',
       subtitle: 'Buyer, ANZO QC/TW/CHINA, RDTW, RDC',
-      icon: Send,
       count: null,
       primary: false,
     },
     {
       id: 'ppic-performance',
-      label: 'Rekap Harian',
+      label: 'REKAP HARIAN',
       subtitle: 'Penyimpanan per hari',
-      icon: Calendar,
       count: null,
       primary: false,
     },
     {
       id: 'issues',
-      label: 'Isu & Usulan',
+      label: 'ISU & USULAN',
       subtitle: 'Laporan & ide tim',
-      icon: MessageSquarePlus,
       count: activeIssuesCount > 0 ? activeIssuesCount : null,
       primary: false,
     },
@@ -226,7 +223,6 @@ const AppContent = () => {
             {/* Top Navigation Tabs */}
             <nav className="flex items-center gap-1.5 mx-1 sm:mx-3 overflow-x-auto scrollbar-none" aria-label="Menu navigasi utama">
               {mainTabs.map((tab) => {
-                const Icon = tab.icon;
                 const isActive = appMode === tab.id;
                 return (
                   <button
@@ -234,17 +230,16 @@ const AppContent = () => {
                     type="button"
                     onClick={() => setAppMode(tab.id)}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
                       isActive
                         ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                         : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300'
                     }`}
                     title={tab.subtitle}
                   >
-                    <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} aria-hidden="true" />
                     <span>{tab.label}</span>
                     {tab.count !== null && tab.count !== undefined && (
-                      <span className={`text-xs px-2 py-0.5 rounded-md font-bold tabular-nums ${
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-bold tabular-nums ${
                         isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
                       }`}>
                         {tab.count}
@@ -279,8 +274,6 @@ const AppContent = () => {
                 <Database className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>{connected ? usageLabel : 'Cloud Terhubung'}</span>
               </div>
-
-              <InventoryImport />
 
               {/* Keranjang Pengiriman (Marketplace Model) */}
               <button
@@ -390,6 +383,21 @@ const AppContent = () => {
                               <span className="text-[10px] text-emerald-400 opacity-60 group-hover:opacity-100 transition">↗</span>
                             </div>
                             <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Auto-backup, snapshot &amp; restore</div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsImportModalOpen(true);
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
+                          >
+                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center justify-between">
+                              <span>Impor Excel (.xlsx)</span>
+                              <Upload className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Unggah file data excel baru</div>
                           </button>
 
                           <button
@@ -522,6 +530,14 @@ const AppContent = () => {
             onClose={() => setIsBackupModalOpen(false)}
           />
         </Suspense>
+      )}
+
+      {/* Impor Excel Spreadsheet Modal */}
+      {isImportModalOpen && (
+        <InventoryImport
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+        />
       )}
 
       {/* Keranjang Pengiriman (Marketplace Model) */}
