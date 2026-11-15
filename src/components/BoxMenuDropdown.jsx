@@ -55,7 +55,7 @@ export const BoxMenuDropdown = ({
 
   return (
     <div
-      className="absolute left-0 mt-2.5 w-[330px] sm:w-[640px] max-w-[94vw] max-h-[82vh] overflow-y-auto bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal"
+      className="absolute left-0 mt-2.5 w-[330px] sm:w-[780px] md:w-[860px] lg:w-[940px] max-w-[96vw] max-h-[85vh] overflow-y-auto bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal"
       style={{ whiteSpace: 'normal' }}
     >
       {/* Popover Header */}

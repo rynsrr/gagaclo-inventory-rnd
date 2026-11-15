@@ -71,14 +71,14 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact 
       </div>
 
       {/* Inline Summary Chips (Apple Capsule Style) */}
-      <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none text-xs">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 py-1 text-xs">
         <span className="text-xs font-semibold text-[#86868b] shrink-0">Pilih PIC:</span>
         {picStats.map((pic) => (
           <button
             key={pic.id}
             type="button"
             onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-all duration-150 cursor-pointer shrink-0 select-none ${
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border text-xs font-medium transition-all duration-150 cursor-pointer shrink-0 select-none ${
               activePic === pic.name
                 ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
                 : 'bg-black/[0.03] hover:bg-black/[0.06] border-black/[0.06] text-[#1d1d1f]'
