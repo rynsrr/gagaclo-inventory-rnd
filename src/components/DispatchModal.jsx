@@ -12,11 +12,13 @@ import {
   Check,
   FileSpreadsheet,
   Download,
+  Plus,
+  Trash2,
 } from 'lucide-react';
-import { DISPATCH_DESTINATIONS, parseSendingInfoText, exportInvoiceToExcel } from '../utils/dispatchUtils';
+import { DISPATCH_DESTINATIONS, parseSendingInfoText, exportInvoiceToExcel, encodeDispatchTags } from '../utils/dispatchUtils';
 
 export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) {
-  const { dispatchItem, currentUser, suggestions, items: allItems, clearDispatchCart } = useInventory();
+  const { dispatchItem, currentUser, suggestions, items: allItems, clearDispatchCart, addItem } = useInventory();
 
   // If single item or multiple items from cart
   const itemsToDispatch = useMemo(() => {
@@ -49,37 +51,26 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     if (singleItem?.buyerNo && singleItem.buyerNo !== 'NA' && singleItem.buyerNo !== '-') {
       return String(singleItem.buyerNo).trim().toUpperCase();
     }
-    return 'FLINK PRODUCTION GMBH';
+    return '';
   });
 
-  const [consigneeAddress, setConsigneeAddress] = useState(
-    'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND'
-  );
-  const [attn, setAttn] = useState('WAN LIN');
-  const [email, setEmail] = useState('wanlin@flink.com');
-  const [tel, setTel] = useState('+41 81 511 23 20');
-  const [sendingInfoText, setSendingInfoText] = useState(() => {
-    const name = singleItem?.buyerNo && singleItem.buyerNo !== 'NA' && singleItem.buyerNo !== '-'
-      ? String(singleItem.buyerNo).trim().toUpperCase()
-      : 'FLINK PRODUCTION GMBH';
-    return [
-      name,
-      'Address: OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND',
-      'ATTN: WAN LIN          EMAIL: wanlin@flink.com          TEL: +41 81 511 23 20',
-    ].join('\n');
-  });
+  const [consigneeAddress, setConsigneeAddress] = useState('');
+  const [attn, setAttn] = useState('');
+  const [email, setEmail] = useState('');
+  const [tel, setTel] = useState('');
+  const [sendingInfoText, setSendingInfoText] = useState('');
 
-  const [midCode, setMidCode] = useState('IDGAGTAMBSEM');
+  const midCode = 'IDGAGTAMBSEM';
   const [invoiceNo, setInvoiceNo] = useState('');
 
   const [docDate, setDocDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [shippingDate, setShippingDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [fromLocation, setFromLocation] = useState('SEMARANG, INDONESIA');
-  const [paymentBy, setPaymentBy] = useState('FREIGHT COLLECT (RECEIVER PAY)');
-  const [courierName, setCourierName] = useState('DHL');
-  const [courierAccount, setCourierAccount] = useState('968 123 456');
-  const [shipmentBy, setShipmentBy] = useState('DHL');
-  const [invoiceValue, setInvoiceValue] = useState('USD');
+  const fromLocation = 'SEMARANG, INDONESIA';
+  const [paymentBy, setPaymentBy] = useState('');
+  const [courierName, setCourierName] = useState('');
+  const [courierAccount, setCourierAccount] = useState('');
+  const [shipmentBy, setShipmentBy] = useState('');
+  const invoiceValue = 'USD';
 
   // Interactive Item Rows in the 12-Column Table
   const [itemRows, setItemRows] = useState(() => {
@@ -210,7 +201,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
       if (Number.isNaN(parsed)) {
         next[idx] = { ...next[idx], qty: 1 };
       } else {
-        const capped = Math.max(1, Math.min(parsed, next[idx].maxQty));
+        const capped = Math.max(1, Math.min(parsed, next[idx].maxQty || 9999));
         next[idx] = { ...next[idx], qty: capped };
       }
       return next;
@@ -223,6 +214,35 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
       next[idx] = { ...next[idx], [field]: value };
       return next;
     });
+  };
+
+  const handleAddManualRow = () => {
+    setItemRows((prev) => [
+      ...prev,
+      {
+        id: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        isManual: true,
+        hsCode: '',
+        kode: '-',
+        orderName: consigneeName ? `${consigneeName}` : 'RSD-MANUAL',
+        detail: 'SAMPLE',
+        style: '',
+        color: 'Multi Color',
+        size: 'ONE SIZE',
+        qty: 1,
+        maxQty: 9999,
+        unit: 'PCS',
+        unitPrice: 1.0,
+      },
+    ]);
+  };
+
+  const handleRemoveRow = (idx) => {
+    if (itemRows.length <= 1) {
+      setError('Invoice harus memiliki minimal 1 baris item.');
+      return;
+    }
+    setItemRows((prev) => prev.filter((_, i) => i !== idx));
   };
 
   // Handler for free-form multi-line sending info paste / edit
@@ -243,40 +263,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   const handleSelectBuyer = (name) => {
     setDestinationId('BUYER');
     setConsigneeName(name);
-    let addr = '';
-    let a = attn;
-    let em = email;
-    let t = tel;
-    if (name.toUpperCase().includes('FLINK')) {
-      addr = 'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND';
-      a = 'WAN LIN';
-      em = 'wanlin@flink.com';
-      t = '+41 81 511 23 20';
-      setCourierName('DHL');
-      setCourierAccount('968 123 456');
-    } else {
-      addr = `Industrial Park Zone, Destination ${name}`;
-      if (attn === 'WAN LIN') a = 'Receiving Dept / Sample Review';
-      if (email === 'wanlin@flink.com') em = 'sample@buyer.com';
-      if (tel === '+41 81 511 23 20') t = '-';
-    }
-    setConsigneeAddress(addr);
-    setAttn(a);
-    setEmail(em);
-    setTel(t);
-    setSendingInfoText([
-      name,
-      `Address: ${addr}`,
-      `ATTN: ${a}          EMAIL: ${em}          TEL: ${t}`,
-    ].join('\n'));
   };
 
   const handleSelectChannel = (channel) => {
     setDestinationId(channel.id);
     if (channel.id !== 'BUYER') {
       setConsigneeName(channel.label);
-      setConsigneeAddress(`Divisi ${channel.label}, Head Office / QC Center`);
-      setAttn(`PIC ${channel.label}`);
     }
   };
 
@@ -335,8 +327,13 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
       return;
     }
 
+    if (!paymentBy.trim()) {
+      setError('Wajib memilih PAYMENT BY (FREIGHT COLLECT atau SHIPPER PAY).');
+      return;
+    }
+
     if (!courierName.trim()) {
-      setError('Wajib mengisi Nama Kurir (misal DHL, FEDEX, UPS) pada baris Shipment By.');
+      setError('Wajib memilih Nama Kurir (Express / Economy) pada baris Shipment By.');
       return;
     }
 
@@ -381,19 +378,69 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
       const finalInvoiceNo = invoiceNo.trim();
       for (const row of itemRows) {
-        await dispatchItem(row.originalItem, {
-          destinationId,
-          destinationLabel: destLabel,
-          buyerName: consigneeName.trim(),
-          type: dispatchType,
-          date: shippingDate,
-          qty: row.qty,
-          recipient: attn.trim(),
-          invoiceNo: finalInvoiceNo,
-          notes: finalInvoiceNo
-            ? `Invoice: ${finalInvoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`
-            : `Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
-        });
+        if (row.originalItem) {
+          await dispatchItem(row.originalItem, {
+            destinationId,
+            destinationLabel: destLabel,
+            buyerName: consigneeName.trim(),
+            type: dispatchType,
+            date: shippingDate,
+            qty: row.qty,
+            recipient: attn.trim(),
+            invoiceNo: finalInvoiceNo,
+            notes: finalInvoiceNo
+              ? `Invoice: ${finalInvoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`
+              : `Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
+          });
+        } else {
+          // Manual item dispatch record
+          const manualItemId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+          const isPermanent = dispatchType === 'PERMANENT';
+          const statusText = `Dispatched: ${destLabel} (${isPermanent ? 'Permanen' : 'Review'})`;
+          const dispatchTags = encodeDispatchTags({
+            destinationId,
+            destinationLabel: destLabel,
+            type: dispatchType,
+            date: shippingDate,
+            originBox: 0,
+            pic: currentUser?.name || 'R&D Staff',
+            recipient: attn.trim(),
+            notes: finalInvoiceNo
+              ? `Invoice: ${finalInvoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`
+              : `Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
+            buyerName: consigneeName.trim(),
+            invoiceNo: finalInvoiceNo,
+          }, []);
+
+          const dispatchedRecord = {
+            id: manualItemId,
+            kode: row.kode || 'MANUAL',
+            sampleNo: row.orderName || 'MANUAL',
+            buyerNo: consigneeName.trim() || 'BUYER',
+            category: row.detail || 'SAMPLE',
+            tipe: row.detail || 'SAMPLE',
+            style: row.style || 'MANUAL ITEM',
+            name: row.style || 'MANUAL ITEM',
+            deskripsi: row.style || 'MANUAL ITEM',
+            color: row.color || 'Multi Color',
+            warna: row.color || 'Multi Color',
+            size: row.size || 'ONE SIZE',
+            ukuran: row.size || 'ONE SIZE',
+            jumlah: row.qty,
+            qty: row.qty,
+            satuan: row.unit || 'PCS',
+            boxNumber: 0,
+            rackName: 'DISPATCH',
+            picName: currentUser?.name || 'R&D Staff',
+            hsCode: row.hsCode || '-',
+            status: statusText,
+            tags: dispatchTags,
+            place: `DIKIRIM: ${destLabel} (${isPermanent ? 'Permanen' : 'Review'}) • Item Manual`,
+          };
+          if (addItem) {
+            await addItem(dispatchedRecord);
+          }
+        }
       }
 
       clearDispatchCart();
@@ -647,14 +694,8 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="p-0 text-left">
-                        <input
-                          type="text"
-                          value={midCode}
-                          onChange={(e) => setMidCode(e.target.value.toUpperCase())}
-                          placeholder="IDGAGTAMBSEM"
-                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                        />
+                      <td className="py-1 px-3 text-left font-bold text-[10.5px] uppercase tracking-tight select-all">
+                        {midCode}
                       </td>
                     </tr>
                     <tr className="border-b border-black">
@@ -827,24 +868,34 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                     <tr className="border-b border-black">
                       <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
                         <div className="flex items-center justify-between">
-                          <span>PAYMENT BY</span>
+                          <span className="flex items-center">
+                            PAYMENT BY
+                            <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                          </span>
                           <span>:</span>
                         </div>
                       </td>
                       <td className="p-0 text-left">
-                        {/* Screen: Dropdown 2 Opsi */}
+                        {/* Screen: Dropdown Opsi */}
                         <select
                           value={paymentBy}
-                          onChange={(e) => setPaymentBy(e.target.value)}
-                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:hidden tracking-tight cursor-pointer transition-colors"
-                          title="Pilih Payment By (Freight Collect atau Shipper Pay)"
+                          onChange={(e) => {
+                            setPaymentBy(e.target.value);
+                            if (error) setError(null);
+                          }}
+                          required
+                          className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:hidden tracking-tight cursor-pointer transition-colors ${
+                            !paymentBy ? 'text-neutral-400 font-normal' : 'text-neutral-900 font-bold'
+                          }`}
+                          title="Pilih Payment By (Freight Collect atau Shipper Pay) - Wajib"
                         >
-                          <option value="FREIGHT COLLECT (RECEIVER PAY)">FREIGHT COLLECT (RECEIVER PAY)</option>
-                          <option value="SHIPPER PAY">SHIPPER PAY</option>
+                          <option value="" disabled className="text-neutral-400">-- PILIH PAYMENT BY (WAJIB) --</option>
+                          <option value="FREIGHT COLLECT (RECEIVER PAY)" className="text-neutral-900">FREIGHT COLLECT (RECEIVER PAY)</option>
+                          <option value="SHIPPER PAY" className="text-neutral-900">SHIPPER PAY</option>
                         </select>
                         {/* Print: Teks resmi cetak */}
                         <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
-                          {paymentBy}
+                          {paymentBy || '-'}
                         </div>
                       </td>
                     </tr>
@@ -861,35 +912,50 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       <td className="p-0 text-left">
                         {/* Screen: Dua input terpisah dalam satu baris (Nama Kurir & Account No) */}
                         <div className="flex items-center w-full h-full divide-x divide-black no-print">
-                          {/* Nama Kurir (Wajib) */}
-                          <div className="w-[40%] min-w-0 h-full">
-                            <input
-                              type="text"
-                              list="courier-list-options"
+                          {/* Nama Kurir & Layanan (Wajib) */}
+                          <div className="w-[45%] min-w-0 h-full">
+                            <select
                               value={courierName}
                               onChange={(e) => {
-                                setCourierName(e.target.value.toUpperCase());
-                                setShipmentBy(e.target.value.toUpperCase());
+                                setCourierName(e.target.value);
+                                setShipmentBy(e.target.value);
                                 if (error) setError(null);
                               }}
-                              placeholder="NAMA KURIR (DHL / FEDEX / UPS) *"
                               required
-                              className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
-                                !courierName.trim() ? 'placeholder:text-rose-400' : ''
+                              className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-2 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-pointer transition-colors ${
+                                !courierName ? 'text-neutral-400 font-normal' : 'text-neutral-900 font-bold'
                               }`}
-                              title="Nama Kurir Pengiriman (Wajib diisi)"
-                            />
-                            <datalist id="courier-list-options">
-                              <option value="DHL" />
-                              <option value="FEDEX" />
-                              <option value="UPS" />
-                              <option value="SF EXPRESS" />
-                              <option value="TNT" />
-                              <option value="COURIER / AIR FREIGHT" />
-                            </datalist>
+                              title="Pilih Kurir & Layanan Pengiriman (Wajib)"
+                            >
+                              <option value="" disabled className="text-neutral-400">-- PILIH KURIR &amp; LAYANAN (WAJIB) --</option>
+                              <optgroup label="DHL">
+                                <option value="DHL EXPRESS" className="text-neutral-900">DHL EXPRESS</option>
+                                <option value="DHL ECONOMY" className="text-neutral-900">DHL ECONOMY</option>
+                              </optgroup>
+                              <optgroup label="FEDEX">
+                                <option value="FEDEX EXPRESS" className="text-neutral-900">FEDEX EXPRESS</option>
+                                <option value="FEDEX ECONOMY" className="text-neutral-900">FEDEX ECONOMY</option>
+                              </optgroup>
+                              <optgroup label="UPS">
+                                <option value="UPS EXPRESS" className="text-neutral-900">UPS EXPRESS</option>
+                                <option value="UPS ECONOMY" className="text-neutral-900">UPS ECONOMY</option>
+                              </optgroup>
+                              <optgroup label="SF EXPRESS">
+                                <option value="SF EXPRESS" className="text-neutral-900">SF EXPRESS</option>
+                                <option value="SF ECONOMY" className="text-neutral-900">SF ECONOMY</option>
+                              </optgroup>
+                              <optgroup label="TNT">
+                                <option value="TNT EXPRESS" className="text-neutral-900">TNT EXPRESS</option>
+                                <option value="TNT ECONOMY" className="text-neutral-900">TNT ECONOMY</option>
+                              </optgroup>
+                              <optgroup label="LAINNYA / AIR FREIGHT">
+                                <option value="COURIER / AIR FREIGHT EXPRESS" className="text-neutral-900">COURIER / AIR FREIGHT EXPRESS</option>
+                                <option value="COURIER / AIR FREIGHT ECONOMY" className="text-neutral-900">COURIER / AIR FREIGHT ECONOMY</option>
+                              </optgroup>
+                            </select>
                           </div>
                           {/* Account No (Wajib) */}
-                          <div className="w-[60%] min-w-0 h-full">
+                          <div className="w-[55%] min-w-0 h-full">
                             <input
                               type="text"
                               value={courierAccount}
@@ -908,7 +974,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                         </div>
                         {/* Print: Teks resmi cetak */}
                         <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
-                          <span>{courierName}</span>
+                          <span>{courierName || '-'}</span>
                           {courierAccount && <span className="ml-4 font-mono">ACC NO: {courierAccount}</span>}
                         </div>
                       </td>
@@ -920,15 +986,8 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="p-0 text-left">
-                        <input
-                          type="text"
-                          value={invoiceValue}
-                          onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
-                          placeholder="USD"
-                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                          title="Nilai Invoice dalam mata uang USD"
-                        />
+                      <td className="py-1 px-3 text-left font-bold text-[10.5px] uppercase tracking-tight select-all">
+                        {invoiceValue}
                       </td>
                     </tr>
                     <tr className="border-b border-black">
@@ -958,14 +1017,8 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="p-0 text-left">
-                        <input
-                          type="text"
-                          value={fromLocation}
-                          onChange={(e) => setFromLocation(e.target.value.toUpperCase())}
-                          placeholder="SEMARANG, INDONESIA"
-                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                        />
+                      <td className="py-1 px-3 text-left font-bold text-[10.5px] uppercase tracking-tight select-all">
+                        {fromLocation}
                       </td>
                     </tr>
                   </tbody>
@@ -973,7 +1026,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
               </div>
 
               {/* Table: 12 Columns Items List (Direct Interactive Input Grid) */}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto border-b border-black">
                 <table className="w-full text-left border-collapse text-[10px]">
                   <thead>
                     <tr className="border-b border-black font-bold text-center bg-slate-50/60 print:bg-white text-[9.5px] leading-tight">
@@ -997,10 +1050,11 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                         <div>UNIT</div>
                         <div>PRICE</div>
                       </th>
-                      <th className="py-1 px-2 w-16">
+                      <th className="py-1 px-2 w-16 border-r print:border-r-0 border-black">
                         <div>TOTAL</div>
                         <div>PRICE</div>
                       </th>
+                      <th className="py-1 px-1 w-7 text-center no-print"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1026,8 +1080,18 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           </td>
 
                           {/* 3. ITEM NO. */}
-                          <td className="py-1 px-1.5 border-r border-black font-mono font-bold text-center text-neutral-900 print:text-black">
-                            {row.kode}
+                          <td className="py-0.5 px-1.5 border-r border-black font-mono font-bold text-center text-neutral-900 print:text-black">
+                            {row.isManual ? (
+                              <input
+                                type="text"
+                                value={row.kode === '-' ? '' : row.kode}
+                                onChange={(e) => handleRowFieldChange(idx, 'kode', e.target.value.toUpperCase())}
+                                placeholder="ITEM NO"
+                                className="w-full text-center font-mono font-bold text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                              />
+                            ) : (
+                              row.kode
+                            )}
                           </td>
 
                           {/* 4. ORDER NAME */}
@@ -1086,18 +1150,28 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               <input
                                 type="number"
                                 min={1}
-                                max={row.maxQty}
+                                max={row.maxQty || 9999}
                                 value={row.qty}
                                 onChange={(e) => handleRowQtyChange(idx, e.target.value)}
                                 className="w-10 text-center font-bold font-mono text-[10.5px] bg-amber-50/80 hover:bg-amber-100 focus:bg-amber-100 print:bg-transparent border border-amber-200 print:border-none rounded-xs focus:outline-none focus:ring-1 focus:ring-amber-500 py-0.5"
-                                title={`Stok tersedia di box: ${row.maxQty} PCS`}
+                                title={row.isManual ? 'Jumlah manual' : `Stok tersedia di box: ${row.maxQty} PCS`}
                               />
                             </div>
                           </td>
 
                           {/* 10. UNIT */}
-                          <td className="py-1 px-1 border-r border-black text-center uppercase font-medium">
-                            {row.unit}
+                          <td className="py-0.5 px-1 border-r border-black text-center uppercase font-medium">
+                            {row.isManual ? (
+                              <input
+                                type="text"
+                                value={row.unit}
+                                onChange={(e) => handleRowFieldChange(idx, 'unit', e.target.value.toUpperCase())}
+                                placeholder="PCS"
+                                className="w-full text-center text-[9.5px] uppercase font-bold bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                              />
+                            ) : (
+                              row.unit
+                            )}
                           </td>
 
                           {/* 11. UNIT PRICE */}
@@ -1118,6 +1192,18 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <td className="py-1 px-2 text-right font-mono font-bold">
                             ${itemTotalPrice}
                           </td>
+
+                          {/* Row Action (Delete) - Hidden in Print */}
+                          <td className="py-0.5 px-1 text-center no-print">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveRow(idx)}
+                              className="w-5 h-5 flex items-center justify-center rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer mx-auto"
+                              title="Hapus baris ini"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -1133,9 +1219,26 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       <td className="py-1 px-2 text-right font-mono font-bold text-[10.5px]">
                         ${totalPrice}
                       </td>
+                      <td className="no-print"></td>
                     </tr>
                   </tbody>
                 </table>
+
+                {/* Add Manual Item Button Bar (Directly below table, clean, no-print) */}
+                <div className="py-1.5 px-3 bg-neutral-50/90 border-t border-black flex items-center justify-between no-print">
+                  <button
+                    type="button"
+                    onClick={handleAddManualRow}
+                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10.5px] rounded-md flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                    title="Tambah baris sampel / barang secara manual ke invoice"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Tambah Baris Manual</span>
+                  </button>
+                  <span className="text-[10px] text-neutral-500 font-medium">
+                    Tekan <span className="font-bold text-neutral-700">+ Tambah Baris Manual</span> untuk menambahkan sampel / item ekstra langsung ke invoice.
+                  </span>
+                </div>
               </div>
 
               {/* Footer Section: Weight, Packaging, and Samples Notice (Aligned with Metadata Column Ratio) */}
@@ -1168,9 +1271,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
                       {/* Right Column (71%): Dimension, NW, and GW separated by vertical dividers with centered text */}
                       <td className="w-[71%] p-0 font-bold align-middle">
-                        <div className="flex items-stretch w-full divide-x divide-black h-full">
+                        <div className="flex items-stretch w-full h-full">
                           {/* 1. Dimension (Centered, Wajib Diisi) */}
-                          <div className="flex-1 py-1.5 px-2 flex items-center justify-center gap-1.5 text-center">
+                          <div className="flex-1 py-1.5 px-2 border-r border-black flex items-center justify-center gap-1.5 text-center">
                             <span className="text-[10px] uppercase tracking-tight font-bold shrink-0">
                               {packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} :
                             </span>
@@ -1186,7 +1289,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           </div>
 
                           {/* 2. Weight NW (Centered, Wajib Diisi) */}
-                          <div className="w-[28%] py-1.5 px-2 flex items-center justify-center gap-1.5 text-center shrink-0">
+                          <div className="w-[28%] py-1.5 px-2 border-r border-black flex items-center justify-center gap-1.5 text-center shrink-0">
                             <input
                               type="text"
                               value={netWeight}

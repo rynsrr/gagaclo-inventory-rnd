@@ -8,6 +8,8 @@ import {
   User,
   FileSpreadsheet,
   Download,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { decodeDispatchData, parseSendingInfoText, exportInvoiceToExcel } from '../utils/dispatchUtils';
 
@@ -44,43 +46,18 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     );
   }, [safeItems]);
 
-  const totalPcs = useMemo(() => {
-    return safeItems.reduce((acc, it) => acc + Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1), 0);
-  }, [safeItems]);
-
   // Document format toggle: 'invoice' (PDF Standar Image 2) vs 'surat-jalan' (Internal Domestic)
   const [docFormat, setDocFormat] = useState('invoice');
   const [isEditing, setIsEditing] = useState(false);
 
   // Editable fields with smart defaults matching the PDF
-  const [consigneeName, setConsigneeName] = useState(() => defaultBuyer);
-  const [consigneeAddress, setConsigneeAddress] = useState(() => {
-    if (String(defaultBuyer).toUpperCase().includes('FLINK')) {
-      return 'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND';
-    }
-    return 'Industrial Zone, Consignee Destination Area';
-  });
-  const [attn, setAttn] = useState(() => firstDispatch?.recipient || 'WAN LIN');
-  const [email, setEmail] = useState('wanlin@flink.com');
-  const [tel, setTel] = useState(() => {
-    if (String(defaultBuyer).toUpperCase().includes('FLINK')) return '+41 81 511 23 20';
-    return '-';
-  });
+  const [consigneeName, setConsigneeName] = useState(() => defaultBuyer || '');
+  const [consigneeAddress, setConsigneeAddress] = useState('');
+  const [attn, setAttn] = useState(() => firstDispatch?.recipient || '');
+  const [email, setEmail] = useState('');
+  const [tel, setTel] = useState('');
 
-  const [sendingInfoText, setSendingInfoText] = useState(() => {
-    const name = defaultBuyer;
-    const addr = String(defaultBuyer).toUpperCase().includes('FLINK')
-      ? 'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND'
-      : 'Industrial Zone, Consignee Destination Area';
-    const a = firstDispatch?.recipient || 'WAN LIN';
-    const em = 'wanlin@flink.com';
-    const t = String(defaultBuyer).toUpperCase().includes('FLINK') ? '+41 81 511 23 20' : '-';
-    return [
-      name,
-      `Address: ${addr}`,
-      `ATTN: ${a}          EMAIL: ${em}          TEL: ${t}`,
-    ].join('\n');
-  });
+  const [sendingInfoText, setSendingInfoText] = useState('');
 
   const handleSendingInfoChange = (val) => {
     const upperVal = String(val || '').toUpperCase();
@@ -91,9 +68,11 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     if (parsed.attn) setAttn(parsed.attn);
     if (parsed.email) setEmail(parsed.email);
     if (parsed.tel) setTel(parsed.tel);
+    if (parsed.courier) setCourierName(parsed.courier);
+    if (parsed.accountNo) setCourierAccount(parsed.accountNo);
   };
 
-  const [midCode, setMidCode] = useState('IDGAGTAMBSEM');
+  const midCode = 'IDGAGTAMBSEM';
   const defaultInvoiceNo = useMemo(() => {
     if (initialConfig?.invoiceNo) return initialConfig.invoiceNo;
     if (firstDispatch?.invoiceNo) return firstDispatch.invoiceNo;
@@ -103,13 +82,118 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
   const [invoiceNo, setInvoiceNo] = useState(() => defaultInvoiceNo);
   const [docDate, setDocDate] = useState(() => defaultDate);
   const [shippingDate, setShippingDate] = useState(() => defaultDate);
-  const [fromLocation, setFromLocation] = useState('SEMARANG, INDONESIA');
+  const fromLocation = 'SEMARANG, INDONESIA';
   const [orderNo, setOrderNo] = useState(() => defaultOrderNo);
-  const [paymentBy, setPaymentBy] = useState('FREIGHT COLLECT (RECEIVER PAY)');
-  const [courierName, setCourierName] = useState('DHL');
-  const [courierAccount, setCourierAccount] = useState('968 123 456');
-  const [shipmentBy, setShipmentBy] = useState('DHL');
-  const [invoiceValue, setInvoiceValue] = useState('USD');
+  const [paymentBy, setPaymentBy] = useState('');
+  const [courierName, setCourierName] = useState('');
+  const [courierAccount, setCourierAccount] = useState('');
+  const [shipmentBy, setShipmentBy] = useState('');
+  const invoiceValue = 'USD';
+
+  // Interactive Item Rows in Manifest Table
+  const [manifestRows, setManifestRows] = useState(() => {
+    return safeItems.map((it) => {
+      const itemQty = Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
+      const detailStr = it.category || it.tipe || it.namaBarang || 'SWATCHES MATERIAL';
+      const styleStr = it.style || it.deskripsi || it.name || '-';
+      const orderNameStr = it.sampleNo && it.sampleNo !== 'NA' ? it.sampleNo : (it.buyerNo || defaultOrderNo || '-');
+      return {
+        id: it.id,
+        isManual: false,
+        hsCode: it.hsCode || '',
+        kode: it.kode || it.sku || '-',
+        orderName: orderNameStr,
+        detail: detailStr,
+        style: styleStr,
+        color: it.color || 'Multi Color',
+        size: it.size || 'ONE SIZE',
+        qty: itemQty,
+        unit: it.satuan || 'PCS',
+        unitPrice: 1.0,
+      };
+    });
+  });
+
+  useEffect(() => {
+    if (safeItems.length > 0) {
+      setManifestRows(
+        safeItems.map((it) => {
+          const itemQty = Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
+          const detailStr = it.category || it.tipe || it.namaBarang || 'SWATCHES MATERIAL';
+          const styleStr = it.style || it.deskripsi || it.name || '-';
+          const orderNameStr = it.sampleNo && it.sampleNo !== 'NA' ? it.sampleNo : (it.buyerNo || defaultOrderNo || '-');
+          return {
+            id: it.id,
+            isManual: false,
+            hsCode: it.hsCode || '',
+            kode: it.kode || it.sku || '-',
+            orderName: orderNameStr,
+            detail: detailStr,
+            style: styleStr,
+            color: it.color || 'Multi Color',
+            size: it.size || 'ONE SIZE',
+            qty: itemQty,
+            unit: it.satuan || 'PCS',
+            unitPrice: 1.0,
+          };
+        })
+      );
+    }
+  }, [safeItems, defaultOrderNo]);
+
+  const handleRowQtyChange = (idx, value) => {
+    setManifestRows((prev) => {
+      const next = [...prev];
+      const parsed = parseInt(value, 10);
+      next[idx] = { ...next[idx], qty: Number.isNaN(parsed) || parsed < 1 ? 1 : parsed };
+      return next;
+    });
+  };
+
+  const handleRowFieldChange = (idx, field, value) => {
+    setManifestRows((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      return next;
+    });
+  };
+
+  const handleAddManualRow = () => {
+    setManifestRows((prev) => [
+      ...prev,
+      {
+        id: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        isManual: true,
+        hsCode: '',
+        kode: '-',
+        orderName: consigneeName ? `${consigneeName}` : 'RSD-MANUAL',
+        detail: 'SAMPLE',
+        style: '',
+        color: 'Multi Color',
+        size: 'ONE SIZE',
+        qty: 1,
+        unit: 'PCS',
+        unitPrice: 1.0,
+      },
+    ]);
+  };
+
+  const handleRemoveRow = (idx) => {
+    if (manifestRows.length <= 1) {
+      alert('Invoice harus memiliki minimal 1 baris item.');
+      return;
+    }
+    setManifestRows((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const totalPcs = useMemo(() => {
+    return manifestRows.reduce((acc, it) => acc + Number(it.qty || 1), 0);
+  }, [manifestRows]);
+
+  const totalPrice = useMemo(() => {
+    const sum = manifestRows.reduce((acc, it) => acc + (Number(it.qty || 1) * Number(it.unitPrice || 1)), 0);
+    return sum.toFixed(2).replace('.', ',');
+  }, [manifestRows]);
 
   useEffect(() => {
     if (firstDispatch?.invoiceNo) {
@@ -181,10 +265,6 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     }
   }, [totalPcs, packageType]);
 
-  const totalPrice = useMemo(() => {
-    return (totalPcs * Number(unitPrice || 1)).toFixed(2).replace('.', ',');
-  }, [totalPcs, unitPrice]);
-
   const handlePrint = () => {
     if (!consigneeName.trim()) {
       alert('Wajib mengisi Company Name sebelum mencetak invoice.');
@@ -202,8 +282,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
       alert('Wajib mengisi ATTN Email sebelum mencetak invoice.');
       return;
     }
+    if (!paymentBy || !paymentBy.trim()) {
+      alert('Wajib memilih PAYMENT BY (FREIGHT COLLECT atau SHIPPER PAY) sebelum mencetak invoice.');
+      return;
+    }
     if (!courierName.trim()) {
-      alert('Wajib mengisi Nama Kurir sebelum mencetak invoice.');
+      alert('Wajib memilih Nama Kurir & Layanan sebelum mencetak invoice.');
       return;
     }
     if (!courierAccount.trim()) {
@@ -233,28 +317,22 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
 
   const handleExportExcel = async () => {
     try {
-      const itemRows = safeItems.map((it) => {
-        const itemQty = Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
-        const detailStr = it.category || it.tipe || it.namaBarang || 'SWATCHES MATERIAL';
-        const styleStr = it.style || it.deskripsi || it.name || '-';
-        const orderNameStr = it.sampleNo && it.sampleNo !== 'NA' ? it.sampleNo : (it.buyerNo || orderNo || '-');
-        return {
-          hsCode: it.hsCode || '-',
-          kode: it.kode || it.sku || '-',
-          orderName: orderNameStr,
-          detail: detailStr,
-          style: styleStr,
-          color: it.color || 'Multi Color',
-          size: it.size || 'ONE SIZE',
-          qty: itemQty,
-          unit: it.satuan || 'PCS',
-          unitPrice: Number(unitPrice || 1),
-        };
-      });
+      const itemRows = manifestRows.map((it) => ({
+        hsCode: it.hsCode || '-',
+        kode: it.kode || it.sku || '-',
+        orderName: it.orderName || orderNo || '-',
+        detail: it.detail || 'SWATCHES MATERIAL',
+        style: it.style || '-',
+        color: it.color || 'Multi Color',
+        size: it.size || 'ONE SIZE',
+        qty: Number(it.qty || 1),
+        unit: it.unit || 'PCS',
+        unitPrice: Number(it.unitPrice || 1),
+      }));
 
       await exportInvoiceToExcel({
         invoiceNo,
-        shippingDate: date,
+        shippingDate: shippingDate,
         fromLocation,
         consigneeName,
         consigneeAddress,
@@ -475,12 +553,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 />
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">MID CODE</label>
+                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">MID CODE (Static)</label>
                 <input
                   type="text"
                   value={midCode}
-                  onChange={(e) => setMidCode(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs text-[#1d1d1f]"
+                  disabled
+                  readOnly
+                  className="w-full px-2.5 py-1.5 bg-neutral-100 border border-black/[0.1] rounded-lg text-xs font-bold text-neutral-600 cursor-not-allowed select-all"
                 />
               </div>
               <div>
@@ -502,12 +581,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 />
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">From Location</label>
+                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">From Location (Static)</label>
                 <input
                   type="text"
                   value={fromLocation}
-                  onChange={(e) => setFromLocation(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs text-[#1d1d1f]"
+                  disabled
+                  readOnly
+                  className="w-full px-2.5 py-1.5 bg-neutral-100 border border-black/[0.1] rounded-lg text-xs font-bold text-neutral-600 cursor-not-allowed select-all"
                 />
               </div>
               <div>
@@ -573,22 +653,47 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                   onChange={(e) => setPaymentBy(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs font-semibold text-[#1d1d1f]"
                 >
+                  <option value="">-- Pilih Payment By --</option>
                   <option value="FREIGHT COLLECT (RECEIVER PAY)">FREIGHT COLLECT (RECEIVER PAY)</option>
                   <option value="SHIPPER PAY">SHIPPER PAY</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">Kurir</label>
-                <input
-                  type="text"
-                  list="manifest-courier-options"
+                <label className="text-[10px] font-semibold text-[#86868b] uppercase block">Kurir &amp; Layanan</label>
+                <select
                   value={courierName}
                   onChange={(e) => {
-                    setCourierName(e.target.value.toUpperCase());
-                    setShipmentBy(e.target.value.toUpperCase());
+                    setCourierName(e.target.value);
+                    setShipmentBy(e.target.value);
                   }}
-                  className="w-full px-2.5 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs font-semibold text-[#1d1d1f]"
-                />
+                  className="w-full px-2 py-1.5 bg-white border border-black/[0.1] rounded-lg text-xs font-semibold text-[#1d1d1f]"
+                >
+                  <option value="">-- Pilih Kurir --</option>
+                  <optgroup label="DHL">
+                    <option value="DHL EXPRESS">DHL EXPRESS</option>
+                    <option value="DHL ECONOMY">DHL ECONOMY</option>
+                  </optgroup>
+                  <optgroup label="FEDEX">
+                    <option value="FEDEX EXPRESS">FEDEX EXPRESS</option>
+                    <option value="FEDEX ECONOMY">FEDEX ECONOMY</option>
+                  </optgroup>
+                  <optgroup label="UPS">
+                    <option value="UPS EXPRESS">UPS EXPRESS</option>
+                    <option value="UPS ECONOMY">UPS ECONOMY</option>
+                  </optgroup>
+                  <optgroup label="SF EXPRESS">
+                    <option value="SF EXPRESS">SF EXPRESS</option>
+                    <option value="SF ECONOMY">SF ECONOMY</option>
+                  </optgroup>
+                  <optgroup label="TNT">
+                    <option value="TNT EXPRESS">TNT EXPRESS</option>
+                    <option value="TNT ECONOMY">TNT ECONOMY</option>
+                  </optgroup>
+                  <optgroup label="LAINNYA / AIR FREIGHT">
+                    <option value="COURIER / AIR FREIGHT EXPRESS">COURIER / AIR FREIGHT EXPRESS</option>
+                    <option value="COURIER / AIR FREIGHT ECONOMY">COURIER / AIR FREIGHT ECONOMY</option>
+                  </optgroup>
+                </select>
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-[#86868b] uppercase block">Account No</label>
@@ -695,14 +800,8 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="p-0 text-left">
-                          <input
-                            type="text"
-                            value={midCode}
-                            onChange={(e) => setMidCode(e.target.value.toUpperCase())}
-                            placeholder="IDGAGTAMBSEM"
-                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                          />
+                        <td className="py-1 px-3 text-left font-bold text-[10.5px] uppercase tracking-tight select-all">
+                          {midCode}
                         </td>
                       </tr>
                       <tr className="border-b border-black">
@@ -869,24 +968,31 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
                           <div className="flex items-center justify-between">
-                            <span>PAYMENT BY</span>
+                            <span className="flex items-center">
+                              PAYMENT BY
+                              <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                            </span>
                             <span>:</span>
                           </div>
                         </td>
                         <td className="p-0 text-left">
-                          {/* Screen: Dropdown 2 Opsi */}
+                          {/* Screen: Dropdown Opsi */}
                           <select
                             value={paymentBy}
                             onChange={(e) => setPaymentBy(e.target.value)}
-                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:hidden tracking-tight cursor-pointer transition-colors"
-                            title="Pilih Payment By (Freight Collect atau Shipper Pay)"
+                            required
+                            className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:hidden tracking-tight cursor-pointer transition-colors ${
+                              !paymentBy ? 'text-neutral-400 font-normal' : 'text-neutral-900 font-bold'
+                            }`}
+                            title="Pilih Payment By (Freight Collect atau Shipper Pay) - Wajib"
                           >
-                            <option value="FREIGHT COLLECT (RECEIVER PAY)">FREIGHT COLLECT (RECEIVER PAY)</option>
-                            <option value="SHIPPER PAY">SHIPPER PAY</option>
+                            <option value="" disabled className="text-neutral-400">-- PILIH PAYMENT BY (WAJIB) --</option>
+                            <option value="FREIGHT COLLECT (RECEIVER PAY)" className="text-neutral-900">FREIGHT COLLECT (RECEIVER PAY)</option>
+                            <option value="SHIPPER PAY" className="text-neutral-900">SHIPPER PAY</option>
                           </select>
                           {/* Print: Teks resmi cetak */}
                           <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
-                            {paymentBy}
+                            {paymentBy || '-'}
                           </div>
                         </td>
                       </tr>
@@ -903,34 +1009,49 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                         <td className="p-0 text-left">
                           {/* Screen: Dua input terpisah dalam satu baris (Nama Kurir & Account No) */}
                           <div className="flex items-center w-full h-full divide-x divide-black no-print">
-                            {/* Nama Kurir (Wajib) */}
-                            <div className="w-[40%] min-w-0 h-full">
-                              <input
-                                type="text"
-                                list="manifest-courier-options"
+                            {/* Nama Kurir & Layanan (Wajib) */}
+                            <div className="w-[45%] min-w-0 h-full">
+                              <select
                                 value={courierName}
                                 onChange={(e) => {
-                                  setCourierName(e.target.value.toUpperCase());
-                                  setShipmentBy(e.target.value.toUpperCase());
+                                  setCourierName(e.target.value);
+                                  setShipmentBy(e.target.value);
                                 }}
-                                placeholder="NAMA KURIR (DHL / FEDEX / UPS) *"
                                 required
-                                className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
-                                  !courierName.trim() ? 'placeholder:text-rose-400' : ''
+                                className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-2 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-pointer transition-colors ${
+                                  !courierName ? 'text-neutral-400 font-normal' : 'text-neutral-900 font-bold'
                                 }`}
-                                title="Nama Kurir Pengiriman (Wajib diisi)"
-                              />
-                              <datalist id="manifest-courier-options">
-                                <option value="DHL" />
-                                <option value="FEDEX" />
-                                <option value="UPS" />
-                                <option value="SF EXPRESS" />
-                                <option value="TNT" />
-                                <option value="COURIER / AIR FREIGHT" />
-                              </datalist>
+                                title="Pilih Kurir & Layanan Pengiriman (Wajib)"
+                              >
+                                <option value="" disabled className="text-neutral-400">-- PILIH KURIR &amp; LAYANAN (WAJIB) --</option>
+                                <optgroup label="DHL">
+                                  <option value="DHL EXPRESS" className="text-neutral-900">DHL EXPRESS</option>
+                                  <option value="DHL ECONOMY" className="text-neutral-900">DHL ECONOMY</option>
+                                </optgroup>
+                                <optgroup label="FEDEX">
+                                  <option value="FEDEX EXPRESS" className="text-neutral-900">FEDEX EXPRESS</option>
+                                  <option value="FEDEX ECONOMY" className="text-neutral-900">FEDEX ECONOMY</option>
+                                </optgroup>
+                                <optgroup label="UPS">
+                                  <option value="UPS EXPRESS" className="text-neutral-900">UPS EXPRESS</option>
+                                  <option value="UPS ECONOMY" className="text-neutral-900">UPS ECONOMY</option>
+                                </optgroup>
+                                <optgroup label="SF EXPRESS">
+                                  <option value="SF EXPRESS" className="text-neutral-900">SF EXPRESS</option>
+                                  <option value="SF ECONOMY" className="text-neutral-900">SF ECONOMY</option>
+                                </optgroup>
+                                <optgroup label="TNT">
+                                  <option value="TNT EXPRESS" className="text-neutral-900">TNT EXPRESS</option>
+                                  <option value="TNT ECONOMY" className="text-neutral-900">TNT ECONOMY</option>
+                                </optgroup>
+                                <optgroup label="LAINNYA / AIR FREIGHT">
+                                  <option value="COURIER / AIR FREIGHT EXPRESS" className="text-neutral-900">COURIER / AIR FREIGHT EXPRESS</option>
+                                  <option value="COURIER / AIR FREIGHT ECONOMY" className="text-neutral-900">COURIER / AIR FREIGHT ECONOMY</option>
+                                </optgroup>
+                              </select>
                             </div>
                             {/* Account No (Wajib) */}
-                            <div className="w-[60%] min-w-0 h-full">
+                            <div className="w-[55%] min-w-0 h-full">
                               <input
                                 type="text"
                                 value={courierAccount}
@@ -946,7 +1067,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                           </div>
                           {/* Print: Teks resmi cetak */}
                           <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
-                            <span>{courierName}</span>
+                            <span>{courierName || '-'}</span>
                             {courierAccount && <span className="ml-4 font-mono">ACC NO: {courierAccount}</span>}
                           </div>
                         </td>
@@ -958,15 +1079,8 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="p-0 text-left">
-                          <input
-                            type="text"
-                            value={invoiceValue}
-                            onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
-                            placeholder="USD"
-                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                            title="Nilai Invoice dalam mata uang USD"
-                          />
+                        <td className="py-1 px-3 text-left font-bold text-[10.5px] uppercase tracking-tight select-all">
+                          {invoiceValue}
                         </td>
                       </tr>
                       <tr className="border-b border-black">
@@ -996,14 +1110,8 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="p-0 text-left">
-                          <input
-                            type="text"
-                            value={fromLocation}
-                            onChange={(e) => setFromLocation(e.target.value.toUpperCase())}
-                            placeholder="SEMARANG, INDONESIA"
-                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                          />
+                        <td className="py-1 px-3 text-left font-bold text-[10.5px] uppercase tracking-tight select-all">
+                          {fromLocation}
                         </td>
                       </tr>
                     </tbody>
@@ -1011,7 +1119,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 </div>
 
                 {/* Table: 12 Columns Items List */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto border-b border-black">
                   <table className="w-full text-left border-collapse text-[10px]">
                     <thead>
                       <tr className="border-b border-black font-bold text-center bg-slate-50/60 print:bg-white text-[9.5px] leading-tight">
@@ -1035,36 +1143,131 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                           <div>UNIT</div>
                           <div>PRICE</div>
                         </th>
-                        <th className="py-1 px-2 w-16">
+                        <th className="py-1 px-2 w-16 border-r print:border-r-0 border-black">
                           <div>TOTAL</div>
                           <div>PRICE</div>
                         </th>
+                        <th className="py-1 px-1 w-7 text-center no-print"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {safeItems.map((it, idx) => {
-                        const itemQty = Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
-                        const itemTotalPrice = (itemQty * Number(unitPrice || 1)).toFixed(2).replace('.', ',');
-                        const detailStr = it.category || it.tipe || it.namaBarang || 'SWATCHES MATERIAL';
-                        const styleStr = it.style || it.deskripsi || it.name || '-';
-                        const orderNameStr = it.sampleNo && it.sampleNo !== 'NA' ? it.sampleNo : (it.buyerNo || orderNo || '-');
+                      {manifestRows.map((it, idx) => {
+                        const itemQty = Number(it.qty || 1);
+                        const itemTotalPrice = (itemQty * Number(it.unitPrice || 1)).toFixed(2).replace('.', ',');
 
                         return (
                           <tr key={it.id || idx} className="border-b border-black hover:bg-amber-50/20 print:bg-white">
                             <td className="py-1 px-1 border-r border-black text-center font-bold text-neutral-700 print:text-black">{idx + 1}</td>
-                            <td className="py-1 px-1 border-r border-black text-center font-mono text-[9.5px]">{it.hsCode || '-'}</td>
-                            <td className="py-1 px-1.5 border-r border-black font-mono font-bold text-center text-neutral-900 print:text-black">
-                              {it.kode || it.sku || '-'}
+                            <td className="py-0.5 px-1 border-r border-black text-center">
+                              <input
+                                type="text"
+                                value={it.hsCode}
+                                onChange={(e) => handleRowFieldChange(idx, 'hsCode', e.target.value)}
+                                placeholder="-"
+                                className="w-full text-center font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                              />
                             </td>
-                            <td className="py-1 px-1.5 border-r border-black font-mono text-center text-[9.5px]">{orderNameStr}</td>
-                            <td className="py-1 px-1.5 border-r border-black uppercase text-[9.5px] px-1">{detailStr}</td>
-                            <td className="py-1 px-1.5 border-r border-black text-[9.5px] px-1">{styleStr}</td>
-                            <td className="py-1 px-1 border-r border-black text-center uppercase text-[9.5px]">{it.color || 'Multi Color'}</td>
-                            <td className="py-1 px-1 border-r border-black text-center uppercase font-bold text-[9.5px]">{it.size || 'ONE SIZE'}</td>
-                            <td className="py-1 px-1 border-r border-black text-center font-bold font-mono text-[10.5px]">{itemQty}</td>
-                            <td className="py-1 px-1 border-r border-black text-center uppercase font-medium">{it.satuan || 'PCS'}</td>
-                            <td className="py-1 px-1.5 border-r border-black text-right font-mono text-[9.5px]">${Number(unitPrice || 1).toFixed(2).replace('.', ',')}</td>
+                            <td className="py-0.5 px-1.5 border-r border-black font-mono font-bold text-center text-neutral-900 print:text-black">
+                              {it.isManual ? (
+                                <input
+                                  type="text"
+                                  value={it.kode === '-' ? '' : it.kode}
+                                  onChange={(e) => handleRowFieldChange(idx, 'kode', e.target.value.toUpperCase())}
+                                  placeholder="ITEM NO"
+                                  className="w-full text-center font-mono font-bold text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                                />
+                              ) : (
+                                it.kode || it.sku || '-'
+                              )}
+                            </td>
+                            <td className="py-0.5 px-1.5 border-r border-black text-center">
+                              <input
+                                type="text"
+                                value={it.orderName}
+                                onChange={(e) => handleRowFieldChange(idx, 'orderName', e.target.value)}
+                                className="w-full text-center font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                              />
+                            </td>
+                            <td className="py-0.5 px-1.5 border-r border-black">
+                              <input
+                                type="text"
+                                value={it.detail}
+                                onChange={(e) => handleRowFieldChange(idx, 'detail', e.target.value.toUpperCase())}
+                                className="w-full text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1"
+                              />
+                            </td>
+                            <td className="py-0.5 px-1.5 border-r border-black">
+                              <input
+                                type="text"
+                                value={it.style}
+                                onChange={(e) => handleRowFieldChange(idx, 'style', e.target.value)}
+                                className="w-full text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1"
+                              />
+                            </td>
+                            <td className="py-0.5 px-1 border-r border-black text-center">
+                              <input
+                                type="text"
+                                value={it.color}
+                                onChange={(e) => handleRowFieldChange(idx, 'color', e.target.value)}
+                                className="w-full text-center text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                              />
+                            </td>
+                            <td className="py-0.5 px-1 border-r border-black text-center">
+                              <input
+                                type="text"
+                                value={it.size}
+                                onChange={(e) => handleRowFieldChange(idx, 'size', e.target.value.toUpperCase())}
+                                className="w-full text-center text-[9.5px] uppercase font-bold bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                              />
+                            </td>
+                            <td className="py-0.5 px-1 border-r border-black text-center">
+                              <div className="flex items-center justify-center">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={itemQty}
+                                  onChange={(e) => handleRowQtyChange(idx, e.target.value)}
+                                  className="w-10 text-center font-bold font-mono text-[10.5px] bg-amber-50/80 hover:bg-amber-100 focus:bg-amber-100 print:bg-transparent border border-amber-200 print:border-none rounded-xs focus:outline-none focus:ring-1 focus:ring-amber-500 py-0.5"
+                                />
+                              </div>
+                            </td>
+                            <td className="py-0.5 px-1 border-r border-black text-center uppercase font-medium">
+                              {it.isManual ? (
+                                <input
+                                  type="text"
+                                  value={it.unit}
+                                  onChange={(e) => handleRowFieldChange(idx, 'unit', e.target.value.toUpperCase())}
+                                  placeholder="PCS"
+                                  className="w-full text-center text-[9.5px] uppercase font-bold bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                                />
+                              ) : (
+                                it.unit || it.satuan || 'PCS'
+                              )}
+                            </td>
+                            <td className="py-0.5 px-1 border-r border-black text-right">
+                              <div className="flex items-center justify-end font-mono">
+                                <span className="text-neutral-500 print:text-black mr-0.5">$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={it.unitPrice}
+                                  onChange={(e) => handleRowFieldChange(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                  className="w-10 text-right font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                                />
+                              </div>
+                            </td>
                             <td className="py-1 px-2 text-right font-mono font-bold text-[10px]">${itemTotalPrice}</td>
+                            {/* Row Action (Delete) - Hidden in Print */}
+                            <td className="py-0.5 px-1 text-center no-print">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveRow(idx)}
+                                className="w-5 h-5 flex items-center justify-center rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer mx-auto"
+                                title="Hapus baris ini"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -1076,9 +1279,26 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                         <td className="py-1 px-1 border-r border-black text-center font-bold text-[10px]">PCS</td>
                         <td className="py-1 px-1 border-r border-black text-right"></td>
                         <td className="py-1 px-2 text-right font-mono font-bold text-[10.5px]">${totalPrice}</td>
+                        <td className="no-print"></td>
                       </tr>
                     </tbody>
                   </table>
+
+                  {/* Add Manual Item Button Bar (Directly below table, clean, no-print) */}
+                  <div className="py-1.5 px-3 bg-neutral-50/90 border-t border-black flex items-center justify-between no-print">
+                    <button
+                      type="button"
+                      onClick={handleAddManualRow}
+                      className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10.5px] rounded-md flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                      title="Tambah baris sampel / barang secara manual ke invoice"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Tambah Baris Manual</span>
+                    </button>
+                    <span className="text-[10px] text-neutral-500 font-medium">
+                      Tekan <span className="font-bold text-neutral-700">+ Tambah Baris Manual</span> untuk menambahkan sampel / item ekstra ke invoice.
+                    </span>
+                  </div>
                 </div>
 
                 {/* Footer Section: Weight, Packaging, and Samples Notice (Aligned with Metadata Column Ratio) */}
@@ -1111,9 +1331,9 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
 
                       {/* Right Column (71%): Dimension, NW, and GW separated by vertical dividers with centered text */}
                       <td className="w-[71%] p-0 font-bold align-middle">
-                        <div className="flex items-stretch w-full divide-x divide-black h-full">
+                        <div className="flex items-stretch w-full h-full">
                           {/* 1. Dimension (Centered, Wajib Diisi) */}
-                          <div className="flex-1 py-1.5 px-2 flex items-center justify-center gap-1.5 text-center">
+                          <div className="flex-1 py-1.5 px-2 border-r border-black flex items-center justify-center gap-1.5 text-center">
                             <span className="text-[10px] uppercase tracking-tight font-bold shrink-0">
                               {packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} :
                             </span>
@@ -1129,7 +1349,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                           </div>
 
                           {/* 2. Weight NW (Centered, Wajib Diisi) */}
-                          <div className="w-[28%] py-1.5 px-2 flex items-center justify-center gap-1.5 text-center shrink-0">
+                          <div className="w-[28%] py-1.5 px-2 border-r border-black flex items-center justify-center gap-1.5 text-center shrink-0">
                             <input
                               type="text"
                               value={netWeight}
