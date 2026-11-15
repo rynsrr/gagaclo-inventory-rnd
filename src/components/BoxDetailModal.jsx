@@ -292,6 +292,25 @@ function BoxDetail({ box }) {
     );
   });
 
+  // Natural alphanumeric sort: Mengurutkan Style & Deskripsi secara teratur berdasarkan angka & alfabet (A-Z)
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort((a, b) => {
+      const styleA = String(a.style || a.deskripsi || a.name || '').trim();
+      const styleB = String(b.style || b.deskripsi || b.name || '').trim();
+      const cmp = styleA.localeCompare(styleB, undefined, { numeric: true, sensitivity: 'base' });
+      if (cmp !== 0) return cmp;
+
+      const sizeA = String(a.size || '').trim();
+      const sizeB = String(b.size || '').trim();
+      const sizeCmp = sizeA.localeCompare(sizeB, undefined, { numeric: true, sensitivity: 'base' });
+      if (sizeCmp !== 0) return sizeCmp;
+
+      const codeA = String(a.kode || a.sku || '').trim();
+      const codeB = String(b.kode || b.sku || '').trim();
+      return codeA.localeCompare(codeB, undefined, { numeric: true });
+    });
+  }, [filteredItems]);
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'In Storage':
@@ -701,7 +720,7 @@ function BoxDetail({ box }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredItems.map((item, idx) => {
+                    {sortedItems.map((item, idx) => {
                       const isSelected = selectedItemIds.has(item.id);
                       return (
                         <tr

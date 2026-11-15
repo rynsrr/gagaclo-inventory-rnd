@@ -686,9 +686,11 @@ export const Warehouse3DView = ({
     const beaconGroup = new THREE.Group();
     beaconGroup.visible = false;
 
-    // Pointer Pin (kerucut terbalik mengarah ke atas muka box)
-    const coneGeo = new THREE.ConeGeometry(0.32, 0.75, 16);
+    // Pointer Pin (kerucut terbalik mengarah persis ke atas muka box tanpa ada jarak)
+    const coneHeight = 0.65;
+    const coneGeo = new THREE.ConeGeometry(0.28, coneHeight, 16);
     coneGeo.rotateX(Math.PI);
+    coneGeo.translate(0, coneHeight / 2, 0); // Apex / ujung runcing pointer berada tepat di y = 0
     const pinMat = new THREE.MeshStandardMaterial({
       color: 0x00f0ff,
       emissive: 0x00d4ff,
@@ -697,11 +699,10 @@ export const Warehouse3DView = ({
       metalness: 0.6,
     });
     const pinMesh = new THREE.Mesh(coneGeo, pinMat);
-    pinMesh.position.y = 0.5;
     beaconGroup.add(pinMesh);
 
     // Glowing Orb / Diamond di puncak pin pointer
-    const orbGeo = new THREE.SphereGeometry(0.2, 16, 16);
+    const orbGeo = new THREE.SphereGeometry(0.16, 16, 16);
     const orbMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       emissive: 0x00f0ff,
@@ -710,11 +711,11 @@ export const Warehouse3DView = ({
       metalness: 0.2,
     });
     const orbMesh = new THREE.Mesh(orbGeo, orbMat);
-    orbMesh.position.y = 0.95;
+    orbMesh.position.y = coneHeight + 0.12;
     beaconGroup.add(orbMesh);
 
     // Pulsing Horizontal Ring mengitari pin
-    const ringGeo = new THREE.TorusGeometry(0.42, 0.035, 16, 32);
+    const ringGeo = new THREE.TorusGeometry(0.38, 0.03, 16, 32);
     ringGeo.rotateX(Math.PI / 2);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
@@ -722,7 +723,7 @@ export const Warehouse3DView = ({
       opacity: 0.85,
     });
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh.position.y = 0.65;
+    ringMesh.position.y = coneHeight * 0.65;
     beaconGroup.add(ringMesh);
 
     scene.add(beaconGroup);
@@ -1009,9 +1010,9 @@ export const Warehouse3DView = ({
         const worldPos = new THREE.Vector3();
         activeHoveredMesh.getWorldPosition(worldPos);
 
-        // Animasi melayang bouncing halus di atas box
-        const bounceY = Math.sin(elapsed * 5.0) * 0.12;
-        beaconGroup.position.set(worldPos.x, worldPos.y + 1.05 + bounceY, worldPos.z);
+        // Ujung bawah kerucut berada tepat di atas permukaan box persis tanpa ada jarak
+        const boxTopY = worldPos.y + (0.75 * activeHoveredMesh.scale.y) / 2;
+        beaconGroup.position.set(worldPos.x, boxTopY, worldPos.z);
         beaconGroup.rotation.y = elapsed * 2.5;
 
         // Cincin halo berdenyut
@@ -1081,11 +1082,10 @@ export const Warehouse3DView = ({
 
       if (isAll) {
         if (hudOffset) {
-          // Geser ke kanan agar denah 3D tepat CENTERED di area kosong antara dropdown (kiri) dan tepi layar (kanan)
-          // Berdasarkan optimasi proyeksi kamera:
-          // Menghasilkan breathing space seimbang di kiri (~5.3% dari tepi dropdown) dan kanan (~6.9% dari tepi layar)
-          lookTarget = new THREE.Vector3(-5.3, -3.7, -64.6);
-          targetPos = new THREE.Vector3(-79.4, 51.3, -122.5);
+          // Geser posisi 3D persis referensi visual pengguna:
+          // Berada di sisi kanan dengan ruang lapang di kiri untuk dropdown, serta CENTERED atas-bawah
+          lookTarget = new THREE.Vector3(4.4, 5.4, -68.5);
+          targetPos = new THREE.Vector3(-65.9, 57.5, -123.4);
         } else {
           // Sudut pandang default persis referensi visual pengguna (overview denah arsitektur & seluruh rak)
           lookTarget = new THREE.Vector3(-25.1, 1.5, -34.4);

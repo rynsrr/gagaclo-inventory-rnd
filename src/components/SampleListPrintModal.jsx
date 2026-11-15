@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   X, 
   Printer, 
@@ -6,14 +6,15 @@ import {
   Square, 
   FileText, 
   Search,
-  Filter
+  Filter,
+  ArrowUpAZ,
+  ArrowDownZA,
 } from 'lucide-react';
 
 export const SampleListPrintModal = ({ box, items = [], onClose }) => {
   const [selectedIds, setSelectedIds] = useState(() => new Set(items.map((i, idx) => i.id || `item-${idx}`)));
   const [searchTerm, setSearchTerm] = useState('');
-
-  if (!box) return null;
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' = A-Z (angka & abjad), 'desc' = Z-A
 
   const toggleSelect = (id) => {
     setSelectedIds(prev => {
@@ -51,6 +52,37 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
     return selectedIds.has(id);
   });
 
+  // Natural alphanumeric sort: Mengurutkan Style & Deskripsi secara teratur berdasarkan angka & alfabet (A-Z)
+  const sortedActiveItems = useMemo(() => {
+    return [...activeItems].sort((a, b) => {
+      const styleA = String(a.style || a.deskripsi || a.name || '').trim();
+      const styleB = String(b.style || b.deskripsi || b.name || '').trim();
+
+      // Natural alphanumeric sort: urut numbering & urut alphabet A-Z
+      const cmp = styleA.localeCompare(styleB, undefined, { numeric: true, sensitivity: 'base' });
+      if (cmp !== 0) {
+        return sortOrder === 'asc' ? cmp : -cmp;
+      }
+
+      // Secondary: Size
+      const sizeA = String(a.size || '').trim();
+      const sizeB = String(b.size || '').trim();
+      const sizeCmp = sizeA.localeCompare(sizeB, undefined, { numeric: true, sensitivity: 'base' });
+      if (sizeCmp !== 0) return sizeCmp;
+
+      // Tertiary: Color
+      const colorA = String(a.color || a.warna || '').trim();
+      const colorB = String(b.color || b.warna || '').trim();
+      const colorCmp = colorA.localeCompare(colorB, undefined, { numeric: true, sensitivity: 'base' });
+      if (colorCmp !== 0) return colorCmp;
+
+      // Quaternary: Kode Sample
+      const codeA = String(a.kode || a.sku || '').trim();
+      const codeB = String(b.kode || b.sku || '').trim();
+      return codeA.localeCompare(codeB, undefined, { numeric: true });
+    });
+  }, [activeItems, sortOrder]);
+
   const totalUnits = activeItems.reduce((sum, item) => sum + (Number(item.qty || item.jumlah) || 1), 0);
 
   const handlePrint = () => {
@@ -64,6 +96,8 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  if (!box) return null;
 
   return (
     <div className="font-apple fixed inset-0 z-[80] bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto">
@@ -133,6 +167,20 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
           </div>
 
           <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="no-print inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-semibold text-xs transition cursor-pointer"
+              title="Klik untuk ubah arah urutan Style & Deskripsi"
+            >
+              {sortOrder === 'asc' ? (
+                <ArrowUpAZ className="w-3.5 h-3.5 text-blue-600" />
+              ) : (
+                <ArrowDownZA className="w-3.5 h-3.5 text-blue-600" />
+              )}
+              <span>Urut Style: {sortOrder === 'asc' ? 'A-Z (Angka & Abjad)' : 'Z-A'}</span>
+            </button>
+
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
               <input
@@ -215,7 +263,28 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                     <tr className="bg-slate-100 print:bg-slate-200 text-slate-900 border-b border-slate-300 print:border-slate-400 font-bold uppercase text-xs">
                       <th className="py-2 px-2.5 w-10 text-center border-r border-slate-300 print:border-slate-400">No.</th>
                       <th className="py-2 px-3 w-32 border-r border-slate-300 print:border-slate-400">Kode Sample</th>
-                      <th className="py-2 px-3 border-r border-slate-300 print:border-slate-400">Style & Deskripsi</th>
+                      <th 
+                        className="py-2 px-3 border-r border-slate-300 print:border-slate-400 cursor-pointer select-none no-print:hover:bg-slate-200 transition-colors"
+                        onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        title="Klik untuk ubah arah urutan Style & Deskripsi"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span>Style &amp; Deskripsi</span>
+                          <span className="no-print inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold lowercase">
+                            {sortOrder === 'asc' ? (
+                              <>
+                                <ArrowUpAZ className="w-3 h-3 text-blue-600" />
+                                <span>A-Z</span>
+                              </>
+                            ) : (
+                              <>
+                                <ArrowDownZA className="w-3 h-3 text-blue-600" />
+                                <span>Z-A</span>
+                              </>
+                            )}
+                          </span>
+                        </div>
+                      </th>
                       <th className="py-2 px-3 w-28 border-r border-slate-300 print:border-slate-400">Size & Warna</th>
                       <th className="py-2 px-2.5 w-16 text-center border-r border-slate-300 print:border-slate-400">Qty</th>
                       <th className="py-2 px-2.5 w-24 text-center border-r border-slate-300 print:border-slate-400">Status</th>
@@ -223,7 +292,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 print:divide-slate-300">
-                    {activeItems.map((item, idx) => (
+                    {sortedActiveItems.map((item, idx) => (
                       <tr 
                         key={item.id || idx}
                         className="hover:bg-slate-50/80 transition print:break-inside-avoid print:page-break-inside-avoid"
