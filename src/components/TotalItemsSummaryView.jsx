@@ -6,6 +6,7 @@ import {
   getItemRecordDate,
   normalizeDateKey,
   formatDateIndo,
+  formatToDDMMYYYY,
 } from '../utils/dateUtils';
 export { getLocalTodayIso, getItemRecordDate, normalizeDateKey, formatDateIndo };
 import {
@@ -134,13 +135,14 @@ export function TotalItemsSummaryView() {
       .map((item) => {
         const box = boxRackMap[Number(item.boxNumber)];
         const rawDate = item.tanggal || item.dateIn || 'NA';
-        const age = calculateStorageAge(rawDate);
+        const formattedDate = formatToDDMMYYYY(rawDate) || rawDate;
+        const age = calculateStorageAge(formattedDate);
         const recordDate = getItemRecordDate(item);
         return {
           ...item,
           recordDate,
           track: item.track || 'NA',
-          tanggal: rawDate,
+          tanggal: formattedDate,
           age,
           kode: item.kode || item.sku || 'NA',
           buyerNo: item.buyerNo || item.buyerNumber || 'NA',
@@ -156,7 +158,7 @@ export function TotalItemsSummaryView() {
           boxNumber: Number(item.boxNumber) || 1,
           rackName: box ? box.rackName : 'NA',
           picName: item.picName || (box ? box.picName : 'NA'),
-          dateIn: item.dateIn || item.tanggal || 'NA',
+          dateIn: formattedDate,
           helperName: (() => {
             if (item.helperName) return item.helperName;
             const tags = Array.isArray(item.tags) ? item.tags : [];

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { formatToDDMMYYYY } from '../utils/dateUtils';
 
 // Retrieve credentials from .env or localStorage
 export function getSupabaseConfig() {
@@ -110,8 +111,8 @@ export function localItemToDb(item) {
     status: item.status || 'In Storage',
     track: item.track || '-',
     place: item.place || '',
-    date_in: item.dateIn || item.date_in || new Date().toISOString().split('T')[0],
-    tanggal: item.tanggal || item.dateIn || '',
+    date_in: formatToDDMMYYYY(item.tanggal || item.dateIn || item.date_in) || item.dateIn || item.date_in || new Date().toISOString().split('T')[0],
+    tanggal: formatToDDMMYYYY(item.tanggal || item.dateIn) || item.tanggal || item.dateIn || '',
     tags: Array.isArray(item.tags) ? item.tags : [],
     created_at: item.createdAt || item.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -144,8 +145,8 @@ export function dbItemToLocal(db) {
     status: db.status || 'In Storage',
     track: db.track || '-',
     place: db.place || '',
-    dateIn: db.date_in || db.tanggal || '',
-    tanggal: db.tanggal || db.date_in || '',
+    dateIn: formatToDDMMYYYY(db.tanggal || db.date_in) || db.date_in || db.tanggal || '',
+    tanggal: formatToDDMMYYYY(db.tanggal || db.date_in) || db.tanggal || db.date_in || '',
     tags: Array.isArray(db.tags) ? db.tags : [],
     helperName: (() => {
       if (db.helper_name) return db.helper_name;

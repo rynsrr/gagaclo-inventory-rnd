@@ -27,7 +27,7 @@ import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, releaseCode } from '../utils/sequenceResolver';
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
-import { getLocalTodayIso } from '../utils/dateUtils';
+import { getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
 export { isSuperuser, isHelper, isManager };
 import {
   checkAndTriggerDailyAutoBackup,
@@ -346,13 +346,26 @@ export const InventoryProvider = ({ children }) => {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           const deletedIds = getDeletedItemIds();
-          const cleanItems = parsed.filter(i => (
-            !deletedIds.has(String(i.id)) &&
-            i.status !== 'DELETED' &&
-            Number(i.boxNumber ?? i.box_number ?? 1) > 0 &&
-            !String(i.id || '').startsWith('demo-achieve-')
-          ));
-          if (cleanItems.length !== parsed.length) {
+          let datesRepaired = false;
+          const cleanItems = parsed
+            .filter(i => (
+              !deletedIds.has(String(i.id)) &&
+              i.status !== 'DELETED' &&
+              Number(i.boxNumber ?? i.box_number ?? 1) > 0 &&
+              !String(i.id || '').startsWith('demo-achieve-')
+            ))
+            .map(item => {
+              const rawDate = item.tanggal || item.dateIn;
+              if (!rawDate || rawDate === 'NA' || rawDate === '-') return item;
+              const fixedDate = formatToDDMMYYYY(rawDate);
+              if (fixedDate && (fixedDate !== item.tanggal || fixedDate !== item.dateIn)) {
+                datesRepaired = true;
+                return { ...item, tanggal: fixedDate, dateIn: fixedDate };
+              }
+              return item;
+            });
+
+          if (datesRepaired || cleanItems.length !== parsed.length) {
             try {
               localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(cleanItems));
               localStorage.removeItem('gagaclo_demo_all_achieved_active');
@@ -365,7 +378,12 @@ export const InventoryProvider = ({ children }) => {
     } catch (e) {
       console.error('Failed to load items from localStorage', e);
     }
-    return INITIAL_ITEMS;
+    return INITIAL_ITEMS.map(item => {
+      const rawDate = item.tanggal || item.dateIn;
+      if (!rawDate || rawDate === 'NA' || rawDate === '-') return item;
+      const fixedDate = formatToDDMMYYYY(rawDate);
+      return fixedDate ? { ...item, tanggal: fixedDate, dateIn: fixedDate } : item;
+    });
   });
 
   const [transactions, setTransactions] = useState(() => {
