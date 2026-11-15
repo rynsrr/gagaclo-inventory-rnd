@@ -152,17 +152,18 @@ export function TeamStructureView() {
                     <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-400 leading-relaxed">
                       Supervisi strategis, kebijakan mutu sampel, persetujuan target besar, dan eskalasi manajemen puncak.
                     </div>
+                    {/* Badge ditaruh di dalam box Sururi */}
+                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-center">
+                      <span className="px-3 py-1 rounded-full bg-blue-950/90 border border-blue-500/50 text-[10px] font-bold text-blue-300 uppercase tracking-wider">
+                        Supervisi &amp; Arahan Kebijakan
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Panah Alur Komando: Sururi ➔ Jasmine */}
+                {/* Panah Alur Komando: Sururi ➔ Jasmine (Garis Bersih Tanpa Teks di Tengah) */}
                 <div className="flex flex-col items-center my-3 relative">
-                  <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-emerald-400 rounded-full" />
-                  <div className="my-1 px-3 py-1 rounded-full bg-slate-950 border border-emerald-500/60 text-[10px] font-bold text-emerald-300 uppercase tracking-wider shadow-md shadow-emerald-500/10 flex items-center gap-1.5">
-                    <span>▼</span>
-                    <span>SUPERVISI &amp; ARAHAN KEBIJAKAN</span>
-                  </div>
-                  <div className="w-1 h-6 bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-full" />
+                  <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-emerald-500 rounded-full" />
                   <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[9px] border-t-emerald-500 drop-shadow-[0_0_4px_rgba(16,185,129,0.8)]" />
                 </div>
 
@@ -187,37 +188,26 @@ export function TeamStructureView() {
                   </div>
                 </div>
 
-                {/* Panah Alur Cabang: Jasmine ➔ PPIC & Tim Support */}
-                <div className="w-full max-w-4xl my-4 relative flex flex-col items-center">
+                {/* Panah Alur Cabang: Jasmine ➔ PPIC & Tim Support (Garis Bersih) */}
+                <div className="w-full max-w-4xl my-3 relative flex flex-col items-center">
                   <div className="w-1 h-6 bg-emerald-500 rounded-full" />
                   
                   {/* Spine horizontal menghubungkan cabang PPIC & Support */}
                   <div className="w-3/4 h-1 bg-gradient-to-r from-amber-500 via-emerald-500 to-cyan-500 rounded-full relative">
-                    {/* Left Drop: Ke PPIC (Panah & Badge terpusat di tengah) */}
+                    {/* Left Drop: Ke PPIC */}
                     <div className="absolute left-0 top-0 flex flex-col items-center -translate-x-1/2">
                       <div className="w-1 h-6 bg-amber-500" />
                       <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-amber-500" />
-                      <div className="mt-2 whitespace-nowrap">
-                        <span className="px-3 py-1 rounded-full bg-amber-950/90 border border-amber-500/60 text-amber-300 shadow-md text-[10px] font-bold tracking-wider uppercase">
-                          ▼ Target &amp; Penugasan Box
-                        </span>
-                      </div>
                     </div>
                     
-                    {/* Right Drop: Ke Tim Support (Panah & Badge terpusat di tengah) */}
+                    {/* Right Drop: Ke Tim Support */}
                     <div className="absolute right-0 top-0 flex flex-col items-center translate-x-1/2">
                       <div className="w-1 h-6 bg-cyan-500" />
                       <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-cyan-500" />
-                      <div className="mt-2 whitespace-nowrap">
-                        <span className="px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-500/60 text-cyan-300 shadow-md text-[10px] font-bold tracking-wider uppercase">
-                          ▼ Penugasan Asistensi
-                        </span>
-                      </div>
                     </div>
                   </div>
 
-                  {/* Spacer vertical agar tingkat 3 tidak menabrak badge absolute */}
-                  <div className="h-10" />
+                  <div className="h-4" />
                 </div>
 
                 {/* ========================================================= */}
@@ -230,6 +220,9 @@ export function TeamStructureView() {
                     <div className="flex items-center justify-between mb-1 pb-2 border-b border-amber-500/30">
                       <span className="text-amber-400 font-bold text-sm tracking-wide">
                         📦 5 PPIC &mdash; [ R ] RESPONSIBLE (PENANGGUNG JAWAB UTAMA BOX)
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[10px] font-bold tracking-wider uppercase">
+                        Target &amp; Alokasi Box
                       </span>
                     </div>
 
@@ -259,6 +252,9 @@ export function TeamStructureView() {
                       <div className="flex items-center justify-between mb-1 pb-2 border-b border-cyan-500/30">
                         <span className="text-cyan-400 font-bold text-sm tracking-wide">
                           ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 text-[10px] font-bold tracking-wider uppercase">
+                          Penugasan Asistensi
                         </span>
                       </div>
 

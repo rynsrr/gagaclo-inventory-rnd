@@ -244,19 +244,17 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-slate-950 shadow-md shadow-emerald-500/30 group-hover:scale-105 transition-transform">
                 <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950 stroke-[2.5]" />
               </div>
-              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-[#161618] ${isJasmineActive ? 'bg-emerald-400 animate-pulse' : 'bg-emerald-500'}`} />
+              {/* Titik hanya muncul jika akun Jasmine sedang aktif login */}
+              {isJasmineActive && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-[#161618] bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
+              )}
             </div>
 
             {/* Teks Nama Jasmine */}
-            <div className="flex items-center gap-1.5 text-left">
+            <div className="flex items-center text-left">
               <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight leading-none">
                 Jasmine
               </span>
-              {isJasmineActive && (
-                <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 leading-tight">
-                  Anda
-                </span>
-              )}
             </div>
           </button>
         </div>
@@ -404,7 +402,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                     }`}
                     title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isCurrentActive ? 'bg-[#2997ff] animate-pulse' : m.isAchieved ? 'bg-[#34c759]' : 'bg-white/30'}`}></span>
+                    <span className={`rounded-full shrink-0 ${isCurrentActive ? 'w-2 h-2 bg-[#2997ff] shadow-[0_0_8px_#2997ff] animate-pulse ring-2 ring-[#2997ff]/50' : m.isAchieved ? 'w-1.5 h-1.5 bg-[#34c759]' : 'w-1.5 h-1.5 bg-white/30'}`}></span>
                     <span className="font-semibold text-white truncate">{m.name}</span>
                     <span className={`tabular-nums font-normal shrink-0 text-[10px] sm:text-[11px] ${isCurrentActive ? 'text-[#2997ff]' : m.isAchieved ? 'text-[#30d158]' : 'text-slate-400'}`}>
                       · {m.pcs}/{m.target}
@@ -412,11 +410,6 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                     <span className="text-[9px] text-slate-400 shrink-0 hidden 2xl:inline">PCE</span>
                     {m.isAchieved && (
                       <span className="text-[10px] text-[#30d158] font-bold shrink-0">✓</span>
-                    )}
-                    {isCurrentActive && (
-                      <span className="text-[8px] uppercase tracking-wider font-extrabold px-1 rounded-full bg-[#0071e3] text-white shrink-0 hidden lg:inline">
-                        Anda
-                      </span>
                     )}
                   </button>
                 );
