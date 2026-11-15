@@ -98,59 +98,59 @@ export const BackupModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden text-slate-800">
+    <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden text-[#1d1d1f]">
         
-        {/* Header Dialog */}
-        <div className="inventory-dialog-heading px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-blue-600 text-white">
+        {/* Apple Style Header Dialog */}
+        <div className="px-6 py-4 bg-[#fbfbfd] border-b border-black/[0.06] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0071e3]/10 text-[#0071e3]">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight">Pusat Cadangan &amp; Pemulihan Data (Auto-Backup)</h3>
-              <p className="text-xs text-slate-400">Proteksi data otomatis harian, unduhan fisik &amp; riwayat snapshot</p>
+              <h3 className="text-[15px] font-semibold tracking-tight text-[#1d1d1f]">Pusat Cadangan &amp; Pemulihan Data</h3>
+              <p className="text-[12px] text-[#86868b]">Proteksi data otomatis harian, unduhan fisik &amp; riwayat snapshot</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-md hover:bg-slate-800 transition cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
             aria-label="Tutup"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Isi Dialog */}
-        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs">
           
-          {/* Card 1: Proteksi Auto-Backup Harian (Fitur Utama yang Diminta Pengguna) */}
-          <div className="p-4 rounded-lg border border-emerald-300 bg-emerald-50/60 space-y-3">
+          {/* Card 1: Proteksi Auto-Backup Harian (Apple Inset Grouped) */}
+          <div className="p-4.5 rounded-[20px] border border-black/[0.05] bg-[#f5f5f7] space-y-3">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-emerald-600 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#34c759]/15 text-[#34c759]">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-sm text-emerald-950">Auto-Download &amp; Backup Harian</h4>
-                  <p className="text-emerald-800 text-xs">
+                  <h4 className="font-semibold text-[14px] text-[#1d1d1f]">Auto-Download &amp; Backup Harian</h4>
+                  <p className="text-[#86868b] text-[12px] leading-relaxed">
                     Mencadangkan file JSON ke folder Downloads laptop dan menyimpan snapshot lokal setiap hari baru secara otomatis.
                   </p>
                 </div>
               </div>
 
-              {/* Toggle Switch */}
+              {/* iOS Toggle Switch */}
               <button
                 type="button"
                 onClick={handleToggleAutoBackup}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  autoEnabled ? 'bg-emerald-600' : 'bg-slate-300'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                  autoEnabled ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
                 }`}
                 title={autoEnabled ? 'Klik untuk nonaktifkan auto-backup' : 'Klik untuk aktifkan auto-backup'}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
                     autoEnabled ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
@@ -158,14 +158,14 @@ export const BackupModal = ({ isOpen, onClose }) => {
             </div>
 
             {/* Status Backup Terkini */}
-            <div className="pt-2 border-t border-emerald-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-1.5 text-emerald-900 font-medium">
-                <Clock className="w-3.5 h-3.5 text-emerald-700" />
+            <div className="pt-3 border-t border-black/[0.06] flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-1.5 text-[#1d1d1f] font-medium">
+                <Clock className="w-3.5 h-3.5 text-[#86868b]" />
                 <span>
                   Backup Hari Ini: {lastInfo.isToday ? (
-                    <strong className="text-emerald-800 font-bold">Sudah Diunduh &amp; Tersimpan</strong>
+                    <strong className="text-[#248a3d] font-semibold">Sudah Diunduh &amp; Tersimpan</strong>
                   ) : (
-                    <span className="text-slate-600 font-semibold">Siap diunduh untuk hari ini</span>
+                    <span className="text-[#86868b]">Siap diunduh untuk hari ini</span>
                   )}
                 </span>
               </div>
@@ -173,7 +173,7 @@ export const BackupModal = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={handleBackupNow}
-                className="px-3 py-1.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium transition shadow-xs flex items-center gap-1.5 cursor-pointer"
                 title="Unduh file backup JSON hari ini sekarang juga"
               >
                 <HardDriveDownload className="w-3.5 h-3.5" />

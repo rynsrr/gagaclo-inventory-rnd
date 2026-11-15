@@ -45,20 +45,23 @@ export const QuickScannerModal = () => {
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
-        {/* Header */}
-        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <QrCode className="w-5 h-5 text-sky-400" />
-            <h3 className="text-base font-bold">Lompat Cepat ke Box (1 - 72)</h3>
+        {/* Apple Style Header */}
+        <div className="bg-[#fbfbfd] px-6 py-4 flex items-center justify-between border-b border-black/[0.06] shrink-0">
+          <div className="flex items-center space-x-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0071e3]/10 text-[#0071e3]">
+              <QrCode className="w-4 h-4" />
+            </div>
+            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Lompat Cepat ke Box (1 - 72)</h3>
           </div>
           <button
             onClick={() => setQuickScannerOpen(false)}
-            className="text-slate-500 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-200 transition"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
+            aria-label="Tutup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 

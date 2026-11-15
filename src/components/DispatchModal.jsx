@@ -115,29 +115,30 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in no-print">
-      <div className="relative w-full max-w-lg bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
-        {/* Header */}
-        <div className="px-5 py-4 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-blue-500/20 rounded-xl border border-blue-400/30 text-blue-300">
-              <Send className="w-5 h-5" />
+    <div className="font-apple fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in no-print">
+      <div className="relative w-full max-w-lg bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] overflow-hidden flex flex-col max-h-[92vh]">
+        {/* Apple Dark Header */}
+        <div className="px-6 py-4 bg-[#161618] text-white flex items-center justify-between border-b border-white/[0.08]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">
+              <Send className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-black tracking-tight text-white flex items-center gap-2">
-                Catat Pengiriman Sampel Keluar R&D
+              <h3 className="text-[15px] font-semibold tracking-tight text-white flex items-center gap-2">
+                Catat Pengiriman Sampel Keluar
               </h3>
-              <p className="text-xs text-blue-200 font-medium">
-                Kirim sampel ke Buyer, ANZO QC, ANZO TW, ANZO QC CHINA, RDTW, atau RDC
+              <p className="text-[11px] text-white/60">
+                Kirim sampel ke Buyer, ANZO QC, ANZO TW, QC CHINA, RDTW, atau RDC
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
+            aria-label="Tutup"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -426,20 +427,20 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
             <span>Stok Box #{singleItem?.boxNumber || '-'} akan berkurang otomatis</span>
           </div>
 
-          {/* Footer Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-200">
+          {/* Apple Style Footer Actions */}
+          <div className="pt-3 flex items-center justify-end gap-2 border-t border-black/[0.06]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-black/[0.06] bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] font-medium text-xs transition cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Memproses...' : 'Konfirmasi Kirim Sampel'}</span>

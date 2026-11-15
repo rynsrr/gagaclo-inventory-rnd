@@ -40,21 +40,21 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto print:block">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-300 w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none print:overflow-visible print:block">
+    <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto print:block">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none print:overflow-visible print:block">
         
-        {/* Header (hidden in print) */}
-        <div className="no-print inventory-dialog-heading px-6 py-4 flex items-center justify-between border-b border-slate-800">
+        {/* Apple Dark Header (hidden in print) */}
+        <div className="no-print bg-[#161618] text-white px-6 py-4 flex items-center justify-between border-b border-white/[0.08]">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-600 rounded-lg text-white">
-              <Printer className="w-5 h-5" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">
+              <Printer className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-[15px] font-semibold text-white tracking-tight">
                 Cetak Label Stiker Box (Desain Resmi GAGACLO)
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Desain 1:1 sesuai standar: Judul Box, Nomor Raksasa, Bar Lavender Nama PPIC, Lokasi Rak & Unit RND.
+              <p className="text-xs text-white/60 mt-0.5">
+                Desain 1:1 sesuai standar: Judul Box, Nomor Raksasa, Bar Lavender Nama PPIC, Lokasi Rak &amp; Unit RND.
               </p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
           <div className="flex items-center space-x-2">
             <button
               onClick={handlePrint}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-md transition"
+              className="flex items-center space-x-1.5 px-5 py-2 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-medium shadow-xs transition cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>Cetak Sekarang ({boxesToPrint.length} Label)</span>
@@ -70,9 +70,10 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
 
             <button
               onClick={onClose}
-              className="p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-200 transition"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
+              aria-label="Tutup"
             >
-              <X className="w-5 h-5" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

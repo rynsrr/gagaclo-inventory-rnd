@@ -216,46 +216,49 @@ export const BoxManageModal = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in no-print">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-300 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="font-apple fixed inset-0 z-[70] bg-black/50 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in no-print">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
 
-        {/* Header */}
-        <div className="inventory-dialog-heading px-5 py-3.5 flex items-center justify-between shrink-0">
+        {/* Apple Style Header */}
+        <div className="bg-[#fbfbfd] px-6 py-4 flex items-center justify-between border-b border-black/[0.06] shrink-0">
           <div>
-            <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase">
+            <h3 className="text-[16px] font-semibold tracking-tight text-[#1d1d1f]">
               Kelola Box, Rak &amp; Orang
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[12px] text-[#86868b] mt-0.5">
               Tambah box baru, atur penempatan rak/lantai, dan kelola data PPIC.
             </p>
           </div>
           <button
             onClick={closeModal}
-            className="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-200 transition"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
             aria-label="Tutup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-slate-200 bg-slate-50 px-3 pt-2 gap-1 shrink-0">
+        {/* Apple Segmented Tab Bar */}
+        <div className="flex bg-black/[0.04] p-1 rounded-full border border-black/[0.04] mx-6 mt-4 gap-1 shrink-0">
           {tabs.map((t) => {
             const Icon = t.icon;
+            const isActive = tab === t.id;
             return (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => { setTab(t.id); setConfirmDelete(null); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg text-xs font-bold transition ${
-                  tab === t.id
-                    ? 'bg-white text-blue-700 border border-b-0 border-slate-200'
-                    : 'text-slate-500 hover:text-slate-800'
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
+                  isActive
+                    ? 'bg-white text-[#1d1d1f] shadow-xs'
+                    : 'text-[#86868b] hover:text-[#1d1d1f]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                {t.label}
-                <span className="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-full text-xs font-black">
+                <span>{t.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[11px] font-medium tabular-nums ${
+                  isActive ? 'bg-black/[0.06] text-[#1d1d1f]' : 'bg-black/[0.04] text-[#86868b]'
+                }`}>
                   {t.count}
                 </span>
               </button>

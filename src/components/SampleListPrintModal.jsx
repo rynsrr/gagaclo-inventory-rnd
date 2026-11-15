@@ -66,24 +66,24 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
   });
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-300 w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
+    <div className="font-apple fixed inset-0 z-[80] bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
         
-        {/* Top Control Bar (Hidden on print) */}
-        <div className="no-print bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
+        {/* Apple Dark Control Bar (Hidden on print) */}
+        <div className="no-print bg-[#161618] text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-black tracking-wide flex items-center gap-2">
+              <h2 className="text-[15px] font-semibold tracking-tight text-white flex items-center gap-2">
                 <span>Print List Sample: BOX #{box.boxNumber}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-white/80">
                   {box.rackName}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
-                Format Lembar Manifest / Daftar Isi Box resmi untuk arsip & stock opname fisik
+              <p className="text-xs text-white/60 mt-0.5">
+                Format Lembar Manifest / Daftar Isi Box resmi untuk arsip &amp; stock opname fisik
               </p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
               type="button"
               onClick={handlePrint}
               disabled={activeItems.length === 0}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-900/30 transition cursor-pointer active:scale-95"
+              className="flex items-center space-x-1.5 px-5 py-2 bg-[#0071e3] hover:bg-[#0077ed] disabled:opacity-40 text-white rounded-xl text-xs font-medium shadow-xs transition cursor-pointer"
             >
               <Printer className="w-4 h-4 text-white" />
               <span>Cetak Sekarang ({activeItems.length} Item)</span>
@@ -102,9 +102,10 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
               type="button"
               onClick={onClose}
               aria-label="Tutup jendela cetak list sample"
-              className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
+              title="Tutup dialog"
             >
-              <X className="w-5 h-5" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

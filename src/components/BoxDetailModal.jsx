@@ -315,27 +315,27 @@ function BoxDetail({ box }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-1 sm:p-3 overflow-y-auto animate-fade-in print:p-0 print:bg-transparent">
-      <div className={`bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal || showSampleListPrintModal ? 'no-print' : ''}`}>
+    <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-1.5 sm:p-3 overflow-y-auto print:p-0 print:bg-transparent transition-opacity">
+      <div className={`bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal || showSampleListPrintModal ? 'no-print' : ''}`}>
         
-        {/* Header */}
-        <div className="inventory-dialog-heading p-5 flex items-start justify-between border-b border-slate-800">
+        {/* Apple Dark Header */}
+        <div className="bg-[#161618] text-white p-5 flex items-start justify-between border-b border-white/[0.08] shrink-0">
           <div className="flex items-start space-x-3.5 min-w-0 flex-1 mr-4">
             <div className="w-full">
-              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                <h2 className="text-xl font-black tracking-tight">{box.code}</h2>
-                <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                  box.category === 'SAMPLE' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-400 text-slate-950'
+              <div className="flex items-center space-x-2.5 flex-wrap gap-y-1">
+                <h2 className="text-[20px] font-semibold tracking-tight text-white">{box.code}</h2>
+                <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium tracking-wide uppercase ${
+                  box.category === 'SAMPLE' ? 'bg-[#ff9500]/20 text-[#ffb340] border border-[#ff9500]/30' : 'bg-[#34c759]/20 text-[#6ce38c] border border-[#34c759]/30'
                 }`}>
                   {box.category}
                 </span>
-                <span className="text-xs text-slate-300 font-medium px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
+                <span className="text-[11px] text-white/70 font-medium px-2.5 py-0.5 rounded-full bg-white/10 border border-white/10">
                   {box.rackName}
                 </span>
               </div>
 
               {/* Simple Description / Catatan Box Persis di Bawah Box */}
-              <div className="mt-1.5 flex items-center gap-2 max-w-xl">
+              <div className="mt-2 flex items-center gap-2 max-w-xl">
                 {isOwner ? (
                   <div className="flex items-center gap-1.5 w-full">
                     <input
@@ -350,20 +350,20 @@ function BoxDetail({ box }) {
                         }
                       }}
                       placeholder="Tambah deskripsi / catatan box..."
-                      className="w-full text-xs text-slate-800 placeholder:text-slate-400 bg-white border border-slate-300 rounded-md px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs transition"
+                      className="w-full text-xs text-white placeholder:text-white/40 bg-white/10 border border-white/15 rounded-xl px-3 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/40 focus:bg-white/15 transition"
                       title="Klik untuk ubah catatan (Tekan Enter untuk simpan)"
                     />
                     <button
                       type="button"
                       onClick={handleSaveNotes}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs shrink-0 px-2.5 py-1 rounded-md transition cursor-pointer"
+                      className="text-xs font-medium text-white bg-white/15 hover:bg-white/25 border border-white/20 shrink-0 px-3 py-1.5 rounded-xl transition cursor-pointer"
                       title="Simpan Catatan"
                     >
                       {isSavingNotes ? '✓ Tersimpan' : 'Simpan'}
                     </button>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500 italic truncate" title={boxNotes || 'Tidak ada catatan'}>
+                  <p className="text-xs text-white/60 italic truncate" title={boxNotes || 'Tidak ada catatan'}>
                     {boxNotes ? `Catatan: ${boxNotes}` : 'Tidak ada catatan khusus'}
                   </p>
                 )}
@@ -376,67 +376,69 @@ function BoxDetail({ box }) {
               type="button"
               onClick={toggleFullStatus}
               disabled={savingFullStatus || !isOwner}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold text-white transition ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold text-white transition cursor-pointer ${
                 !isOwner
-                  ? 'bg-slate-500 opacity-60 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-500 disabled:opacity-50'
+                  ? 'bg-white/10 text-white/40 opacity-60 cursor-not-allowed'
+                  : box.isFull 
+                  ? 'bg-white/15 hover:bg-white/25 text-white border border-white/20' 
+                  : 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-xs'
               }`}
               title={!isOwner ? `Terkunci: Box ini milik PPIC ${box.picName}` : undefined}
             >
               {!isOwner && <Lock className="inline w-3 h-3 mr-1 -mt-0.5" />}
               {savingFullStatus ? 'Menyimpan…' : box.isFull ? 'Buka kembali box' : 'Tandai penuh'}
             </button>
-            {fullStatusError && <span role="alert" className="text-xs text-red-700">{fullStatusError}</span>}
+            {fullStatusError && <span role="alert" className="text-xs text-[#ff453a]">{fullStatusError}</span>}
             <button
               type="button"
               onClick={() => setShowSampleListPrintModal(true)}
-              className="flex items-center space-x-1.5 text-xs font-bold bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 px-3 py-1.5 rounded-lg shadow-2xs transition cursor-pointer"
+              className="flex items-center space-x-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 text-white border border-white/15 px-3 py-1.5 rounded-full transition cursor-pointer"
               title="Cetak Lembar Daftar Sample Box (Format A4)"
             >
-              <FileText className="w-4 h-4 text-blue-600" />
+              <FileText className="w-3.5 h-3.5 text-[#2997ff]" />
               <span>Print List Sample</span>
             </button>
             <button
               onClick={() => setShowBoxLabelModal(true)}
-              className="flex items-center space-x-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg shadow-sm transition"
+              className="flex items-center space-x-1.5 text-xs font-medium bg-[#ff9500]/20 hover:bg-[#ff9500]/30 text-[#ffb340] border border-[#ff9500]/40 px-3.5 py-1.5 rounded-full transition cursor-pointer"
               title="Cetak Label Stiker Box (Desain Resmi)"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-3.5 h-3.5" />
               <span>Cetak Label Box</span>
             </button>
             <button
               onClick={() => setSelectedBoxNumber(null)}
               aria-label="Tutup detail box"
-              className="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-200 transition"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer ml-1"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* PPIC & Quick Stats Bar */}
-        <div className="bg-slate-50 px-5 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+        {/* Apple Style PPIC & Quick Stats Bar */}
+        <div className="bg-[#f5f5f7] px-5 py-3 border-b border-black/[0.06] flex flex-wrap items-center justify-between gap-3 text-xs text-[#1d1d1f] shrink-0">
           <div className="flex items-center space-x-3">
-            <span className="text-slate-500 font-medium">PPIC</span>
-            <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-2xs font-semibold text-slate-800">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+            <span className="text-[#86868b] font-medium">PPIC</span>
+            <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full border border-black/[0.06] shadow-2xs font-semibold text-[#1d1d1f]">
+              <span className="w-2 h-2 rounded-full bg-[#0071e3]"></span>
               <span>#{box.ppicNumber} {box.picName}</span>
             </div>
             {isSuper && String(currentUser?.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase() && (
-              <span className="text-xs font-black uppercase text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+              <span className="text-[11px] font-semibold text-[#b25000] bg-[#ff9500]/15 border border-[#ff9500]/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 ⚡ Mode Superuser (Akses Penuh)
               </span>
             )}
             {isHelperUser && (
-              <span className="text-xs font-black uppercase text-teal-900 bg-teal-100 border border-teal-300 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+              <span className="text-[11px] font-semibold text-[#006b52] bg-[#30b0c7]/15 border border-[#30b0c7]/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 🛠️ Tim Support (Membantu {box.picName})
               </span>
             )}
           </div>
 
-          <div className="flex items-center space-x-4 text-slate-600">
-            <div>
-              Total: <strong className="text-slate-900 font-bold">{itemsInBox.reduce((sum, i) => sum + (Number(i.qty) || 0), 0)} unit</strong>
+          <div className="flex items-center space-x-4 text-[#86868b]">
+            <div className="text-[13px]">
+              Total: <strong className="text-[#1d1d1f] font-semibold tabular-nums">{itemsInBox.reduce((sum, i) => sum + (Number(i.qty) || 0), 0)} unit</strong>
             </div>
           </div>
         </div>
@@ -458,10 +460,10 @@ function BoxDetail({ box }) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-center flex-wrap gap-2.5">
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">
                   Daftar Barang
                 </h3>
-                <span className="bg-slate-900 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                <span className="bg-[#1d1d1f] text-white text-[11px] px-2.5 py-0.5 rounded-full font-medium tabular-nums">
                   {itemsInBox.length}
                 </span>
               </div>
@@ -469,13 +471,13 @@ function BoxDetail({ box }) {
               {/* Quick Search in Box */}
               {itemsInBox.length > 2 && (
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                  <Search className="w-3.5 h-3.5 text-[#86868b] absolute left-3 top-2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari kode / style / size..."
-                    className="pl-8 pr-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs w-44 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition"
+                    className="pl-8 pr-3 py-1.5 bg-[#f5f5f7] border border-black/[0.08] rounded-full text-xs text-[#1d1d1f] placeholder:text-[#86868b] w-48 focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 focus:bg-white transition"
                   />
                 </div>
               )}
@@ -493,14 +495,14 @@ function BoxDetail({ box }) {
                       setCardPrintItems(itemsInBox);
                     }
                   }}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition cursor-pointer ${
+                  className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
                     selectedItemIds.size > 0
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'
-                      : 'bg-slate-900 hover:bg-slate-800 text-white'
+                      ? 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-xs'
+                      : 'bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.08] shadow-2xs'
                   }`}
                   title="Cetak Kartu Fisik Item"
                 >
-                  <Printer className="w-3.5 h-3.5 text-amber-400" />
+                  <Printer className="w-3.5 h-3.5 text-[#ff9500]" />
                   <span>
                     {selectedItemIds.size > 0
                       ? `Cetak Terpilih (${selectedItemIds.size})`
@@ -514,10 +516,10 @@ function BoxDetail({ box }) {
                 <button
                   type="button"
                   onClick={() => setShowSampleListPrintModal(true)}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-2xs transition cursor-pointer"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.08] shadow-2xs transition cursor-pointer"
                   title="Cetak Lembar Daftar / Manifest Sample Box (Format A4)"
                 >
-                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
                   <span>
                     {selectedItemIds.size > 0
                       ? `Print List Terpilih (${selectedItemIds.size})`
@@ -534,7 +536,7 @@ function BoxDetail({ box }) {
                     const selected = itemsInBox.filter(i => selectedItemIds.has(i.id));
                     addMultipleToDispatchCart(selected);
                   }}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#ff2d55] hover:bg-[#e02447] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
                   title="Masukkan semua item yang dicentang ke Keranjang Pengiriman"
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
@@ -550,8 +552,8 @@ function BoxDetail({ box }) {
                     setDispatchPreselectedItems(itemsInBox.filter(i => selectedItemIds.has(i.id)));
                     setDispatchModalItem(null);
                   }}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
-                  title="Kirim semua item yang dicentang ke luar (Buyer / ANZO QC / ANZO TW / ANZO QC CHINA / RDTW / RDC)"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
+                  title="Kirim semua item yang dicentang ke luar"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Kirim Terpilih ({selectedItemIds.size})</span>
@@ -562,7 +564,7 @@ function BoxDetail({ box }) {
               {isOwner && selectedItemIds.size > 0 && (
                 <button
                   onClick={() => openMoveModal(itemsInBox.filter(i => selectedItemIds.has(i.id)))}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-black shadow-xs transition cursor-pointer"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#ff9500] hover:bg-[#f08c00] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
                   title="Pindahkan semua item yang dicentang ke Box lain"
                 >
                   <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -575,10 +577,10 @@ function BoxDetail({ box }) {
                 <button
                   type="button"
                   onClick={handleCopySelectedInfo}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold border border-slate-300 shadow-2xs transition cursor-pointer"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] rounded-full text-xs font-medium border border-black/[0.06] transition cursor-pointer"
                   title="Salin ringkasan data item yang dicentang ke clipboard"
                 >
-                  <Copy className="w-3.5 h-3.5 text-blue-600" />
+                  <Copy className="w-3.5 h-3.5 text-[#0071e3]" />
                   <span>Copy Data ({selectedItemIds.size})</span>
                 </button>
               )}
@@ -591,7 +593,7 @@ function BoxDetail({ box }) {
                     setDeleteError(null);
                     setItemToDelete(itemsInBox.filter(i => selectedItemIds.has(i.id)));
                   }}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#ff3b30]/10 hover:bg-[#ff3b30]/20 text-[#ff3b30] border border-[#ff3b30]/20 rounded-full text-xs font-medium transition cursor-pointer"
                   title="Hapus semua item yang dicentang dari box ini"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -602,17 +604,17 @@ function BoxDetail({ box }) {
               {isOwner ? (
                 <button
                   onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
-                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs transition cursor-pointer"
+                  className="flex items-center space-x-1.5 px-4 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Tambah Item</span>
                 </button>
               ) : (
                 <span
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-xs font-bold border border-slate-200 cursor-not-allowed"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#f5f5f7] text-[#86868b] rounded-full text-xs font-medium border border-black/[0.06] cursor-not-allowed"
                   title={`Terkunci: Box #${box.boxNumber} adalah milik PPIC ${box.picName}. Satu user tidak dapat mengedit data user lain.`}
                 >
-                  <Lock className="w-3.5 h-3.5 text-slate-400" />
+                  <Lock className="w-3.5 h-3.5 text-[#86868b]" />
                   <span>Terkunci ({box.picName})</span>
                 </span>
               )}
@@ -945,37 +947,39 @@ function BoxDetail({ box }) {
       {/* Quick Move Item(s) to Another Box Modal */}
       {movingItems && (
         <div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in no-print">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-300 max-w-md w-full overflow-hidden flex flex-col">
-            <div className="inventory-dialog-heading px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+          <div className="bg-white rounded-[22px] shadow-[0_24px_50px_rgba(0,0,0,0.18)] border border-black/[0.08] max-w-md w-full overflow-hidden flex flex-col font-apple animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 bg-[#fbfbfd] border-b border-black/[0.06] flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <ArrowRightLeft className="w-4 h-4 text-amber-400" />
-                <h3 className="font-black text-slate-900 text-sm uppercase">
+                <div className="w-7 h-7 rounded-full bg-[#ff9500]/15 text-[#ff9500] flex items-center justify-center">
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="font-semibold text-[#1d1d1f] text-[15px] tracking-tight">
                   Pindah Box ({movingItems.length} Item)
                 </h3>
               </div>
               <button
                 onClick={() => setMovingItems(null)}
-                className="text-slate-500 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-200 cursor-pointer"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
                 aria-label="Tutup"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
             <div className="p-5 space-y-4 text-xs">
               {/* Item preview list */}
               <div>
-                <span className="block font-bold text-slate-600 mb-1">Item yang akan dipindahkan:</span>
-                <div className="max-h-36 overflow-y-auto space-y-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                <span className="block font-medium text-[#86868b] mb-1.5">Item yang akan dipindahkan:</span>
+                <div className="max-h-36 overflow-y-auto space-y-1 bg-[#f5f5f7] border border-black/[0.05] rounded-xl p-2.5">
                   {movingItems.map((it) => (
-                    <div key={it.id} className="flex items-center justify-between text-xs font-semibold text-slate-800 py-0.5">
-                      <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-300 text-xs">
+                    <div key={it.id} className="flex items-center justify-between text-xs font-medium text-[#1d1d1f] py-0.5">
+                      <span className="font-mono bg-white px-1.5 py-0.5 rounded-md border border-black/[0.08] text-[11px]">
                         {it.kode || it.sku || '-'}
                       </span>
-                      <span className="truncate max-w-[190px] text-slate-700 ml-2">
+                      <span className="truncate max-w-[190px] text-[#1d1d1f] ml-2">
                         {it.style || it.deskripsi || it.name}
                       </span>
-                      <span className="text-slate-500 ml-auto whitespace-nowrap text-xs">
+                      <span className="text-[#86868b] ml-auto whitespace-nowrap text-xs tabular-nums">
                         {it.jumlah || it.qty} {it.satuan || it.unit || 'PCS'}
                       </span>
                     </div>
@@ -983,38 +987,38 @@ function BoxDetail({ box }) {
                 </div>
               </div>
 
-              {/* Destination Box Picker (Lightweight Alternative, No 71-option select) */}
+              {/* Destination Box Picker */}
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
+                <label className="block font-medium text-[#1d1d1f] mb-1.5">
                   Nomor Box Tujuan (saat ini di Box #{box.boxNumber}):
                 </label>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 border border-slate-300 rounded-xl px-3 py-2 bg-white flex-1 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
-                    <span className="font-black text-slate-500 text-xs">BOX #</span>
+                  <div className="flex items-center gap-2 border border-black/[0.08] rounded-xl px-3 py-2 bg-[#f5f5f7] flex-1 focus-within:bg-white focus-within:border-[#0071e3] focus-within:ring-4 focus-within:ring-[#0071e3]/15 transition">
+                    <span className="font-semibold text-[#86868b] text-xs">BOX #</span>
                     <input
                       type="number"
                       min="1"
                       max="72"
                       value={targetBoxNum}
                       onChange={(e) => setTargetBoxNum(Math.max(1, Math.min(72, Number(e.target.value) || 1)))}
-                      className="w-16 font-mono font-black text-sm text-slate-900 focus:outline-none bg-transparent"
+                      className="w-16 font-mono font-semibold text-sm text-[#1d1d1f] focus:outline-hidden bg-transparent"
                     />
                     {(() => {
                       const dest = boxes.find(b => Number(b.boxNumber) === Number(targetBoxNum));
                       return dest ? (
-                        <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 ml-auto truncate">
+                        <span className="text-[11px] font-medium text-[#0071e3] bg-[#0071e3]/10 px-2 py-0.5 rounded-full border border-[#0071e3]/20 ml-auto truncate">
                           {dest.rackName || 'LANTAI'} • {dest.picName || 'Royan'}
                         </span>
                       ) : (
-                        <span className="text-xs font-bold text-rose-500 ml-auto">Box #{targetBoxNum}</span>
+                        <span className="text-xs font-semibold text-[#ff3b30] ml-auto">Box #{targetBoxNum}</span>
                       );
                     })()}
                   </div>
                 </div>
 
                 {/* Quick Box Chips */}
-                <div className="flex items-center gap-1 mt-2 flex-wrap text-xs">
-                  <span className="text-slate-400 font-semibold mr-0.5">Pilihan Box:</span>
+                <div className="flex items-center gap-1 mt-2.5 flex-wrap text-xs">
+                  <span className="text-[#86868b] font-medium mr-0.5">Pilihan Box:</span>
                   {boxes
                     .filter(b => Number(b.boxNumber) !== Number(box.boxNumber) && Number(b.boxNumber) <= 72)
                     .slice(0, 10)
@@ -1023,10 +1027,10 @@ function BoxDetail({ box }) {
                         key={b.boxNumber}
                         type="button"
                         onClick={() => setTargetBoxNum(b.boxNumber)}
-                        className={`px-2 py-0.5 rounded-md font-bold border transition cursor-pointer ${
+                        className={`px-2 py-0.5 rounded-full font-medium text-xs transition cursor-pointer ${
                           targetBoxNum === b.boxNumber
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300'
+                            ? 'bg-[#0071e3] text-white shadow-xs'
+                            : 'bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] border border-black/[0.06]'
                         }`}
                       >
                         #{b.boxNumber}
@@ -1036,18 +1040,18 @@ function BoxDetail({ box }) {
               </div>
 
               {moveError && (
-                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 font-bold text-xs flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <div className="p-2.5 rounded-xl bg-[#ff3b30]/8 border border-[#ff3b30]/20 text-[#ff3b30] font-medium text-xs flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-[#ff3b30] shrink-0" />
                   <span>{moveError}</span>
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-200 flex items-center justify-end space-x-2">
+              <div className="pt-3 border-t border-black/[0.06] flex items-center justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setMovingItems(null)}
                   disabled={isMoving}
-                  className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 font-bold hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-[#1d1d1f] font-medium text-xs bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.06] transition cursor-pointer"
                 >
                   Batal
                 </button>
@@ -1055,7 +1059,7 @@ function BoxDetail({ box }) {
                   type="button"
                   onClick={handleConfirmMove}
                   disabled={isMoving}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl shadow-md transition flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <ArrowRightLeft className="w-3.5 h-3.5" />
                   <span>{isMoving ? 'Memindahkan...' : 'Pindahkan Sekarang'}</span>
@@ -1068,29 +1072,29 @@ function BoxDetail({ box }) {
 
       {/* Delete Item Confirmation Modal */}
       {itemToDelete && (
-        <div className="fixed inset-0 z-[75] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in no-print">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-300 max-w-sm w-full overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[75] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in no-print">
+          <div className="bg-white rounded-[22px] shadow-[0_24px_50px_rgba(0,0,0,0.18)] border border-black/[0.08] max-w-sm w-full overflow-hidden flex flex-col font-apple animate-in fade-in zoom-in-95 duration-150">
             <div className="p-5 text-center">
-              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
-                <Trash2 className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-full bg-[#ff3b30]/10 text-[#ff3b30] flex items-center justify-center mx-auto mb-3">
+                <Trash2 className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-black text-slate-900">
+              <h3 className="text-[16px] font-semibold text-[#1d1d1f] tracking-tight">
                 {Array.isArray(itemToDelete) ? `Hapus ${itemToDelete.length} Item?` : 'Hapus Item Ini?'}
               </h3>
-              <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+              <p className="text-xs text-[#86868b] mt-1.5 leading-relaxed">
                 {Array.isArray(itemToDelete) ? (
                   <span>
-                    Item yang Anda centang akan dikeluarkan secara permanen dari <strong>Box #{box.boxNumber}</strong>.
+                    Item yang Anda centang akan dikeluarkan secara permanen dari <strong className="text-[#1d1d1f]">Box #{box.boxNumber}</strong>.
                   </span>
                 ) : (
                   <span>
-                    Yakin ingin menghapus <strong>"{itemToDelete.name || itemToDelete.style || itemToDelete.kode}"</strong> dari <strong>Box #{box.boxNumber}</strong>?
+                    Yakin ingin menghapus <strong className="text-[#1d1d1f]">"{itemToDelete.name || itemToDelete.style || itemToDelete.kode}"</strong> dari <strong className="text-[#1d1d1f]">Box #{box.boxNumber}</strong>?
                   </span>
                 )}
               </p>
 
               {deleteError && (
-                <div className="mt-3 p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                <div className="mt-3 p-2 rounded-xl bg-[#ff3b30]/8 border border-[#ff3b30]/20 text-[#ff3b30] text-xs font-medium">
                   {deleteError}
                 </div>
               )}
@@ -1100,7 +1104,7 @@ function BoxDetail({ box }) {
                   type="button"
                   disabled={isDeleting}
                   onClick={() => { setItemToDelete(null); setDeleteError(null); }}
-                  className="flex-1 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] font-medium text-xs border border-black/[0.06] transition cursor-pointer"
                 >
                   Batal
                 </button>
@@ -1108,7 +1112,7 @@ function BoxDetail({ box }) {
                   type="button"
                   disabled={isDeleting}
                   onClick={handleConfirmDelete}
-                  className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1"
+                  className="flex-1 py-2.5 rounded-xl bg-[#ff3b30] hover:bg-[#e03026] text-white font-medium text-xs transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1"
                 >
                   {isDeleting ? <span>Menghapus...</span> : <span>Ya, Hapus</span>}
                 </button>

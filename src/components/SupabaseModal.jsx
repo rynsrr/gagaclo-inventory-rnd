@@ -283,41 +283,42 @@ EXECUTE FUNCTION public.trg_auto_assign_item_code();`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col">
+    <div className="font-apple fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] max-w-2xl w-full border border-black/[0.08] overflow-hidden max-h-[92vh] flex flex-col">
         
-        {/* Modal Header */}
-        <div className="inventory-dialog-heading p-5 flex items-center justify-between border-b border-slate-800">
+        {/* Apple Style Modal Header */}
+        <div className="bg-[#fbfbfd] px-6 py-4 flex items-center justify-between border-b border-black/[0.06] shrink-0">
           <div className="flex items-center space-x-3">
-            <div className={`p-2.5 rounded-xl ${supabaseStatus.isConnected ? 'bg-emerald-100 text-emerald-600 border border-emerald-300' : 'bg-blue-100 text-blue-600 border border-blue-300'}`}>
-              <Database className="w-6 h-6" />
+            <div className={`flex h-9 w-9 items-center justify-center rounded-full ${supabaseStatus.isConnected ? 'bg-[#34c759]/15 text-[#248a3d]' : 'bg-[#0071e3]/10 text-[#0071e3]'}`}>
+              <Database className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-base font-bold text-slate-900 tracking-wide">
-                  Database Supabase Corporate Gagaclo
+                <h3 className="text-[16px] font-semibold text-[#1d1d1f] tracking-tight">
+                  Database Cloud Supabase
                 </h3>
                 {supabaseStatus.isConnected ? (
-                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#34c759]/15 text-[#248a3d] border border-[#34c759]/25">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse"></span>
                     <span>ONLINE</span>
                   </span>
                 ) : (
-                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                  <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/[0.05] text-[#86868b] border border-black/[0.08]">
                     <span>OFFLINE LOKAL</span>
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500">
-                Penyimpanan cloud terpusat untuk tim R&D & PPIC Gagaclo
+              <p className="text-[12px] text-[#86868b]">
+                Penyimpanan cloud terpusat untuk tim R&amp;D &amp; PPIC Gagaclo
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
+            aria-label="Tutup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 

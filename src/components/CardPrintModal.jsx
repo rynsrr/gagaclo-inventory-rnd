@@ -4,11 +4,6 @@ import {
   Printer, 
   Scissors, 
   CheckSquare, 
-  Square, 
-  Check, 
-  ListFilter,
-  Eye,
-  Layers,
   AlertTriangle
 } from 'lucide-react';
 import { InventoryCard } from './InventoryCard';
@@ -70,28 +65,28 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto">
+    <div className="font-apple fixed inset-0 z-[60] bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static print:inset-auto">
       
       {/* Container */}
-      <div className="bg-white rounded-xl shadow-xl border border-slate-300 w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-5xl max-h-[96vh] flex flex-col overflow-hidden print:max-w-none print:max-h-none print:shadow-none print:border-none print:rounded-none">
         
-        {/* Top Control Bar (Hidden when printing) */}
-        <div className="no-print inventory-dialog-heading px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 shrink-0">
+        {/* Apple Dark Control Bar (Hidden when printing) */}
+        <div className="no-print bg-[#161618] text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-600 rounded-lg text-white">
-              <Printer className="w-5 h-5" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">
+              <Printer className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase">
+                <h3 className="text-[15px] font-semibold tracking-tight text-white">
                   Cetak Multi-Kartu A4 (Ukuran KTP)
                 </h3>
-                <span className="bg-amber-400 text-slate-950 text-xs font-black px-1.5 py-0.5 rounded uppercase">
+                <span className="bg-white/10 text-white text-[11px] font-medium px-2 py-0.5 rounded-full border border-white/15 uppercase">
                   85.6 × 54 mm
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {activeItems.length} kartu terpilih = <strong className="text-slate-900 font-bold">{totalCards} kartu dicetak</strong> (± {estimatedPages} lembar A4)
+              <p className="text-xs text-white/60 mt-0.5">
+                {activeItems.length} kartu terpilih = <strong className="text-white font-semibold tabular-nums">{totalCards} kartu dicetak</strong> (± {estimatedPages} lembar A4)
               </p>
             </div>
           </div>
@@ -100,10 +95,10 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
             <button
               onClick={handlePrint}
               disabled={cardsToPrint.length === 0}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition transform active:scale-95 ${
+              className={`flex items-center space-x-2 px-5 py-2 rounded-xl text-xs font-medium shadow-xs transition ${
                 cardsToPrint.length > 0
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
-                  : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                  ? 'bg-[#0071e3] hover:bg-[#0077ed] text-white cursor-pointer'
+                  : 'bg-white/10 text-white/40 cursor-not-allowed opacity-60'
               }`}
             >
               <Printer className="w-4 h-4" />
@@ -112,10 +107,10 @@ export const CardPrintModal = ({ itemsToPrint, onClose }) => {
 
             <button
               onClick={onClose}
-              className="p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-200 transition cursor-pointer"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
               title="Tutup dialog"
             >
-              <X className="w-5 h-5" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

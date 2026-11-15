@@ -59,30 +59,33 @@ export const TransactionModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden">
+    <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-lg overflow-hidden">
         
-        {/* Header */}
-        <div className="inventory-dialog-heading px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <ArrowLeftRight className="w-5 h-5 text-blue-400" />
-            <h3 className="text-base font-bold">Catat Mutasi / Peminjaman Barang</h3>
+        {/* Apple Style Header */}
+        <div className="bg-[#fbfbfd] px-6 py-4 flex items-center justify-between border-b border-black/[0.06] shrink-0">
+          <div className="flex items-center space-x-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0071e3]/10 text-[#0071e3]">
+              <ArrowLeftRight className="w-4 h-4" />
+            </div>
+            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Catat Mutasi / Peminjaman Barang</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-200 transition"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
+            aria-label="Tutup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 text-xs">
           
-          {/* Transaction Type */}
+          {/* Transaction Type Segmented */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Jenis Mutasi</label>
-            <div className="grid grid-cols-4 gap-2">
+            <label className="block font-medium text-[#1d1d1f] mb-1.5">Jenis Mutasi</label>
+            <div className="grid grid-cols-4 gap-1.5 bg-black/[0.04] p-1 rounded-full border border-black/[0.04]">
               {[
                 { id: 'BORROW', label: 'Pinjam' },
                 { id: 'RETURN', label: 'Kembali' },
@@ -93,10 +96,10 @@ export const TransactionModal = ({ isOpen, onClose }) => {
                   type="button"
                   key={t.id}
                   onClick={() => setType(t.id)}
-                  className={`py-2 text-xs font-bold rounded-lg border transition ${
+                  className={`py-1.5 text-xs font-medium rounded-full transition cursor-pointer text-center ${
                     type === t.id
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-white text-[#1d1d1f] shadow-xs'
+                      : 'text-[#86868b] hover:text-[#1d1d1f]'
                   }`}
                 >
                   {t.label}
@@ -187,18 +190,18 @@ export const TransactionModal = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Actions */}
-          <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+          {/* Apple Style Actions */}
+          <div className="pt-3 border-t border-black/[0.06] flex justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-100 font-semibold"
+              className="px-4 py-2 rounded-xl text-xs font-medium text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.06] transition cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center space-x-1.5 shadow-xs"
+              className="px-5 py-2 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-medium flex items-center space-x-1.5 shadow-xs transition cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>Simpan Mutasi</span>
