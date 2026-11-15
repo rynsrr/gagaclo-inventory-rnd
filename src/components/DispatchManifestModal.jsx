@@ -192,6 +192,61 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     return list.sort((a, b) => a.code.localeCompare(b.code));
   }, [allItems]);
 
+  // Unique list of Order Names from database for ORDER NAME autocomplete & autofill
+  const uniqueManifestOrderOptions = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+    (allItems || []).forEach((it) => {
+      if (!it) return;
+      const order = String(
+        it.sampleNo && it.sampleNo !== 'NA' && it.sampleNo !== '-' 
+          ? it.sampleNo 
+          : (it.buyerNo || it.orderName || '')
+      ).trim();
+      if (order && !seen.has(order.toUpperCase())) {
+        seen.add(order.toUpperCase());
+        const kode = it.kode || it.sku || '';
+        const style = it.style || it.deskripsi || it.name || '';
+        const box = it.boxNumber ? `BOX ${it.boxNumber}` : '';
+        const parts = [order];
+        if (kode && kode !== order) parts.push(`(${kode})`);
+        if (style && style !== '-') parts.push(`- ${style}`);
+        if (box) parts.push(`• ${box}`);
+        list.push({
+          value: order,
+          label: parts.join(' '),
+          item: it,
+        });
+      }
+    });
+    return list.sort((a, b) => a.value.localeCompare(b.value));
+  }, [allItems]);
+
+  // Unique list of Styles from database for STYLE autocomplete & autofill
+  const uniqueManifestStyleOptions = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+    (allItems || []).forEach((it) => {
+      if (!it) return;
+      const style = String(it.style || it.deskripsi || it.name || '').trim();
+      if (style && style !== '-' && !seen.has(style.toUpperCase())) {
+        seen.add(style.toUpperCase());
+        const kode = it.kode || it.sku || '';
+        const order = it.sampleNo && it.sampleNo !== 'NA' ? it.sampleNo : (it.buyerNo || '');
+        const box = it.boxNumber ? `BOX ${it.boxNumber}` : '';
+        const parts = [style];
+        if (order || kode) parts.push(`(${[order, kode].filter(Boolean).join(' / ')})`);
+        if (box) parts.push(`• ${box}`);
+        list.push({
+          value: style,
+          label: parts.join(' '),
+          item: it,
+        });
+      }
+    });
+    return list.sort((a, b) => a.value.localeCompare(b.value));
+  }, [allItems]);
+
   const handleRowQtyChange = (idx, value) => {
     setManifestRows((prev) => {
       const next = [...prev];
@@ -205,6 +260,35 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     setManifestRows((prev) => {
       const next = [...prev];
       next[idx] = { ...next[idx], [field]: value };
+      return next;
+    });
+  };
+
+  // Reusable helper: apply matched database item to populate row fields
+  const applyMatchedItemToManifestRow = (idx, matched, overrides = {}) => {
+    if (!matched) return;
+    const k = matched.kode || matched.sku || '';
+    const s = matched.sampleNo && matched.sampleNo !== 'NA' && matched.sampleNo !== '-' ? matched.sampleNo : '';
+    const b = matched.buyerNo || '';
+    const orderNameVal = s || b || '';
+    const styleVal = matched.style || matched.deskripsi || matched.name || '-';
+
+    setManifestRows((prev) => {
+      const next = [...prev];
+      next[idx] = {
+        ...next[idx],
+        isManual: false,
+        kode: overrides.kode || k || next[idx].kode,
+        hsCode: matched.hsCode || next[idx].hsCode || '',
+        orderName: overrides.orderName || orderNameVal || next[idx].orderName || '',
+        detail: matched.category || matched.tipe || matched.namaBarang || next[idx].detail || 'SAMPLE',
+        style: overrides.style || styleVal,
+        color: matched.color || matched.warna || next[idx].color || 'Multi Color',
+        size: matched.size || matched.ukuran || next[idx].size || 'ONE SIZE',
+        qty: 1,
+        unit: matched.satuan || next[idx].unit || 'PCS',
+        ...overrides,
+      };
       return next;
     });
   };
@@ -223,23 +307,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     });
 
     if (matched) {
-      setManifestRows((prev) => {
-        const next = [...prev];
-        next[idx] = {
-          ...next[idx],
-          isManual: false,
-          kode: matched.kode || matched.sku || upperVal,
-          hsCode: matched.hsCode || next[idx].hsCode || '',
-          orderName: matched.sampleNo && matched.sampleNo !== 'NA' ? matched.sampleNo : (matched.buyerNo || next[idx].orderName || ''),
-          detail: matched.category || matched.tipe || matched.namaBarang || next[idx].detail || 'SAMPLE',
-          style: matched.style || matched.deskripsi || matched.name || next[idx].style || '-',
-          color: matched.color || matched.warna || next[idx].color || 'Multi Color',
-          size: matched.size || matched.ukuran || next[idx].size || 'ONE SIZE',
-          qty: 1,
-          unit: matched.satuan || next[idx].unit || 'PCS',
-        };
-        return next;
-      });
+      applyMatchedItemToManifestRow(idx, matched, { kode: upperVal });
     } else {
       setManifestRows((prev) => {
         const next = [...prev];
@@ -249,6 +317,52 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
         };
         return next;
       });
+    }
+  };
+
+  // Handler for ORDER NAME change with database dropdown auto-lookup and autofill
+  const handleOrderNameChange = (idx, value) => {
+    const rawVal = String(value || '');
+    const cleanVal = rawVal.trim().toUpperCase();
+
+    // Look for matching item in allItems by sampleNo, buyerNo, orderName, or kode
+    const matched = (allItems || []).find((it) => {
+      if (!it) return false;
+      const s = String(it.sampleNo || '').trim().toUpperCase();
+      const b = String(it.buyerNo || '').trim().toUpperCase();
+      const o = String(it.orderName || '').trim().toUpperCase();
+      const k = String(it.kode || it.sku || '').trim().toUpperCase();
+      return (s && s !== 'NA' && s !== '-' && s === cleanVal) ||
+             (b && b === cleanVal) ||
+             (o && o === cleanVal) ||
+             (k && k === cleanVal);
+    });
+
+    if (matched) {
+      applyMatchedItemToManifestRow(idx, matched, { orderName: rawVal });
+    } else {
+      handleRowFieldChange(idx, 'orderName', value);
+    }
+  };
+
+  // Handler for STYLE change with database dropdown auto-lookup and autofill
+  const handleStyleChange = (idx, value) => {
+    const rawVal = String(value || '');
+    const cleanVal = rawVal.trim().toLowerCase();
+
+    // Look for matching item in allItems by style, deskripsi, or name
+    const matched = (allItems || []).find((it) => {
+      if (!it) return false;
+      const st = String(it.style || '').trim().toLowerCase();
+      const d = String(it.deskripsi || '').trim().toLowerCase();
+      const n = String(it.name || '').trim().toLowerCase();
+      return (st && st === cleanVal) || (d && d === cleanVal) || (n && n === cleanVal);
+    });
+
+    if (matched) {
+      applyMatchedItemToManifestRow(idx, matched, { style: rawVal });
+    } else {
+      handleRowFieldChange(idx, 'style', value);
     }
   };
 
@@ -1221,6 +1335,22 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                       </option>
                     ))}
                   </datalist>
+
+                  <datalist id="inventory-manifest-order-names-list">
+                    {uniqueManifestOrderOptions.map((opt, i) => (
+                      <option key={`${opt.value}-${i}`} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </datalist>
+
+                  <datalist id="inventory-manifest-styles-list">
+                    {uniqueManifestStyleOptions.map((opt, i) => (
+                      <option key={`${opt.value}-${i}`} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </datalist>
                   <table className="w-full text-left border-collapse text-[10px]">
                     <thead>
                       <tr className="border-b border-black font-bold text-center bg-slate-50/60 print:bg-white text-[9.5px] leading-tight">
@@ -1282,9 +1412,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <td className="py-0.5 px-1.5 border-r border-black text-center">
                               <input
                                 type="text"
+                                list="inventory-manifest-order-names-list"
                                 value={it.orderName}
-                                onChange={(e) => handleRowFieldChange(idx, 'orderName', e.target.value)}
-                                className="w-full text-center font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
+                                onChange={(e) => handleOrderNameChange(idx, e.target.value)}
+                                placeholder="ORDER NAME"
+                                className="w-full text-center font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 cursor-text"
+                                title="Ketik atau pilih Order Name dari database (data baris otomatis mengikuti)"
                               />
                             </td>
                             <td className="py-0.5 px-1.5 border-r border-black">
@@ -1298,9 +1431,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <td className="py-0.5 px-1.5 border-r border-black">
                               <input
                                 type="text"
+                                list="inventory-manifest-styles-list"
                                 value={it.style}
-                                onChange={(e) => handleRowFieldChange(idx, 'style', e.target.value)}
-                                className="w-full text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1"
+                                onChange={(e) => handleStyleChange(idx, e.target.value)}
+                                placeholder="STYLE"
+                                className="w-full text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 cursor-text"
+                                title="Ketik atau pilih Style dari database (data baris otomatis mengikuti)"
                               />
                             </td>
                             <td className="py-0.5 px-1 border-r border-black text-center">
