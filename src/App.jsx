@@ -297,10 +297,9 @@ const AppContent = () => {
                       key={tab.id}
                       type="button"
                       onClick={() => {
-                        if (tab.id === '3d-warehouse' && appMode === '3d-warehouse') {
-                          window.dispatchEvent(new CustomEvent('gagaclo_toggle_box_hud'));
-                        } else {
-                          setAppMode(tab.id);
+                        setAppMode(tab.id);
+                        if (tab.id === '3d-warehouse') {
+                          window.dispatchEvent(new CustomEvent('gagaclo_reset_3d_home_view'));
                         }
                       }}
                       aria-current={isActive ? 'page' : undefined}

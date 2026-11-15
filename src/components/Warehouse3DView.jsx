@@ -343,6 +343,7 @@ export const Warehouse3DView = ({
       isUserInteractingRef.current = true;
       flyCameraTargetRef.current = null;
       flyControlsTargetRef.current = null;
+      setIsHudExpanded(false); // Auto-close HUD when user starts orbiting / interacting with 3D
     });
     controls.addEventListener('end', () => {
       isUserInteractingRef.current = false;
@@ -960,13 +961,22 @@ export const Warehouse3DView = ({
       camera.far = Math.max(450, distance * 4);
       camera.updateProjectionMatrix();
 
-      const lookTarget = isAll ? new THREE.Vector3(-25.1, 1.5, -34.4) : center.clone();
+      let lookTarget;
       let targetPos;
+
       if (isAll) {
-        // Sudut pandang default persis referensi visual pengguna (overview denah arsitektur & seluruh rak)
-        targetPos = new THREE.Vector3(-80.0, 42.2, -77.3);
+        if (hudOffset) {
+          // Sudut pandang offset saat dropdown dibuka: geser gudang ke area kanan agar Rak 1 tidak terhalang
+          lookTarget = new THREE.Vector3(-11.0, 1.5, -52.0);
+          targetPos = new THREE.Vector3(-70.0, 46.0, -96.0);
+        } else {
+          // Sudut pandang default persis referensi visual pengguna (overview denah arsitektur & seluruh rak)
+          lookTarget = new THREE.Vector3(-25.1, 1.5, -34.4);
+          targetPos = new THREE.Vector3(-80.0, 42.2, -77.3);
+        }
       } else {
         const curRackId = Number(activeRackRef.current);
+        lookTarget = center.clone();
         if (curRackId === 1) {
           // Rak 1 faces West (-X)
           targetPos = new THREE.Vector3(center.x - distance, center.y + 0.5, center.z);
@@ -995,17 +1005,23 @@ export const Warehouse3DView = ({
       if (!newWidth || !newHeight) return;
       camera.aspect = newWidth / newHeight;
       renderer.setSize(newWidth, newHeight, false);
-      fitFrontView(false);
+      fitFrontView(false, isHudExpanded);
     };
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);
     handleResize();
+
+    const onCanvasWheel = () => {
+      setIsHudExpanded(false);
+    };
+    renderer.domElement.addEventListener('wheel', onCanvasWheel, { passive: true });
 
     // Cleanup
     return () => {
       rendererRef.current = null;
       resizeObserver.disconnect();
       fitCameraRef.current = null;
+      renderer.domElement.removeEventListener('wheel', onCanvasWheel);
       renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
@@ -1124,17 +1140,26 @@ export const Warehouse3DView = ({
     }
   }, [previewFocusBoxNumber, boxes]);
 
-  // Listener untuk klik logo brand header: kembali ke sudut pandang home default 3D
+  // Listener untuk klik logo brand header atau tab BOX: kembali ke sudut pandang home default 3D
   useEffect(() => {
     const handleResetHome = () => {
       lastUserInteractionTimeRef.current = Date.now();
       activeRackRef.current = 'ALL';
-      fitCameraRef.current?.(true);
+      setIsHudExpanded(false);
+      fitCameraRef.current?.(true, false);
       setHoveredBox(null);
     };
     window.addEventListener('gagaclo_reset_3d_home_view', handleResetHome);
     return () => window.removeEventListener('gagaclo_reset_3d_home_view', handleResetHome);
   }, []);
+
+  // Saat dropdown status box dibuka, geser kamera 3D agar Rak 1-5 tidak terhalang dropdown.
+  // Saat dropdown ditutup, kembalikan kamera ke sudut pandang default.
+  useEffect(() => {
+    if (activeRackRef.current === 'ALL' && fitCameraRef.current) {
+      fitCameraRef.current(true, isHudExpanded);
+    }
+  }, [isHudExpanded]);
 
   // Reapply PIC/search selection whenever filters change or cloud sync rebuilds
   // the scene. A box stays solid only when it satisfies every active filter.
@@ -1285,9 +1310,13 @@ export const Warehouse3DView = ({
                 <span>PIC: @{highlightPpic}</span>
                 <button
                   type="button"
-                  onClick={() => setHighlightPpic('ALL')}
+                  onClick={() => {
+                    setHighlightPpic('ALL');
+                    activeRackRef.current = 'ALL';
+                    fitCameraRef.current?.(true, isHudExpanded);
+                  }}
                   className="rounded-full px-1 text-[#0071e3] hover:text-[#ff3b30] underline cursor-pointer"
-                  title="Reset filter PIC"
+                  title="Reset filter PIC & kembali ke Fit View Default"
                 >
                   Reset
                 </button>
@@ -1329,7 +1358,15 @@ export const Warehouse3DView = ({
                 <div className="flex items-center justify-between text-[11px] font-bold text-[#86868b] uppercase tracking-wider px-0.5">
                   <span>Status Pengisian Box ({boxes.length} Box)</span>
                   {highlightPpic !== 'ALL' && (
-                    <button type="button" onClick={() => setHighlightPpic('ALL')} className="text-[#0071e3] hover:underline font-semibold lowercase cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHighlightPpic('ALL');
+                        activeRackRef.current = 'ALL';
+                        fitCameraRef.current?.(true, isHudExpanded);
+                      }}
+                      className="text-[#0071e3] hover:underline font-semibold lowercase cursor-pointer"
+                    >
                       difilter: @{highlightPpic} (reset)
                     </button>
                   )}
@@ -1381,9 +1418,9 @@ export const Warehouse3DView = ({
           )}
         </div>
 
-        {/* Hovered Box HUD Card (Bottom Left - Apple VisionOS / macOS Glass Card) */}
+        {/* Hovered Box HUD Card (Bottom Right - Apple VisionOS / macOS Glass Card) */}
         {hoveredBox && (
-          <div className="absolute bottom-5 left-5 z-10 bg-black/80 backdrop-blur-2xl p-4 rounded-[20px] border border-white/[0.12] text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none font-apple">
+          <div className="absolute bottom-13 right-3 sm:bottom-14 sm:right-4 z-20 bg-black/85 backdrop-blur-2xl p-4 rounded-[20px] border border-white/[0.12] text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none font-apple">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold text-white tabular-nums">
                 #{hoveredBox.boxNumber}
