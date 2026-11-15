@@ -225,8 +225,8 @@ const AppContent = () => {
                 </span>
               </div>
 
-            {/* Top Navigation Tabs */}
-            <nav className="flex items-center gap-1.5 mx-1 sm:mx-3 overflow-x-auto scrollbar-none" aria-label="Menu navigasi utama">
+            {/* Top Navigation Tabs (Tengah & Terdistribusi Rata) */}
+            <nav className="flex flex-1 items-center justify-center gap-2 sm:gap-2.5 mx-2 sm:mx-4 overflow-x-auto scrollbar-none" aria-label="Menu navigasi utama">
               {mainTabs.map((tab) => {
                 const isActive = appMode === tab.id;
                 return (
@@ -255,8 +255,8 @@ const AppContent = () => {
               })}
             </nav>
 
-            {/* Actions */}
-            <div className="inventory-header-actions flex shrink-0 items-center gap-2">
+            {/* Actions (Kanan & Rata) */}
+            <div className="inventory-header-actions ml-auto flex shrink-0 items-center justify-end gap-2">
 
               {/* Supabase Corporate Gagaclo Status Badge (Display Only - Tidak Dapat Diklik untuk Keamanan Data) */}
               <div

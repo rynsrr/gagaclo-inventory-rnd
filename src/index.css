@@ -112,16 +112,16 @@
   .inventory-header-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-width: max-content;
-    width: min(100%, 1440px);
+    justify-content: space-between;
+    gap: 16px;
+    width: min(100%, 1560px);
     margin-inline: auto;
     padding: 10px 20px;
     white-space: nowrap;
   }
 
   .inventory-header-controls { margin-inline: auto; }
-  .inventory-header-brand + .inventory-header-actions { margin-left: auto; }
+  .inventory-header-actions { margin-left: auto; }
 
   /* Left main navigation (BOX is the primary tab) */
   .inventory-body {
