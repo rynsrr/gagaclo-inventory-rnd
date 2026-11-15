@@ -240,9 +240,6 @@ export function TeamStructureView() {
                               {p.code}
                             </span>
                             <div className="text-base font-extrabold text-white">{p.name}</div>
-                            <span className="text-xs font-semibold text-slate-400">
-                              • PPIC Specialist
-                            </span>
                           </div>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.raciBg}`}>
                             [ R ] Resp.
