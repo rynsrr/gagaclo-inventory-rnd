@@ -14,6 +14,7 @@ import {
   Trash2,
   Layers,
 } from 'lucide-react';
+import { DEFAULT_ANNOUNCEMENT } from '../context/InventoryContext';
 
 export function AnnouncementModal({
   isOpen,
@@ -34,22 +35,10 @@ export function AnnouncementModal({
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Normalize items array from announcement prop
-  const items = Array.isArray(announcement?.items) && announcement.items.length > 0
+  // Normalize items array from announcement prop (always ensure at least 2 default items)
+  const items = Array.isArray(announcement?.items) && announcement.items.length >= 2
     ? announcement.items
-    : [
-        {
-          id: 'point-1',
-          title: announcement?.title || 'Standardisasi Kode Sampel IT & Sampel Baru',
-          badge: announcement?.badge || 'PENGUMUMAN PPIC & R&D',
-          badgeType: announcement?.badgeType || 'amber',
-          content: announcement?.content || '',
-          exampleCorrect: announcement?.exampleCorrect || '',
-          exampleWrong: announcement?.exampleWrong || '',
-          exampleNotes: announcement?.exampleNotes || '',
-          author: announcement?.author || 'Leader / R&D',
-        },
-      ];
+    : DEFAULT_ANNOUNCEMENT.items;
 
   // Reset to first slide when modal is opened
   useEffect(() => {
@@ -61,40 +50,26 @@ export function AnnouncementModal({
 
   // Sync edit form state whenever announcement prop or edit mode changes
   useEffect(() => {
-    if (announcement) {
-      const normalizedItems = Array.isArray(announcement.items) && announcement.items.length > 0
-        ? announcement.items
-        : [
-            {
-              id: 'point-1',
-              title: announcement.title || 'Standardisasi Kode Sampel IT & Sampel Baru',
-              badge: announcement.badge || 'PENGUMUMAN PPIC & R&D',
-              badgeType: announcement.badgeType || 'amber',
-              content: announcement.content || '',
-              exampleCorrect: announcement.exampleCorrect || '',
-              exampleWrong: announcement.exampleWrong || '',
-              exampleNotes: announcement.exampleNotes || '',
-              author: announcement.author || currentUser?.name || 'Supervisor / Leader R&D',
-            },
-          ];
+    const baseItems = Array.isArray(announcement?.items) && announcement.items.length >= 2
+      ? announcement.items
+      : DEFAULT_ANNOUNCEMENT.items;
 
-      setFormState({
-        title: announcement.title || 'Standardisasi Kode Sampel',
-        isActive: announcement.isActive !== false,
-        items: normalizedItems.map((it, idx) => ({
-          id: it.id || `point-${idx + 1}`,
-          title: it.title || '',
-          badge: it.badge || `POIN ${idx + 1}`,
-          badgeType: it.badgeType || 'amber',
-          content: it.content || '',
-          exampleCorrect: it.exampleCorrect || '',
-          exampleWrong: it.exampleWrong || '',
-          exampleNotes: it.exampleNotes || '',
-          author: it.author || currentUser?.name || 'Leader / R&D',
-        })),
-      });
-      setActiveEditIndex(0);
-    }
+    setFormState({
+      title: announcement?.title || DEFAULT_ANNOUNCEMENT.title,
+      isActive: announcement?.isActive !== false,
+      items: baseItems.map((it, idx) => ({
+        id: it.id || `point-${idx + 1}`,
+        title: it.title || '',
+        badge: it.badge || `POIN ${idx + 1}`,
+        badgeType: it.badgeType || 'amber',
+        content: it.content || '',
+        exampleCorrect: it.exampleCorrect || '',
+        exampleWrong: it.exampleWrong || '',
+        exampleNotes: it.exampleNotes || '',
+        author: it.author || currentUser?.name || 'Leader / R&D',
+      })),
+    });
+    setActiveEditIndex(0);
   }, [announcement, currentUser, isEditing]);
 
   if (!isOpen) return null;

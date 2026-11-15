@@ -43,9 +43,9 @@ import {
 const InventoryContext = createContext(null);
 
 export const DEFAULT_ANNOUNCEMENT = {
-  id: 'announcement_rnd_multi',
+  id: 'announcement_rnd_multi_v2',
   title: 'Pengumuman Penting Operasional R&D',
-  updatedAt: '2026-11-16T06:34:00.000Z',
+  updatedAt: '2026-11-16T06:45:00.000Z',
   isActive: true,
   items: [
     {
@@ -78,45 +78,25 @@ Mohon bantu percepat penataan fisik sampel, pengecekan kelengkapan, dan input da
 };
 
 export const normalizeAnnouncement = (raw) => {
-  if (!raw) return DEFAULT_ANNOUNCEMENT;
-  if (Array.isArray(raw.items) && raw.items.length > 0) {
-    return {
-      ...raw,
-      title: raw.title || raw.items[0]?.title || 'Standardisasi Kode Sampel',
-      isActive: raw.isActive !== false,
-      updatedAt: raw.updatedAt || new Date().toISOString(),
-      items: raw.items.map((it, idx) => ({
-        id: it.id || `point-${idx + 1}`,
-        title: it.title || `Poin Pengumuman #${idx + 1}`,
-        badge: it.badge || `POIN ${idx + 1}`,
-        badgeType: it.badgeType || 'amber',
-        content: it.content || '',
-        exampleCorrect: it.exampleCorrect || '',
-        exampleWrong: it.exampleWrong || '',
-        exampleNotes: it.exampleNotes || '',
-        author: it.author || raw.author || 'Leader / R&D',
-      })),
-    };
+  if (!raw || !Array.isArray(raw.items) || raw.items.length < 2) {
+    return DEFAULT_ANNOUNCEMENT;
   }
-  // Konversi format lawas single-item ke multi-item array
   return {
-    id: raw.id || 'announcement_rnd_current',
-    title: raw.title || 'Standardisasi Kode Sampel',
-    updatedAt: raw.updatedAt || new Date().toISOString(),
+    ...raw,
+    title: raw.title || raw.items[0]?.title || DEFAULT_ANNOUNCEMENT.title,
     isActive: raw.isActive !== false,
-    items: [
-      {
-        id: 'point-1',
-        title: raw.title || 'Standardisasi Kode Sampel IT & Sampel Baru',
-        badge: raw.badge || 'PENGUMUMAN PPIC & R&D',
-        badgeType: raw.badgeType || 'amber',
-        content: raw.content || '',
-        exampleCorrect: raw.exampleCorrect || '',
-        exampleWrong: raw.exampleWrong || '',
-        exampleNotes: raw.exampleNotes || '',
-        author: raw.author || 'Supervisor / Leader R&D',
-      },
-    ],
+    updatedAt: raw.updatedAt || new Date().toISOString(),
+    items: raw.items.map((it, idx) => ({
+      id: it.id || `point-${idx + 1}`,
+      title: it.title || `Poin Pengumuman #${idx + 1}`,
+      badge: it.badge || `POIN ${idx + 1}`,
+      badgeType: it.badgeType || 'amber',
+      content: it.content || '',
+      exampleCorrect: it.exampleCorrect || '',
+      exampleWrong: it.exampleWrong || '',
+      exampleNotes: it.exampleNotes || '',
+      author: it.author || raw.author || 'Leader / R&D',
+    })),
   };
 };
 
@@ -679,11 +659,10 @@ export const InventoryProvider = ({ children }) => {
   // Dynamic Announcement State & Operations
   const [announcement, setAnnouncement] = useState(() => {
     try {
-      const saved = localStorage.getItem('gagaclo_active_announcement');
+      const saved = localStorage.getItem('gagaclo_active_announcement_v2');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed) {
-          // Jika data tersimpan lebih lama dari default terbaru, prioritaskan default terbaru
           if (parsed.updatedAt && new Date(parsed.updatedAt) < new Date(DEFAULT_ANNOUNCEMENT.updatedAt)) {
             return DEFAULT_ANNOUNCEMENT;
           }
@@ -704,7 +683,7 @@ export const InventoryProvider = ({ children }) => {
     };
     setAnnouncement(updated);
     try {
-      localStorage.setItem('gagaclo_active_announcement', JSON.stringify(updated));
+      localStorage.setItem('gagaclo_active_announcement_v2', JSON.stringify(updated));
     } catch {}
 
     if (supabase) {
@@ -951,7 +930,7 @@ export const InventoryProvider = ({ children }) => {
               const norm = normalizeAnnouncement(parsed);
               setAnnouncement(norm);
               try {
-                localStorage.setItem('gagaclo_active_announcement', JSON.stringify(norm));
+                localStorage.setItem('gagaclo_active_announcement_v2', JSON.stringify(norm));
               } catch {}
             }
           } catch {}
@@ -1294,7 +1273,7 @@ export const InventoryProvider = ({ children }) => {
             const norm = normalizeAnnouncement(data.announcement);
             setAnnouncement(norm);
             try {
-              localStorage.setItem('gagaclo_active_announcement', JSON.stringify(norm));
+              localStorage.setItem('gagaclo_active_announcement_v2', JSON.stringify(norm));
             } catch {}
           }
           // Trigger silent full sync to pull authoritative data from Supabase
@@ -1312,7 +1291,7 @@ export const InventoryProvider = ({ children }) => {
                   if (parsed) {
                     const norm = normalizeAnnouncement(parsed);
                     setAnnouncement(norm);
-                    try { localStorage.setItem('gagaclo_active_announcement', JSON.stringify(norm)); } catch {}
+                    try { localStorage.setItem('gagaclo_active_announcement_v2', JSON.stringify(norm)); } catch {}
                   }
                 } catch {}
               }

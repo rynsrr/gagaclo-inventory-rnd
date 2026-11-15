@@ -219,7 +219,7 @@ const AppContent = () => {
   useEffect(() => {
     if (!announcement?.isActive) return;
     try {
-      const lastSeen = localStorage.getItem('gagaclo_last_seen_announcement_ts');
+      const lastSeen = localStorage.getItem('gagaclo_last_seen_announcement_v2');
       if (lastSeen !== announcement.updatedAt) {
         const timer = setTimeout(() => {
           setIsAnnouncementOpen(true);
@@ -232,7 +232,7 @@ const AppContent = () => {
   const handleDismissAnnouncement = () => {
     try {
       if (announcement?.updatedAt) {
-        localStorage.setItem('gagaclo_last_seen_announcement_ts', announcement.updatedAt);
+        localStorage.setItem('gagaclo_last_seen_announcement_v2', announcement.updatedAt);
       }
     } catch {}
     setIsAnnouncementOpen(false);
@@ -600,7 +600,7 @@ const AppContent = () => {
                   {/* Indikator titik jika ada pengumuman aktif yang belum dibuka */}
                   {(() => {
                     try {
-                      const lastSeen = localStorage.getItem('gagaclo_last_seen_announcement_ts');
+                      const lastSeen = localStorage.getItem('gagaclo_last_seen_announcement_v2');
                       if (announcement?.isActive && lastSeen !== announcement?.updatedAt) {
                         return (
                           <span className="absolute -top-1 -right-1 flex h-2 w-2">
