@@ -148,8 +148,27 @@ export function TeamStructureView() {
                         [ C / I ] Consulted &amp; Informed
                       </span>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-400 leading-relaxed">
-                      Pengawasan stok fisik sample rak dan box, persetujuan target, serta penerima laporan input data inventory.
+                    <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300 leading-relaxed space-y-1">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-400 font-bold select-none">-</span>
+                        <span>Merancang alur kerja pendataan</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-400 font-bold select-none">-</span>
+                        <span>Memantau kinerja tim</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-400 font-bold select-none">-</span>
+                        <span>Menerima laporan input inventory</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-400 font-bold select-none">-</span>
+                        <span>Me-review dan meng-improve fasilitas penunjang operasional</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-400 font-bold select-none">-</span>
+                        <span>Follow-up kendala ke atasan</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -309,7 +328,8 @@ export function TeamStructureView() {
                     [ C / I ] CONSULTED &amp; INFORMED
                   </span>
                   <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white">Sururi (SPV Sample):</strong> Pengawasan stok fisik sample rak dan box, persetujuan target, serta penerima laporan input data inventory.
+                    <strong className="text-white block mb-0.5">Sururi (SPV Sample):</strong>
+                    <span>Merancang alur kerja, memantau kinerja tim, menerima laporan input, review &amp; improve fasilitas, serta follow-up kendala ke atasan.</span>
                   </div>
                 </div>
               </div>
