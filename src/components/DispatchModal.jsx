@@ -411,162 +411,165 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
         {/* DOCUMENT VIEW: WYSIWYG EDITABLE INVOICE & PACKING LIST (A4 LANDSCAPE) */}
         {/* ================================================================= */}
         <div className="flex-1 overflow-y-auto bg-slate-100 p-3 sm:p-6 printable-area flex justify-center">
-          <div className="dispatch-invoice-sheet w-[280mm] max-w-full min-h-[195mm] bg-white text-black p-5 sm:p-7 shadow-md border border-slate-300 print:shadow-none print:border-none print:p-0 font-sans text-xs">
+          <div 
+            className="dispatch-invoice-sheet w-[280mm] max-w-full min-h-[195mm] bg-white text-black p-4 sm:p-6 shadow-md border border-slate-300 print:shadow-none print:border-none print:p-0 text-xs"
+            style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif" }}
+          >
             {/* The Black Outer Box */}
             <div className="border border-black">
               {/* Header 1: Company Info */}
               <div className="text-center py-2 px-4 border-b border-black">
-                <h1 className="text-sm font-bold tracking-wide uppercase">PT GAGACLO</h1>
-                <p className="text-[11px] italic mt-0.5 leading-tight">
+                <h1 className="text-[13px] font-bold tracking-wider uppercase">PT GAGACLO</h1>
+                <p className="text-[10px] italic mt-0.5 text-neutral-800 leading-tight">
                   Jl. Tambak Aji Timur No 1 Ngaliyan Semarang Tel: 0062-24-8661188 Email : zuniarto@gagaclo.com
                 </p>
-                <h2 className="text-xs font-bold uppercase tracking-wider mt-1">INVOICE &amp; PACKING LIST</h2>
-                <h3 className="text-xs font-bold uppercase tracking-wider mt-0.5">SENDING INFO REFERENCE</h3>
+                <h2 className="text-[11.5px] font-bold uppercase tracking-widest mt-1">INVOICE &amp; PACKING LIST</h2>
+                <h3 className="text-[11px] font-bold uppercase tracking-wider mt-0.5">SENDING INFO REFERENCE</h3>
               </div>
 
               {/* Header 2: Consignee / Buyer Live Inputs */}
-              <div className="text-center py-2 px-4 border-b border-black space-y-1 bg-amber-50/20 print:bg-white">
-                <div className="flex items-center justify-center gap-2">
+              <div className="text-center py-2 px-4 border-b border-black space-y-1 bg-amber-50/15 print:bg-white">
+                <div>
                   <input
                     type="text"
                     value={consigneeName}
                     onChange={(e) => setConsigneeName(e.target.value.toUpperCase())}
                     placeholder="NAMA BUYER / CONSIGNEE..."
-                    className="font-bold uppercase text-xs text-center w-full max-w-md border-b border-dashed border-black/30 hover:border-black focus:border-black focus:outline-none focus:bg-amber-100/60 py-0.5 transition"
+                    className="font-bold uppercase text-[12px] text-center w-full max-w-md bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
                     title="Ketik atau pilih Nama Buyer dari baris tombol di atas"
                   />
                 </div>
-                <div className="flex items-center justify-center gap-1 text-[11px]">
-                  <span className="font-semibold text-slate-600 print:text-black">Address:</span>
+                <div className="flex items-center justify-center gap-1 text-[10.5px]">
+                  <span className="font-semibold text-neutral-700 print:text-black">Address:</span>
                   <input
                     type="text"
                     value={consigneeAddress}
                     onChange={(e) => setConsigneeAddress(e.target.value)}
                     placeholder="Alamat lengkap tujuan..."
-                    className="text-[11px] text-center w-full max-w-lg border-b border-dashed border-black/30 hover:border-black focus:border-black focus:outline-none focus:bg-amber-100/60 py-0.5 transition"
+                    className="text-[10.5px] text-center w-full max-w-xl bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
                   />
                 </div>
-                <div className="flex items-center justify-center gap-4 text-[11px] flex-wrap">
+                <div className="flex items-center justify-center gap-6 text-[10.5px] font-semibold">
                   <div className="flex items-center gap-1">
-                    <span className="font-semibold text-slate-600 print:text-black">ATTN:</span>
+                    <span className="text-neutral-700 print:text-black">ATTN:</span>
                     <input
                       type="text"
                       value={attn}
                       onChange={(e) => setAttn(e.target.value)}
                       placeholder="Nama Penerima (WAN LIN)..."
-                      className="text-[11px] font-semibold text-center w-40 border-b border-dashed border-black/30 hover:border-black focus:border-black focus:outline-none focus:bg-amber-100/60 py-0.5 transition"
+                      className="text-[10.5px] font-semibold text-center w-36 bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
                     />
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="font-semibold text-slate-600 print:text-black">TEL:</span>
+                    <span className="text-neutral-700 print:text-black">TEL:</span>
                     <input
                       type="text"
                       value={tel}
                       onChange={(e) => setTel(e.target.value)}
                       placeholder="Nomor Telepon..."
-                      className="text-[11px] text-center w-36 border-b border-dashed border-black/30 hover:border-black focus:border-black focus:outline-none focus:bg-amber-100/60 py-0.5 transition"
+                      className="text-[10.5px] text-center w-36 bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Metadata Key-Value Table */}
-              <div className="border-b border-black text-[11px]">
+              <div className="border-b border-black text-[10px]">
                 <table className="w-full border-collapse">
                   <tbody>
                     <tr className="border-b border-black">
-                      <td className="w-[32%] py-1 px-3 font-bold border-r border-black uppercase">MID CODE :</td>
-                      <td className="py-1 px-3 font-semibold uppercase">{midCode}</td>
+                      <td className="w-[29%] py-0.5 px-2.5 font-bold border-r border-black uppercase tracking-tight">MID CODE :</td>
+                      <td className="py-0.5 px-2.5 font-bold uppercase">{midCode}</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">Invoice No :</td>
-                      <td className="py-0.5 px-3">
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Invoice No :</td>
+                      <td className="py-0.5 px-2.5">
                         <input
                           type="text"
                           value={invoiceNo}
                           onChange={(e) => setInvoiceNo(e.target.value)}
-                          className="w-full font-mono text-[11px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                          className="w-full font-mono text-[10px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1"
                         />
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">Date :</td>
-                      <td className="py-0.5 px-3">
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Date :</td>
+                      <td className="py-0.5 px-2.5">
                         <div className="flex items-center gap-2">
                           <input
                             type="date"
                             value={docDate}
                             onChange={(e) => setDocDate(e.target.value)}
-                            className="text-[11px] bg-transparent focus:outline-none no-print"
+                            className="text-[10px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print"
                           />
                           <span className="font-medium print:inline hidden">{formatDateDisplay(docDate)}</span>
                         </div>
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">SHIP TO (Company Name. Adress):</td>
-                      <td className="py-1 px-3 font-medium">{consigneeName}. {consigneeAddress}</td>
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">SHIP TO (Company Name. Adress):</td>
+                      <td className="py-0.5 px-2.5 font-medium">{consigneeName}. {consigneeAddress}</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">ATTN :</td>
-                      <td className="py-1 px-3 font-medium">{attn}</td>
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">ATTN :</td>
+                      <td className="py-0.5 px-2.5 font-medium">{attn}</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">Order no. :</td>
-                      <td className="py-1 px-3 font-mono">
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Order no. :</td>
+                      <td className="py-0.5 px-2.5 font-mono">
                         {itemRows.map((r) => r.orderName).filter((n) => n && n !== '-').join(', ') || '-'}
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">Payment by :</td>
-                      <td className="py-0.5 px-3">
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Payment by :</td>
+                      <td className="py-0.5 px-2.5">
                         <input
                           type="text"
                           value={paymentBy}
                           onChange={(e) => setPaymentBy(e.target.value)}
-                          className="w-full text-[11px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5 uppercase"
+                          className="w-full text-[10px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase"
                         />
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">Shipment by :</td>
-                      <td className="py-0.5 px-3">
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Shipment by :</td>
+                      <td className="py-0.5 px-2.5">
                         <input
                           type="text"
                           value={shipmentBy}
                           onChange={(e) => setShipmentBy(e.target.value)}
-                          className="w-full text-[11px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5 uppercase"
+                          className="w-full text-[10px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase"
                         />
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">Invoice value :</td>
-                      <td className="py-0.5 px-3">
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Invoice value :</td>
+                      <td className="py-0.5 px-2.5">
                         <input
                           type="text"
                           value={invoiceValue}
                           onChange={(e) => setInvoiceValue(e.target.value)}
-                          className="w-full text-[11px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5 uppercase font-medium"
+                          className="w-full text-[10px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase font-medium"
                         />
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black">Shipping Date :</td>
-                      <td className="py-0.5 px-3">
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Shipping Date :</td>
+                      <td className="py-0.5 px-2.5">
                         <div className="flex items-center gap-2">
                           <input
                             type="date"
                             value={shippingDate}
                             onChange={(e) => setShippingDate(e.target.value)}
-                            className="text-[11px] bg-transparent focus:outline-none no-print"
+                            className="text-[10px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print"
                           />
                           <span className="font-medium print:inline hidden">{formatDateDisplay(shippingDate)}</span>
                         </div>
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-1 px-3 font-bold border-r border-black">From :</td>
-                      <td className="py-1 px-3">{fromLocation}</td>
+                      <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">From :</td>
+                      <td className="py-0.5 px-2.5">{fromLocation}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -574,21 +577,33 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
               {/* Table: 12 Columns Items List (Direct Interactive Input Grid) */}
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-[10.5px]">
+                <table className="w-full text-left border-collapse text-[10px]">
                   <thead>
-                    <tr className="border-b border-black font-bold text-center bg-slate-50 print:bg-white">
-                      <th className="py-1.5 px-1.5 border-r border-black w-8">No</th>
-                      <th className="py-1.5 px-1.5 border-r border-black w-20">HS CODE</th>
-                      <th className="py-1.5 px-2 border-r border-black">ITEM NO.</th>
-                      <th className="py-1.5 px-2 border-r border-black">ORDER NAME</th>
-                      <th className="py-1.5 px-2 border-r border-black">DETAIL</th>
-                      <th className="py-1.5 px-2 border-r border-black">STYLE</th>
-                      <th className="py-1.5 px-2 border-r border-black">COLOR</th>
-                      <th className="py-1.5 px-2 border-r border-black">SIZE</th>
-                      <th className="py-1.5 px-2 border-r border-black w-20">AMOUNT</th>
-                      <th className="py-1.5 px-1.5 border-r border-black w-12">UNIT</th>
-                      <th className="py-1.5 px-1.5 border-r border-black w-16">UNIT PRICE</th>
-                      <th className="py-1.5 px-2 w-16">TOTAL PRICE</th>
+                    <tr className="border-b border-black font-bold text-center bg-slate-50/60 print:bg-white text-[9.5px] leading-tight">
+                      <th className="py-1 px-1 border-r border-black w-8">No</th>
+                      <th className="py-1 px-1 border-r border-black w-20">HS CODE</th>
+                      <th className="py-1 px-1.5 border-r border-black w-24">
+                        <div>ITEM</div>
+                        <div>NO.</div>
+                      </th>
+                      <th className="py-1 px-1.5 border-r border-black w-24">
+                        <div>ORDER</div>
+                        <div>NAME</div>
+                      </th>
+                      <th className="py-1 px-1.5 border-r border-black w-28">DETAIL</th>
+                      <th className="py-1 px-2 border-r border-black">STYLE</th>
+                      <th className="py-1 px-1.5 border-r border-black w-20">COLOR</th>
+                      <th className="py-1 px-1 border-r border-black w-16">SIZE</th>
+                      <th className="py-1 px-1 border-r border-black w-14">AMOUNT</th>
+                      <th className="py-1 px-1 border-r border-black w-10">UNIT</th>
+                      <th className="py-1 px-1.5 border-r border-black w-16">
+                        <div>UNIT</div>
+                        <div>PRICE</div>
+                      </th>
+                      <th className="py-1 px-2 w-16">
+                        <div>TOTAL</div>
+                        <div>PRICE</div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -596,9 +611,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       const itemTotalPrice = (row.qty * Number(row.unitPrice || 1)).toFixed(2).replace('.', ',');
 
                       return (
-                        <tr key={row.id || idx} className="border-b border-black hover:bg-blue-50/20 print:bg-white">
+                        <tr key={row.id || idx} className="border-b border-black hover:bg-amber-50/20 print:bg-white">
                           {/* 1. No */}
-                          <td className="py-1 px-1.5 border-r border-black text-center font-bold text-slate-600 print:text-black">
+                          <td className="py-1 px-1 border-r border-black text-center font-bold text-neutral-700 print:text-black">
                             {idx + 1}
                           </td>
 
@@ -609,12 +624,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               value={row.hsCode}
                               onChange={(e) => handleRowFieldChange(idx, 'hsCode', e.target.value)}
                               placeholder="-"
-                              className="w-full text-center font-mono text-[10px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                              className="w-full text-center font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
                             />
                           </td>
 
                           {/* 3. ITEM NO. */}
-                          <td className="py-1 px-2 border-r border-black font-mono font-bold text-center text-[#0071e3] print:text-black">
+                          <td className="py-1 px-1.5 border-r border-black font-mono font-bold text-center text-neutral-900 print:text-black">
                             {row.kode}
                           </td>
 
@@ -624,7 +639,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               type="text"
                               value={row.orderName}
                               onChange={(e) => handleRowFieldChange(idx, 'orderName', e.target.value)}
-                              className="w-full text-center font-mono text-[10px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                              className="w-full text-center font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
                             />
                           </td>
 
@@ -634,7 +649,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               type="text"
                               value={row.detail}
                               onChange={(e) => handleRowFieldChange(idx, 'detail', e.target.value.toUpperCase())}
-                              className="w-full text-[10px] uppercase bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                              className="w-full text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1"
                             />
                           </td>
 
@@ -644,7 +659,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               type="text"
                               value={row.style}
                               onChange={(e) => handleRowFieldChange(idx, 'style', e.target.value)}
-                              className="w-full text-[10px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                              className="w-full text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1"
                             />
                           </td>
 
@@ -654,7 +669,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               type="text"
                               value={row.color}
                               onChange={(e) => handleRowFieldChange(idx, 'color', e.target.value)}
-                              className="w-full text-center text-[10px] uppercase bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                              className="w-full text-center text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
                             />
                           </td>
 
@@ -664,41 +679,40 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               type="text"
                               value={row.size}
                               onChange={(e) => handleRowFieldChange(idx, 'size', e.target.value.toUpperCase())}
-                              className="w-full text-center text-[10px] uppercase font-bold bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                              className="w-full text-center text-[9.5px] uppercase font-bold bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
                             />
                           </td>
 
                           {/* 9. AMOUNT (Input Qty with Stock Cap) */}
                           <td className="py-0.5 px-1 border-r border-black text-center">
-                            <div className="flex items-center justify-center gap-1">
+                            <div className="flex items-center justify-center">
                               <input
                                 type="number"
                                 min={1}
                                 max={row.maxQty}
                                 value={row.qty}
                                 onChange={(e) => handleRowQtyChange(idx, e.target.value)}
-                                className="w-12 text-center font-bold font-mono text-[11px] bg-amber-50 print:bg-transparent border border-amber-300 print:border-none rounded focus:outline-none focus:ring-1 focus:ring-amber-500 py-0.5"
+                                className="w-10 text-center font-bold font-mono text-[10.5px] bg-amber-50/80 hover:bg-amber-100 focus:bg-amber-100 print:bg-transparent border border-amber-200 print:border-none rounded-xs focus:outline-none focus:ring-1 focus:ring-amber-500 py-0.5"
                                 title={`Stok tersedia di box: ${row.maxQty} PCS`}
                               />
-                              <span className="text-[9px] text-[#86868b] no-print">/{row.maxQty}</span>
                             </div>
                           </td>
 
                           {/* 10. UNIT */}
-                          <td className="py-1 px-1.5 border-r border-black text-center uppercase font-medium">
+                          <td className="py-1 px-1 border-r border-black text-center uppercase font-medium">
                             {row.unit}
                           </td>
 
                           {/* 11. UNIT PRICE */}
                           <td className="py-0.5 px-1 border-r border-black text-right">
                             <div className="flex items-center justify-end font-mono">
-                              <span className="text-slate-400 print:text-black">$</span>
+                              <span className="text-neutral-500 print:text-black mr-0.5">$</span>
                               <input
                                 type="number"
                                 step="0.01"
                                 value={row.unitPrice}
                                 onChange={(e) => handleRowFieldChange(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                className="w-12 text-right font-mono text-[10px] bg-transparent focus:outline-none focus:bg-amber-100/50 py-0.5"
+                                className="w-10 text-right font-mono text-[9.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
                               />
                             </div>
                           </td>
@@ -711,94 +725,96 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       );
                     })}
 
-                    {/* Total Row */}
-                    <tr className="border-b border-black font-bold bg-slate-50/50 print:bg-white">
-                      <td colSpan={8} className="py-1.5 px-2 border-r border-black text-right uppercase tracking-wider text-[10px] text-slate-500 print:text-black">
-                        Total Amount:
-                      </td>
-                      <td className="py-1.5 px-2 border-r border-black text-center font-bold font-mono text-xs text-[#0071e3] print:text-black">
+                    {/* Total Row (Direct Excel / PDF Alignment) */}
+                    <tr className="border-b border-black font-bold bg-slate-50/30 print:bg-white">
+                      <td colSpan={8} className="py-1 px-2 border-r border-black text-right"></td>
+                      <td className="py-1 px-1 border-r border-black text-center font-bold font-mono text-[10.5px]">
                         {totalPcs}
                       </td>
-                      <td className="py-1.5 px-2 border-r border-black text-center">PCS</td>
-                      <td className="py-1.5 px-2 border-r border-black text-right"></td>
-                      <td className="py-1.5 px-2 text-right font-mono font-bold text-xs">
+                      <td className="py-1 px-1 border-r border-black text-center font-bold text-[10px]">PCS</td>
+                      <td className="py-1 px-1 border-r border-black text-right"></td>
+                      <td className="py-1 px-2 text-right font-mono font-bold text-[10.5px]">
                         ${totalPrice}
                       </td>
                     </tr>
+                  </tbody>
+                </table>
+              </div>
 
-                    {/* Gross & Net Weight Row */}
+              {/* Footer Section: Weight, Packaging, and Samples Notice (Aligned with Metadata Column Ratio) */}
+              <div className="text-[10px]">
+                <table className="w-full border-collapse">
+                  <tbody>
+                    {/* Row 1: Gross Weight & Net Weight */}
                     <tr className="border-b border-black font-bold">
-                      <td colSpan={6} className="py-1 px-3 border-r border-black">
+                      <td className="w-[29%] py-1 px-2.5 border-r border-black">
                         <div className="flex items-center gap-1">
                           <input
                             type="text"
                             value={grossWeight}
                             onChange={(e) => setGrossWeight(e.target.value)}
-                            className="w-16 font-bold bg-transparent border-b border-dashed border-black/30 focus:outline-none focus:bg-amber-100/50 text-[11px]"
+                            className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5"
                           />
                           <span>KG (GROSS WEIGHT)</span>
                         </div>
                       </td>
-                      <td colSpan={6} className="py-1 px-3 text-right">
+                      <td className="w-[71%] py-1 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <input
                             type="text"
                             value={netWeight}
                             onChange={(e) => setNetWeight(e.target.value)}
-                            className="w-16 text-right font-bold bg-transparent border-b border-dashed border-black/30 focus:outline-none focus:bg-amber-100/50 text-[11px]"
+                            className="w-12 font-bold text-right bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5"
                           />
                           <span>KG (NET WEIGHT)</span>
                         </div>
                       </td>
                     </tr>
 
-                    {/* Package Type (CARTON / BAG) & Dimension Adjustment Row */}
+                    {/* Row 2: Package Type (CARTON / BAG) & Dimension Adjustment */}
                     <tr className="border-b border-black">
-                      <td colSpan={6} className="py-2 px-3 border-r border-black font-bold align-middle">
-                        <div className="flex items-center justify-between gap-2">
-                          {/* Print text */}
-                          <span className="print:inline hidden font-bold text-xs uppercase">{packageType}</span>
+                      <td className="w-[29%] py-1.5 px-2.5 border-r border-black font-bold align-middle">
+                        {/* Print text */}
+                        <span className="print:inline hidden text-[10.5px] uppercase">{packageType}</span>
 
-                          {/* Screen interactive selector */}
-                          <div className="no-print flex items-center gap-1 bg-black/[0.04] p-1 rounded-lg border border-black/[0.08]">
-                            <span className="text-[10px] text-[#86868b] uppercase tracking-wider font-semibold mr-1">Kemasan:</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPackageType('CARTON');
-                                if (cartonSize.includes('20 x 5') || cartonSize.includes('18 x 3')) {
-                                  setCartonSize('35 x 25 x 8 cm');
-                                }
-                              }}
-                              className={`px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
-                                packageType === 'CARTON'
-                                  ? 'bg-[#1d1d1f] text-white shadow-2xs'
-                                  : 'text-[#1d1d1f] hover:bg-white'
-                              }`}
-                            >
-                              📦 CARTON
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPackageType('BAG');
-                                if (cartonSize.includes('35 x 25 x 8') || cartonSize.includes('40 x 30 x 15')) {
-                                  setCartonSize('30 x 20 x 5 cm');
-                                }
-                              }}
-                              className={`px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
-                                packageType === 'BAG'
-                                  ? 'bg-[#1d1d1f] text-white shadow-2xs'
-                                  : 'text-[#1d1d1f] hover:bg-white'
-                              }`}
-                            >
-                              🛍️ BAG
-                            </button>
-                          </div>
+                        {/* Screen interactive selector */}
+                        <div className="no-print inline-flex items-center gap-1 p-0.5 bg-neutral-100 rounded border border-neutral-300">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPackageType('CARTON');
+                              if (cartonSize.includes('20 x 5') || cartonSize.includes('18 x 3')) {
+                                setCartonSize('35 x 25 x 8 cm');
+                              }
+                            }}
+                            className={`px-2 py-0.5 text-[9.5px] font-bold rounded-xs transition cursor-pointer ${
+                              packageType === 'CARTON'
+                                ? 'bg-neutral-900 text-white shadow-2xs'
+                                : 'text-neutral-700 hover:bg-neutral-200'
+                            }`}
+                          >
+                            📦 CARTON
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPackageType('BAG');
+                              if (cartonSize.includes('35 x 25 x 8') || cartonSize.includes('40 x 30 x 15')) {
+                                setCartonSize('30 x 20 x 5 cm');
+                              }
+                            }}
+                            className={`px-2 py-0.5 text-[9.5px] font-bold rounded-xs transition cursor-pointer ${
+                              packageType === 'BAG'
+                                ? 'bg-neutral-900 text-white shadow-2xs'
+                                : 'text-neutral-700 hover:bg-neutral-200'
+                            }`}
+                          >
+                            🛍️ BAG
+                          </button>
                         </div>
                       </td>
-                      <td colSpan={6} className="py-2 px-3 text-center align-middle">
-                        <div className="font-bold text-[11px]">
+                      <td className="w-[71%] py-1.5 px-2 text-center align-middle">
+                        <div className="font-bold text-[9.5px] uppercase tracking-wide">
                           ⬇ {packageType} SIZE ⬇
                         </div>
                         <div className="mt-0.5">
@@ -807,16 +823,16 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                             value={cartonSize}
                             onChange={(e) => setCartonSize(e.target.value)}
                             placeholder={packageType === 'CARTON' ? '35 x 25 x 8 cm' : '30 x 20 x 5 cm'}
-                            className="font-semibold text-center w-full max-w-xs bg-transparent border-b border-dashed border-black/30 hover:border-black focus:border-black focus:outline-none focus:bg-amber-100/50 text-xs py-0.5 print:border-none"
+                            className="font-bold text-center w-full max-w-xs bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
                             title="Ketik dimensi ukuran kemasan (Panjang x Lebar x Tinggi)"
                           />
                         </div>
                       </td>
                     </tr>
 
-                    {/* Samples of No Commercial Value Banner */}
+                    {/* Row 3: Samples Notice */}
                     <tr>
-                      <td colSpan={12} className="py-1.5 px-3 font-bold text-xs uppercase text-center sm:text-left">
+                      <td colSpan={2} className="py-1 px-2.5 font-bold italic uppercase text-[10px] tracking-wide">
                         SAMPLES OF NO COMMERCIAL VALUE
                       </td>
                     </tr>
