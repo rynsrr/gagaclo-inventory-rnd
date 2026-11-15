@@ -186,11 +186,11 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-black text-sm bg-indigo-600 shadow-xs`}>
                           <Crown className="w-5 h-5 text-white" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-indigo-950">{u.name}</span>
                             <span className="rounded-full bg-indigo-100 border border-indigo-300 px-2 py-0.5 text-xs font-black text-indigo-900 flex items-center gap-0.5">
@@ -206,9 +206,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                         </div>
                       </div>
 
-                      <div>
+                      <div className="shrink-0 flex items-center justify-end">
                         {isCurrent ? (
-                          <span className="text-xs font-bold text-emerald-700 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 whitespace-nowrap">
+                            <Check className="h-3 w-3" />
                             Sedang Digunakan
                           </span>
                         ) : (
@@ -219,7 +220,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                               setLoginPassword('');
                               setLoginError('');
                             }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
                               isSelected
                                 ? 'bg-indigo-600 text-white border-indigo-600'
                                 : 'bg-white hover:bg-indigo-50 text-indigo-900 border-indigo-300'
@@ -302,11 +303,11 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-black text-sm ${u.avatarBg || 'bg-blue-600'}`}>
                           {u.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-slate-900">{u.name}</span>
                             <span className="text-xs font-bold text-slate-400">#{u.ppicNumber}</span>
@@ -325,9 +326,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                         </div>
                       </div>
 
-                      <div>
+                      <div className="shrink-0 flex items-center justify-end">
                         {isCurrent ? (
-                          <span className="text-xs font-bold text-emerald-700 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 whitespace-nowrap">
+                            <Check className="h-3 w-3" />
                             Sedang Digunakan
                           </span>
                         ) : (
@@ -338,7 +340,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                               setLoginPassword('');
                               setLoginError('');
                             }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
                               isSelected
                                 ? 'bg-blue-600 text-white border-blue-600'
                                 : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
@@ -424,11 +426,11 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-black text-sm ${u.avatarBg || 'bg-teal-600'}`}>
                           {u.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs font-black text-slate-900">{u.name}</span>
                             <span className="rounded-full bg-teal-100 border border-teal-300 px-2 py-0.5 text-xs font-black text-teal-900 flex items-center gap-1">
@@ -446,9 +448,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                         </div>
                       </div>
 
-                      <div>
+                      <div className="shrink-0 flex items-center justify-end">
                         {isCurrent ? (
-                          <span className="text-xs font-bold text-teal-800 px-3 py-1.5 rounded-lg bg-teal-100/70 border border-teal-300">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-teal-800 px-3 py-1.5 rounded-lg bg-teal-100/70 border border-teal-300 whitespace-nowrap">
+                            <Check className="h-3 w-3" />
                             Sedang Digunakan
                           </span>
                         ) : (
@@ -459,7 +462,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                               setLoginPassword('');
                               setLoginError('');
                             }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
                               isSelected
                                 ? 'bg-teal-600 text-white border-teal-600'
                                 : 'bg-white hover:bg-teal-50 text-slate-700 border-slate-300'

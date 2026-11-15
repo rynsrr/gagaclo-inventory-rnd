@@ -85,7 +85,6 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
 
   const isAchieved = todayStats.pcs >= dailyTarget;
   const percent = Math.round((todayStats.pcs / dailyTarget) * 100);
-  const remaining = Math.max(0, dailyTarget - todayStats.pcs);
 
   // Map box ke PIC untuk deteksi penginput
   const boxRackMap = useMemo(() => {
@@ -334,16 +333,14 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                 style={{ width: `${Math.min(100, percent)}%` }}
               />
             </div>
-            <div className="text-xs font-medium text-slate-300 shrink-0 whitespace-nowrap">
-              {isAchieved ? (
+            {isAchieved && (
+              <div className="text-xs font-medium text-slate-300 shrink-0 whitespace-nowrap">
                 <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   Target Team Tercapai
                 </span>
-              ) : (
-                <span>Sisa <strong className="text-white font-mono font-bold">{remaining.toLocaleString('id-ID')}</strong> PCS</span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
