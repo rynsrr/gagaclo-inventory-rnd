@@ -1006,69 +1006,74 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 <div className="text-[10px]">
                   <table className="w-full border-collapse">
                     <tbody>
-                      {/* Row 1: Gross Weight (GW) & Net Weight (NW) */}
-                      <tr className="border-b border-black font-bold">
-                        <td className="w-[29%] py-1 px-2.5 border-r border-black font-bold">
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="text"
-                              value={grossWeight}
-                              onChange={(e) => setGrossWeight(e.target.value)}
-                              className="w-14 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5"
-                              title="Gross Weight (WEIGHT GW: Untuk CARTON = NW + 1, Untuk BAG = NW)"
-                            />
-                            <span>KG (WEIGHT GW)</span>
-                          </div>
-                        </td>
-                        <td className="w-[71%] py-1 px-4 text-right font-bold">
-                          <div className="flex items-center justify-end gap-1">
-                            <input
-                              type="text"
-                              value={netWeight}
-                              onChange={(e) => handleNetWeightChange(e.target.value)}
-                              className="w-14 font-bold text-right bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5"
-                              title="Net Weight (WEIGHT NW)"
-                            />
-                            <span>KG (WEIGHT NW)</span>
-                          </div>
-                        </td>
-                      </tr>
-
-                      {/* Row 2: Package Type Dropdown (CARTON / BAG) & Dimension */}
-                      <tr className="border-b border-black">
-                        <td className="w-[29%] py-1.5 px-2.5 border-r border-black font-bold align-middle">
+                    {/* Single Row: Package Type, Gross Weight (GW), Dimension, and Net Weight (NW) */}
+                    <tr className="border-b border-black font-bold">
+                      {/* Left Column (29%): Package Type Dropdown & Gross Weight */}
+                      <td className="w-[29%] py-1.5 px-2.5 border-r border-black font-bold align-middle">
+                        <div className="flex items-center gap-2">
                           {/* Print text */}
-                          <span className="print:inline hidden text-[10.5px] uppercase">{packageType}</span>
+                          <span className="print:inline hidden text-[10px] uppercase">{packageType}</span>
 
                           {/* Screen interactive dropdown */}
                           <div className="no-print">
                             <select
                               value={packageType}
                               onChange={(e) => handlePackageTypeChange(e.target.value)}
-                              className="font-bold text-[10.5px] uppercase bg-white hover:bg-amber-100/40 focus:bg-amber-100/70 border border-neutral-300 rounded px-2 py-0.5 outline-none cursor-pointer shadow-2xs transition"
+                              className="font-bold text-[10px] uppercase bg-white hover:bg-amber-100/40 focus:bg-amber-100/70 border border-neutral-300 rounded px-1.5 py-0.5 outline-none cursor-pointer shadow-2xs transition"
                               title="Pilih Kemasan (CARTON atau BAG)"
                             >
                               <option value="CARTON">📦 CARTON</option>
                               <option value="BAG">🛍️ BAG</option>
                             </select>
                           </div>
-                        </td>
-                        <td className="w-[71%] py-1.5 px-2 text-center align-middle">
-                          <div className="font-bold text-[9.5px] uppercase tracking-wide">
-                            ⬇ {packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} ⬇
-                          </div>
-                          <div className="mt-0.5">
+
+                          <div className="flex items-center gap-1">
                             <input
                               type="text"
-                              value={cartonSize}
-                              onChange={(e) => setCartonSize(e.target.value)}
-                              placeholder={packageType === 'CARTON' ? '35 x 25 x 8 cm' : '30 x 20 x 5 cm'}
-                              className="font-bold text-center w-full max-w-xs bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title={`Ketik ${packageType === 'CARTON' ? 'Carton' : 'Bag'} Dimension (Panjang x Lebar x Tinggi)`}
+                              value={grossWeight}
+                              onChange={(e) => setGrossWeight(e.target.value)}
+                              className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
+                              title="Gross Weight (WEIGHT GW: Untuk CARTON = NW + 1, Untuk BAG = NW)"
                             />
+                            <span className="text-[9.5px]">KG (WEIGHT GW)</span>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </td>
+
+                      {/* Right Column (71%): Dimension (Centered) & Net Weight (Right-Aligned) */}
+                      <td className="w-[71%] py-1.5 px-3 font-bold align-middle">
+                        <div className="relative flex items-center justify-end w-full">
+                          {/* Center Dimension */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="flex items-center gap-1.5 pointer-events-auto">
+                              <span className="text-[9.5px] uppercase tracking-wide font-bold">
+                                ⬇ {packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} ⬇ :
+                              </span>
+                              <input
+                                type="text"
+                                value={cartonSize}
+                                onChange={(e) => setCartonSize(e.target.value)}
+                                placeholder={packageType === 'CARTON' ? '35 x 25 x 8 cm' : '30 x 20 x 5 cm'}
+                                className="font-bold text-center w-36 bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[9.5px]"
+                                title={`Ketik ${packageType === 'CARTON' ? 'Carton' : 'Bag'} Dimension (Panjang x Lebar x Tinggi)`}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Right Net Weight */}
+                          <div className="flex items-center justify-end gap-1 z-10">
+                            <input
+                              type="text"
+                              value={netWeight}
+                              onChange={(e) => handleNetWeightChange(e.target.value)}
+                              className="w-12 font-bold text-right bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
+                              title="Net Weight (WEIGHT NW)"
+                            />
+                            <span className="text-[9.5px]">KG (WEIGHT NW)</span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
 
                       {/* Row 3: Samples Notice */}
                       <tr>
