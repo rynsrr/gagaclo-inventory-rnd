@@ -213,58 +213,58 @@ const AppContent = () => {
         {/* Top Navigation Bar */}
         <header className="inventory-header">
           <div className="inventory-header-scroll">
-            <div className="inventory-header-row">
+            <div className="inventory-header-row font-apple">
 
-              <div className="inventory-header-brand flex shrink-0 items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm ring-1 ring-white/20">
-                  <Boxes className="h-4 w-4" />
+              <div className="inventory-header-brand flex shrink-0 items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#0071e3] text-white shadow-xs ring-1 ring-black/[0.06]">
+                  <Boxes className="h-4.5 w-4.5 stroke-[2.2]" />
                 </div>
-                <span className="inventory-brand text-xs font-black tracking-tight text-slate-900 flex items-center gap-1.5">
-                  GAGACLO <span className="text-blue-600 font-black">R&amp;D</span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-md">v2.0</span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-bold tracking-tight text-[#1d1d1f]">
+                    GAGACLO <span className="text-[#0071e3] font-black">R&amp;D</span>
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 bg-black/[0.04] border border-black/[0.06] px-1.5 py-0.5 rounded-full">v2.0</span>
+                </div>
               </div>
 
-            {/* Top Navigation Tabs (Tengah & Terdistribusi Rata) */}
-            <nav className="flex flex-1 items-center justify-center gap-2 sm:gap-2.5 mx-2 sm:mx-4 overflow-x-auto scrollbar-none" aria-label="Menu navigasi utama">
-              {mainTabs.map((tab) => {
-                const isActive = appMode === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setAppMode(tab.id)}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
-                      isActive
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300'
-                    }`}
-                    title={tab.subtitle}
-                  >
-                    <span>{tab.label}</span>
-                    {tab.count !== null && tab.count !== undefined && (
-                      <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-bold tabular-nums ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
-                      }`}>
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            {/* Top Navigation Tabs (Apple Segmented Control Style) */}
+            <nav className="flex flex-1 items-center justify-center mx-2 sm:mx-4 font-apple" aria-label="Menu navigasi utama">
+              <div className="inline-flex items-center p-1 bg-black/[0.04] rounded-full border border-black/[0.05] gap-0.5 max-w-full overflow-x-auto scrollbar-none">
+                {mainTabs.map((tab) => {
+                  const isActive = appMode === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setAppMode(tab.id)}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-[-0.01em] transition-all duration-200 cursor-pointer select-none whitespace-nowrap ${
+                        isActive
+                          ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                          : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
+                      }`}
+                      title={tab.subtitle}
+                    >
+                      <span>{tab.label}</span>
+                      {tab.count !== null && tab.count !== undefined && (
+                        <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums transition-colors ${
+                          isActive ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'bg-black/[0.05] text-[#86868b]'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </nav>
 
-            {/* Actions (Kanan & Rata) */}
-            <div className="inventory-header-actions ml-auto flex shrink-0 items-center justify-end gap-2">
+            {/* Actions Toolbar Kanan (Apple macOS Style) */}
+            <div className="inventory-header-actions ml-auto flex shrink-0 items-center justify-end gap-2 font-apple">
 
-              {/* Supabase Corporate Gagaclo Status Badge (Display Only - Tidak Dapat Diklik untuk Keamanan Data) */}
+              {/* Supabase Status Pill (Apple Indicator Pill) */}
               <div
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border cursor-default select-none ${
-                  supabaseStatus.isConnected
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                    : 'bg-slate-50 text-slate-600 border-slate-200'
-                }`}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-black/[0.06] bg-black/[0.03] text-[#1d1d1f] cursor-default select-none tabular-nums"
                 aria-label={connected ? `Supabase Gagaclo, ${usageLabel}` : 'Status Cloud Supabase'}
                 title={
                   supabaseStatus.isConnected
@@ -273,65 +273,60 @@ const AppContent = () => {
                 }
               >
                 <span className="relative flex h-2 w-2">
-                  {connected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
-                  <span className={`relative inline-flex rounded-full h-2 w-2 ${connected ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                  {connected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34c759] opacity-75"></span>}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${connected ? 'bg-[#34c759]' : 'bg-[#86868b]'}`}></span>
                 </span>
-                <Database className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>{connected ? usageLabel : 'Cloud Terhubung'}</span>
+                <Database className="h-3.5 w-3.5 text-[#86868b]" aria-hidden="true" />
+                <span className="text-[11px] font-semibold text-[#1d1d1f]">{connected ? usageLabel : 'Cloud'}</span>
               </div>
 
-              {/* Keranjang Pengiriman (Marketplace Model) */}
+              {/* Keranjang Pengiriman */}
               <button
                 type="button"
                 onClick={() => setIsCartOpen(true)}
-                className={`relative flex items-center justify-center p-2 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                className={`relative flex items-center justify-center h-8.5 w-8.5 rounded-full text-xs font-medium transition-all duration-150 border cursor-pointer ${
                   dispatchCart?.length > 0
-                    ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 shadow-xs'
-                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                    ? 'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/25 hover:bg-[#ff3b30]/15'
+                    : 'bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border-black/[0.08] shadow-2xs'
                 }`}
                 aria-label="Keranjang Pengiriman Sampel"
                 title={`Keranjang Pengiriman Sampel (${dispatchCart?.length || 0} item)`}
               >
-                <ShoppingBasket className="h-4 w-4 text-rose-600" aria-hidden="true" />
+                <ShoppingBasket className={`h-4 w-4 ${dispatchCart?.length > 0 ? 'text-[#ff3b30]' : 'text-[#1d1d1f]'}`} aria-hidden="true" />
                 {dispatchCart?.length > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-xs">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-[#ff3b30] text-[10px] font-bold text-white shadow-xs">
                     {dispatchCart.length}
                   </span>
                 )}
               </button>
 
-              {/* Menu Tab Setting Dropdown (Icon Only) */}
+              {/* Menu Tab Setting Dropdown (Apple System Menu Style) */}
               <div className={`relative ${isSettingsOpen ? 'z-50' : ''}`} ref={settingsRef}>
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen((prev) => !prev)}
-                  className={`flex items-center justify-center p-2 rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-2xs ${
+                  className={`flex items-center justify-center h-8.5 w-8.5 rounded-full text-xs font-medium transition-all duration-150 border cursor-pointer ${
                     isSettingsOpen
-                      ? 'bg-slate-100 text-slate-900 border-slate-300'
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                      ? 'bg-[#1d1d1f] text-white border-[#1d1d1f] shadow-xs'
+                      : 'bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border-black/[0.08] shadow-2xs'
                   }`}
                   aria-label="Menu Setting & Pengaturan"
                   title="Menu Setting: Kelola Box & Rak, Backup & Pulihkan, Impor & Ekspor Excel"
                 >
-                  <Settings className={`h-4 w-4 text-slate-700 transition-transform duration-200 ${isSettingsOpen ? 'rotate-45 text-slate-900' : ''}`} aria-hidden="true" />
+                  <Settings className={`h-4 w-4 transition-transform duration-200 ${isSettingsOpen ? 'rotate-90 text-white' : 'text-[#1d1d1f]'}`} aria-hidden="true" />
                 </button>
 
                 {isSettingsOpen && (
                   <div
-                    className="absolute right-0 mt-2.5 w-[310px] sm:w-[480px] bg-slate-900 text-slate-100 border border-slate-700/90 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-1 duration-150 whitespace-normal"
+                    className="absolute right-0 mt-3 w-[320px] sm:w-[490px] bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150 whitespace-normal font-apple"
                     style={{ whiteSpace: 'normal' }}
                   >
-                    {/* Caret Triangle Pointing to Setting Icon (DHL Style) */}
-                    <div className="absolute -top-2 right-[10px] w-0 h-0 border-x-[7px] border-x-transparent border-b-[8px] border-b-slate-700 pointer-events-none">
-                      <div className="absolute -left-[6px] top-[1px] w-0 h-0 border-x-[6px] border-x-transparent border-b-[7px] border-b-slate-900" />
-                    </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Kolom 1: KELOLA GUDANG */}
-                      <div className="flex flex-col gap-1.5 min-w-0">
-                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 pb-1.5 border-b border-slate-800 flex items-center justify-between">
+                      <div className="flex flex-col gap-2 min-w-0">
+                        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] px-2 flex items-center justify-between">
                           <span>Kelola Gudang</span>
-                          <PackagePlus className="w-3.5 h-3.5 text-blue-400" />
+                          <span className="text-[10px] text-[#86868b] bg-black/[0.04] px-1.5 py-0.5 rounded-full font-medium">Fisik</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           <button
@@ -340,22 +335,29 @@ const AppContent = () => {
                               setIsBoxManageOpen(true);
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
+                            className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center justify-between">
-                              <span>Kelola Box &amp; Rak</span>
-                              <span className="text-[10px] text-blue-400 opacity-60 group-hover:opacity-100 transition">↗</span>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#0071e3]/10 text-[#0071e3] group-hover:bg-[#0071e3] group-hover:text-white transition-colors shrink-0">
+                                <PackagePlus className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
+                                  <span>Kelola Box &amp; Rak</span>
+                                  <span className="text-[11px] text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition-all">›</span>
+                                </div>
+                                <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Atur nomor box, rak 1–5 &amp; PIC</div>
+                              </div>
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Atur nomor box, rak 1–5 &amp; PIC</div>
                           </button>
                         </div>
                       </div>
 
                       {/* Kolom 2: DATA & CADANGAN */}
-                      <div className="flex flex-col gap-1.5 min-w-0">
-                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 pb-1.5 border-b border-slate-800 flex items-center justify-between">
+                      <div className="flex flex-col gap-2 min-w-0">
+                        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] px-2 flex items-center justify-between">
                           <span>Data &amp; Cadangan</span>
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-[10px] text-[#86868b] bg-black/[0.04] px-1.5 py-0.5 rounded-full font-medium">Cloud &amp; File</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           <button
@@ -364,13 +366,20 @@ const AppContent = () => {
                               setIsBackupModalOpen(true);
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
+                            className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center justify-between">
-                              <span>Backup &amp; Pulihkan</span>
-                              <span className="text-[10px] text-emerald-400 opacity-60 group-hover:opacity-100 transition">↗</span>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#34c759]/10 text-[#34c759] group-hover:bg-[#34c759] group-hover:text-white transition-colors shrink-0">
+                                <ShieldCheck className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
+                                  <span>Backup &amp; Pulihkan</span>
+                                  <span className="text-[11px] text-[#86868b] group-hover:text-[#34c759] group-hover:translate-x-0.5 transition-all">›</span>
+                                </div>
+                                <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Auto-backup, snapshot &amp; restore</div>
+                              </div>
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Auto-backup, snapshot &amp; restore</div>
                           </button>
 
                           <button
@@ -379,13 +388,20 @@ const AppContent = () => {
                               setIsImportModalOpen(true);
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
+                            className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center justify-between">
-                              <span>Impor Excel (.xlsx)</span>
-                              <Upload className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#5856d6]/10 text-[#5856d6] group-hover:bg-[#5856d6] group-hover:text-white transition-colors shrink-0">
+                                <Upload className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
+                                  <span>Impor Excel (.xlsx)</span>
+                                  <span className="text-[11px] text-[#86868b] group-hover:text-[#5856d6] group-hover:translate-x-0.5 transition-all">›</span>
+                                </div>
+                                <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Unggah file data excel baru</div>
+                              </div>
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Unggah file data excel baru</div>
                           </button>
 
                           <button
@@ -394,13 +410,20 @@ const AppContent = () => {
                               if (exportToExcel) exportToExcel();
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
+                            className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center justify-between">
-                              <span>Unduh Excel (.xlsx)</span>
-                              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#ff9500]/10 text-[#ff9500] group-hover:bg-[#ff9500] group-hover:text-white transition-colors shrink-0">
+                                <FileSpreadsheet className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
+                                  <span>Unduh Excel (.xlsx)</span>
+                                  <span className="text-[11px] text-[#86868b] group-hover:text-[#ff9500] group-hover:translate-x-0.5 transition-all">›</span>
+                                </div>
+                                <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Ekspor data rekap seluruh item</div>
+                              </div>
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Ekspor data rekap seluruh item</div>
                           </button>
                         </div>
                       </div>
@@ -416,11 +439,11 @@ const AppContent = () => {
                   setUserProfileTarget(null);
                   setIsUserProfileOpen(true);
                 }}
-                className="flex items-center justify-center p-2 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 cursor-pointer shadow-2xs"
+                className="flex items-center justify-center h-8.5 w-8.5 rounded-full text-xs font-medium transition-all duration-150 border bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border-black/[0.08] cursor-pointer shadow-2xs"
                 aria-label={`Akun: ${currentUser?.name || 'PPIC'}`}
                 title={`Login sebagai: ${currentUser?.name || 'PPIC'} (${currentUser?.role || 'Staff'}) • Klik untuk beralih akun`}
               >
-                <User className="h-4 w-4 text-slate-700" aria-hidden="true" />
+                <User className="h-4 w-4 text-[#1d1d1f]" aria-hidden="true" />
               </button>
 
             </div>

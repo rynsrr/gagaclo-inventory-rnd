@@ -104,10 +104,10 @@
   }
 
   .inventory-header {
-    background: rgb(255 255 255 / 82%);
+    background: rgb(255 255 255 / 85%);
     backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
-    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: 0 2px 16px -4px rgba(0, 0, 0, 0.03);
     position: relative;
     overflow: visible;
   }
