@@ -139,10 +139,7 @@ export function TeamStructureView() {
                 {/* ========================================================= */}
                 <div className="w-full max-w-md">
                   <div className="relative rounded-xl bg-slate-950/90 border-2 border-blue-500 p-5 shadow-xl shadow-blue-500/10 transition hover:shadow-blue-500/20">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wider uppercase border border-blue-500/60 text-blue-400 bg-blue-950/50">
-                        SPV SAMPLE
-                      </span>
+                    <div className="flex items-center justify-end mb-3">
                       <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-blue-900 text-blue-200 border border-blue-600">
                         [ C / I ] Consulted &amp; Informed
                       </span>
@@ -166,10 +163,7 @@ export function TeamStructureView() {
                 {/* ========================================================= */}
                 <div className="w-full max-w-lg">
                   <div className="relative rounded-xl bg-emerald-950/30 border-2 border-emerald-500 p-6 shadow-xl shadow-emerald-500/10 transition hover:shadow-emerald-500/20">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wider uppercase border border-emerald-500/60 text-emerald-400 bg-emerald-950/50">
-                        LEADER
-                      </span>
+                    <div className="flex items-center justify-end mb-3">
                       <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-900 text-emerald-200 border border-emerald-600">
                         [ A ] Accountable
                       </span>
