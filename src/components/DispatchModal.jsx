@@ -77,7 +77,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   const [courierName, setCourierName] = useState('DHL');
   const [courierAccount, setCourierAccount] = useState('968 123 456');
   const [shipmentBy, setShipmentBy] = useState('DHL');
-  const [invoiceValue, setInvoiceValue] = useState('USD 1.00');
+  const [invoiceValue, setInvoiceValue] = useState('USD');
 
   // Interactive Item Rows in the 12-Column Table
   const [itemRows, setItemRows] = useState(() => {
@@ -832,7 +832,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           type="text"
                           value={invoiceValue}
                           onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
-                          placeholder="USD 1.00"
+                          placeholder="USD"
                           className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           title="Nilai Invoice dalam mata uang USD"
                         />
