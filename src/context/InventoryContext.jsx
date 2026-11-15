@@ -43,23 +43,81 @@ import {
 const InventoryContext = createContext(null);
 
 export const DEFAULT_ANNOUNCEMENT = {
-  id: 'announcement_rnd_current',
+  id: 'announcement_rnd_multi',
   title: 'Standardisasi Kode Sampel IT & Sampel Baru',
-  badge: 'PENGUMUMAN PPIC & R&D • BERLAKU HARI INI',
-  badgeType: 'amber',
-  content: `Per hari ini, seluruh kode sampel untuk divisi IT dan sampel fisik yang baru masuk WAJIB mengikuti format kode inventory R&D.
-
-1. Sampel IT: Kode sampel dari IT disinkronkan dan mengikuti kode master R&D.
-2. Sampel Baru: Segera input dan beri label box sesuai penomoran inventori baku R&D.
-3. Format Input: Wajib HURUF BESAR (UPPERCASE) dan satuan standar PCE.
-
-Mohon seluruh PPIC dan Tim Support mematuhi aturan ini demi keteraturan data dan pelacakan fisik sampel.`,
-  exampleCorrect: 'Mengikuti struktur kode resmi inventory R&D Gagaclo (UPPERCASE & PCE)',
-  exampleWrong: 'Menggunakan kode manual acak atau format lama non-standar',
-  exampleNotes: 'Pastikan Style, Buyer No, Art, Size, Color, dan Qty (PCE) terisi akurat.',
-  author: 'Supervisor / Leader R&D',
-  updatedAt: '2026-11-16T06:14:00.000Z',
+  updatedAt: '2026-11-16T06:30:00.000Z',
   isActive: true,
+  items: [
+    {
+      id: 'point-1',
+      title: 'Standardisasi Kode Sampel untuk Tim IT',
+      badge: 'POIN 1 • KODE SAMPEL IT',
+      badgeType: 'amber',
+      content: `Per hari ini, seluruh kode sampel yang berasal dari atau berhubungan dengan divisi IT WAJIB disinkronkan dan mengikuti struktur penomoran kode inventory R&D resmi.
+
+Dilarang menggunakan format kode manual bebas atau format lama internal IT. Seluruh data sampel IT harus terintegrasi dengan kode master R&D agar tidak terjadi selisih stok fisik di lapangan.`,
+      exampleCorrect: 'GGC-RND-2026-XXXX (Mengikuti kode master R&D resmi)',
+      exampleWrong: 'Kode format manual bebas / format acak internal IT lama',
+      exampleNotes: 'Koordinasikan dengan Leader jika sampel IT belum memiliki kode master R&D.',
+      author: 'Supervisor / Leader R&D',
+    },
+    {
+      id: 'point-2',
+      title: 'Penomoran Sampel Baru yang Masuk ke Area R&D',
+      badge: 'POIN 2 • SAMPEL BARU MASUK',
+      badgeType: 'blue',
+      content: `Setiap sampel fisik baru yang baru tiba di area R&D wajib langsung didata menggunakan standar kode inventory R&D ke dalam box terkait.
+
+Pastikan fisik sampel ditata rapi ke dalam box dan status box segera diperbarui. Dilarang menumpuk sampel baru di meja atau lantai tanpa pencatatan ke sistem web.`,
+      exampleCorrect: 'Input langsung ke sistem web & pastikan label fisik box sinkron',
+      exampleWrong: 'Menumpuk sampel fisik di box tanpa input data sistem',
+      exampleNotes: 'Format input teks wajib HURUF BESAR (UPPERCASE) dan satuan standar PCE.',
+      author: 'Supervisor / Leader R&D',
+    },
+  ],
+};
+
+export const normalizeAnnouncement = (raw) => {
+  if (!raw) return DEFAULT_ANNOUNCEMENT;
+  if (Array.isArray(raw.items) && raw.items.length > 0) {
+    return {
+      ...raw,
+      title: raw.title || raw.items[0]?.title || 'Standardisasi Kode Sampel',
+      isActive: raw.isActive !== false,
+      updatedAt: raw.updatedAt || new Date().toISOString(),
+      items: raw.items.map((it, idx) => ({
+        id: it.id || `point-${idx + 1}`,
+        title: it.title || `Poin Pengumuman #${idx + 1}`,
+        badge: it.badge || `POIN ${idx + 1}`,
+        badgeType: it.badgeType || 'amber',
+        content: it.content || '',
+        exampleCorrect: it.exampleCorrect || '',
+        exampleWrong: it.exampleWrong || '',
+        exampleNotes: it.exampleNotes || '',
+        author: it.author || raw.author || 'Leader / R&D',
+      })),
+    };
+  }
+  // Konversi format lawas single-item ke multi-item array
+  return {
+    id: raw.id || 'announcement_rnd_current',
+    title: raw.title || 'Standardisasi Kode Sampel',
+    updatedAt: raw.updatedAt || new Date().toISOString(),
+    isActive: raw.isActive !== false,
+    items: [
+      {
+        id: 'point-1',
+        title: raw.title || 'Standardisasi Kode Sampel IT & Sampel Baru',
+        badge: raw.badge || 'PENGUMUMAN PPIC & R&D',
+        badgeType: raw.badgeType || 'amber',
+        content: raw.content || '',
+        exampleCorrect: raw.exampleCorrect || '',
+        exampleWrong: raw.exampleWrong || '',
+        exampleNotes: raw.exampleNotes || '',
+        author: raw.author || 'Supervisor / Leader R&D',
+      },
+    ],
+  };
 };
 
 const STORAGE_KEY = 'gagaclo_inventory_data_v1';
@@ -624,7 +682,7 @@ export const InventoryProvider = ({ children }) => {
       const saved = localStorage.getItem('gagaclo_active_announcement');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.title) return parsed;
+        if (parsed) return normalizeAnnouncement(parsed);
       }
     } catch (e) {
       console.error('Failed to load announcement from localStorage', e);
@@ -633,8 +691,9 @@ export const InventoryProvider = ({ children }) => {
   });
 
   const updateAnnouncement = async (newAnnouncement) => {
+    const normalized = normalizeAnnouncement(newAnnouncement);
     const updated = {
-      ...newAnnouncement,
+      ...normalized,
       updatedAt: new Date().toISOString(),
     };
     setAnnouncement(updated);
@@ -882,10 +941,11 @@ export const InventoryProvider = ({ children }) => {
         if (announcementItem?.deskripsi) {
           try {
             const parsed = JSON.parse(announcementItem.deskripsi);
-            if (parsed && parsed.title) {
-              setAnnouncement(parsed);
+            if (parsed) {
+              const norm = normalizeAnnouncement(parsed);
+              setAnnouncement(norm);
               try {
-                localStorage.setItem('gagaclo_active_announcement', JSON.stringify(parsed));
+                localStorage.setItem('gagaclo_active_announcement', JSON.stringify(norm));
               } catch {}
             }
           } catch {}
@@ -1225,9 +1285,10 @@ export const InventoryProvider = ({ children }) => {
           }
           // If announcement changed, update local state immediately
           if (data?.action === 'ANNOUNCEMENT_UPDATED' && data.announcement) {
-            setAnnouncement(data.announcement);
+            const norm = normalizeAnnouncement(data.announcement);
+            setAnnouncement(norm);
             try {
-              localStorage.setItem('gagaclo_active_announcement', JSON.stringify(data.announcement));
+              localStorage.setItem('gagaclo_active_announcement', JSON.stringify(norm));
             } catch {}
           }
           // Trigger silent full sync to pull authoritative data from Supabase
@@ -1242,9 +1303,10 @@ export const InventoryProvider = ({ children }) => {
               if (payload.new?.deskripsi) {
                 try {
                   const parsed = JSON.parse(payload.new.deskripsi);
-                  if (parsed && parsed.title) {
-                    setAnnouncement(parsed);
-                    try { localStorage.setItem('gagaclo_active_announcement', JSON.stringify(parsed)); } catch {}
+                  if (parsed) {
+                    const norm = normalizeAnnouncement(parsed);
+                    setAnnouncement(norm);
+                    try { localStorage.setItem('gagaclo_active_announcement', JSON.stringify(norm)); } catch {}
                   }
                 } catch {}
               }
