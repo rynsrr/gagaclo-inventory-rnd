@@ -70,7 +70,17 @@ function BoxDetail({ box }) {
   const isSuper = isSuperuser?.(currentUser);
   const isHelperUser = isHelper(currentUser);
   const isRealOwner = currentUser && box.picName && String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
-  const isOwner = !currentUser || isSuper || isHelperUser || !box.picName || isRealOwner;
+  const isCrossPpic = currentUser && !isRealOwner && !isHelperUser && !isSuper;
+  const isBoxManager = !currentUser || isSuper || isHelperUser || !box.picName || isRealOwner;
+  const isOwner = isBoxManager || isCrossPpic;
+
+  const canEditItem = (item) => {
+    if (isBoxManager) return true;
+    if (!currentUser) return true;
+    const inputter = item?.inputtedBy || item?.createdBy;
+    if (inputter && String(inputter).trim().toLowerCase() === String(currentUser.name).trim().toLowerCase()) return true;
+    return false;
+  };
   const [copiedId, setCopiedId] = useState(null);
   const [dispatchModalItem, setDispatchModalItem] = useState(null);
   const [dispatchPreselectedItems, setDispatchPreselectedItems] = useState([]);
@@ -124,7 +134,7 @@ function BoxDetail({ box }) {
   const [savingFullStatus, setSavingFullStatus] = useState(false);
   const [fullStatusError, setFullStatusError] = useState('');
   const toggleFullStatus = async () => {
-    if (!isOwner) {
+    if (!isBoxManager) {
       showNotification?.(`Akses ditolak: Box ini dialokasikan untuk ${box.picName}. Satu user tidak dapat mengubah status box user lain.`, 'error', 4500);
       return;
     }
@@ -259,7 +269,7 @@ function BoxDetail({ box }) {
   };
 
   const handleSaveNotes = () => {
-    if (!isOwner) {
+    if (!isBoxManager) {
       showNotification?.(`Akses ditolak: Catatan Box #${box.boxNumber} milik ${box.picName}. Satu user tidak dapat mengedit data user lain.`, 'error', 4500);
       return;
     }
@@ -336,7 +346,7 @@ function BoxDetail({ box }) {
 
               {/* Simple Description / Catatan Box Persis di Bawah Box */}
               <div className="mt-2 flex items-center gap-2 max-w-xl">
-                {isOwner ? (
+                {isBoxManager ? (
                   <div className="flex items-center gap-1.5 w-full">
                     <input
                       type="text"
@@ -375,17 +385,17 @@ function BoxDetail({ box }) {
             <button
               type="button"
               onClick={toggleFullStatus}
-              disabled={savingFullStatus || !isOwner}
+              disabled={savingFullStatus || !isBoxManager}
               className={`rounded-full px-3.5 py-1.5 text-xs font-semibold text-white transition cursor-pointer ${
-                !isOwner
+                !isBoxManager
                   ? 'bg-white/10 text-white/40 opacity-60 cursor-not-allowed'
                   : box.isFull 
                   ? 'bg-white/15 hover:bg-white/25 text-white border border-white/20' 
                   : 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-xs'
               }`}
-              title={!isOwner ? `Terkunci: Box ini milik PPIC ${box.picName}` : undefined}
+              title={!isBoxManager ? `Terkunci: Box ini milik PPIC ${box.picName}` : undefined}
             >
-              {!isOwner && <Lock className="inline w-3 h-3 mr-1 -mt-0.5" />}
+              {!isBoxManager && <Lock className="inline w-3 h-3 mr-1 -mt-0.5" />}
               {savingFullStatus ? 'Menyimpan…' : box.isFull ? 'Buka kembali box' : 'Tandai penuh'}
             </button>
             {fullStatusError && <span role="alert" className="text-xs text-[#ff453a]">{fullStatusError}</span>}
@@ -434,6 +444,11 @@ function BoxDetail({ box }) {
                 🛠️ Tim Support (Membantu {box.picName})
               </span>
             )}
+            {isCrossPpic && (
+              <span className="text-[11px] font-semibold text-[#0071e3] bg-[#0071e3]/10 border border-[#0071e3]/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                🤝 Bantuan Antar-PPIC (Membantu {box.picName})
+              </span>
+            )}
           </div>
 
           <div className="flex items-center space-x-4 text-[#86868b]">
@@ -442,6 +457,16 @@ function BoxDetail({ box }) {
             </div>
           </div>
         </div>
+
+        {/* Cross-PPIC Helper Notice */}
+        {isCrossPpic && (
+          <div className="bg-blue-50/90 border-b border-blue-200/90 px-5 py-2.5 flex items-center gap-2.5 text-xs text-blue-950 font-semibold shadow-2xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse shrink-0"></span>
+            <div className="flex-1 leading-snug">
+              <strong>Mode Bantuan Antar-PPIC:</strong> Anda sedang login sebagai <strong>{currentUser?.name}</strong> untuk membantu input item di Box #{box.boxNumber} (Milik PPIC <strong>{box.picName}</strong>). Stok fisik masuk ke Box {box.picName}, dan credit input harian tercatat atas nama <strong>{currentUser?.name}</strong>.
+            </div>
+          </div>
+        )}
 
         {/* Read-Only Notice when viewing another PPIC's box */}
         {!isOwner && (
@@ -560,8 +585,8 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
-              {/* Bulk Move Items to another Box (Only Owner) */}
-              {isOwner && selectedItemIds.size > 0 && (
+              {/* Bulk Move Items to another Box (Only Box Manager) */}
+              {isBoxManager && selectedItemIds.size > 0 && (
                 <button
                   onClick={() => openMoveModal(itemsInBox.filter(i => selectedItemIds.has(i.id)))}
                   className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#ff9500] hover:bg-[#f08c00] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
@@ -585,8 +610,8 @@ function BoxDetail({ box }) {
                 </button>
               )}
 
-              {/* Bulk Delete Items (Only Owner) */}
-              {isOwner && selectedItemIds.size > 0 && (
+              {/* Bulk Delete Items (Only Box Manager) */}
+              {isBoxManager && selectedItemIds.size > 0 && (
                 <button
                   type="button"
                   onClick={() => {
@@ -607,7 +632,7 @@ function BoxDetail({ box }) {
                   className="flex items-center space-x-1.5 px-4 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah Item</span>
+                  <span>{isCrossPpic ? 'Bantu Input Item' : 'Tambah Item'}</span>
                 </button>
               ) : (
                 <span
@@ -630,10 +655,10 @@ function BoxDetail({ box }) {
               {isOwner ? (
                 <button
                   onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
-                  className="mt-3 inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-xs"
+                  className="mt-3 inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Catat Item Pertama</span>
+                  <span>{isCrossPpic ? 'Bantu Catat Item Pertama' : 'Catat Item Pertama'}</span>
                 </button>
               ) : (
                 <span className="mt-3 inline-flex items-center gap-1.5 text-xs text-slate-400 font-semibold bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
@@ -845,7 +870,7 @@ function BoxDetail({ box }) {
                                   {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
                                 </button>
                               )}
-                              {isOwner ? (
+                              {canEditItem(item) ? (
                                 <>
                                   <button
                                     type="button"

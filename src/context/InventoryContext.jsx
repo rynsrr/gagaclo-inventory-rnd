@@ -1193,14 +1193,9 @@ export const InventoryProvider = ({ children }) => {
 
   // Actions
   const addItem = async (itemData) => {
-    // ATURAN KEAMANAN: Satu user tidak dapat menambah/mengedit data user lain (Kecuali Superuser atau Helper / Asisten Rekap)
+    // PPIC Utama dan Support kini dapat membantu input data ke box mana pun (credit tetap tercatat ke penginput)
     const targetBox = boxes.find(b => Number(b.boxNumber) === Number(itemData.boxNumber));
     const boxOwner = targetBox?.picName || itemData.picName;
-    if (currentUser && !isSuperuser(currentUser) && !isHelper(currentUser) && boxOwner && String(currentUser.name).trim().toLowerCase() !== String(boxOwner).trim().toLowerCase()) {
-      const errMsg = `Akses ditolak: Box #${itemData.boxNumber} adalah milik PIC "${boxOwner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
-      showNotification(errMsg, 'error', 6000);
-      throw new Error(errMsg);
-    }
 
     // Automatically record and remember newly inputted data
     recordSuggestions(itemData);
@@ -1219,9 +1214,10 @@ export const InventoryProvider = ({ children }) => {
     const createdBy = currentUser?.name || 'Royan';
     const isByHelper = isHelper(currentUser);
 
-    const helperTags = isByHelper
-      ? [`helper:${encodeURIComponent(createdBy)}`, `inputted_by:${encodeURIComponent(createdBy)}`]
-      : [];
+    const trackingTags = [
+      `inputted_by:${encodeURIComponent(createdBy)}`,
+      ...(isByHelper ? [`helper:${encodeURIComponent(createdBy)}`] : []),
+    ];
 
     const newItem = {
       ...itemData,
@@ -1237,7 +1233,7 @@ export const InventoryProvider = ({ children }) => {
       createdBy: createdBy,
       inputtedBy: createdBy,
       helperName: isByHelper ? createdBy : (itemData.helperName || null),
-      tags: [...(Array.isArray(itemData.tags) ? itemData.tags : []), ...helperTags],
+      tags: [...(Array.isArray(itemData.tags) ? itemData.tags : []), ...trackingTags],
     };
 
     if (resolved.wasAdjusted) {
@@ -1368,10 +1364,17 @@ export const InventoryProvider = ({ children }) => {
     const oldItem = items.find((i) => String(i.id) === String(itemId));
     if (!oldItem) return null;
 
-    // ATURAN KEAMANAN: Satu user tidak dapat mengedit data user lain (Kecuali Superuser atau Helper / Asisten Rekap)
+    // ATURAN KEAMANAN: Dapat diedit oleh pemilik box, penginput item, Helper, atau Superuser
     const oldBoxObj = boxes.find(b => Number(b.boxNumber) === Number(oldItem.boxNumber));
     const oldOwner = oldBoxObj?.picName || oldItem.picName;
-    if (currentUser && !isSuperuser(currentUser) && !isHelper(currentUser) && oldOwner && String(currentUser.name).trim().toLowerCase() !== String(oldOwner).trim().toLowerCase()) {
+    const isInputter = currentUser && (
+      (oldItem.inputtedBy && String(currentUser.name).trim().toLowerCase() === String(oldItem.inputtedBy).trim().toLowerCase()) ||
+      (oldItem.createdBy && String(currentUser.name).trim().toLowerCase() === String(oldItem.createdBy).trim().toLowerCase())
+    );
+    const isBoxOwner = currentUser && oldOwner && String(currentUser.name).trim().toLowerCase() === String(oldOwner).trim().toLowerCase();
+    const canModify = !currentUser || isSuperuser(currentUser) || isHelper(currentUser) || isBoxOwner || isInputter;
+
+    if (!canModify) {
       const errMsg = `Akses ditolak: Data sampel ini berada di Box #${oldItem.boxNumber} milik PIC "${oldOwner}". Anda sedang login sebagai "${currentUser.name}". Satu user tidak dapat mengedit data user lain.`;
       showNotification(errMsg, 'error', 6000);
       throw new Error(errMsg);

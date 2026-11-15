@@ -1077,8 +1077,12 @@ export function TotalItemsSummaryView() {
                           {(() => {
                             const isHelperUser = isHelper(currentUser);
                             const isPicOwner = !item.picName || String(currentUser?.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
-                            const canEdit = !currentUser || isSuperuser(currentUser) || isHelperUser || isPicOwner;
-                            const canDelete = !currentUser || (!isHelperUser && (isSuperuser(currentUser) || isPicOwner));
+                            const isInputter = currentUser && (
+                              (item.inputtedBy && String(currentUser.name).trim().toLowerCase() === String(item.inputtedBy).trim().toLowerCase()) ||
+                              (item.createdBy && String(currentUser.name).trim().toLowerCase() === String(item.createdBy).trim().toLowerCase())
+                            );
+                            const canEdit = !currentUser || isSuperuser(currentUser) || isHelperUser || isPicOwner || isInputter;
+                            const canDelete = !currentUser || (!isHelperUser && (isSuperuser(currentUser) || isPicOwner || isInputter));
 
                             if (!canEdit && !canDelete) {
                               return (

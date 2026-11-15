@@ -110,46 +110,34 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
       const pcs = Number(item.jumlah) || 0;
       const boxPic = String(item.picName || (box ? box.picName : 'Lainnya')).trim();
 
-      // Deteksi penginput riil (Support vs PPIC)
+      // Deteksi penginput riil (PPIC Utama maupun Support)
       const tags = Array.isArray(item.tags) ? item.tags : [];
-      const supportTag = tags.find((t) => typeof t === 'string' && (t.startsWith('support:') || t.startsWith('helper:')));
       const inputtedByTag = tags.find((t) => typeof t === 'string' && t.startsWith('inputted_by:'));
-      const rawSupport =
+      const supportTag = tags.find((t) => typeof t === 'string' && (t.startsWith('support:') || t.startsWith('helper:')));
+
+      const rawInputtedBy =
+        item.inputtedBy ||
+        item.createdBy ||
+        (inputtedByTag ? decodeURIComponent(inputtedByTag.slice(12)) : null) ||
         item.supportName ||
         item.helperName ||
-        (supportTag ? decodeURIComponent(supportTag.slice(supportTag.indexOf(':') + 1)) : null) ||
-        (inputtedByTag ? decodeURIComponent(inputtedByTag.slice(12)) : null) ||
-        (item.inputtedBy && ['sheva', 'ade', 'tri', 'helper 1', 'helper 2', 'helper 3'].some((n) => String(item.inputtedBy).toLowerCase().includes(n))
-          ? item.inputtedBy
-          : null) ||
-        (item.createdBy && ['sheva', 'ade', 'tri', 'helper 1', 'helper 2', 'helper 3'].some((n) => String(item.createdBy).toLowerCase().includes(n))
-          ? item.createdBy
-          : null);
+        (supportTag ? decodeURIComponent(supportTag.slice(supportTag.indexOf(':') + 1)) : null);
 
-      let resolvedSupport = null;
-      if (rawSupport) {
-        const sStr = String(rawSupport).trim();
-        if (/helper\s*1/i.test(sStr)) resolvedSupport = 'Sheva';
-        else if (/helper\s*2/i.test(sStr)) resolvedSupport = 'Ade';
-        else if (/helper\s*3/i.test(sStr)) resolvedSupport = 'Tri';
+      let contributor = null;
+      if (rawInputtedBy) {
+        const sStr = String(rawInputtedBy).trim().toLowerCase();
+        if (/helper\s*1/i.test(sStr)) contributor = 'Sheva';
+        else if (/helper\s*2/i.test(sStr)) contributor = 'Ade';
+        else if (/helper\s*3/i.test(sStr)) contributor = 'Tri';
         else {
-          const match = ['Sheva', 'Ade', 'Tri'].find((s) => s.toLowerCase() === sStr.toLowerCase());
-          if (match) resolvedSupport = match;
+          const match = TEAM_MEMBERS.find((m) => m.name.toLowerCase() === sStr);
+          if (match) contributor = match.name;
         }
       }
 
-      let contributor = null;
-      if (resolvedSupport) {
-        contributor = resolvedSupport;
-      } else {
-        const inputByStr = String(item.inputtedBy || item.createdBy || '').trim().toLowerCase();
-        const foundMember = TEAM_MEMBERS.find((m) => m.name.toLowerCase() === inputByStr);
-        if (foundMember) {
-          contributor = foundMember.name;
-        } else {
-          const matchPic = TEAM_MEMBERS.find((m) => m.name.toLowerCase() === boxPic.toLowerCase());
-          if (matchPic) contributor = matchPic.name;
-        }
+      if (!contributor) {
+        const matchPic = TEAM_MEMBERS.find((m) => m.name.toLowerCase() === boxPic.toLowerCase());
+        contributor = matchPic ? matchPic.name : (boxPic || 'Royan');
       }
 
       if (contributor && pcsMap[contributor] !== undefined) {

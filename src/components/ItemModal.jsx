@@ -319,8 +319,13 @@ const ItemModalContent = () => {
     const isSuper = isSuperuser?.(currentUser);
     const isSupportUser = isSupport?.(currentUser) || isHelper?.(currentUser);
     const isOwnerBox = !currentUser || isSuper || isSupportUser || !boxObj?.picName || String(currentUser.name).trim().toLowerCase() === String(boxObj.picName).trim().toLowerCase();
-    if (!isOwnerBox) {
-      setSubmitError(`Akses ditolak: Box #${boxNum} adalah milik PPIC "${boxObj?.picName}". Anda sedang login sebagai "${currentUser?.name}". Satu user tidak dapat mengedit data user lain.`);
+    const isInputter = itemModalConfig.item && currentUser && (
+      (itemModalConfig.item.inputtedBy && String(currentUser.name).trim().toLowerCase() === String(itemModalConfig.item.inputtedBy).trim().toLowerCase()) ||
+      (itemModalConfig.item.createdBy && String(currentUser.name).trim().toLowerCase() === String(itemModalConfig.item.createdBy).trim().toLowerCase())
+    );
+    const canSubmit = !isEditing || isOwnerBox || isInputter;
+    if (!canSubmit) {
+      setSubmitError(`Akses ditolak: Data sampel ini di Box #${boxNum} dialokasikan untuk PPIC "${boxObj?.picName}". Anda sedang login sebagai "${currentUser?.name}". Satu user tidak dapat mengedit data user lain.`);
       return;
     }
 
@@ -419,7 +424,12 @@ const ItemModalContent = () => {
   const isSuper = isSuperuser?.(currentUser);
   const isSupportUser = isSupport?.(currentUser) || isHelper?.(currentUser);
   const isRealOwner = currentUser && currentBoxObj?.picName && String(currentUser.name).trim().toLowerCase() === String(currentBoxObj.picName).trim().toLowerCase();
-  const isOwner = !currentUser || isSuper || isSupportUser || !currentBoxObj?.picName || isRealOwner;
+  const isCrossPpic = currentUser && !isRealOwner && !isSupportUser && !isSuper;
+  const isInputter = isEditing && itemModalConfig.item && currentUser && (
+    (itemModalConfig.item.inputtedBy && String(currentUser.name).trim().toLowerCase() === String(itemModalConfig.item.inputtedBy).trim().toLowerCase()) ||
+    (itemModalConfig.item.createdBy && String(currentUser.name).trim().toLowerCase() === String(itemModalConfig.item.createdBy).trim().toLowerCase())
+  );
+  const isOwner = !isEditing || isRealOwner || isSuper || isSupportUser || isCrossPpic || isInputter;
 
   return (
     <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-fade-in print:p-0 print:bg-transparent">
@@ -460,12 +470,22 @@ const ItemModalContent = () => {
           </div>
         )}
 
+        {/* Cross-PPIC Helper Banner */}
+        {isCrossPpic && !isRealOwner && currentBoxObj?.picName && (
+          <div className="no-print bg-blue-50 border-b border-blue-300 text-blue-950 px-4 py-2 text-xs font-bold flex items-center gap-2.5 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse shrink-0"></span>
+            <div className="flex-1 leading-snug">
+              <strong>Mode Bantuan Antar-PPIC:</strong> Anda sedang login sebagai <strong>{currentUser?.name}</strong> untuk membantu input item di Box #{formData.boxNumber} (Milik PPIC <strong>{currentBoxObj?.picName}</strong>). Stok fisik masuk ke Box {currentBoxObj?.picName}, dan credit input harian tercatat atas nama <strong>{currentUser?.name}</strong>.
+            </div>
+          </div>
+        )}
+
         {/* Read-Only Banner when box belongs to another PPIC */}
         {!isOwner && (
           <div className="no-print bg-amber-50 border-b border-amber-300 text-amber-950 px-4 py-2 text-xs font-bold flex items-center gap-2.5 shrink-0">
             <Lock className="w-4 h-4 text-amber-600 shrink-0" />
             <div className="flex-1 leading-snug">
-              Akses Terkunci: Box #{formData.boxNumber} dialokasikan untuk PPIC <strong>{currentBoxObj?.picName}</strong>. Anda login sebagai <strong>{currentUser?.name}</strong>, sehingga tidak dapat menambah atau mengedit item pada box ini.
+              Akses Terkunci: Box #{formData.boxNumber} dialokasikan untuk PPIC <strong>{currentBoxObj?.picName}</strong>. Anda login sebagai <strong>{currentUser?.name}</strong>, sehingga tidak dapat mengedit item pada box ini.
             </div>
           </div>
         )}
@@ -964,7 +984,7 @@ const ItemModalContent = () => {
                   ? `Terkunci (${currentBoxObj?.picName || 'Lain'})`
                   : (isSubmitting 
                     ? 'Menyimpan...' 
-                    : (isDuplicate ? 'Simpan Item Salinan' : (isEditing ? 'Simpan Perubahan' : 'Simpan ke Box')))}
+                    : (isDuplicate ? 'Simpan Item Salinan' : (isEditing ? 'Simpan Perubahan' : (isCrossPpic ? `Bantu Simpan ke Box #${formData.boxNumber}` : 'Simpan ke Box'))))}
               </span>
             </button>
           </div>
