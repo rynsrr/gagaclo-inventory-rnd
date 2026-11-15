@@ -216,104 +216,84 @@ export function TeamStructureView() {
                 {/* ========================================================= */}
                 {/* TINGKAT 3 (DI BAWAHNYA LAGI): PPIC & TIM SUPPORT          */}
                 {/* ========================================================= */}
-                <div className="w-full space-y-6 mt-2">
+                <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-5 mt-2">
 
-                  {/* 3A. WING 5 PPIC (Responsible) */}
-                  <div className="rounded-xl bg-slate-950/80 border-2 border-amber-500/60 p-5 shadow-lg shadow-amber-500/5">
-                    <div className="flex items-center justify-between mb-4">
+                  {/* 3A. WING 5 PPIC (MENURUN KE BAWAH) */}
+                  <div className="md:col-span-7 rounded-xl bg-slate-950/80 border-2 border-amber-500/60 p-5 shadow-lg shadow-amber-500/5 space-y-3">
+                    <div className="flex items-center justify-between mb-1 pb-2 border-b border-amber-500/30">
                       <span className="text-amber-400 font-bold text-sm tracking-wide">
                         📦 5 PPIC &mdash; [ R ] RESPONSIBLE (PENANGGUNG JAWAB UTAMA BOX)
                       </span>
                       <span className="text-xs text-amber-300/80 font-medium">
-                        Penanggung Jawab Box Tersebar
+                        Penanggung Jawab Box
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div className="flex flex-col gap-2.5">
                       {ppicList.map((p) => (
                         <div
                           key={p.name}
-                          className={`rounded-lg bg-slate-900/90 border-2 ${p.border} p-3.5 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-lg`}
+                          className={`rounded-lg bg-slate-900/90 border-2 ${p.border} px-4 py-3 flex items-center justify-between transition hover:translate-x-1 hover:shadow-lg`}
                         >
-                          <div>
-                            <div className="flex items-center justify-between gap-1 mb-2">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${p.badgeBg}`}>
-                                {p.code}
-                              </span>
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${p.raciBg}`}>
-                                [ R ] Resp.
-                              </span>
-                            </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.badgeBg}`}>
+                              {p.code}
+                            </span>
                             <div className="text-base font-extrabold text-white">{p.name}</div>
-                            <div className="text-xs font-semibold text-slate-400 mt-0.5">
-                              PPIC Specialist
-                            </div>
+                            <span className="text-xs font-semibold text-slate-400">
+                              • PPIC Specialist
+                            </span>
                           </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.raciBg}`}>
+                            [ R ] Resp.
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Channel Panah Asistensi: Support ➔ PPIC */}
-                  <div className="py-2.5 px-6 rounded-xl bg-slate-950/70 border border-cyan-500/40 shadow-inner flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      {['Sheva', 'Ade', 'Tri'].map((name) => (
-                        <div key={name} className="flex flex-col items-center">
-                          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
-                          <div className="w-0.5 h-3 border-l-2 border-dashed border-cyan-400 my-0.5" />
-                          <span className="text-[10px] text-cyan-300 font-mono font-bold">{name}</span>
-                        </div>
-                      ))}
-                    </div>
+                  {/* 3B. WING 3 TIM SUPPORT (MENURUN KE BAWAH) */}
+                  <div className="md:col-span-5 rounded-xl bg-slate-950/80 border-2 border-cyan-500/60 p-5 shadow-lg shadow-cyan-500/5 space-y-3 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1 pb-2 border-b border-cyan-500/30">
+                        <span className="text-cyan-400 font-bold text-sm tracking-wide">
+                          ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT
+                        </span>
+                        <span className="text-xs text-cyan-300/80 font-medium">
+                          Asistensi Data Entry
+                        </span>
+                      </div>
 
-                    <div className="px-4 py-1.5 rounded-full bg-cyan-950/90 border border-cyan-500/60 shadow-lg shadow-cyan-500/10 flex items-center gap-2">
-                      <span className="text-cyan-400 font-extrabold text-sm animate-pulse">▲</span>
-                      <span className="text-cyan-200 text-xs font-bold tracking-wide">
-                        Asistensi Langsung: Menghitung &amp; Input Fisik Sampel Bersama PPIC di Rak
-                      </span>
-                    </div>
-
-                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-cyan-300 font-medium">
-                      <span>Bantuan Input &amp; Pengecekan</span>
-                    </div>
-                  </div>
-
-                  {/* 3B. WING 3 TIM SUPPORT (Support) */}
-                  <div className="rounded-xl bg-slate-950/80 border-2 border-cyan-500/60 p-5 shadow-lg shadow-cyan-500/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-cyan-400 font-bold text-sm tracking-wide">
-                        ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT (ASISTENSI PERCEPATAN DATA ENTRY FISIK)
-                      </span>
-                      <span className="text-xs text-cyan-300/80 font-medium">
-                        Tenaga Percepatan Pengisian Box
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                      {supportList.map((s) => (
-                        <div
-                          key={s.name}
-                          className={`rounded-lg bg-slate-900/90 border-2 ${s.border} p-3.5 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-lg`}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between gap-1 mb-2">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${s.badgeBg}`}>
+                      <div className="flex flex-col gap-2.5 mt-3">
+                        {supportList.map((s) => (
+                          <div
+                            key={s.name}
+                            className={`rounded-lg bg-slate-900/90 border-2 ${s.border} px-4 py-3 flex items-center justify-between transition hover:translate-x-1 hover:shadow-lg`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.badgeBg}`}>
                                 {s.code}
                               </span>
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${s.raciBg}`}>
-                                [ S ] Support
-                              </span>
+                              <div>
+                                <div className="text-base font-extrabold text-white">{s.name}</div>
+                                <div className="text-[10px] text-cyan-300">Data Entry Assistant</div>
+                              </div>
                             </div>
-                            <div className="text-base font-extrabold text-white">{s.name}</div>
-                            <div className="text-xs font-semibold text-cyan-300 mt-0.5">
-                              Data Entry Assistant
-                            </div>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.raciBg} shrink-0`}>
+                              [ S ] Support
+                            </span>
                           </div>
-                          <div className="mt-2.5 pt-2 border-t border-slate-800 text-[11px] text-slate-400 leading-tight">
-                            Membantu fisik &amp; input sampel perbantuan di box 5 PPIC
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Banner Alur Asistensi ke PPIC */}
+                    <div className="mt-4 p-3 rounded-lg bg-cyan-950/70 border border-cyan-500/50 text-xs text-cyan-200 flex items-center gap-2.5 shadow-inner">
+                      <span className="text-cyan-400 text-base font-extrabold animate-pulse">◀</span>
+                      <div className="leading-tight">
+                        <strong className="text-white font-semibold">Alur Asistensi Lapangan:</strong>
+                        <div className="text-cyan-300/90 text-[11px] mt-0.5">Mendampingi &amp; asistensi langsung input fisik bersama 5 PPIC di rak.</div>
+                      </div>
                     </div>
                   </div>
 
