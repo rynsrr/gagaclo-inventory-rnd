@@ -245,8 +245,28 @@ export function TeamStructureView() {
                       </span>
                     </div>
 
-                    {/* Rincian Tugas 5 PPIC */}
-                    <div className="rounded-lg bg-amber-950/30 border border-amber-500/20 p-3 text-xs text-slate-300 leading-relaxed space-y-1.5 mb-2">
+                    {/* Kartu 5 Personil PPIC */}
+                    <div className="flex flex-col gap-2.5">
+                      {ppicList.map((p) => (
+                        <div
+                          key={p.name}
+                          className={`rounded-lg bg-slate-900/90 border-2 ${p.border} px-4 py-3 flex items-center justify-between transition hover:translate-x-1 hover:shadow-lg`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.badgeBg}`}>
+                              {p.code}
+                            </span>
+                            <div className="text-base font-extrabold text-white">{p.name}</div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.raciBg} shrink-0`}>
+                            [ R ] Responsible
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Rincian Tugas 5 PPIC (DI BAGIAN BAWAH) */}
+                    <div className="rounded-lg bg-amber-950/30 border border-amber-500/20 p-3 text-xs text-slate-300 leading-relaxed space-y-1.5 pt-3">
                       <div className="flex items-start gap-1.5">
                         <span className="text-amber-400 font-bold select-none">-</span>
                         <span>Mengumpulkan &amp; mendata sampel yang menjadi tanggung jawabnya, atau mendelegasikannya ke Tim Support lengkap dengan info Buyer, lokasi, dan jenis sampel</span>
@@ -268,25 +288,6 @@ export function TeamStructureView() {
                         <span>Melaporkan segera ke Leader apabila ditemukan kendala operasional lapangan</span>
                       </div>
                     </div>
-
-                    <div className="flex flex-col gap-2.5">
-                      {ppicList.map((p) => (
-                        <div
-                          key={p.name}
-                          className={`rounded-lg bg-slate-900/90 border-2 ${p.border} px-4 py-3 flex items-center justify-between transition hover:translate-x-1 hover:shadow-lg`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.badgeBg}`}>
-                              {p.code}
-                            </span>
-                            <div className="text-base font-extrabold text-white">{p.name}</div>
-                          </div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.raciBg} shrink-0`}>
-                            [ R ] Responsible
-                          </span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   {/* 3B. WING 3 TIM SUPPORT (MENURUN KE BAWAH) */}
@@ -298,8 +299,28 @@ export function TeamStructureView() {
                         </span>
                       </div>
 
-                      {/* Rincian Tugas 3 Tim Support */}
-                      <div className="rounded-lg bg-cyan-950/30 border border-cyan-500/20 p-3 text-xs text-slate-300 leading-relaxed space-y-1.5 mb-3 mt-3">
+                      {/* Kartu 3 Personil Support */}
+                      <div className="flex flex-col gap-2.5 mt-3 mb-3">
+                        {supportList.map((s) => (
+                          <div
+                            key={s.name}
+                            className={`rounded-lg bg-slate-900/90 border-2 ${s.border} px-4 py-3 flex items-center justify-between transition hover:translate-x-1 hover:shadow-lg`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.badgeBg}`}>
+                                {s.code}
+                              </span>
+                              <div className="text-base font-extrabold text-white">{s.name}</div>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.raciBg} shrink-0`}>
+                              [ S ] Support
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Rincian Tugas 3 Tim Support (DI BAGIAN BAWAH) */}
+                      <div className="rounded-lg bg-cyan-950/30 border border-cyan-500/20 p-3 text-xs text-slate-300 leading-relaxed space-y-1.5 pt-3">
                         <div className="flex items-start gap-1.5">
                           <span className="text-cyan-400 font-bold select-none">-</span>
                           <span>Menerima sampel fisik yang didelegasikan oleh PPIC beserta kelengkapan keterangan Buyer, lokasi rak/box, dan jenis sampel</span>
@@ -320,25 +341,6 @@ export function TeamStructureView() {
                           <span className="text-cyan-400 font-bold select-none">-</span>
                           <span>Menginfokan segera ke PPIC terkait atau Leader jika data sampel tidak lengkap, barcode bermasalah, atau terjadi kendala teknis</span>
                         </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2.5 mt-3">
-                        {supportList.map((s) => (
-                          <div
-                            key={s.name}
-                            className={`rounded-lg bg-slate-900/90 border-2 ${s.border} px-4 py-3 flex items-center justify-between transition hover:translate-x-1 hover:shadow-lg`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.badgeBg}`}>
-                                {s.code}
-                              </span>
-                              <div className="text-base font-extrabold text-white">{s.name}</div>
-                            </div>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.raciBg} shrink-0`}>
-                              [ S ] Support
-                            </span>
-                          </div>
-                        ))}
                       </div>
                     </div>
                   </div>
