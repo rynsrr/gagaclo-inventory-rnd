@@ -269,9 +269,9 @@ export const SimpleInventoryView = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-apple">
       <div className={printModalItems ? 'no-print space-y-6' : 'space-y-6'}>
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
+      <div className="bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-black/[0.08] p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2">

@@ -134,10 +134,10 @@ export const ItemsListView = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-apple">
       
       {/* Top Action & Filter Toolbar */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5">
+      <div className="bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-black/[0.08] p-4 sm:p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Search bar */}

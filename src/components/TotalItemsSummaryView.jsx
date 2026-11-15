@@ -372,15 +372,15 @@ export function TotalItemsSummaryView() {
   }, [items]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-apple">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-            <Archive className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            Ringkasan Total Item &amp; Aktivitas R&D
+          <h1 className="flex items-center gap-2 text-lg font-bold text-[#1d1d1f] tracking-tight">
+            <Archive className="h-5 w-5 text-[#0071e3]" aria-hidden="true" />
+            Ringkasan Total Item &amp; Aktivitas R&amp;D
           </h1>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs text-[#86868b]">
             Pelacakan umur simpan, rekap harian simpan PCS per PPIC, matriks style, dan audit kode duplikat.
           </p>
         </div>
@@ -391,113 +391,117 @@ export function TotalItemsSummaryView() {
             type="button"
             onClick={handleManualSync}
             disabled={isManualSyncing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-emerald-500/40 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition cursor-pointer shadow-2xs disabled:opacity-60"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[#34c759]/30 bg-[#34c759]/10 hover:bg-[#34c759]/20 text-[#30d158] transition cursor-pointer shadow-xs disabled:opacity-60"
             title="Sinkronkan data inventory real-time dari Supabase (Otomatis sync tiap 4 detik)"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isManualSyncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#30d158] ${isManualSyncing ? 'animate-spin' : ''}`} />
             <span>{isManualSyncing ? 'Menyinkronkan...' : 'Sinkron Real-Time'}</span>
             <span className="relative flex h-2 w-2 ml-0.5" title="Koneksi Cloud Real-time Aktif">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34c759] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#34c759]"></span>
             </span>
           </button>
 
-          {/* View Mode Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 self-start sm:self-center flex-wrap">
-          <button
-            type="button"
-            onClick={() => setViewMode('styles')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === 'styles'
-                ? 'bg-white text-blue-700 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Shirt className="w-3.5 h-3.5" />
-            <span>Pengelompokan Style</span>
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200/60">
-              {styleGroups.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode('table')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === 'table'
-                ? 'bg-white text-blue-700 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <List className="w-3.5 h-3.5" />
-            <span>Daftar Tabel &amp; Umur</span>
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700 font-bold">
-              {filteredItems.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode('duplicates')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === 'duplicates'
-                ? 'bg-white text-amber-700 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Kode Sama &amp; Perbaikan</span>
-            <span
-              className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-                duplicateCodeGroups.length > 0
-                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                  : 'bg-emerald-100 text-emerald-800'
+          {/* View Mode Switcher (Apple Segmented Control Style) */}
+          <div className="inline-flex items-center p-1 bg-black/[0.04] rounded-full border border-black/[0.05] gap-0.5 max-w-full overflow-x-auto scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setViewMode('styles')}
+              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                viewMode === 'styles'
+                  ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                  : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
               }`}
             >
-              {duplicateCodeGroups.length > 0 ? `${duplicateCodeGroups.length} Duplikat` : '✓ 0'}
-            </span>
-          </button>
+              <Shirt className="w-3.5 h-3.5" />
+              <span>Pengelompokan Style</span>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums ${
+                viewMode === 'styles' ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'bg-black/[0.05] text-[#86868b]'
+              }`}>
+                {styleGroups.length}
+              </span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setViewMode('dispatch')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-              viewMode === 'dispatch'
-                ? 'bg-blue-600 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Kirim Keluar</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-              viewMode === 'dispatch' ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
-            }`}>
-              {dispatchedStats.pcs} PCS
-            </span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                viewMode === 'table'
+                  ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                  : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Daftar Tabel &amp; Umur</span>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums ${
+                viewMode === 'table' ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'bg-black/[0.05] text-[#86868b]'
+              }`}>
+                {filteredItems.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('duplicates')}
+              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                viewMode === 'duplicates'
+                  ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                  : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Kode Sama &amp; Perbaikan</span>
+              <span
+                className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums ${
+                  duplicateCodeGroups.length > 0
+                    ? 'bg-[#ff9500]/15 text-[#c96700]'
+                    : 'bg-[#34c759]/15 text-[#30d158]'
+                }`}
+              >
+                {duplicateCodeGroups.length > 0 ? `${duplicateCodeGroups.length} Duplikat` : '✓ 0'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('dispatch')}
+              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                viewMode === 'dispatch'
+                  ? 'bg-white text-[#0071e3] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                  : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
+              }`}
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Kirim Keluar</span>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums ${
+                viewMode === 'dispatch' ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'bg-black/[0.05] text-[#86868b]'
+              }`}>
+                {dispatchedStats.pcs} PCS
+              </span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-      {/* Top Banner Widget: Kotak Sampel Terkirim Keluar (Buyer, Anzo, RDTW, RDC, ANZOTW) */}
-      <div className="p-4 sm:p-5 rounded-lg bg-slate-900 border border-slate-800 text-white border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Banner Widget: Kotak Sampel Terkirim Keluar (Apple Dark Style) */}
+      <div className="p-4 sm:p-5 rounded-[22px] bg-[#161618] border border-white/[0.08] text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 font-apple">
         <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/20 border border-blue-400/30 text-blue-300 shrink-0">
-            <Truck className="w-5 h-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#0071e3]/20 border border-[#0071e3]/30 text-[#2997ff] shrink-0">
+            <Truck className="w-5 h-5 stroke-[2.2]" />
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-black text-white">
+              <span className="text-sm font-bold text-white">
                 Kotak Pengiriman Keluar R&amp;D
               </span>
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#2997ff] bg-[#0071e3]/15 px-2.5 py-0.5 rounded-full border border-[#0071e3]/30">
                 Buyer • ANZO QC • ANZO TW • ANZO QC CHINA • RDTW • RDC
               </span>
             </div>
             <p className="text-xs text-slate-300">
               Total <strong>{dispatchedStats.pcs} PCS</strong> ({dispatchedStats.count} item) terkirim keluar:
-              <span className="text-rose-300 font-bold ml-1.5">• {dispatchedStats.permPcs} PCS Permanen</span>
-              <span className="text-amber-300 font-bold ml-1.5">• {dispatchedStats.revPcs} PCS Review (Bisa Kembali)</span>
+              <span className="text-rose-300 font-semibold ml-1.5">• {dispatchedStats.permPcs} PCS Permanen</span>
+              <span className="text-amber-300 font-semibold ml-1.5">• {dispatchedStats.revPcs} PCS Review (Bisa Kembali)</span>
             </p>
           </div>
         </div>
@@ -506,10 +510,10 @@ export function TotalItemsSummaryView() {
           <button
             type="button"
             onClick={() => setViewMode(viewMode === 'dispatch' ? 'styles' : 'dispatch')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 shadow-md cursor-pointer ${
               viewMode === 'dispatch'
-                ? 'bg-white text-slate-900 hover:bg-slate-100 shadow-white/10'
-                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30'
+                ? 'bg-white text-[#1d1d1f] hover:bg-[#f5f5f7]'
+                : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
             }`}
           >
             <Send className="w-3.5 h-3.5" />
@@ -749,30 +753,30 @@ export function TotalItemsSummaryView() {
       {/* SUB-VIEW 3 & 4: PENGELOMPOKAN STYLE & DAFTAR TABEL & UMUR                */}
       {/* ========================================================================= */}
       {(viewMode === 'styles' || viewMode === 'table') && (
-        <section className="inventory-panel p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-2xs space-y-4">
+        <section className="inventory-panel p-4 sm:p-5 bg-white/90 backdrop-blur-xl rounded-[22px] border border-black/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4 font-apple">
           {/* Controls: Search, Aging Filter Chips, Actions */}
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1">
               <div className="relative w-full sm:w-72">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86868b]" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Cari style, buyer, kode, box, PPIC..."
-                  className="w-full rounded-xl border border-slate-200/90 bg-slate-50/80 py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
+                  className="w-full rounded-full border border-black/[0.07] bg-black/[0.03] py-2 pl-9 pr-3 text-xs sm:text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:border-[#0071e3] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 transition shadow-xs"
                 />
               </div>
 
-              {/* Quick Aging Filter Chips */}
+              {/* Quick Aging Filter Chips (Apple Segmented Style) */}
               <div className="flex items-center gap-1.5 flex-wrap text-xs">
                 <button
                   type="button"
                   onClick={() => setAgeFilter('ALL')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-full font-semibold transition cursor-pointer border select-none ${
                     ageFilter === 'ALL'
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      ? 'bg-[#1d1d1f] text-white border-[#1d1d1f] shadow-xs'
+                      : 'bg-black/[0.03] hover:bg-black/[0.06] text-[#86868b] border-black/[0.06]'
                   }`}
                 >
                   Semua Umur ({metrics.total})
@@ -780,10 +784,10 @@ export function TotalItemsSummaryView() {
                 <button
                   type="button"
                   onClick={() => setAgeFilter('FRESH')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-full font-semibold transition cursor-pointer border select-none ${
                     ageFilter === 'FRESH'
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                      ? 'bg-[#34c759] text-white border-[#34c759] shadow-xs'
+                      : 'bg-[#34c759]/10 hover:bg-[#34c759]/20 text-[#30d158] border-[#34c759]/25'
                   }`}
                 >
                   &lt; 30 Hari ({metrics.fresh})
@@ -791,10 +795,10 @@ export function TotalItemsSummaryView() {
                 <button
                   type="button"
                   onClick={() => setAgeFilter('MEDIUM')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-full font-semibold transition cursor-pointer border select-none ${
                     ageFilter === 'MEDIUM'
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200'
+                      ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                      : 'bg-[#0071e3]/10 hover:bg-[#0071e3]/20 text-[#0071e3] border-[#0071e3]/25'
                   }`}
                 >
                   30–90 Hari ({metrics.medium})
@@ -802,10 +806,10 @@ export function TotalItemsSummaryView() {
                 <button
                   type="button"
                   onClick={() => setAgeFilter('AGED')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-full font-semibold transition cursor-pointer border select-none ${
                     ageFilter === 'AGED'
-                      ? 'bg-amber-600 text-white border-amber-600'
-                      : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                      ? 'bg-[#ff9500] text-white border-[#ff9500] shadow-xs'
+                      : 'bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border-[#ff9500]/25'
                   }`}
                 >
                   90–180 Hari ({metrics.aged})
@@ -813,10 +817,10 @@ export function TotalItemsSummaryView() {
                 <button
                   type="button"
                   onClick={() => setAgeFilter('CRITICAL')}
-                  className={`px-2.5 py-1.5 rounded-lg font-bold transition cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-full font-semibold transition cursor-pointer border select-none ${
                     ageFilter === 'CRITICAL'
-                      ? 'bg-rose-600 text-white border-rose-600'
-                      : 'bg-rose-50 hover:bg-rose-100 text-rose-900 border-rose-200'
+                      ? 'bg-[#ff3b30] text-white border-[#ff3b30] shadow-xs'
+                      : 'bg-[#ff3b30]/10 hover:bg-[#ff3b30]/20 text-[#ff3b30] border-[#ff3b30]/25'
                   }`}
                 >
                   &gt; 180 Hari ({metrics.critical})
@@ -827,18 +831,18 @@ export function TotalItemsSummaryView() {
             {/* Actions: Expand/Collapse & Export Excel */}
             <div className="flex items-center gap-2 self-start lg:self-center">
               {viewMode === 'styles' && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={expandAllStyles}
-                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-full border border-black/[0.08] text-[#1d1d1f] bg-white hover:bg-black/[0.03] text-xs font-semibold transition cursor-pointer"
                   >
                     Buka Semua
                   </button>
                   <button
                     type="button"
                     onClick={collapseAllStyles}
-                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                    className="px-3 py-1.5 rounded-full border border-black/[0.08] text-[#1d1d1f] bg-white hover:bg-black/[0.03] text-xs font-semibold transition cursor-pointer"
                   >
                     Tutup Semua
                   </button>
@@ -848,7 +852,7 @@ export function TotalItemsSummaryView() {
               <button
                 type="button"
                 onClick={handleExportExcel}
-                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full bg-[#34c759] hover:bg-[#30d158] text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5" />
                 <span>Unduh Excel</span>
@@ -1071,88 +1075,88 @@ export function TotalItemsSummaryView() {
 
           {/* Mode 2: Tabel Lengkap Standar & Umur */}
           {viewMode === 'table' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <div className="overflow-x-auto rounded-[18px] border border-black/[0.06] bg-white shadow-2xs">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 uppercase">
-                    <th className="px-3 py-2.5">No</th>
-                    <th className="px-3 py-2.5">Tanggal</th>
-                    <th className="px-3 py-2.5">Umur Simpan</th>
-                    <th className="px-3 py-2.5">Kode</th>
-                    <th className="px-3 py-2.5">Track</th>
-                    <th className="px-3 py-2.5">Buyer</th>
-                    <th className="px-3 py-2.5">Jenis</th>
-                    <th className="px-3 py-2.5">Style</th>
-                    <th className="px-3 py-2.5">Sample No</th>
-                    <th className="px-3 py-2.5">Size</th>
-                    <th className="px-3 py-2.5">Color</th>
-                    <th className="px-3 py-2.5 text-right">Jumlah</th>
-                    <th className="px-3 py-2.5">Box &amp; PPIC</th>
-                    <th className="px-3 py-2.5 text-center">Aksi</th>
+                  <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
+                    <th className="px-3.5 py-3">No</th>
+                    <th className="px-3.5 py-3">Tanggal</th>
+                    <th className="px-3.5 py-3">Umur Simpan</th>
+                    <th className="px-3.5 py-3">Kode</th>
+                    <th className="px-3.5 py-3">Track</th>
+                    <th className="px-3.5 py-3">Buyer</th>
+                    <th className="px-3.5 py-3">Jenis</th>
+                    <th className="px-3.5 py-3">Style</th>
+                    <th className="px-3.5 py-3">Sample No</th>
+                    <th className="px-3.5 py-3">Size</th>
+                    <th className="px-3.5 py-3">Color</th>
+                    <th className="px-3.5 py-3 text-right">Jumlah</th>
+                    <th className="px-3.5 py-3">Box &amp; PPIC</th>
+                    <th className="px-3.5 py-3 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-black/[0.04]">
                   {filteredItems.length === 0 ? (
                     <tr>
-                      <td colSpan={14} className="px-4 py-8 text-center text-slate-400">
+                      <td colSpan={14} className="px-4 py-12 text-center text-[#86868b]">
                         Tidak ada item yang cocok dengan pencarian atau filter umur.
                       </td>
                     </tr>
                   ) : (
                     filteredItems.map((item, i) => (
-                      <tr key={item.id} className="hover:bg-slate-50/70 transition">
-                        <td className="px-3 py-2.5 font-bold text-slate-400">{i + 1}</td>
-                        <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">
-                          <div className="flex items-center gap-1 font-mono text-xs">
-                            <Calendar className="h-3 w-3 text-slate-400" />
-                            <span>{item.tanggal}</span>
+                      <tr key={item.id} className="hover:bg-black/[0.02] transition-colors">
+                        <td className="px-3.5 py-3 font-semibold text-[#86868b] tabular-nums">{i + 1}</td>
+                        <td className="px-3.5 py-3 text-[#1d1d1f] whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 font-mono text-xs text-[#86868b]">
+                            <Calendar className="h-3.5 w-3.5 text-[#86868b]" />
+                            <span className="text-[#1d1d1f]">{item.tanggal}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap">
+                        <td className="px-3.5 py-3 whitespace-nowrap">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-bold inline-block shadow-2xs ${
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold inline-block border tabular-nums ${
                               item.age.tier === 'critical'
-                                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                ? 'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/25'
                                 : item.age.tier === 'aged'
-                                ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                                ? 'bg-[#ff9500]/10 text-[#c96700] border-[#ff9500]/25'
                                 : item.age.tier === 'medium'
-                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                ? 'bg-[#0071e3]/10 text-[#0071e3] border-[#0071e3]/25'
+                                : 'bg-[#34c759]/10 text-[#30d158] border-[#34c759]/25'
                             }`}
                           >
                             {item.age.label}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 font-mono font-bold text-blue-700">{item.kode}</td>
-                        <td className="px-3 py-2.5 font-mono text-slate-600">{item.track}</td>
-                        <td className="px-3 py-2.5 font-mono text-slate-700">{item.buyerNo}</td>
-                        <td className="px-3 py-2.5 font-semibold text-slate-800">{item.jenisSample}</td>
-                        <td className="px-3 py-2.5 font-bold text-slate-900 max-w-xs truncate">{item.style}</td>
-                        <td className="px-3 py-2.5 font-mono text-slate-600">{item.sampleNo}</td>
-                        <td className="px-3 py-2.5 text-slate-600">{item.size}</td>
-                        <td className="px-3 py-2.5 text-slate-600">{item.color}</td>
-                        <td className="px-3 py-2.5 text-right font-black text-slate-900 tabular-nums whitespace-nowrap">
+                        <td className="px-3.5 py-3 font-mono font-bold text-[#0071e3]">{item.kode}</td>
+                        <td className="px-3.5 py-3 font-mono text-[#86868b]">{item.track}</td>
+                        <td className="px-3.5 py-3 font-mono text-[#1d1d1f]">{item.buyerNo}</td>
+                        <td className="px-3.5 py-3 font-medium text-[#1d1d1f]">{item.jenisSample}</td>
+                        <td className="px-3.5 py-3 font-semibold text-[#1d1d1f] max-w-xs truncate">{item.style}</td>
+                        <td className="px-3.5 py-3 font-mono text-[#86868b]">{item.sampleNo}</td>
+                        <td className="px-3.5 py-3 text-[#86868b]">{item.size}</td>
+                        <td className="px-3.5 py-3 text-[#86868b]">{item.color}</td>
+                        <td className="px-3.5 py-3 text-right font-bold text-[#1d1d1f] tabular-nums whitespace-nowrap">
                           {item.jumlah.toLocaleString('id-ID')}{' '}
-                          <span className="text-xs font-normal text-slate-400">{item.satuan}</span>
+                          <span className="text-[11px] font-normal text-[#86868b]">{item.satuan}</span>
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3.5 py-3">
                           {isItemDispatched(item) ? (
                             <div className="space-y-0.5">
-                              <span className="inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#ff9500]/10 text-[#c96700] border border-[#ff9500]/25 font-semibold text-xs">
                                 🚀 Dikirim ke {decodeDispatchData(item)?.destinationLabel || 'Luar'}
                               </span>
-                              <div className="text-xs text-slate-400">Asal: {item.boxLabel} • {item.picName}</div>
+                              <div className="text-[11px] text-[#86868b]">Asal: {item.boxLabel} • {item.picName}</div>
                             </div>
                           ) : (
                             <>
-                              <div className="text-xs font-bold text-blue-700">{item.boxLabel}</div>
-                              <div className="mt-0.5 text-xs text-slate-500">
+                              <div className="text-xs font-semibold text-[#0071e3]">{item.boxLabel}</div>
+                              <div className="mt-0.5 text-[11px] text-[#86868b]">
                                 {item.rackName}
                                 {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
                               </div>
                               {item.helperName && (
                                 <div className="mt-1">
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 text-xs font-black">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] border border-[#0071e3]/20 text-[10px] font-bold">
                                     📝 Input: {item.helperName}
                                   </span>
                                 </div>
