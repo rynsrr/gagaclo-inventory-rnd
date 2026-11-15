@@ -723,52 +723,90 @@ const ItemModalContent = () => {
             {/* BARIS 4: Sample No, Size (dengan Preset Chips), & Color (dengan Preset Chips) */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5">
               {/* Sample No */}
-              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
-                errors.sampleNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              <div className={`md:col-span-4 border rounded-xl p-2 bg-white transition flex flex-col justify-between ${
+                errors.sampleNo ? 'border-[#ff3b30] bg-[#ff3b30]/5' : 'border-black/[0.08] focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/15'
               }`}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Sample No <span className="text-rose-500">*</span>:
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(p => ({ ...p, sampleNo: 'NA' }));
+                <div>
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <label className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider whitespace-nowrap">
+                      Sample No <span className="text-[#ff3b30]">*</span>:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(p => ({ ...p, sampleNo: 'NA' }));
+                        if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
+                      }}
+                      className="text-[10px] font-medium px-1.5 py-0.5 bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] rounded-md border border-black/[0.06] transition cursor-pointer"
+                      title="Isi NA"
+                    >
+                      + NA
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    list="sampleno-datalist"
+                    value={formData.sampleNo}
+                    onChange={(e) => {
+                      setFormData(p => ({ ...p, sampleNo: e.target.value.toUpperCase() }));
                       if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
                     }}
-                    className="text-xs font-black px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
-                  >
-                    + NA
-                  </button>
+                    placeholder="Contoh: RSD-250015-2 / NA"
+                    className="w-full text-xs font-mono font-semibold uppercase focus:outline-hidden bg-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
+                  />
+                  <datalist id="sampleno-datalist">
+                    {(suggestions.sampleNo || []).map((sn, idx) => (
+                      <option key={`sno-${idx}`} value={sn} />
+                    ))}
+                  </datalist>
                 </div>
-                <input
-                  type="text"
-                  list="sampleno-datalist"
-                  value={formData.sampleNo}
-                  onChange={(e) => {
-                    setFormData(p => ({ ...p, sampleNo: e.target.value.toUpperCase() }));
-                    if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
-                  }}
-                  placeholder="RSD-250015-2 / NA"
-                  className="w-full text-xs font-mono font-bold uppercase focus:outline-none bg-transparent"
-                />
-                <datalist id="sampleno-datalist">
-                  {(suggestions.sampleNo || []).map((sn, idx) => (
-                    <option key={`sno-${idx}`} value={sn} />
-                  ))}
-                </datalist>
+                <div className="mt-1.5 pt-1.5 border-t border-black/[0.04] text-[10px] text-[#86868b] truncate">
+                  Nomor identifikasi sample
+                </div>
               </div>
 
               {/* Size dengan 1-Click Chips */}
-              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
-                errors.size ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              <div className={`md:col-span-4 border rounded-xl p-2 bg-white transition flex flex-col justify-between ${
+                errors.size ? 'border-[#ff3b30] bg-[#ff3b30]/5' : 'border-black/[0.08] focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/15'
               }`}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Size <span className="text-rose-500">*</span>:
-                  </label>
-                  <div className="flex items-center gap-0.5">
-                    {['S', 'M', 'L', 'XL', 'FREE', 'NA'].map(sz => (
+                <div>
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <label className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider whitespace-nowrap">
+                      Size <span className="text-[#ff3b30]">*</span>:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(p => ({ ...p, size: 'NA' }));
+                        if (errors.size) setErrors(prev => ({ ...prev, size: null }));
+                      }}
+                      className="text-[10px] font-medium px-1.5 py-0.5 bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] rounded-md border border-black/[0.06] transition cursor-pointer"
+                      title="Isi NA"
+                    >
+                      + NA
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    list="size-datalist"
+                    value={formData.size}
+                    onChange={(e) => {
+                      setFormData(p => ({ ...p, size: e.target.value.toUpperCase() }));
+                      if (errors.size) setErrors(prev => ({ ...prev, size: null }));
+                    }}
+                    placeholder="Ketik size atau pilih chip..."
+                    className="w-full text-xs font-semibold uppercase focus:outline-hidden bg-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
+                  />
+                  <datalist id="size-datalist">
+                    {(suggestions.size || []).map((sz, idx) => (
+                      <option key={`sz-${idx}`} value={sz} />
+                    ))}
+                  </datalist>
+                </div>
+                <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-black/[0.04] overflow-x-auto">
+                  {['S', 'M', 'L', 'XL', 'FREE', 'NA'].map(sz => {
+                    const isSelected = formData.size === sz;
+                    return (
                       <button
                         key={sz}
                         type="button"
@@ -776,43 +814,61 @@ const ItemModalContent = () => {
                           setFormData(p => ({ ...p, size: sz }));
                           if (errors.size) setErrors(prev => ({ ...prev, size: null }));
                         }}
-                        className={`px-1 py-0.5 rounded text-xs font-bold transition cursor-pointer ${
-                          formData.size === sz ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                        className={`flex-1 py-0.5 px-1 rounded-full text-[10px] font-semibold tracking-wide uppercase transition cursor-pointer text-center whitespace-nowrap ${
+                          isSelected
+                            ? 'bg-[#0071e3] text-white shadow-2xs'
+                            : 'bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] border border-black/[0.06]'
                         }`}
                       >
                         {sz}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-                <input
-                  type="text"
-                  list="size-datalist"
-                  value={formData.size}
-                  onChange={(e) => {
-                    setFormData(p => ({ ...p, size: e.target.value.toUpperCase() }));
-                    if (errors.size) setErrors(prev => ({ ...prev, size: null }));
-                  }}
-                  placeholder="Ketik atau klik chip di atas..."
-                  className="w-full text-xs font-black uppercase focus:outline-none bg-transparent"
-                />
-                <datalist id="size-datalist">
-                  {(suggestions.size || []).map((sz, idx) => (
-                    <option key={`sz-${idx}`} value={sz} />
-                  ))}
-                </datalist>
               </div>
 
               {/* Color dengan 1-Click Chips */}
-              <div className={`md:col-span-4 border rounded-lg p-1.5 bg-white transition ${
-                errors.color ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
+              <div className={`md:col-span-4 border rounded-xl p-2 bg-white transition flex flex-col justify-between ${
+                errors.color ? 'border-[#ff3b30] bg-[#ff3b30]/5' : 'border-black/[0.08] focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/15'
               }`}>
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Color / Warna <span className="text-rose-500">*</span>:
-                  </label>
-                  <div className="flex items-center gap-0.5">
-                    {['BLACK', 'WHITE', 'NAVY', 'GREY', 'NA'].map(c => (
+                <div>
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <label className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider whitespace-nowrap">
+                      Color / Warna <span className="text-[#ff3b30]">*</span>:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(p => ({ ...p, color: 'NA' }));
+                        if (errors.color) setErrors(prev => ({ ...prev, color: null }));
+                      }}
+                      className="text-[10px] font-medium px-1.5 py-0.5 bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] rounded-md border border-black/[0.06] transition cursor-pointer"
+                      title="Isi NA"
+                    >
+                      + NA
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    list="color-datalist"
+                    value={formData.color}
+                    onChange={(e) => {
+                      setFormData(p => ({ ...p, color: e.target.value.toUpperCase() }));
+                      if (errors.color) setErrors(prev => ({ ...prev, color: null }));
+                    }}
+                    placeholder="Ketik warna atau pilih chip..."
+                    className="w-full text-xs font-semibold uppercase focus:outline-hidden bg-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
+                  />
+                  <datalist id="color-datalist">
+                    {(suggestions.color || []).map((c, idx) => (
+                      <option key={`c-${idx}`} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+                <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-black/[0.04] overflow-x-auto">
+                  {['BLACK', 'WHITE', 'NAVY', 'GREY', 'NA'].map(c => {
+                    const isSelected = formData.color === c;
+                    return (
                       <button
                         key={c}
                         type="button"
@@ -820,31 +876,17 @@ const ItemModalContent = () => {
                           setFormData(p => ({ ...p, color: c }));
                           if (errors.color) setErrors(prev => ({ ...prev, color: null }));
                         }}
-                        className={`px-1 py-0.5 rounded text-xs font-bold transition cursor-pointer ${
-                          formData.color === c ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                        className={`flex-1 py-0.5 px-1 rounded-full text-[10px] font-semibold tracking-wide uppercase transition cursor-pointer text-center whitespace-nowrap ${
+                          isSelected
+                            ? 'bg-[#1d1d1f] text-white shadow-2xs'
+                            : 'bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] border border-black/[0.06]'
                         }`}
                       >
                         {c}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-                <input
-                  type="text"
-                  list="color-datalist"
-                  value={formData.color}
-                  onChange={(e) => {
-                    setFormData(p => ({ ...p, color: e.target.value.toUpperCase() }));
-                    if (errors.color) setErrors(prev => ({ ...prev, color: null }));
-                  }}
-                  placeholder="Ketik atau klik chip di atas..."
-                  className="w-full text-xs font-bold uppercase focus:outline-none bg-transparent"
-                />
-                <datalist id="color-datalist">
-                  {(suggestions.color || []).map((c, idx) => (
-                    <option key={`c-${idx}`} value={c} />
-                  ))}
-                </datalist>
               </div>
             </div>
 

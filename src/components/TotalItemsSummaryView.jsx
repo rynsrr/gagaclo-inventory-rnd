@@ -31,14 +31,11 @@ import {
   Check,
   RotateCcw,
   RefreshCw,
-  Send,
-  Truck,
   Building2,
   ShoppingCart,
 } from 'lucide-react';
-import { isItemDispatched, decodeDispatchData, DISPATCH_DESTINATIONS } from '../utils/dispatchUtils';
+import { isItemDispatched, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper } from '../utils/authUtils';
-import { DispatchOutgoingView } from './DispatchOutgoingView';
 
 /**
  * Menghitung umur simpan item secara presisi berdasarkan tanggal masuk
@@ -349,28 +346,6 @@ export function TotalItemsSummaryView() {
 
   const SAMPLE_TYPES = ['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARCHIVE'];
 
-  const dispatchedStats = useMemo(() => {
-    let count = 0;
-    let pcs = 0;
-    let permPcs = 0;
-    let revPcs = 0;
-    const destBreakdown = {};
-    items.forEach(it => {
-      if (isItemDispatched(it)) {
-        count++;
-        const q = Number(it.jumlah ?? it.qty ?? 1);
-        pcs += q;
-        const d = decodeDispatchData(it);
-        if (d?.type === 'PERMANENT') permPcs += q;
-        else revPcs += q;
-
-        const dest = d?.destinationLabel || 'Lainnya';
-        destBreakdown[dest] = (destBreakdown[dest] || 0) + q;
-      }
-    });
-    return { count, pcs, permPcs, revPcs, destBreakdown };
-  }, [items]);
-
   return (
     <div className="space-y-5 font-apple">
       {/* Page Header */}
@@ -461,75 +436,9 @@ export function TotalItemsSummaryView() {
                 {duplicateCodeGroups.length > 0 ? `${duplicateCodeGroups.length} Duplikat` : '✓ 0'}
               </span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('dispatch')}
-              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                viewMode === 'dispatch'
-                  ? 'bg-white text-[#0071e3] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
-                  : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
-              }`}
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Kirim Keluar</span>
-              <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums ${
-                viewMode === 'dispatch' ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'bg-black/[0.05] text-[#86868b]'
-              }`}>
-                {dispatchedStats.pcs} PCS
-              </span>
-            </button>
           </div>
         </div>
       </div>
-
-      {/* Top Banner Widget: Kotak Sampel Terkirim Keluar (Apple Dark Style) */}
-      <div className="p-4 sm:p-5 rounded-[22px] bg-[#161618] border border-white/[0.08] text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 font-apple">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#0071e3]/20 border border-[#0071e3]/30 text-[#2997ff] shrink-0">
-            <Truck className="w-5 h-5 stroke-[2.2]" />
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-white">
-                Kotak Pengiriman Keluar R&amp;D
-              </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#2997ff] bg-[#0071e3]/15 px-2.5 py-0.5 rounded-full border border-[#0071e3]/30">
-                Buyer • ANZO QC • ANZO TW • ANZO QC CHINA • RDTW • RDC
-              </span>
-            </div>
-            <p className="text-xs text-slate-300">
-              Total <strong>{dispatchedStats.pcs} PCS</strong> ({dispatchedStats.count} item) terkirim keluar:
-              <span className="text-rose-300 font-semibold ml-1.5">• {dispatchedStats.permPcs} PCS Permanen</span>
-              <span className="text-amber-300 font-semibold ml-1.5">• {dispatchedStats.revPcs} PCS Review (Bisa Kembali)</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setViewMode(viewMode === 'dispatch' ? 'styles' : 'dispatch')}
-            className={`px-4 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 shadow-md cursor-pointer ${
-              viewMode === 'dispatch'
-                ? 'bg-white text-[#1d1d1f] hover:bg-[#f5f5f7]'
-                : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
-            }`}
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>{viewMode === 'dispatch' ? 'Tutup Panel Pengiriman' : 'Buka Kotak Pengiriman'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* SUB-VIEW: PENGIRIMAN KELUAR R&D (BUYER / ANZO / RDTW / RDC / ANZOTW)      */}
-      {/* ========================================================================= */}
-      {viewMode === 'dispatch' && (
-        <div className="space-y-4">
-          <DispatchOutgoingView />
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* SUB-VIEW: KODE SAMA / DUPLIKAT & PERBAIKAN OTOMATIS                      */}

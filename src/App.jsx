@@ -6,7 +6,7 @@ import { ItemModal } from './components/ItemModal';
 import { TargetTeamBanner } from './components/TargetTeamBanner';
 import { CelebrationFlareOverlay } from './components/CelebrationFlareOverlay';
 import { InventoryImport } from './components/InventoryImport';
-import { BoxSearchPanel, computeSearchResults } from './components/BoxSearchPanel';
+import { computeSearchResults } from './components/BoxSearchPanel';
 
 // Code-split heavy 3D scene & secondary views for ultra lightweight initial load
 const Warehouse3DView = lazy(() =>
@@ -44,14 +44,9 @@ const BackupModal = lazy(() =>
 );
 import {
   Boxes,
-  Box as BoxIcon,
-  LayoutDashboard,
-  Calendar,
-  MessageSquarePlus,
   Database,
   PackagePlus,
   X,
-  Send,
   ShoppingBasket,
   CheckCircle2,
   AlertTriangle,
@@ -61,6 +56,7 @@ import {
   Settings,
   FileSpreadsheet,
   Upload,
+  Lock,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -94,6 +90,9 @@ const AppContent = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isBackupPasswordOpen, setIsBackupPasswordOpen] = useState(false);
+  const [backupPasswordInput, setBackupPasswordInput] = useState('');
+  const [backupPasswordError, setBackupPasswordError] = useState(false);
   const settingsRef = useRef(null);
   const [cartCheckoutItems, setCartCheckoutItems] = useState(null);
   const [celebrationAchiever, setCelebrationAchiever] = useState(null);
@@ -363,7 +362,9 @@ const AppContent = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              setIsBackupModalOpen(true);
+                              setBackupPasswordInput('');
+                              setBackupPasswordError(false);
+                              setIsBackupPasswordOpen(true);
                               setIsSettingsOpen(false);
                             }}
                             className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
@@ -538,6 +539,99 @@ const AppContent = () => {
             initialSelectedUserName={userProfileTarget}
           />
         </Suspense>
+      )}
+
+      {/* Password Gate Modal untuk Akses Backup (Password: 4695, tanpa hint) */}
+      {isBackupPasswordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="backup-pw-title"
+            className="w-full max-w-sm rounded-[22px] bg-white border border-black/[0.08] shadow-2xl p-6 relative font-apple"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setIsBackupPasswordOpen(false);
+                setBackupPasswordInput('');
+                setBackupPasswordError(false);
+              }}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.04] transition-all cursor-pointer"
+              aria-label="Tutup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 id="backup-pw-title" className="text-sm font-bold text-[#1d1d1f]">
+                  Akses Backup &amp; Pulihkan
+                </h3>
+                <p className="text-[11px] text-[#86868b]">
+                  Masukkan kata sandi pengelola untuk membuka menu ini.
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (backupPasswordInput === '4695') {
+                  setIsBackupPasswordOpen(false);
+                  setBackupPasswordInput('');
+                  setBackupPasswordError(false);
+                  setIsBackupModalOpen(true);
+                } else {
+                  setBackupPasswordError(true);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <input
+                  type="password"
+                  autoFocus
+                  value={backupPasswordInput}
+                  onChange={(e) => {
+                    setBackupPasswordInput(e.target.value);
+                    if (backupPasswordError) setBackupPasswordError(false);
+                  }}
+                  placeholder="Masukkan kata sandi..."
+                  className="w-full px-3.5 py-2.5 rounded-[12px] bg-[#f5f5f7] border border-black/[0.08] text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/40 focus:bg-white transition-all"
+                />
+                {backupPasswordError && (
+                  <p className="text-[11px] text-rose-500 font-medium mt-1.5 flex items-center gap-1">
+                    Kata sandi salah. Akses ditolak.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBackupPasswordOpen(false);
+                    setBackupPasswordInput('');
+                    setBackupPasswordError(false);
+                  }}
+                  className="px-4 py-2 rounded-full text-xs font-medium text-[#1d1d1f] hover:bg-black/[0.05] transition-all cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-full text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-sm transition-all cursor-pointer active:scale-95"
+                >
+                  Masuk
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Backup & Auto-Snapshot Modal */}

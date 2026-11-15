@@ -4,11 +4,9 @@ import {
   X,
   HardDriveDownload,
   Upload,
-  RotateCcw,
   ShieldAlert,
   Database,
   CheckCircle2,
-  Trash2,
   ShieldCheck,
   FileSpreadsheet,
   History,
@@ -33,14 +31,11 @@ export const BackupModal = ({ isOpen, onClose }) => {
     exportToExcel,
     triggerManualBackup,
     restoreFromSnapshotPayload,
-    resetToInitialData,
-    deleteAllItems,
     setIsSupabaseModalOpen,
     supabaseStatus,
   } = useInventory();
 
   const fileInputRef = useRef(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingRestoreSnapshot, setConfirmingRestoreSnapshot] = useState(null);
   const [autoEnabled, setAutoEnabled] = useState(isAutoBackupEnabled());
   const [lastInfo, setLastInfo] = useState(getLastAutoBackupInfo());
@@ -51,7 +46,6 @@ export const BackupModal = ({ isOpen, onClose }) => {
       setAutoEnabled(isAutoBackupEnabled());
       setLastInfo(getLastAutoBackupInfo());
       setSnapshots(getLocalSnapshots());
-      setConfirmingDelete(false);
       setConfirmingRestoreSnapshot(null);
     }
   }, [isOpen]);
@@ -344,68 +338,17 @@ export const BackupModal = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Tindakan Berbahaya: Reset & Hapus */}
-          <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm('Kembalikan konfigurasi rak dan alokasi box ke dokumen awal?')) {
-                  resetToInitialData();
-                  onClose();
-                }
-              }}
-              className="text-slate-500 hover:text-slate-800 font-medium transition flex items-center gap-1 cursor-pointer"
-              title="Reset struktur master box & rak ke konfigurasi awal dokumen"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset Struktur ke Data Awal</span>
-            </button>
-
-            {!confirmingDelete ? (
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(true)}
-                className="text-rose-600 hover:text-rose-800 font-medium transition flex items-center gap-1 cursor-pointer"
-              >
-                <Trash2 className="w-3 h-3" />
-                <span>Hapus Semua Item</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-1">
-                <span className="text-rose-700 font-bold">Yakin hapus semua item?</span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await deleteAllItems?.();
-                    setConfirmingDelete(false);
-                    onClose();
-                  }}
-                  className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white font-bold"
-                >
-                  Ya
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingDelete(false)}
-                  className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-medium"
-                >
-                  Batal
-                </button>
-              </div>
-            )}
-          </div>
-
         </div>
 
         {/* Footer Dialog */}
-        <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
-          <span className="text-xs text-slate-500">
-            Total master saat ini: <strong>{items.length} item</strong> di <strong>{boxes.length} box</strong>
+        <div className="bg-[#fbfbfd] px-6 py-4 border-t border-black/[0.06] flex items-center justify-between shrink-0">
+          <span className="text-xs text-[#86868b]">
+            Total master saat ini: <strong className="text-[#1d1d1f] font-semibold">{items.length} item</strong> di <strong className="text-[#1d1d1f] font-semibold">{boxes.length} box</strong>
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-md text-xs transition cursor-pointer"
+            className="px-5 py-2 bg-[#1d1d1f] hover:bg-black text-white font-medium rounded-full text-xs shadow-sm transition-all duration-200 cursor-pointer active:scale-95"
           >
             Tutup
           </button>
