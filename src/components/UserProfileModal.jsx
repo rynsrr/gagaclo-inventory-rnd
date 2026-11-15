@@ -262,7 +262,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
 
                       <div>
                         <label htmlFor="login-password-input" className="text-[12px] font-medium text-[#1d1d1f] block mb-1.5">
-                          Password {selectedUserToLogin.name}
+                          Password
                         </label>
                         <div className="relative">
                           <input
@@ -272,7 +272,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                             required
                             value={loginPassword}
                             onChange={(e) => setLoginPassword(e.target.value)}
-                            placeholder={`Masukkan password ${selectedUserToLogin.name}...`}
+                            placeholder="Masukkan password..."
                             className="w-full rounded-xl border border-black/[0.12] bg-white py-2.5 pl-3.5 pr-10 text-[13px] text-[#1d1d1f] placeholder:text-[#86868b] focus:border-[#0071e3] focus:outline-hidden focus:ring-4 focus:ring-[#0071e3]/15 transition"
                           />
                           <button

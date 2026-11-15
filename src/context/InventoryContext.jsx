@@ -2172,14 +2172,14 @@ export const InventoryProvider = ({ children }) => {
     if (!user) {
       return {
         success: false,
-        message: `User "${username}" tidak ditemukan. Pilihan PIC: ${users.map(u => u.name).join(', ')}.`,
+        message: 'Pengguna tidak ditemukan.',
       };
     }
 
     if (user.password !== cleanPass) {
       return {
         success: false,
-        message: `Password salah untuk user ${user.name}. (Default password sama dengan nama user).`,
+        message: 'Password salah. Akses ditolak.',
       };
     }
 
