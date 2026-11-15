@@ -321,33 +321,36 @@ const AppContent = () => {
                 </button>
 
                 {isSettingsOpen && (
-                  <div className="absolute right-0 mt-2.5 w-[310px] sm:w-[410px] bg-slate-900 text-slate-100 border border-slate-700/90 rounded-xl shadow-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div
+                    className="absolute right-0 mt-2.5 w-[310px] sm:w-[480px] bg-slate-900 text-slate-100 border border-slate-700/90 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-1 duration-150 whitespace-normal"
+                    style={{ whiteSpace: 'normal' }}
+                  >
                     {/* Caret Triangle Pointing to Setting Tab (DHL Style) */}
-                    <div className="absolute -top-2 right-10 w-0 h-0 border-x-[7px] border-x-transparent border-b-[8px] border-b-slate-700 pointer-events-none">
-                      <div className="absolute -left-[6px] top-[1px] w-0 h-0 border-x-[6px] border-x-transparent border-b-[7px] border-b-slate-900" />
+                    <div className="absolute -top-2 right-12 w-0 h-0 border-x-[8px] border-x-transparent border-b-[8px] border-b-slate-700 pointer-events-none">
+                      <div className="absolute -left-[7px] top-[1px] w-0 h-0 border-x-[7px] border-x-transparent border-b-[8px] border-b-slate-900" />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Kolom 1: KELOLA GUDANG */}
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2 pb-1 border-b border-slate-800 flex items-center justify-between">
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 pb-1.5 border-b border-slate-800 flex items-center justify-between">
                           <span>Kelola Gudang</span>
-                          <PackagePlus className="w-3 h-3 text-blue-400" />
+                          <PackagePlus className="w-3.5 h-3.5 text-blue-400" />
                         </div>
-                        <div className="space-y-1">
+                        <div className="flex flex-col gap-1">
                           <button
                             type="button"
                             onClick={() => {
                               setIsBoxManageOpen(true);
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center gap-1.5">
+                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center justify-between">
                               <span>Kelola Box &amp; Rak</span>
-                              <span className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition">↗</span>
+                              <span className="text-[10px] text-blue-400 opacity-60 group-hover:opacity-100 transition">↗</span>
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Atur nomor box, rak 1-5 &amp; PIC</div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Atur nomor box, rak 1–5 &amp; PIC</div>
                           </button>
 
                           <button
@@ -356,11 +359,11 @@ const AppContent = () => {
                               setAppMode('3d-warehouse');
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center gap-1.5">
+                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center justify-between">
                               <span>Denah Gudang 3D</span>
-                              <span className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition">↗</span>
+                              <span className="text-[10px] text-blue-400 opacity-60 group-hover:opacity-100 transition">↗</span>
                             </div>
                             <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Visualisasi 3D denah fisik rak</div>
                           </button>
@@ -368,23 +371,23 @@ const AppContent = () => {
                       </div>
 
                       {/* Kolom 2: DATA & CADANGAN */}
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2 pb-1 border-b border-slate-800 flex items-center justify-between">
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 pb-1.5 border-b border-slate-800 flex items-center justify-between">
                           <span>Data &amp; Cadangan</span>
-                          <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         </div>
-                        <div className="space-y-1">
+                        <div className="flex flex-col gap-1">
                           <button
                             type="button"
                             onClick={() => {
                               setIsBackupModalOpen(true);
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center justify-between">
                               <span>Backup &amp; Pulihkan</span>
-                              <span className="text-[10px] text-emerald-400 opacity-0 group-hover:opacity-100 transition">↗</span>
+                              <span className="text-[10px] text-emerald-400 opacity-60 group-hover:opacity-100 transition">↗</span>
                             </div>
                             <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Auto-backup, snapshot &amp; restore</div>
                           </button>
@@ -395,11 +398,11 @@ const AppContent = () => {
                               if (exportToExcel) exportToExcel();
                               setIsSettingsOpen(false);
                             }}
-                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
                           >
-                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center justify-between">
                               <span>Unduh Excel (.xlsx)</span>
-                              <FileSpreadsheet className="w-3 h-3 text-emerald-400 ml-auto shrink-0" />
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             </div>
                             <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Ekspor data rekap seluruh item</div>
                           </button>
