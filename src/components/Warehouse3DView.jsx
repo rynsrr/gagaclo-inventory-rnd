@@ -1165,35 +1165,57 @@ export const Warehouse3DView = ({
     }
   }, [isHudExpanded]);
 
-  // Reapply PIC/search selection whenever filters change or cloud sync rebuilds
-  // the scene. A box stays solid only when it satisfies every active filter.
+  // Reapply PIC/search/hover selection whenever filters change, cloud sync rebuilds
+  // the scene, or user hovers a box in the dropdown / search list.
   useEffect(() => {
     const picFilterActive = highlightPpic !== 'ALL';
-    const targetHoverNum = previewFocusBoxNumber ? Number(previewFocusBoxNumber) : null;
+    const targetHoverNum = previewFocusBoxNumber
+      ? Number(previewFocusBoxNumber)
+      : (hoveredBox ? Number(hoveredBox.boxNumber) : null);
 
     for (const mesh of boxMeshesRef.current) {
       const meshBoxNum = Number(mesh.userData.boxNumber);
       const isTargetHover = targetHoverNum !== null && meshBoxNum === targetHoverNum;
       const picMatches = !picFilterActive || matchesPic(mesh.userData.picName, highlightPpic);
       const searchMatches = !searchActive || highlightBoxNumbers.has(meshBoxNum);
-      const dimmed = !isTargetHover && (!picMatches || !searchMatches);
+      const dimmed = !isTargetHover && (
+        targetHoverNum !== null
+          ? true
+          : ((picFilterActive || searchActive) && (!picMatches || !searchMatches))
+      );
       const highlighted = isTargetHover || (!dimmed && (picFilterActive || searchActive));
       mesh.castShadow = !dimmed;
 
       for (const material of new Set(mesh.material)) {
         material.transparent = dimmed;
         material.depthWrite = !dimmed;
-        material.opacity = isTargetHover ? 1 : dimmed ? 0.12 : 1;
+        material.opacity = isTargetHover ? 1 : dimmed ? 0.22 : 1;
         if (isTargetHover) {
-          // Box yang di-hover: sorot dengan warna emas/kuning menyala
-          material.color.setHex(0xffd700);
+          // Box yang di-hover: sorot dengan warna emas/kuning-amber menyala
+          if (material.map) {
+            material.color.setHex(0xffffff);
+            material.emissive.setHex(0xff9f0a);
+            material.emissiveIntensity = 0.6;
+          } else {
+            material.color.setHex(0xff9f0a);
+            material.emissive.setHex(0xff9f0a);
+            material.emissiveIntensity = 0.4;
+          }
         } else {
-          material.color.setHex(highlighted && !material.map ? mesh.userData.baseColor : 0xffffff);
+          if (material.map) {
+            material.color.setHex(0xffffff);
+            material.emissive.setHex(0x000000);
+            material.emissiveIntensity = 0;
+          } else {
+            material.color.setHex(highlighted && !material.map ? mesh.userData.baseColor : 0xffffff);
+            material.emissive.setHex(0x000000);
+            material.emissiveIntensity = 0;
+          }
         }
         material.needsUpdate = true;
       }
     }
-  }, [highlightPpic, highlightBoxNumbers, searchActive, boxes, racks, ppicMembers, previewFocusBoxNumber]);
+  }, [highlightPpic, highlightBoxNumbers, searchActive, boxes, racks, ppicMembers, previewFocusBoxNumber, hoveredBox]);
 
   return (
     <div className="warehouse-layout space-y-4 font-apple">
@@ -1395,6 +1417,9 @@ export const Warehouse3DView = ({
                               }
                               setHoveredBox(box);
                               lastUserInteractionTimeRef.current = Date.now();
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredBox(null);
                             }}
                             onClick={() => {
                               setSelectedBoxNumber(box.boxNumber);
