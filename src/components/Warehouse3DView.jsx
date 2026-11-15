@@ -175,6 +175,14 @@ export const Warehouse3DView = ({
   const boxMeshesRef = useRef([]);
   const interactiveRackMeshesRef = useRef([]);
   const animationFrameIdRef = useRef(null);
+  const previewFocusBoxNumberRef = useRef(previewFocusBoxNumber);
+  useEffect(() => {
+    previewFocusBoxNumberRef.current = previewFocusBoxNumber;
+  }, [previewFocusBoxNumber]);
+  const hoveredBoxRef = useRef(hoveredBox);
+  useEffect(() => {
+    hoveredBoxRef.current = hoveredBox;
+  }, [hoveredBox]);
 
   // PPIC color palette for 3D boxes body. Built from the live PPIC list so
   // people added at runtime get their own color instead of all being blue.
@@ -674,6 +682,63 @@ export const Warehouse3DView = ({
     boxMeshesRef.current = boxMeshes;
     interactiveRackMeshesRef.current = interactiveRackMeshes;
 
+    // --- FLOATING 3D BEACON PIN & NEON WIREFRAME HALO (The Precision Beacon) ---
+    const beaconGroup = new THREE.Group();
+    beaconGroup.visible = false;
+
+    // Pointer Pin (kerucut terbalik mengarah ke atas muka box)
+    const coneGeo = new THREE.ConeGeometry(0.32, 0.75, 16);
+    coneGeo.rotateX(Math.PI);
+    const pinMat = new THREE.MeshStandardMaterial({
+      color: 0x00f0ff,
+      emissive: 0x00d4ff,
+      emissiveIntensity: 0.95,
+      roughness: 0.2,
+      metalness: 0.6,
+    });
+    const pinMesh = new THREE.Mesh(coneGeo, pinMat);
+    pinMesh.position.y = 0.5;
+    beaconGroup.add(pinMesh);
+
+    // Glowing Orb / Diamond di puncak pin pointer
+    const orbGeo = new THREE.SphereGeometry(0.2, 16, 16);
+    const orbMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 1.0,
+      roughness: 0.1,
+      metalness: 0.2,
+    });
+    const orbMesh = new THREE.Mesh(orbGeo, orbMat);
+    orbMesh.position.y = 0.95;
+    beaconGroup.add(orbMesh);
+
+    // Pulsing Horizontal Ring mengitari pin
+    const ringGeo = new THREE.TorusGeometry(0.42, 0.035, 16, 32);
+    ringGeo.rotateX(Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.85,
+    });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh.position.y = 0.65;
+    beaconGroup.add(ringMesh);
+
+    scene.add(beaconGroup);
+
+    // Glowing Wireframe Halo di sekeliling box yang sedang di-hover
+    const wireframeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.36, 0.76, 1.12));
+    const wireframeMat = new THREE.LineBasicMaterial({
+      color: 0x00f0ff,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const wireframeHelper = new THREE.LineSegments(wireframeGeo, wireframeMat);
+    wireframeHelper.visible = false;
+    scene.add(wireframeHelper);
+
     // Helper: Fokus kamera close view tegak lurus menghadap muka rak (face side fit)
     const focusRackFaceSide = (rackId) => {
       const rId = Number(rackId);
@@ -845,12 +910,18 @@ export const Warehouse3DView = ({
       }
 
       // Adaptive idle throttling: hemat GPU & CPU saat user sedang tidak aktif/meninggalkan komputer
+      const curSelectedNum = selectedBoxNumberRef.current;
+      const activeHoverNum = previewFocusBoxNumberRef.current !== null && previewFocusBoxNumberRef.current !== undefined
+        ? Number(previewFocusBoxNumberRef.current)
+        : (hoveredBoxRef.current ? Number(hoveredBoxRef.current.boxNumber) : null);
+
       const idleMs = Date.now() - lastUserInteractionTimeRef.current;
       const isActivelyMoving = Boolean(
         flyCameraTargetRef.current || 
         isUserInteractingRef.current || 
-        selectedBoxNumberRef.current !== null ||
-        currentHoveredMesh !== null
+        curSelectedNum !== null ||
+        currentHoveredMesh !== null ||
+        activeHoverNum !== null
       );
 
       if (!isActivelyMoving) {
@@ -883,26 +954,38 @@ export const Warehouse3DView = ({
         }
       }
 
-      // 2. Tactile box drawer slide-out animation (smooth physical spring lerp)
-      const curSelectedNum = selectedBoxNumberRef.current;
+      // 2. Tactile box drawer slide-out animation & Pop-Out on Hover (Smooth Spring Lerp)
+      let activeHoveredMesh = null;
       for (let i = 0; i < boxMeshesRef.current.length; i++) {
         const mesh = boxMeshesRef.current[i];
-        const isSelected = curSelectedNum !== null && Number(curSelectedNum) === Number(mesh.userData.boxNumber);
-        const isHovered = currentHoveredMesh === mesh;
+        const meshNum = Number(mesh.userData.boxNumber);
+        const isSelected = curSelectedNum !== null && Number(curSelectedNum) === meshNum;
+        const isHovered = activeHoverNum !== null && activeHoverNum === meshNum;
+
+        if (isHovered) {
+          activeHoveredMesh = mesh;
+        }
 
         let targetZ = mesh.userData.initialLocalZ;
         let targetY = mesh.userData.initialLocalY;
+        let targetScale = 1.0;
 
         if (isSelected) {
-          targetZ += 0.42; // Smooth drawer slide-out
+          targetZ += 0.42; // Drawer slide-out
           targetY += 0.08;
+          targetScale = 1.05;
         } else if (isHovered) {
-          targetZ += 0.28; // Tactile pull-out on hover
-          targetY += 0.04;
+          targetZ += 0.32; // Box maju keluar rak saat di-hover (tactile pull-out)
+          targetY += 0.05;
+          targetScale = 1.04;
         }
 
         mesh.position.z += (targetZ - mesh.position.z) * 0.18;
         mesh.position.y += (targetY - mesh.position.y) * 0.18;
+
+        const curScale = mesh.scale.x;
+        const nextScale = curScale + (targetScale - curScale) * 0.18;
+        mesh.scale.set(nextScale, nextScale, nextScale);
 
         // Subtle emissive glow on front label face
         if (mesh.material && mesh.material[4]) {
@@ -911,13 +994,41 @@ export const Warehouse3DView = ({
             frontMat.emissive.setHex(0x38bdf8);
             frontMat.emissiveIntensity = 0.35;
           } else if (isHovered) {
-            frontMat.emissive.setHex(0x60a5fa);
-            frontMat.emissiveIntensity = 0.2;
+            frontMat.emissive.setHex(0x00f0ff);
+            frontMat.emissiveIntensity = 0.4;
           } else {
             frontMat.emissive.setHex(0x000000);
             frontMat.emissiveIntensity = 0;
           }
         }
+      }
+
+      // 3. Floating 3D Animated Pin Pointer & Neon Wireframe Halo (The Precision Beacon)
+      if (activeHoveredMesh) {
+        beaconGroup.visible = true;
+        const worldPos = new THREE.Vector3();
+        activeHoveredMesh.getWorldPosition(worldPos);
+
+        // Animasi melayang bouncing halus di atas box
+        const bounceY = Math.sin(elapsed * 5.0) * 0.12;
+        beaconGroup.position.set(worldPos.x, worldPos.y + 1.05 + bounceY, worldPos.z);
+        beaconGroup.rotation.y = elapsed * 2.5;
+
+        // Cincin halo berdenyut
+        const ringScale = 1.0 + Math.sin(elapsed * 6.0) * 0.15;
+        ringMesh.scale.set(ringScale, ringScale, ringScale);
+        ringMat.opacity = 0.65 + Math.sin(elapsed * 6.0) * 0.3;
+
+        // Garis tepi wireframe neon menyala di sekeliling box
+        wireframeHelper.visible = true;
+        wireframeHelper.position.copy(worldPos);
+        activeHoveredMesh.getWorldQuaternion(wireframeHelper.quaternion);
+        wireframeHelper.scale.copy(activeHoveredMesh.scale).multiplyScalar(1.02);
+        const neonPulse = 0.75 + Math.sin(elapsed * 7.0) * 0.25;
+        wireframeMat.color.setRGB(0, neonPulse, 1.0);
+      } else {
+        beaconGroup.visible = false;
+        wireframeHelper.visible = false;
       }
 
       if (controlsRef.current) {
@@ -970,9 +1081,11 @@ export const Warehouse3DView = ({
 
       if (isAll) {
         if (hudOffset) {
-          // Geser ke kanan maksimal saat dropdown 3D dibuka persis referensi visual screenshot pengguna agar seluruh denah 3D terlihat utuh tanpa tertutup dropdown
-          lookTarget = new THREE.Vector3(12.0, 1.5, -35.0);
-          targetPos = new THREE.Vector3(-75.0, 68.0, -102.0);
+          // Geser ke kanan agar denah 3D tepat CENTERED di area kosong antara dropdown (kiri) dan tepi layar (kanan)
+          // Berdasarkan optimasi proyeksi kamera:
+          // Menghasilkan breathing space seimbang di kiri (~5.3% dari tepi dropdown) dan kanan (~6.9% dari tepi layar)
+          lookTarget = new THREE.Vector3(-5.3, -3.7, -64.6);
+          targetPos = new THREE.Vector3(-79.4, 51.3, -122.5);
         } else {
           // Sudut pandang default persis referensi visual pengguna (overview denah arsitektur & seluruh rak)
           lookTarget = new THREE.Vector3(-25.1, 1.5, -34.4);
