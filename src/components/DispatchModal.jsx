@@ -56,10 +56,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   const [attn, setAttn] = useState('WAN LIN');
   const [tel, setTel] = useState('+41 81 511 23 20');
   const [midCode, setMidCode] = useState('IDGAGTAMBSEM');
-  const [invoiceNo, setInvoiceNo] = useState(() => {
-    const dStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    return `INV-RND-${dStr}-${itemsToDispatch.length || 1}`;
-  });
+  const [invoiceNo, setInvoiceNo] = useState('');
 
   const [docDate, setDocDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [shippingDate, setShippingDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -120,11 +117,6 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
       if (first?.buyerNo && first.buyerNo !== 'NA' && first.buyerNo !== '-') {
         setConsigneeName(String(first.buyerNo).trim().toUpperCase());
       }
-    }
-
-    if (!invoiceNo || invoiceNo.trim() === '') {
-      const dStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      setInvoiceNo(`INV-RND-${dStr}-${itemsToDispatch.length || 1}`);
     }
   }, [itemsToDispatch]);
 
@@ -223,7 +215,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
         destLabel = `Buyer (${consigneeName.trim()})`;
       }
 
-      const finalInvoiceNo = invoiceNo.trim() || `INV-RND-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-1`;
+      const finalInvoiceNo = invoiceNo.trim();
       for (const row of itemRows) {
         await dispatchItem(row.originalItem, {
           destinationId,
@@ -234,7 +226,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           qty: row.qty,
           recipient: attn.trim(),
           invoiceNo: finalInvoiceNo,
-          notes: `Invoice: ${finalInvoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
+          notes: finalInvoiceNo
+            ? `Invoice: ${finalInvoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`
+            : `Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
         });
       }
 

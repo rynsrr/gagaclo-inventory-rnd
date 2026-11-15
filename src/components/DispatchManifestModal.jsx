@@ -67,9 +67,8 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
   const defaultInvoiceNo = useMemo(() => {
     if (initialConfig?.invoiceNo) return initialConfig.invoiceNo;
     if (firstDispatch?.invoiceNo) return firstDispatch.invoiceNo;
-    const cleanDate = String(defaultDate).replace(/[-/]/g, '');
-    return `INV-RND-${cleanDate}-${safeItems.length || 1}`;
-  }, [defaultDate, firstDispatch, initialConfig, safeItems.length]);
+    return '';
+  }, [firstDispatch, initialConfig]);
 
   const [invoiceNo, setInvoiceNo] = useState(() => defaultInvoiceNo);
   const [docDate, setDocDate] = useState(() => defaultDate);
@@ -83,10 +82,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
   useEffect(() => {
     if (firstDispatch?.invoiceNo) {
       setInvoiceNo(firstDispatch.invoiceNo);
-    } else if (!invoiceNo || invoiceNo.trim() === '') {
-      setInvoiceNo(defaultInvoiceNo);
+    } else if (initialConfig?.invoiceNo) {
+      setInvoiceNo(initialConfig.invoiceNo);
+    } else {
+      setInvoiceNo('');
     }
-  }, [firstDispatch, defaultInvoiceNo]);
+  }, [firstDispatch, initialConfig]);
 
   // Package Specifications
   const [grossWeight, setGrossWeight] = useState(() => {
