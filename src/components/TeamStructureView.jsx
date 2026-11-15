@@ -1,13 +1,6 @@
-import React, { useState } from 'react';
-import {
-  ShieldCheck,
-  Layers,
-  Info,
-} from 'lucide-react';
+import React from 'react';
 
 export function TeamStructureView() {
-  const [activeTab, setActiveTab] = useState('chart'); // 'chart' | 'matrix'
-
   // Daftar 5 PPIC (Responsible)
   const ppicList = [
     {
@@ -95,43 +88,14 @@ export function TeamStructureView() {
             <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-white">
               STRUKTUR ORGANISASI TIM INVENTORY SAMPLE
             </h1>
-
-            {/* Tab Selector */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('chart')}
-                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === 'chart'
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                <span>Bagan Visual Hirarki</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('matrix')}
-                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === 'matrix'
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Matriks RACI Lengkap</span>
-              </button>
-            </div>
           </div>
         </div>
 
         {/* 2. Main Content Area */}
-        {activeTab === 'chart' && (
-          <div className="space-y-6">
-            
-            {/* Top-Down Hierarchical Flowchart Card */}
-            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 md:p-8 shadow-xl backdrop-blur-sm">
+        <div className="space-y-6">
+          
+          {/* Top-Down Hierarchical Flowchart Card */}
+          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 md:p-8 shadow-xl backdrop-blur-sm">
               <div className="flex flex-col items-center">
 
                 {/* ========================================================= */}
@@ -350,128 +314,9 @@ export function TeamStructureView() {
               </div>
             </div>
 
-            {/* RACI Legend Card */}
-            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5 md:p-6 shadow-xl">
-              <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Info className="w-4 h-4 text-blue-400" />
-                LEGENDA METODE RACI (ISO 9001:2015 CLAUSE 5.3)
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/60 border border-emerald-900/40">
-                  <span className="px-2 py-1 rounded font-bold bg-emerald-950 text-emerald-300 border border-emerald-600 shrink-0">
-                    [ A ] ACCOUNTABLE
-                  </span>
-                  <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white block mb-0.5">Jasmine (Leader):</strong>
-                    <span>Menetapkan target harian 8 personil, memonitor progres input &amp; kelengkapan box, serta eskalasi kendala operasional.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/60 border border-amber-900/40">
-                  <span className="px-2 py-1 rounded font-bold bg-amber-950 text-amber-300 border border-amber-600 shrink-0">
-                    [ R ] RESPONSIBLE
-                  </span>
-                  <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white block mb-0.5">5 PPIC (Royan, Cynara, Ami, Ryan, Hanami):</strong>
-                    <span>Mengumpulkan &amp; input sampel box, verifikasi box penuh dengan cetak list &amp; TTD Leader, serta capai kuota harian.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/60 border border-cyan-900/40">
-                  <span className="px-2 py-1 rounded font-bold bg-cyan-950 text-cyan-300 border border-cyan-600 shrink-0">
-                    [ S ] SUPPORT
-                  </span>
-                  <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white block mb-0.5">3 Support (Sheva, Ade, Tri):</strong>
-                    <span>Menerima delegasi sampel dari PPIC (Buyer/lokasi/jenis), input cepat ke sistem, dan bantu penataan fisik box.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/60 border border-blue-900/40">
-                  <span className="px-2 py-1 rounded font-bold bg-blue-950 text-blue-300 border border-blue-600 shrink-0">
-                    [ C / I ] CONSULTED &amp; INFORMED
-                  </span>
-                  <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white block mb-0.5">Sururi (SPV Sample):</strong>
-                    <span>Merancang alur kerja, memantau kinerja tim, menerima laporan input, review &amp; improve fasilitas, serta follow-up kendala ke atasan.</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
-        )}
-
-        {/* Tab 2: RACI Matrix Table */}
-        {activeTab === 'matrix' && (
-          <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-6 md:p-8 shadow-xl overflow-x-auto">
-            <h2 className="text-lg font-bold text-white mb-4">Matriks Wewenang &amp; Tanggung Jawab Operasional (RACI)</h2>
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-slate-700 bg-slate-950/80 text-slate-300 text-xs uppercase tracking-wider font-semibold">
-                  <th className="py-3 px-4">Aktivitas / Alur Proses</th>
-                  <th className="py-3 px-4 text-center">Sururi (SPV)</th>
-                  <th className="py-3 px-4 text-center">Jasmine (Leader)</th>
-                  <th className="py-3 px-4 text-center">5 PPIC</th>
-                  <th className="py-3 px-4 text-center">3 Support</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800 text-slate-300 text-xs md:text-sm">
-                <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Penetapan Kebijakan &amp; Alokasi Box Inventory</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-blue-400">Accountable [A]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Consulted [C]</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                </tr>
-                <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Penentuan Target Harian Tim &amp; PIC (PCE/Hari)</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-teal-400">Responsible [R]</td>
-                </tr>
-                <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Kepemilikan Fisik Box Sample (Box Owner)</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-teal-400">Support [S]</td>
-                </tr>
-                <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Input Data &amp; Verifikasi Fisik Sampel</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-teal-400">Responsible [R]</td>
-                </tr>
-                <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Pencatatan Kirim Keluar (Dispatch Outgoing)</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                </tr>
-                <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Perbantuan Fisik &amp; Input Cross-Box Antar PIC</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-cyan-400">Support [S]</td>
-                </tr>
-                <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Eskalasi Kendala Stok &amp; Audit Mutu Lapangan</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-blue-400">Consulted [C]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
-                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-
+        </div>
       </div>
-    </div>
   );
 }
 export default TeamStructureView;
