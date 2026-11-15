@@ -357,13 +357,13 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
     const nwNum = parseFloat(String(netWeight).replace(',', '.'));
     if (!netWeight || !String(netWeight).trim() || isNaN(nwNum) || nwNum <= 0) {
-      setError('Wajib mengisi Net Weight (WEIGHT NW).');
+      setError('Wajib mengisi Net Weight (NET WEIGHT).');
       return;
     }
 
     const gwNum = parseFloat(String(grossWeight).replace(',', '.'));
     if (!grossWeight || !String(grossWeight).trim() || isNaN(gwNum) || gwNum <= 0) {
-      setError('Wajib mengisi Gross Weight (WEIGHT GW).');
+      setError('Wajib mengisi Gross Weight (GROSS WEIGHT).');
       return;
     }
 
@@ -1192,10 +1192,10 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               value={netWeight}
                               onChange={(e) => handleNetWeightChange(e.target.value)}
                               className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title="Net Weight (WEIGHT NW) - Wajib Diisi"
+                              title="Net Weight (NET WEIGHT) - Wajib Diisi"
                               required
                             />
-                            <span className="text-[9.5px] whitespace-nowrap">KG (WEIGHT NW)</span>
+                            <span className="text-[9.5px] whitespace-nowrap">KG (NET WEIGHT)</span>
                           </div>
 
                           {/* 3. Weight GW (Centered, Wajib Diisi) */}
@@ -1205,10 +1205,10 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                               value={grossWeight}
                               onChange={(e) => setGrossWeight(e.target.value)}
                               className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title="Gross Weight (WEIGHT GW: Untuk CARTON = NW + 1, Untuk BAG = NW) - Wajib Diisi"
+                              title="Gross Weight (GROSS WEIGHT: Untuk CARTON = NW + 1, Untuk BAG = NW) - Wajib Diisi"
                               required
                             />
-                            <span className="text-[9.5px] whitespace-nowrap">KG (WEIGHT GW)</span>
+                            <span className="text-[9.5px] whitespace-nowrap">KG (GROSS WEIGHT)</span>
                           </div>
                         </div>
                       </td>

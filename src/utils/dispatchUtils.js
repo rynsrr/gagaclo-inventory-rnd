@@ -322,9 +322,9 @@ export async function exportInvoiceToExcel({
     '',
     '',
     '',
-    `${netWeight || '0,17'} KG (WEIGHT NW)`,
+    `${netWeight || '0,17'} KG (NET WEIGHT)`,
     '',
-    `${grossWeight || '1,17'} KG (WEIGHT GW)`,
+    `${grossWeight || '1,17'} KG (GROSS WEIGHT)`,
     '',
   ]);
 

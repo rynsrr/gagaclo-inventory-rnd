@@ -220,12 +220,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     }
     const nwNum = parseFloat(String(netWeight).replace(',', '.'));
     if (!netWeight || !String(netWeight).trim() || isNaN(nwNum) || nwNum <= 0) {
-      alert('Wajib mengisi Net Weight (WEIGHT NW) sebelum mencetak invoice.');
+      alert('Wajib mengisi Net Weight (NET WEIGHT) sebelum mencetak invoice.');
       return;
     }
     const gwNum = parseFloat(String(grossWeight).replace(',', '.'));
     if (!grossWeight || !String(grossWeight).trim() || isNaN(gwNum) || gwNum <= 0) {
-      alert('Wajib mengisi Gross Weight (WEIGHT GW) sebelum mencetak invoice.');
+      alert('Wajib mengisi Gross Weight (GROSS WEIGHT) sebelum mencetak invoice.');
       return;
     }
     window.print();
@@ -1135,10 +1135,10 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                               value={netWeight}
                               onChange={(e) => handleNetWeightChange(e.target.value)}
                               className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title="Net Weight (WEIGHT NW) - Wajib Diisi"
+                              title="Net Weight (NET WEIGHT) - Wajib Diisi"
                               required
                             />
-                            <span className="text-[9.5px] whitespace-nowrap">KG (WEIGHT NW)</span>
+                            <span className="text-[9.5px] whitespace-nowrap">KG (NET WEIGHT)</span>
                           </div>
 
                           {/* 3. Weight GW (Centered, Wajib Diisi) */}
@@ -1148,10 +1148,10 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                               value={grossWeight}
                               onChange={(e) => setGrossWeight(e.target.value)}
                               className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title="Gross Weight (WEIGHT GW: Untuk CARTON = NW + 1, Untuk BAG = NW) - Wajib Diisi"
+                              title="Gross Weight (GROSS WEIGHT: Untuk CARTON = NW + 1, Untuk BAG = NW) - Wajib Diisi"
                               required
                             />
-                            <span className="text-[9.5px] whitespace-nowrap">KG (WEIGHT GW)</span>
+                            <span className="text-[9.5px] whitespace-nowrap">KG (GROSS WEIGHT)</span>
                           </div>
                         </div>
                       </td>
