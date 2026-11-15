@@ -448,52 +448,52 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 </div>
 
                 {/* Metadata Grid Table */}
-                <div className="border-b border-black text-[10px]">
+                <div className="border-b border-black text-[10.5px]">
                   <table className="w-full border-collapse">
                     <tbody>
                       <tr className="border-b border-black">
-                        <td className="w-[29%] py-0.5 px-2.5 font-bold border-r border-black uppercase tracking-tight">MID CODE :</td>
-                        <td className="py-0.5 px-2.5 font-bold uppercase">{midCode}</td>
+                        <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">MID CODE :</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{midCode}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Invoice No :</td>
-                        <td className="py-0.5 px-2.5 font-mono">{invoiceNo}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">INVOICE NO :</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{invoiceNo}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Date :</td>
-                        <td className="py-0.5 px-2.5">{formatDateDisplay(docDate)}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">DATE :</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{formatDateDisplay(docDate)}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">SHIP TO (Company Name. Adress):</td>
-                        <td className="py-0.5 px-2.5 font-medium">{consigneeName}. {consigneeAddress}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">SHIP TO (COMPANY NAME, ADDRESS) :</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{consigneeName}. {consigneeAddress}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">ATTN :</td>
-                        <td className="py-0.5 px-2.5 font-medium">{attn}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">ATTN :</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{attn}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Order no. :</td>
-                        <td className="py-0.5 px-2.5 font-mono">{orderNo}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">ORDER NO. :</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{orderNo}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Payment by :</td>
-                        <td className="py-0.5 px-2.5 uppercase">{paymentBy}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">PAYMENT BY :</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{paymentBy}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Shipment by :</td>
-                        <td className="py-0.5 px-2.5 uppercase">{shipmentBy}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">SHIPMENT BY :</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{shipmentBy}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Invoice value :</td>
-                        <td className="py-0.5 px-2.5 uppercase font-medium">{invoiceValue}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">INVOICE VALUE :</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{invoiceValue}</td>
                       </tr>
                       <tr className="border-b border-black">
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">Shipping Date :</td>
-                        <td className="py-0.5 px-2.5">{formatDateDisplay(shippingDate)}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">SHIPPING DATE :</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{formatDateDisplay(shippingDate)}</td>
                       </tr>
                       <tr>
-                        <td className="py-0.5 px-2.5 font-bold border-r border-black tracking-tight">From :</td>
-                        <td className="py-0.5 px-2.5">{fromLocation}</td>
+                        <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">FROM :</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{fromLocation.toUpperCase()}</td>
                       </tr>
                     </tbody>
                   </table>
