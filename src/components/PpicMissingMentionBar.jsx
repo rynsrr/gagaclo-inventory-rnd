@@ -70,38 +70,52 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact 
         </span>
       </div>
 
-      {/* Inline Summary Chips (Apple Capsule Style) */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 py-1 text-xs">
-        <span className="text-xs font-semibold text-[#86868b] shrink-0">Pilih PIC:</span>
-        {picStats.map((pic) => (
-          <button
-            key={pic.id}
-            type="button"
-            onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border text-xs font-medium transition-all duration-150 cursor-pointer shrink-0 select-none ${
-              activePic === pic.name
-                ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
-                : 'bg-black/[0.03] hover:bg-black/[0.06] border-black/[0.06] text-[#1d1d1f]'
-            }`}
-            title={`Klik untuk sorot box milik @${pic.name}`}
-          >
-            <span className={`w-4 h-4 rounded-full text-white font-bold text-[10px] flex items-center justify-center ${
-              activePic === pic.name ? 'bg-white/20 text-white' : pic.avatarBg
-            }`}>
-              {pic.name.charAt(0)}
-            </span>
-            <span className="font-semibold">@{pic.name}</span>
-            <span className={`text-[11px] font-semibold px-1.5 py-0.2 rounded-full tabular-nums ${
-              activePic === pic.name
-                ? 'bg-white/20 text-white'
-                : pic.countKurang > 0
-                ? 'bg-[#ff3b30]/15 text-[#ff3b30]'
-                : 'bg-[#34c759]/15 text-[#30d158]'
-            }`}>
-              {pic.countKurang > 0 ? `${pic.countKurang} box` : 'Lengkap'}
-            </span>
-          </button>
-        ))}
+      {/* PIC Filter Selection Row */}
+      <div className="space-y-1.5 pt-0.5">
+        <div className="flex items-center justify-between text-[11px] font-semibold text-[#86868b] px-0.5">
+          <span className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider">Pilih PIC:</span>
+          {activePic !== 'ALL' && (
+            <button
+              type="button"
+              onClick={() => onSelectPic && onSelectPic('ALL')}
+              className="text-[#0071e3] hover:underline font-semibold cursor-pointer lowercase text-[11px]"
+            >
+              reset filter (@{activePic})
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          {picStats.map((pic) => (
+            <button
+              key={pic.id}
+              type="button"
+              onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
+              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border text-xs font-medium transition-all duration-150 cursor-pointer shrink-0 select-none ${
+                activePic === pic.name
+                  ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                  : 'bg-black/[0.03] hover:bg-black/[0.06] border-black/[0.06] text-[#1d1d1f]'
+              }`}
+              title={`Klik untuk sorot box milik @${pic.name}`}
+            >
+              <span className={`w-4 h-4 rounded-full text-white font-bold text-[10px] flex items-center justify-center shrink-0 ${
+                activePic === pic.name ? 'bg-white/20 text-white' : pic.avatarBg
+              }`}>
+                {pic.name.charAt(0)}
+              </span>
+              <span className="font-semibold text-xs">@{pic.name}</span>
+              <span className={`text-[10px] sm:text-[11px] font-semibold px-1.5 py-0.5 rounded-full tabular-nums leading-none ${
+                activePic === pic.name
+                  ? 'bg-white/20 text-white'
+                  : pic.countKurang > 0
+                  ? 'bg-[#ff3b30]/15 text-[#ff3b30]'
+                  : 'bg-[#34c759]/15 text-[#30d158]'
+              }`}>
+                {pic.countKurang > 0 ? `${pic.countKurang} box` : 'Lengkap'}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
