@@ -43,6 +43,31 @@ export function PpicPerformanceView() {
 
   const isMgr = isManager(currentUser) || isSuperuser(currentUser);
 
+  const [dailyTarget, setDailyTarget] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_daily_target_pcs');
+      return saved ? Math.max(1, Number(saved)) : 150;
+    } catch {
+      return 150;
+    }
+  });
+
+  // Dengarkan perubahan target harian dari banner
+  useEffect(() => {
+    const handleTargetChange = () => {
+      try {
+        const saved = localStorage.getItem('gagaclo_daily_target_pcs');
+        if (saved) setDailyTarget(Math.max(1, Number(saved)));
+      } catch {}
+    };
+    window.addEventListener('storage', handleTargetChange);
+    window.addEventListener('gagaclo_target_updated', handleTargetChange);
+    return () => {
+      window.removeEventListener('storage', handleTargetChange);
+      window.removeEventListener('gagaclo_target_updated', handleTargetChange);
+    };
+  }, []);
+
   // Target Harian per Individu (5 PPIC & 3 Support)
   const [individualTargets, setIndividualTargets] = useState(() => {
     try {
@@ -390,8 +415,12 @@ export function PpicPerformanceView() {
             const isExpanded = Boolean(expandedCards[member.name]);
             const assistedList = Object.entries(stats.assistedBoxes || {}).filter(([_, pcs]) => pcs > 0);
 
-            // Perhitungan Target Individu
-            const personTarget = Number(individualTargets[member.name]) > 0 ? Number(individualTargets[member.name]) : 20;
+            // Perhitungan Target Individu (Auto derive dari Daily Team Target, PIC Asli +10% dibanding Support)
+            const isPicAsli = !member.role?.toLowerCase()?.includes('support');
+            const autoTarget = isPicAsli
+              ? Math.max(1, Math.round((dailyTarget / 8.5) * 1.1))
+              : Math.max(1, Math.round(dailyTarget / 8.5));
+            const personTarget = Number(individualTargets[member.name]) > 0 ? Number(individualTargets[member.name]) : autoTarget;
             const personPercent = Math.round((stats.pcs / personTarget) * 100);
             const isPersonAchieved = stats.pcs >= personTarget;
             const isEditingThis = editingMemberTarget === member.name;

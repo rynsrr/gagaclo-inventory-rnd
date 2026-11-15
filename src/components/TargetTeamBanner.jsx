@@ -4,16 +4,16 @@ import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
 
-// 8 Anggota Tim Resmi
+// 8 Anggota Tim Resmi: 5 PIC Asli (PPIC) & 3 Support (Helper)
 const TEAM_MEMBERS = [
-  { name: 'Royan', role: 'PPIC #1' },
-  { name: 'Cynara', role: 'PPIC #2' },
-  { name: 'Ami', role: 'PPIC #3' },
-  { name: 'Ryan', role: 'PPIC #4' },
-  { name: 'Hanami', role: 'PPIC #5' },
-  { name: 'Sheva', role: 'Support #1' },
-  { name: 'Ade', role: 'Support #2' },
-  { name: 'Tri', role: 'Support #3' },
+  { name: 'Royan', role: 'PPIC #1', isPicAsli: true },
+  { name: 'Cynara', role: 'PPIC #2', isPicAsli: true },
+  { name: 'Ami', role: 'PPIC #3', isPicAsli: true },
+  { name: 'Ryan', role: 'PPIC #4', isPicAsli: true },
+  { name: 'Hanami', role: 'PPIC #5', isPicAsli: true },
+  { name: 'Sheva', role: 'Support #1', isPicAsli: false },
+  { name: 'Ade', role: 'Support #2', isPicAsli: false },
+  { name: 'Tri', role: 'Support #3', isPicAsli: false },
 ];
 
 export function TargetTeamBanner({ onOpenUserProfile }) {
@@ -163,13 +163,23 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
       }
     });
 
+    // Hitung pembagian target harian dari Daily Team Target ke 8 orang:
+    // 5 PIC Asli (PPIC #1-#5) mendapatkan 10% lebih banyak daripada 3 Support (Helper)
+    // Rumus: 5 * (1.10 * S) + 3 * S = 8.5 * S = dailyTarget
+    // S (Support) = dailyTarget / 8.5
+    // P (PIC Asli) = S * 1.10
+    const supportTargetCalc = Math.max(1, Math.round(dailyTarget / 8.5));
+    const picTargetCalc = Math.max(1, Math.round((dailyTarget / 8.5) * 1.1));
+
     return TEAM_MEMBERS.map((m) => {
-      const target = Number(savedTargets[m.name]) > 0 ? Number(savedTargets[m.name]) : 20;
+      const isPicAsli = m.isPicAsli ?? !m.role?.toLowerCase()?.includes('support');
+      const target = isPicAsli ? picTargetCalc : supportTargetCalc;
       const currentPcs = pcsMap[m.name] || 0;
       const isAchieved = currentPcs >= target;
       return {
         name: m.name,
         role: m.role,
+        isPicAsli,
         pcs: currentPcs,
         target,
         isAchieved,
@@ -178,7 +188,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
         percent: Math.round((currentPcs / target) * 100),
       };
     });
-  }, [items, boxRackMap, todayIso]);
+  }, [items, boxRackMap, todayIso, dailyTarget]);
 
   const memberAchievers = useMemo(() => {
     return allMemberTargets.filter((m) => m.isAchieved);
@@ -250,7 +260,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0071e3]/15 border border-[#0071e3]/30 text-[#2997ff] shadow-xs shrink-0">
               <Target className="w-3.5 h-3.5 text-[#2997ff] shrink-0" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#2997ff]">
-                TEAM TARGET
+                DAILY TEAM TARGET
               </span>
             </div>
 
@@ -343,12 +353,12 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
           </div>
         </div>
 
-        {/* BARIS BAWAH (Row 2): PERSON TARGET & Semua 8 Nama Personel (Apple Squircle/Capsule Chips) */}
+        {/* BARIS BAWAH (Row 2): DAILY PERSON TARGET & Semua 8 Nama Personel (Apple Squircle/Capsule Chips) */}
         <div className="flex flex-wrap items-center justify-start gap-2 pt-2 border-t border-white/[0.08] w-full">
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.08] border border-white/[0.1] shadow-xs shrink-0">
             <User className="w-3.5 h-3.5 text-slate-300 shrink-0" />
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
-              PERSON TARGET
+              DAILY PERSON TARGET
             </span>
           </div>
 
@@ -379,7 +389,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                       ? 'bg-[#34c759]/15 hover:bg-[#34c759]/25 border-[#34c759]/35 hover:border-[#34c759]/60 text-[#30d158]'
                       : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
                   }`}
-                  title={`${m.name} (${m.role}): Target ${m.target} PCS, Capaian ${m.pcs} PCS (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
+                  title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCS, Capaian ${m.pcs} PCS (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${isCurrentActive ? 'bg-[#2997ff] animate-pulse' : m.isAchieved ? 'bg-[#34c759]' : 'bg-white/30'}`}></span>
                   <span className="font-semibold text-white">{m.name}</span>
