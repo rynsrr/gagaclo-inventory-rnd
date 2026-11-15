@@ -60,6 +60,7 @@ import {
   ShieldCheck,
   Settings,
   ChevronDown,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -83,6 +84,7 @@ const AppContent = () => {
     setSystemNotification,
     currentUser,
     dispatchCart,
+    exportToExcel,
   } = useInventory();
 
   const [databaseBytes, setDatabaseBytes] = useState(null);
@@ -319,36 +321,91 @@ const AppContent = () => {
                 </button>
 
                 {isSettingsOpen && (
-                  <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsBoxManageOpen(true);
-                        setIsSettingsOpen(false);
-                      }}
-                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-700 flex items-center gap-2.5 transition cursor-pointer"
-                    >
-                      <PackagePlus className="h-4 w-4 text-blue-600 shrink-0" />
-                      <div>
-                        <div className="font-bold text-slate-900">Kelola Box &amp; Rak</div>
-                        <div className="text-[10px] text-slate-500 font-normal">Atur box, rak &amp; denah gudang</div>
-                      </div>
-                    </button>
+                  <div className="absolute right-0 mt-2.5 w-[310px] sm:w-[410px] bg-slate-900 text-slate-100 border border-slate-700/90 rounded-xl shadow-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {/* Caret Triangle Pointing to Setting Tab (DHL Style) */}
+                    <div className="absolute -top-2 right-10 w-0 h-0 border-x-[7px] border-x-transparent border-b-[8px] border-b-slate-700 pointer-events-none">
+                      <div className="absolute -left-[6px] top-[1px] w-0 h-0 border-x-[6px] border-x-transparent border-b-[7px] border-b-slate-900" />
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsBackupModalOpen(true);
-                        setIsSettingsOpen(false);
-                      }}
-                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-emerald-700 flex items-center gap-2.5 transition cursor-pointer border-t border-slate-100"
-                    >
-                      <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* Kolom 1: KELOLA GUDANG */}
                       <div>
-                        <div className="font-bold text-slate-900">Backup &amp; Pulihkan</div>
-                        <div className="text-[10px] text-slate-500 font-normal">Cadangan &amp; snapshot data</div>
+                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2 pb-1 border-b border-slate-800 flex items-center justify-between">
+                          <span>Kelola Gudang</span>
+                          <PackagePlus className="w-3 h-3 text-blue-400" />
+                        </div>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsBoxManageOpen(true);
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                          >
+                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center gap-1.5">
+                              <span>Kelola Box &amp; Rak</span>
+                              <span className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition">↗</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Atur nomor box, rak 1-5 &amp; PIC</div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAppMode('3d-warehouse');
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                          >
+                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center gap-1.5">
+                              <span>Denah Gudang 3D</span>
+                              <span className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition">↗</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Visualisasi 3D denah fisik rak</div>
+                          </button>
+                        </div>
                       </div>
-                    </button>
+
+                      {/* Kolom 2: DATA & CADANGAN */}
+                      <div>
+                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2 pb-1 border-b border-slate-800 flex items-center justify-between">
+                          <span>Data &amp; Cadangan</span>
+                          <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        </div>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsBackupModalOpen(true);
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                          >
+                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                              <span>Backup &amp; Pulihkan</span>
+                              <span className="text-[10px] text-emerald-400 opacity-0 group-hover:opacity-100 transition">↗</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Auto-backup, snapshot &amp; restore</div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (exportToExcel) exportToExcel();
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer"
+                          >
+                            <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                              <span>Unduh Excel (.xlsx)</span>
+                              <FileSpreadsheet className="w-3 h-3 text-emerald-400 ml-auto shrink-0" />
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Ekspor data rekap seluruh item</div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
