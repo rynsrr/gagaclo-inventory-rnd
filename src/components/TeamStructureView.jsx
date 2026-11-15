@@ -193,8 +193,19 @@ export function TeamStructureView() {
                         [ A ] Accountable
                       </span>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-emerald-900/50 text-xs text-slate-300 leading-relaxed">
-                      Penanggung jawab mutlak target tim, validasi kelengkapan box, monitoring kinerja PIC, dan penugasan tim support.
+                    <div className="mt-3 pt-3 border-t border-emerald-900/50 text-xs text-slate-300 leading-relaxed space-y-1">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-emerald-400 font-bold select-none">-</span>
+                        <span>Menetapkan &amp; membagi target harian ke 8 personil</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-emerald-400 font-bold select-none">-</span>
+                        <span>Memonitor progres input dan validasi kelengkapan box</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-emerald-400 font-bold select-none">-</span>
+                        <span>Eskalasi kendala operasional</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -301,7 +312,8 @@ export function TeamStructureView() {
                     [ A ] ACCOUNTABLE
                   </span>
                   <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white">Jasmine (Leader):</strong> Pemilik keputusan mutlak &amp; penanggung jawab hasil akhir target tim harian, status kelengkapan box, dan alur kerja.
+                    <strong className="text-white block mb-0.5">Jasmine (Leader):</strong>
+                    <span>Menetapkan target harian 8 personil, memonitor progres input &amp; kelengkapan box, serta eskalasi kendala operasional.</span>
                   </div>
                 </div>
 
