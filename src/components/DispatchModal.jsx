@@ -10,8 +10,10 @@ import {
   AlertCircle,
   HelpCircle,
   CheckCircle2,
+  Printer,
 } from 'lucide-react';
 import { DISPATCH_DESTINATIONS, DISPATCH_TYPES } from '../utils/dispatchUtils';
+import { DispatchManifestModal } from './DispatchManifestModal';
 
 export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) {
   const { dispatchItem, currentUser, suggestions, items, clearDispatchCart } = useInventory();
@@ -34,6 +36,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [manifestPreviewItems, setManifestPreviewItems] = useState(null);
+  const [manifestInitialConfig, setManifestInitialConfig] = useState(null);
+  const [hasDispatched, setHasDispatched] = useState(false);
 
   const isSingle = itemsToDispatch.length === 1;
   const singleItem = itemsToDispatch[0];
@@ -70,8 +75,35 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     destinationLabel = customDestination.trim() || 'Tujuan Khusus';
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handlePreviewPdf = () => {
+    const previewList = itemsToDispatch.map((it) => {
+      const itemQty = isSingle ? Number(qty) : Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
+      return {
+        ...it,
+        jumlah: itemQty,
+        qty: itemQty,
+        dispatchQty: itemQty,
+        sampleNo: it.sampleNo || it.buyerNo || 'NA',
+        dispatchData: {
+          destinationId,
+          destinationLabel,
+          buyerName: destinationId === 'BUYER' ? selectedBuyer.trim() : destinationLabel,
+          type: dispatchType,
+          date: dispatchDate,
+          recipient: recipient.trim(),
+          notes: notes.trim(),
+        },
+      };
+    });
+    setManifestInitialConfig({
+      buyerName: destinationId === 'BUYER' ? selectedBuyer.trim() : destinationLabel,
+      date: dispatchDate,
+    });
+    setManifestPreviewItems(previewList);
+  };
+
+  const handleSubmit = async (e, shouldPrintAfter = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     setError(null);
 
     if (destinationId === 'BUYER' && !selectedBuyer.trim()) {
@@ -91,6 +123,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
     setIsSubmitting(true);
     try {
+      const dispatchedList = [];
       for (const it of itemsToDispatch) {
         const itemQty = isSingle ? Number(qty) : Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
         await dispatchItem(it, {
@@ -103,9 +136,35 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           recipient: recipient.trim(),
           notes: notes.trim(),
         });
+        dispatchedList.push({
+          ...it,
+          jumlah: itemQty,
+          qty: itemQty,
+          dispatchQty: itemQty,
+          sampleNo: it.sampleNo || it.buyerNo || 'NA',
+          dispatchData: {
+            destinationId,
+            destinationLabel,
+            buyerName: destinationId === 'BUYER' ? selectedBuyer.trim() : destinationLabel,
+            type: dispatchType,
+            date: dispatchDate,
+            recipient: recipient.trim(),
+            notes: notes.trim(),
+          },
+        });
       }
       clearDispatchCart();
-      onClose();
+
+      if (shouldPrintAfter) {
+        setHasDispatched(true);
+        setManifestInitialConfig({
+          buyerName: destinationId === 'BUYER' ? selectedBuyer.trim() : destinationLabel,
+          date: dispatchDate,
+        });
+        setManifestPreviewItems(dispatchedList);
+      } else {
+        onClose();
+      }
     } catch (err) {
       console.error('Dispatch error:', err);
       setError(err?.message || 'Gagal memproses pengiriman sampel.');
@@ -428,26 +487,63 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           </div>
 
           {/* Apple Style Footer Actions */}
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-black/[0.06]">
+          <div className="pt-3 flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.06]">
             <button
               type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl border border-black/[0.06] bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] font-medium text-xs transition cursor-pointer"
+              onClick={handlePreviewPdf}
+              className="px-3.5 py-2 rounded-xl border border-black/[0.08] bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] font-medium text-xs transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Lihat format dokumen Invoice & Packing List (PDF) sebelum dikirim"
             >
-              Batal
+              <FileText className="w-3.5 h-3.5 text-[#0071e3]" />
+              <span>Pratinjau PDF</span>
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>{isSubmitting ? 'Memproses...' : 'Konfirmasi Kirim Sampel'}</span>
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-xl border border-black/[0.06] bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] font-medium text-xs transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={(e) => handleSubmit(e, true)}
+                className="px-4 py-2 rounded-xl bg-[#5856d6] hover:bg-[#4b49b8] text-white font-medium text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                title="Catat pengiriman dan langsung buka Invoice & Packing List siap cetak PDF"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Kirim &amp; Cetak PDF</span>
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-5 py-2 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{isSubmitting ? 'Memproses...' : 'Konfirmasi Kirim'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
+
+      {/* Manifest & Invoice PDF Modal */}
+      {manifestPreviewItems && (
+        <DispatchManifestModal
+          isOpen={Boolean(manifestPreviewItems)}
+          onClose={() => {
+            setManifestPreviewItems(null);
+            if (hasDispatched) {
+              onClose();
+            }
+          }}
+          items={manifestPreviewItems}
+          initialConfig={manifestInitialConfig}
+        />
+      )}
     </div>
   );
 }

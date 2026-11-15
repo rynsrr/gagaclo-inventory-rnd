@@ -46,6 +46,16 @@
     margin: 0;
   }
 
+  /* Dispatch Invoice & Packing List (A4 landscape for 12 columns table) */
+  @page dispatch-invoice {
+    size: A4 landscape;
+    margin: 6mm 8mm;
+  }
+
+  .dispatch-invoice-sheet {
+    page: dispatch-invoice;
+  }
+
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
