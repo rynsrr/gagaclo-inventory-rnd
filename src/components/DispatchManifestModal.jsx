@@ -120,17 +120,64 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
   }, [firstDispatch, initialConfig]);
 
   // Package Specifications
-  const [grossWeight, setGrossWeight] = useState(() => {
-    const calculated = (Math.max(1, totalPcs) * 0.27).toFixed(2);
-    return calculated.replace('.', ',');
-  });
+  const [packageType, setPackageType] = useState('CARTON'); // 'CARTON' | 'BAG'
   const [netWeight, setNetWeight] = useState(() => {
     const calculated = (Math.max(1, totalPcs) * 0.17).toFixed(2);
     return calculated.replace('.', ',');
   });
-  const [packageType, setPackageType] = useState('CARTON'); // 'CARTON' | 'BAG'
+  const [grossWeight, setGrossWeight] = useState(() => {
+    const calculated = ((Math.max(1, totalPcs) * 0.17) + 1).toFixed(2); // Untuk CARTON: GW = NW + 1
+    return calculated.replace('.', ',');
+  });
   const [cartonSize, setCartonSize] = useState('35 x 25 x 8 cm');
   const [unitPrice, setUnitPrice] = useState(1.0);
+
+  const updateWeights = (nwVal, type = packageType) => {
+    const rawStr = String(nwVal || '').replace(',', '.');
+    const num = parseFloat(rawStr);
+    if (!isNaN(num)) {
+      if (type === 'CARTON') {
+        const gw = (num + 1).toFixed(2).replace('.', ',');
+        setGrossWeight(gw);
+      } else {
+        // BAG: NW dan GW sama
+        setGrossWeight(String(nwVal));
+      }
+    }
+  };
+
+  const handleNetWeightChange = (val) => {
+    setNetWeight(val);
+    updateWeights(val, packageType);
+  };
+
+  const handlePackageTypeChange = (newType) => {
+    setPackageType(newType);
+    if (newType === 'CARTON') {
+      if (cartonSize.includes('20 x 5') || cartonSize.includes('18 x 3') || cartonSize.includes('30 x 20')) {
+        setCartonSize('35 x 25 x 8 cm');
+      }
+    } else {
+      if (cartonSize.includes('35 x 25 x 8') || cartonSize.includes('40 x 30 x 15')) {
+        setCartonSize('30 x 20 x 5 cm');
+      }
+    }
+    updateWeights(netWeight, newType);
+  };
+
+  // Synchronize weight estimations whenever totalPcs changes
+  // Rumus bisnis: Untuk CARTON: GW = NW + 1. Untuk BAG: GW = NW (sama).
+  useEffect(() => {
+    const count = Math.max(1, totalPcs);
+    const nwNum = count * 0.17;
+    const nwStr = nwNum.toFixed(2).replace('.', ',');
+    setNetWeight(nwStr);
+    if (packageType === 'CARTON') {
+      setGrossWeight((nwNum + 1).toFixed(2).replace('.', ','));
+    } else {
+      setGrossWeight(nwStr);
+    }
+  }, [totalPcs, packageType]);
 
   const totalPrice = useMemo(() => {
     return (totalPcs * Number(unitPrice || 1)).toFixed(2).replace('.', ',');
@@ -959,61 +1006,56 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 <div className="text-[10px]">
                   <table className="w-full border-collapse">
                     <tbody>
-                      {/* Row 1: Gross Weight & Net Weight */}
+                      {/* Row 1: Gross Weight (GW) & Net Weight (NW) */}
                       <tr className="border-b border-black font-bold">
-                        <td className="w-[29%] py-1 px-2.5 border-r border-black">
-                          {grossWeight} KG (GROSS WEIGHT)
+                        <td className="w-[29%] py-1 px-2.5 border-r border-black font-bold">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              value={grossWeight}
+                              onChange={(e) => setGrossWeight(e.target.value)}
+                              className="w-14 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5"
+                              title="Gross Weight (WEIGHT GW: Untuk CARTON = NW + 1, Untuk BAG = NW)"
+                            />
+                            <span>KG (WEIGHT GW)</span>
+                          </div>
                         </td>
-                        <td className="w-[71%] py-1 px-4 text-right">
-                          {netWeight} KG (NET WEIGHT)
+                        <td className="w-[71%] py-1 px-4 text-right font-bold">
+                          <div className="flex items-center justify-end gap-1">
+                            <input
+                              type="text"
+                              value={netWeight}
+                              onChange={(e) => handleNetWeightChange(e.target.value)}
+                              className="w-14 font-bold text-right bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5"
+                              title="Net Weight (WEIGHT NW)"
+                            />
+                            <span>KG (WEIGHT NW)</span>
+                          </div>
                         </td>
                       </tr>
 
-                      {/* Row 2: Package Type (CARTON / BAG) & Dimension Adjustment */}
+                      {/* Row 2: Package Type Dropdown (CARTON / BAG) & Dimension */}
                       <tr className="border-b border-black">
                         <td className="w-[29%] py-1.5 px-2.5 border-r border-black font-bold align-middle">
                           {/* Print text */}
                           <span className="print:inline hidden text-[10.5px] uppercase">{packageType}</span>
 
-                          {/* Screen interactive selector */}
-                          <div className="no-print inline-flex items-center gap-1 p-0.5 bg-neutral-100 rounded border border-neutral-300">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPackageType('CARTON');
-                                if (cartonSize.includes('20 x 5') || cartonSize.includes('18 x 3')) {
-                                  setCartonSize('35 x 25 x 8 cm');
-                                }
-                              }}
-                              className={`px-2 py-0.5 text-[9.5px] font-bold rounded-xs transition cursor-pointer ${
-                                packageType === 'CARTON'
-                                  ? 'bg-neutral-900 text-white shadow-2xs'
-                                  : 'text-neutral-700 hover:bg-neutral-200'
-                              }`}
+                          {/* Screen interactive dropdown */}
+                          <div className="no-print">
+                            <select
+                              value={packageType}
+                              onChange={(e) => handlePackageTypeChange(e.target.value)}
+                              className="font-bold text-[10.5px] uppercase bg-white hover:bg-amber-100/40 focus:bg-amber-100/70 border border-neutral-300 rounded px-2 py-0.5 outline-none cursor-pointer shadow-2xs transition"
+                              title="Pilih Kemasan (CARTON atau BAG)"
                             >
-                              📦 CARTON
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPackageType('BAG');
-                                if (cartonSize.includes('35 x 25 x 8') || cartonSize.includes('40 x 30 x 15')) {
-                                  setCartonSize('30 x 20 x 5 cm');
-                                }
-                              }}
-                              className={`px-2 py-0.5 text-[9.5px] font-bold rounded-xs transition cursor-pointer ${
-                                packageType === 'BAG'
-                                  ? 'bg-neutral-900 text-white shadow-2xs'
-                                  : 'text-neutral-700 hover:bg-neutral-200'
-                              }`}
-                            >
-                              🛍️ BAG
-                            </button>
+                              <option value="CARTON">📦 CARTON</option>
+                              <option value="BAG">🛍️ BAG</option>
+                            </select>
                           </div>
                         </td>
                         <td className="w-[71%] py-1.5 px-2 text-center align-middle">
                           <div className="font-bold text-[9.5px] uppercase tracking-wide">
-                            ⬇ {packageType} SIZE ⬇
+                            ⬇ {packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} ⬇
                           </div>
                           <div className="mt-0.5">
                             <input
@@ -1022,7 +1064,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                               onChange={(e) => setCartonSize(e.target.value)}
                               placeholder={packageType === 'CARTON' ? '35 x 25 x 8 cm' : '30 x 20 x 5 cm'}
                               className="font-bold text-center w-full max-w-xs bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title="Ketik dimensi ukuran kemasan (Panjang x Lebar x Tinggi)"
+                              title={`Ketik ${packageType === 'CARTON' ? 'Carton' : 'Bag'} Dimension (Panjang x Lebar x Tinggi)`}
                             />
                           </div>
                         </td>
