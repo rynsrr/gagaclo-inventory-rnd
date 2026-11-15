@@ -247,21 +247,16 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
               <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-[#161618] ${isJasmineActive ? 'bg-emerald-400 animate-pulse' : 'bg-emerald-500'}`} />
             </div>
 
-            {/* Teks Nama & Leader */}
-            <div className="flex flex-col text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight leading-none">
-                  Jasmine
-                </span>
-                {isJasmineActive && (
-                  <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 leading-tight">
-                    Anda
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] text-emerald-300 font-bold uppercase tracking-wider mt-1 leading-none">
-                Leader
+            {/* Teks Nama Jasmine */}
+            <div className="flex items-center gap-1.5 text-left">
+              <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight leading-none">
+                Jasmine
               </span>
+              {isJasmineActive && (
+                <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-500 text-slate-950 leading-tight">
+                  Anda
+                </span>
+              )}
             </div>
           </button>
         </div>
