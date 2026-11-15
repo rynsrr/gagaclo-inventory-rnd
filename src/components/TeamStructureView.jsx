@@ -152,12 +152,6 @@ export function TeamStructureView() {
                     <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-400 leading-relaxed">
                       Supervisi strategis, kebijakan mutu sampel, persetujuan target besar, dan eskalasi manajemen puncak.
                     </div>
-                    {/* Badge ditaruh di dalam box Sururi */}
-                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-center">
-                      <span className="px-3 py-1 rounded-full bg-blue-950/90 border border-blue-500/50 text-[10px] font-bold text-blue-300 uppercase tracking-wider">
-                        Supervisi &amp; Arahan Kebijakan
-                      </span>
-                    </div>
                   </div>
                 </div>
 
@@ -221,9 +215,6 @@ export function TeamStructureView() {
                       <span className="text-amber-400 font-bold text-sm tracking-wide">
                         📦 5 PPIC &mdash; [ R ] RESPONSIBLE (PENANGGUNG JAWAB UTAMA BOX)
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-950/90 border border-amber-500/50 text-amber-300 text-[10px] font-bold tracking-wider uppercase">
-                        Target &amp; Alokasi Box
-                      </span>
                     </div>
 
                     <div className="flex flex-col gap-2.5">
@@ -252,9 +243,6 @@ export function TeamStructureView() {
                       <div className="flex items-center justify-between mb-1 pb-2 border-b border-cyan-500/30">
                         <span className="text-cyan-400 font-bold text-sm tracking-wide">
                           ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 text-[10px] font-bold tracking-wider uppercase">
-                          Penugasan Asistensi
                         </span>
                       </div>
 
