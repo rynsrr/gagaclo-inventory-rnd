@@ -498,7 +498,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           type="text"
                           value={invoiceNo}
                           onChange={(e) => setInvoiceNo(e.target.value.toUpperCase())}
-                          className="w-full font-mono font-bold text-[10.5px] uppercase text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 tracking-tight"
+                          className="w-full block font-mono font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight"
                         />
                       </td>
                     </tr>
@@ -511,13 +511,14 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                       <td className="py-1 px-3 text-left">
                         <div className="flex items-center justify-start gap-2 text-left">
+                          <span className="font-mono font-bold text-[10.5px] leading-none text-left">{formatDateDisplay(docDate)}</span>
                           <input
                             type="date"
                             value={docDate}
                             onChange={(e) => setDocDate(e.target.value)}
-                            className="font-mono font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print text-left"
+                            className="w-4 h-4 p-0 m-0 opacity-40 hover:opacity-100 cursor-pointer no-print border-none bg-transparent"
+                            title="Pilih tanggal dokumen"
                           />
-                          <span className="font-mono font-bold text-[10.5px] print:inline hidden text-left">{formatDateDisplay(docDate)}</span>
                         </div>
                       </td>
                     </tr>
@@ -562,7 +563,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           type="text"
                           value={paymentBy}
                           onChange={(e) => setPaymentBy(e.target.value.toUpperCase())}
-                          className="w-full font-bold text-[10.5px] text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
+                          className="w-full block font-bold text-[10.5px] text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none uppercase tracking-tight"
                         />
                       </td>
                     </tr>
@@ -578,7 +579,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           type="text"
                           value={shipmentBy}
                           onChange={(e) => setShipmentBy(e.target.value.toUpperCase())}
-                          className="w-full font-bold text-[10.5px] text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
+                          className="w-full block font-bold text-[10.5px] text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none uppercase tracking-tight"
                         />
                       </td>
                     </tr>
@@ -594,7 +595,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           type="text"
                           value={invoiceValue}
                           onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
-                          className="w-full font-bold text-[10.5px] text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
+                          className="w-full block font-bold text-[10.5px] text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none uppercase tracking-tight"
                         />
                       </td>
                     </tr>
@@ -607,13 +608,14 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                       <td className="py-1 px-3 text-left">
                         <div className="flex items-center justify-start gap-2 text-left">
+                          <span className="font-mono font-bold text-[10.5px] leading-none text-left">{formatDateDisplay(shippingDate)}</span>
                           <input
                             type="date"
                             value={shippingDate}
                             onChange={(e) => setShippingDate(e.target.value)}
-                            className="font-mono font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print text-left"
+                            className="w-4 h-4 p-0 m-0 opacity-40 hover:opacity-100 cursor-pointer no-print border-none bg-transparent"
+                            title="Pilih tanggal pengiriman"
                           />
-                          <span className="font-mono font-bold text-[10.5px] print:inline hidden text-left">{formatDateDisplay(shippingDate)}</span>
                         </div>
                       </td>
                     </tr>
