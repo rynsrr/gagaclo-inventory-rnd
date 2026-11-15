@@ -250,14 +250,14 @@ export function TeamStructureView() {
                   </div>
 
                   {/* 3B. WING 3 TIM SUPPORT (MENURUN KE BAWAH) */}
-                  <div className="md:col-span-5 rounded-xl bg-slate-950/80 border-2 border-cyan-500/60 p-5 shadow-lg shadow-cyan-500/5 space-y-3 flex flex-col justify-between">
+                  <div className="md:col-span-5 rounded-xl bg-slate-950/80 border-2 border-cyan-500/60 p-5 shadow-lg shadow-cyan-500/5 space-y-3">
                     <div>
                       <div className="flex items-center justify-between mb-1 pb-2 border-b border-cyan-500/30">
                         <span className="text-cyan-400 font-bold text-sm tracking-wide">
                           ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT
                         </span>
                         <span className="text-xs text-cyan-300/80 font-medium">
-                          Asistensi Data Entry
+                          Support Data Entry
                         </span>
                       </div>
 
@@ -271,25 +271,13 @@ export function TeamStructureView() {
                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.badgeBg}`}>
                                 {s.code}
                               </span>
-                              <div>
-                                <div className="text-base font-extrabold text-white">{s.name}</div>
-                                <div className="text-[10px] text-cyan-300">Data Entry Assistant</div>
-                              </div>
+                              <div className="text-base font-extrabold text-white">{s.name}</div>
                             </div>
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.raciBg} shrink-0`}>
                               [ S ] Support
                             </span>
                           </div>
                         ))}
-                      </div>
-                    </div>
-
-                    {/* Banner Alur Asistensi ke PPIC */}
-                    <div className="mt-4 p-3 rounded-lg bg-cyan-950/70 border border-cyan-500/50 text-xs text-cyan-200 flex items-center gap-2.5 shadow-inner">
-                      <span className="text-cyan-400 text-base font-extrabold animate-pulse">◀</span>
-                      <div className="leading-tight">
-                        <strong className="text-white font-semibold">Alur Asistensi Lapangan:</strong>
-                        <div className="text-cyan-300/90 text-[11px] mt-0.5">Mendampingi &amp; asistensi langsung input fisik bersama 5 PPIC di rak.</div>
                       </div>
                     </div>
                   </div>
