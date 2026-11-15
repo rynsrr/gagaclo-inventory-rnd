@@ -173,29 +173,29 @@ export function DispatchOutgoingView() {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* Top Header Card */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-lg p-5 sm:p-6 shadow-xl border border-slate-800">
+    <div className="space-y-5 animate-fade-in font-apple">
+      {/* Top Header Card (Apple Dark Surface) */}
+      <div className="bg-[#161618] text-white rounded-[22px] p-5 sm:p-6 shadow-xl border border-white/[0.08]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0071e3]/15 border border-[#0071e3]/30 text-[#2997ff] text-xs font-semibold">
               <Truck className="w-3.5 h-3.5" />
               <span>Monitoring Pengiriman Sampel Keluar R&amp;D</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
               Daftar Sampel Terkirim Keluar
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-300 font-normal max-w-2xl leading-relaxed">
               Memantau sampel yang dikirim ke <strong>Buyer</strong>, <strong>ANZO QC</strong>, <strong>ANZO TW</strong>, <strong>ANZO QC CHINA</strong>, <strong>RDTW</strong>, dan <strong>RDC</strong>. Sampel keluar permanen mengurangi stok box, sedangkan sampel review dapat diterima kembali.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {selectedItemIds.size > 0 && (
               <button
                 type="button"
                 onClick={() => setManifestItems(dispatchedItems.filter(i => selectedItemIds.has(i.id)))}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition flex items-center gap-2 shadow-lg shadow-indigo-600/30 cursor-pointer"
+                className="px-4 py-2 rounded-full bg-[#5856d6] hover:bg-[#4b49b8] text-white text-xs font-semibold transition flex items-center gap-2 shadow-md cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>Cetak Surat Jalan ({selectedItemIds.size})</span>
@@ -204,9 +204,9 @@ export function DispatchOutgoingView() {
             <button
               type="button"
               onClick={() => setCartModalOpen(true)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 shadow-lg cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition flex items-center gap-2 shadow-md cursor-pointer ${
                 dispatchCart?.length > 0
-                  ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 animate-pulse-subtle'
+                  ? 'bg-[#ff3b30] hover:bg-[#d63026] text-white shadow-rose-600/30 animate-pulse-subtle'
                   : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
               }`}
               title="Buka Keranjang Pengiriman (Model Marketplace)"
@@ -217,7 +217,7 @@ export function DispatchOutgoingView() {
             <button
               type="button"
               onClick={() => setDispatchModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition flex items-center gap-2 shadow-lg shadow-blue-600/30 cursor-pointer"
+              className="px-4 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold transition flex items-center gap-2 shadow-md cursor-pointer"
             >
               <Send className="w-4 h-4" />
               <span>+ Catat Pengiriman Baru</span>
@@ -226,54 +226,54 @@ export function DispatchOutgoingView() {
         </div>
 
         {/* 4 Quick Stat Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t border-slate-800">
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xs">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Sampel Keluar</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t border-white/[0.08]">
+          <div className="p-3.5 rounded-[16px] bg-white/[0.06] border border-white/[0.08] backdrop-blur-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">Total Sampel Keluar</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-black text-white">{stats.totalPcs}</span>
-              <span className="text-xs font-bold text-slate-400">PCS ({stats.totalItems} item)</span>
+              <span className="text-2xl font-bold text-white tabular-nums">{stats.totalPcs}</span>
+              <span className="text-xs font-medium text-slate-400">PCS ({stats.totalItems} item)</span>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 backdrop-blur-xs">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-300 block">Keluar Permanen</span>
+          <div className="p-3.5 rounded-[16px] bg-[#ff3b30]/10 border border-[#ff3b30]/20 backdrop-blur-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-rose-300 block">Keluar Permanen</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-black text-rose-300">{stats.permanentPcs}</span>
-              <span className="text-xs font-bold text-rose-400">PCS (Stok R&amp;D Berkurang)</span>
+              <span className="text-2xl font-bold text-rose-300 tabular-nums">{stats.permanentPcs}</span>
+              <span className="text-xs font-medium text-rose-400">PCS (Stok R&amp;D Berkurang)</span>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 backdrop-blur-xs">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-300 block">Review Sementara</span>
+          <div className="p-3.5 rounded-[16px] bg-[#ff9500]/10 border border-[#ff9500]/20 backdrop-blur-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-300 block">Review Sementara</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-black text-amber-300">{stats.reviewPcs}</span>
-              <span className="text-xs font-bold text-amber-400">PCS (Pending Kembali)</span>
+              <span className="text-2xl font-bold text-amber-300 tabular-nums">{stats.reviewPcs}</span>
+              <span className="text-xs font-medium text-amber-400">PCS (Pending Kembali)</span>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-xs">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-300 block">Tujuan Teraktif</span>
-            <div className="text-sm font-black text-emerald-300 mt-1 truncate">
+          <div className="p-3.5 rounded-[16px] bg-[#34c759]/10 border border-[#34c759]/20 backdrop-blur-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300 block">Tujuan Teraktif</span>
+            <div className="text-sm font-bold text-emerald-300 mt-1 truncate">
               Buyer: {stats.destCounts.BUYER || 0} • ANZO QC: {stats.destCounts.ANZO_QC || 0}
             </div>
-            <span className="text-xs text-emerald-400/80">ANZO TW: {stats.destCounts.ANZO_TW || 0} • ANZO QC CHINA: {stats.destCounts.ANZO_QC_CHINA || 0} • RDTW: {stats.destCounts.RDTW || 0} • RDC: {stats.destCounts.RDC || 0}</span>
+            <span className="text-[11px] text-emerald-400/80">ANZO TW: {stats.destCounts.ANZO_TW || 0} • ANZO QC CHINA: {stats.destCounts.ANZO_QC_CHINA || 0} • RDTW: {stats.destCounts.RDTW || 0} • RDC: {stats.destCounts.RDC || 0}</span>
           </div>
         </div>
       </div>
 
       {/* Destination Pills Filter */}
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-white rounded-lg border border-slate-200 shadow-2xs">
-        <span className="text-xs font-black text-slate-700 flex items-center gap-1.5 px-2">
-          <Building2 className="w-3.5 h-3.5 text-blue-600" />
+      <div className="flex flex-wrap items-center gap-2 p-3.5 bg-white/90 backdrop-blur-xl rounded-[20px] border border-black/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+        <span className="text-xs font-bold text-[#1d1d1f] flex items-center gap-1.5 px-2">
+          <Building2 className="w-3.5 h-3.5 text-[#0071e3]" />
           Filter Tujuan:
         </span>
         <button
           type="button"
           onClick={() => setSelectedDestination('ALL')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer select-none ${
             selectedDestination === 'ALL'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              ? 'bg-[#1d1d1f] text-white shadow-xs'
+              : 'bg-black/[0.03] hover:bg-black/[0.06] text-[#86868b] border border-black/[0.06]'
           }`}
         >
           Semua Tujuan ({stats.totalPcs} PCS)
@@ -287,14 +287,14 @@ export function DispatchOutgoingView() {
               key={dest.id}
               type="button"
               onClick={() => setSelectedDestination(dest.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer select-none border ${
                 isSelected
-                  ? `${dest.color} ring-2 ring-blue-500 font-black shadow-xs`
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  ? `${dest.color} ring-2 ring-[#0071e3] shadow-xs`
+                  : 'bg-black/[0.03] hover:bg-black/[0.06] text-[#1d1d1f] border-black/[0.06]'
               }`}
             >
               <span>{dest.label}</span>
-              <span className="px-1.5 py-0.5 rounded-full text-xs bg-white/70 font-mono">
+              <span className="px-1.5 py-0.2 rounded-full text-[11px] bg-white/70 font-mono tabular-nums">
                 {count} PCS
               </span>
             </button>
@@ -303,29 +303,29 @@ export function DispatchOutgoingView() {
       </div>
 
       {/* Controls Bar: Search & Nature Filter */}
-      <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="p-4 bg-white/90 backdrop-blur-xl rounded-[20px] border border-black/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#86868b] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari kode, style, nomor sample, nama penerima, atau catatan..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 rounded-full border border-black/[0.07] bg-black/[0.03] text-xs font-medium text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 focus:bg-white transition"
           />
         </div>
 
         {/* Nature Filter Pills */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-xs font-bold text-slate-600 hidden md:inline">Sifat:</span>
+          <span className="text-xs font-semibold text-[#86868b] hidden md:inline">Sifat:</span>
           <button
             type="button"
             onClick={() => setSelectedType('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer select-none border ${
               selectedType === 'ALL'
-                ? 'bg-blue-600 text-white'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                : 'bg-black/[0.03] hover:bg-black/[0.06] text-[#86868b] border-black/[0.06]'
             }`}
           >
             Semua Sifat
@@ -333,10 +333,10 @@ export function DispatchOutgoingView() {
           <button
             type="button"
             onClick={() => setSelectedType('PERMANENT')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer select-none border ${
               selectedType === 'PERMANENT'
-                ? 'bg-rose-700 text-white'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                ? 'bg-[#ff3b30] text-white border-[#ff3b30] shadow-xs'
+                : 'bg-black/[0.03] hover:bg-black/[0.06] text-[#86868b] border-black/[0.06]'
             }`}
           >
             Keluar Permanen

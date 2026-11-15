@@ -255,22 +255,22 @@ export function PpicPerformanceView() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
-      {/* Header Controls: Date Picker & Refresh */}
-      <div className="p-4 sm:p-5 bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="max-w-7xl mx-auto px-4 py-6 space-y-5 font-apple">
+      {/* Header Controls: Date Picker & Refresh (Apple Glass Style) */}
+      <div className="p-4 sm:p-5 bg-white/90 backdrop-blur-xl rounded-[22px] border border-black/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
-              <Calendar className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-[#34c759]/15 text-[#30d158] border border-[#34c759]/25 shrink-0">
+              <Calendar className="h-4.5 w-4.5 stroke-[2.2]" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                Rekap Harian Penyimpanan Tim R&D
-                <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              <h1 className="text-base font-bold text-[#1d1d1f] flex items-center gap-2 tracking-tight">
+                Rekap Harian Penyimpanan Tim R&amp;D
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#34c759]/15 text-[#30d158] border border-[#34c759]/30 tabular-nums">
                   {currentDailyData.totalPcs} PCS
                 </span>
               </h1>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#86868b]">
                 Catatan kuantitatif input barang harian 8 anggota tim (5 PPIC &amp; 3 Support) secara setara &amp; transparan
               </p>
             </div>
@@ -280,15 +280,15 @@ export function PpicPerformanceView() {
         <div className="flex items-center gap-2 flex-wrap">
           {/* Date Input (Tampil: Tanggal, Bulan dan Tahun) */}
           <label
-            className="relative flex items-center gap-2 bg-slate-50 hover:bg-slate-100/90 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold cursor-pointer transition shadow-2xs group"
+            className="relative flex items-center gap-2 bg-black/[0.03] hover:bg-black/[0.06] px-3.5 py-1.5 rounded-full border border-black/[0.07] text-xs font-semibold text-[#1d1d1f] cursor-pointer transition shadow-2xs group"
             title="Klik untuk memilih tanggal dari kalender"
           >
-            <Calendar className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-600 transition shrink-0" />
-            <span className="text-slate-500 text-xs">Tanggal:</span>
-            <span className="text-slate-900 font-bold tracking-tight">
+            <Calendar className="w-3.5 h-3.5 text-[#86868b] group-hover:text-[#0071e3] transition shrink-0" />
+            <span className="text-[#86868b] text-xs">Tanggal:</span>
+            <span className="text-[#1d1d1f] font-semibold tracking-tight">
               {formatDateIndoFull(selectedDailyDate)}
             </span>
-            <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 ml-0.5 shrink-0" />
+            <Calendar className="w-3.5 h-3.5 text-[#86868b] group-hover:text-[#1d1d1f] ml-0.5 shrink-0" />
             <input
               type="date"
               value={selectedDailyDate}
@@ -308,10 +308,10 @@ export function PpicPerformanceView() {
           <button
             type="button"
             onClick={() => setSelectedDailyDate(todayIso)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition border cursor-pointer select-none ${
               selectedDailyDate === todayIso
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                : 'bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border-black/[0.08]'
             }`}
           >
             Hari Ini
@@ -322,24 +322,24 @@ export function PpicPerformanceView() {
             type="button"
             onClick={handleManualSync}
             disabled={isManualSyncing}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold border border-emerald-500/40 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-60"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold border border-[#34c759]/30 bg-[#34c759]/10 hover:bg-[#34c759]/20 text-[#30d158] transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-60"
             title="Refresh data aktivitas harian langsung dari server cloud"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isManualSyncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#30d158] ${isManualSyncing ? 'animate-spin' : ''}`} />
             <span>{isManualSyncing ? 'Sync...' : 'Refresh'}</span>
           </button>
         </div>
       </div>
 
-      {/* Ringkasan 2 Metrik Pendukung */}
+      {/* Ringkasan 2 Metrik Pendukung (Apple Metric Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Card 1: Kontributor Teraktif */}
-        <div className="p-4 bg-gradient-to-br from-blue-50/80 to-blue-100/40 rounded-lg border border-blue-200/80 flex flex-col justify-between">
+        <div className="p-4 sm:p-5 bg-white/90 backdrop-blur-xl rounded-[20px] border border-black/[0.08] shadow-xs flex flex-col justify-between">
           <div>
-            <div className="text-xs font-bold text-blue-800 uppercase tracking-wider">
+            <div className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
               Kontributor Teraktif
             </div>
-            <div className="mt-1 text-2xl font-black text-blue-950 truncate">
+            <div className="mt-1 text-2xl font-bold text-[#1d1d1f] truncate">
               {(() => {
                 let topPerson = '-';
                 let maxPcs = 0;
@@ -354,20 +354,20 @@ export function PpicPerformanceView() {
               })()}
             </div>
           </div>
-          <div className="mt-2 text-xs text-blue-700">Jumlah input terbanyak pada tanggal ini</div>
+          <div className="mt-2 text-xs text-[#0071e3] font-medium">Jumlah input terbanyak pada tanggal ini</div>
         </div>
 
         {/* Card 2: Riwayat Hari Tercatat */}
-        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100/60 rounded-lg border border-slate-200/80 flex flex-col justify-between">
+        <div className="p-4 sm:p-5 bg-white/90 backdrop-blur-xl rounded-[20px] border border-black/[0.08] shadow-xs flex flex-col justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+            <div className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
               Riwayat Hari Tercatat
             </div>
-            <div className="mt-1 text-2xl font-black text-slate-800 tabular-nums">
-              {dailyTeamRecords.dates.length} <span className="text-sm font-semibold text-slate-500">Hari</span>
+            <div className="mt-1 text-2xl font-bold text-[#1d1d1f] tabular-nums">
+              {dailyTeamRecords.dates.length} <span className="text-sm font-medium text-[#86868b]">Hari</span>
             </div>
           </div>
-          <div className="mt-2 text-xs text-slate-500">Total data riwayat hari tersimpan</div>
+          <div className="mt-2 text-xs text-[#86868b]">Total data riwayat hari tersimpan</div>
         </div>
       </div>
 

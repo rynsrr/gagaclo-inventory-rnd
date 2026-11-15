@@ -54,50 +54,50 @@ export function FeedbackIssuesView() {
   const doneCount = issues.length - openCount;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-6 space-y-6 font-apple">
       {/* Header Sederhana */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-black/[0.06] pb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Isu & Usulan Tim</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-[#1d1d1f] tracking-tight">Isu &amp; Usulan Tim</h1>
+          <p className="text-xs text-[#86868b]">
             Catat kendala, usulan perbaikan, atau ide fitur dengan cepat
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold">
-          <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="px-3 py-1 rounded-full bg-[#ff9500]/15 text-[#c96700] border border-[#ff9500]/25 tabular-nums">
             {openCount} Belum Selesai
           </span>
-          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="px-3 py-1 rounded-full bg-[#34c759]/15 text-[#30d158] border border-[#34c759]/25 tabular-nums">
             {doneCount} Selesai
           </span>
         </div>
       </div>
 
-      {/* Form Input Cepat */}
+      {/* Form Input Cepat (Apple Inset Grouped Style) */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-3"
+        className="bg-white/90 backdrop-blur-xl border border-black/[0.08] rounded-[22px] p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-3"
       >
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Tulis kendala atau usulan di sini... (contoh: Box 14 di Rak 2 miring / tambah fitur export)"
           rows={3}
-          className="w-full text-sm rounded-lg border border-slate-300 p-2.5 focus:outline-hidden focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-none text-slate-800 placeholder-slate-400"
+          className="w-full text-sm rounded-[14px] border border-black/[0.08] bg-black/[0.02] p-3 focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 focus:border-[#0071e3] focus:bg-white resize-none text-[#1d1d1f] placeholder-[#86868b] transition"
         />
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-slate-500 font-medium mr-1">PPIC:</span>
+            <span className="text-xs text-[#86868b] font-medium mr-1">PPIC:</span>
             {PIC_OPTIONS.map((pic) => (
               <button
                 key={pic}
                 type="button"
                 onClick={() => setSelectedPic(pic)}
-                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                className={`text-xs px-3 py-1 rounded-full font-semibold transition-all cursor-pointer select-none border ${
                   selectedPic === pic
-                    ? 'bg-sky-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                    : 'bg-black/[0.03] hover:bg-black/[0.06] text-[#86868b] border-black/[0.06]'
                 }`}
               >
                 {pic}
@@ -108,23 +108,23 @@ export function FeedbackIssuesView() {
           <button
             type="submit"
             disabled={!text.trim()}
-            className="text-xs px-4 py-2 rounded-lg font-semibold bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="text-xs px-4 py-2 rounded-full font-semibold bg-[#0071e3] text-white hover:bg-[#0077ed] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-xs"
           >
             + Kirim Usulan
           </button>
         </div>
       </form>
 
-      {/* Toolbar Filter & Pencarian */}
+      {/* Toolbar Filter & Pencarian (Apple Segmented Capsule) */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 self-start">
+        <div className="inline-flex items-center gap-0.5 bg-black/[0.04] p-1 rounded-full border border-black/[0.05] self-start">
           <button
             type="button"
             onClick={() => setFilter('ALL')}
-            className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+            className={`text-xs px-3 sm:px-3.5 py-1 rounded-full font-semibold transition-all cursor-pointer select-none ${
               filter === 'ALL'
-                ? 'bg-white text-slate-800 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
             Semua ({issues.length})
@@ -132,10 +132,10 @@ export function FeedbackIssuesView() {
           <button
             type="button"
             onClick={() => setFilter('OPEN')}
-            className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+            className={`text-xs px-3 sm:px-3.5 py-1 rounded-full font-semibold transition-all cursor-pointer select-none ${
               filter === 'OPEN'
-                ? 'bg-white text-slate-800 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
             Belum ({openCount})
@@ -143,10 +143,10 @@ export function FeedbackIssuesView() {
           <button
             type="button"
             onClick={() => setFilter('RESOLVED')}
-            className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+            className={`text-xs px-3 sm:px-3.5 py-1 rounded-full font-semibold transition-all cursor-pointer select-none ${
               filter === 'RESOLVED'
-                ? 'bg-white text-slate-800 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
+                : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
           >
             Selesai ({doneCount})
@@ -158,14 +158,14 @@ export function FeedbackIssuesView() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari catatan..."
-          className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-sky-500 w-full sm:w-56"
+          className="text-xs px-3.5 py-1.5 rounded-full border border-black/[0.07] bg-black/[0.03] text-[#1d1d1f] placeholder-[#86868b] focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 focus:bg-white w-full sm:w-56 transition"
         />
       </div>
 
       {/* List Catatan */}
       <div className="space-y-2">
         {filteredIssues.length === 0 ? (
-          <div className="text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs">
+          <div className="text-center py-10 bg-black/[0.02] border border-dashed border-black/[0.08] rounded-[20px] text-[#86868b] text-xs">
             {issues.length === 0
               ? 'Belum ada isu atau usulan tercatat. Tulis langsung di atas!'
               : 'Tidak ada catatan yang cocok dengan filter.'}
@@ -185,10 +185,10 @@ export function FeedbackIssuesView() {
             return (
               <div
                 key={issue.id}
-                className={`flex items-start gap-3 p-3.5 rounded-xl border transition-colors ${
+                className={`flex items-start gap-3 p-4 rounded-[18px] border transition-colors ${
                   isDone
-                    ? 'bg-slate-50/70 border-slate-200 text-slate-400'
-                    : 'bg-white border-slate-200 hover:border-slate-300 text-slate-800'
+                    ? 'bg-black/[0.02] border-black/[0.05] text-[#86868b]'
+                    : 'bg-white border-black/[0.06] hover:border-black/[0.12] text-[#1d1d1f] shadow-2xs'
                 }`}
               >
                 {/* Checkbox status */}
@@ -196,10 +196,10 @@ export function FeedbackIssuesView() {
                   type="button"
                   onClick={() => handleToggleStatus(issue)}
                   title={isDone ? 'Tandai belum selesai' : 'Tandai selesai'}
-                  className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0 border text-xs transition-colors ${
+                  className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 border text-xs transition-colors cursor-pointer ${
                     isDone
-                      ? 'bg-emerald-500 border-emerald-600 text-white'
-                      : 'border-slate-300 hover:border-sky-500 bg-white'
+                      ? 'bg-[#34c759] border-[#34c759] text-white'
+                      : 'border-black/[0.15] hover:border-[#0071e3] bg-white'
                   }`}
                 >
                   {isDone ? '✓' : ''}
@@ -209,13 +209,13 @@ export function FeedbackIssuesView() {
                 <div className="flex-1 min-w-0">
                   <p
                     className={`text-sm leading-relaxed whitespace-pre-wrap break-words ${
-                      isDone ? 'line-through text-slate-400' : 'text-slate-800'
+                      isDone ? 'line-through text-[#86868b]' : 'text-[#1d1d1f]'
                     }`}
                   >
                     {issue.description || issue.title}
                   </p>
-                  <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400">
-                    <span className="font-medium text-slate-600">
+                  <div className="flex items-center gap-2 mt-1.5 text-xs text-[#86868b]">
+                    <span className="font-semibold text-[#1d1d1f]">
                       @{issue.reporterName || 'Anonim'}
                     </span>
                     {dateStr && <span>• {dateStr}</span>}
@@ -231,7 +231,7 @@ export function FeedbackIssuesView() {
                     }
                   }}
                   title="Hapus"
-                  className="text-slate-300 hover:text-rose-500 p-1 text-sm transition-colors shrink-0"
+                  className="text-slate-300 hover:text-rose-500 p-1 text-sm transition-colors shrink-0 cursor-pointer"
                 >
                   ✕
                 </button>
