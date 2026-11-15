@@ -132,6 +132,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
   }, [totalPcs, unitPrice]);
 
   const handlePrint = () => {
+    if (!consigneeName.trim()) {
+      alert('Wajib mengisi Company Name sebelum mencetak invoice.');
+      return;
+    }
+    if (!consigneeAddress.trim()) {
+      alert('Wajib mengisi Address sebelum mencetak invoice.');
+      return;
+    }
     window.print();
   };
 
@@ -574,25 +582,48 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
                           <div className="flex items-center justify-between">
-                            <span>SHIP TO (COMPANY NAME, ADDRESS)</span>
+                            <span className="flex items-center">
+                              SHIP TO (COMPANY NAME)
+                              <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                            </span>
                             <span className="ml-2">:</span>
                           </div>
                         </td>
                         <td className="p-0 text-left">
                           <input
                             type="text"
-                            value={consigneeName ? `${consigneeName}. ${consigneeAddress}` : consigneeAddress}
-                            onChange={(e) => {
-                              const val = e.target.value.toUpperCase();
-                              const parts = val.split('.');
-                              if (parts.length > 1) {
-                                setConsigneeName(parts[0].trim());
-                                setConsigneeAddress(parts.slice(1).join('.').trim());
-                              } else {
-                                setConsigneeAddress(val);
-                              }
-                            }}
-                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
+                            value={consigneeName}
+                            onChange={(e) => setConsigneeName(e.target.value.toUpperCase())}
+                            placeholder="NAMA PERUSAHAAN / BUYER (WAJIB)"
+                            required
+                            className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors ${
+                              !consigneeName.trim() ? 'placeholder:text-rose-400' : ''
+                            }`}
+                            title="Company Name (Wajib diisi)"
+                          />
+                        </td>
+                      </tr>
+                      <tr className="border-b border-black">
+                        <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center">
+                              ADDRESS
+                              <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                            </span>
+                            <span className="ml-2">:</span>
+                          </div>
+                        </td>
+                        <td className="p-0 text-left">
+                          <input
+                            type="text"
+                            value={consigneeAddress}
+                            onChange={(e) => setConsigneeAddress(e.target.value.toUpperCase())}
+                            placeholder="ALAMAT LENGKAP PENGIRIMAN (WAJIB)"
+                            required
+                            className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors ${
+                              !consigneeAddress.trim() ? 'placeholder:text-rose-400' : ''
+                            }`}
+                            title="Address (Wajib diisi)"
                           />
                         </td>
                       </tr>
