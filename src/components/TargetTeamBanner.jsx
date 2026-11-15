@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Target, Edit2, Check, X, User } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
+import { getDailyTargetForDate, saveDailyTargetForDate } from '../utils/targetUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
 
 // 8 Anggota Tim Resmi: 5 PIC Asli (PPIC) & 3 Support (Helper)
@@ -25,26 +26,17 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
   } = useInventory();
   const isMgr = isManager(currentUser) || isSuperuser(currentUser);
 
-  // Target Harian Tim (disimpan di localStorage agar persisten)
-  const [dailyTarget, setDailyTarget] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gagaclo_daily_target_pcs');
-      return saved ? Math.max(1, Number(saved)) : 150;
-    } catch {
-      return 150;
-    }
-  });
+  const todayIso = getLocalTodayIso();
 
+  // Target Harian Tim (mengikuti aturan: berubah per hari, jika tidak diubah maka sama dengan hari sebelumnya)
+  const [dailyTarget, setDailyTarget] = useState(() => getDailyTargetForDate(todayIso));
   const [isEditingTarget, setIsEditingTarget] = useState(false);
   const [tempTarget, setTempTarget] = useState(dailyTarget.toString());
 
-  // Dengarkan perubahan target dari komponen lain
+  // Dengarkan perubahan target dari komponen lain atau saat tanggal berganti
   useEffect(() => {
     const handleStorageChange = () => {
-      try {
-        const saved = localStorage.getItem('gagaclo_daily_target_pcs');
-        if (saved) setDailyTarget(Math.max(1, Number(saved)));
-      } catch {}
+      setDailyTarget(getDailyTargetForDate(todayIso));
     };
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('gagaclo_target_updated', handleStorageChange);
@@ -52,24 +44,18 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('gagaclo_target_updated', handleStorageChange);
     };
-  }, []);
+  }, [todayIso]);
 
   const handleSaveTarget = (e) => {
     e?.preventDefault?.();
     const num = Math.max(1, parseInt(tempTarget, 10) || 150);
+    saveDailyTargetForDate(todayIso, num);
     setDailyTarget(num);
-    try {
-      localStorage.setItem('gagaclo_daily_target_pcs', num.toString());
-      window.dispatchEvent(new Event('gagaclo_target_updated'));
-    } catch {}
     setIsEditingTarget(false);
     if (showNotification) {
-      showNotification(`Target team berhasil disetel ke ${num} PCS oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
+      showNotification(`Target team hari ini (${todayIso}) berhasil disetel ke ${num} PCS oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
     }
   };
-
-  // Hitung total PCS dan jumlah sampel yang di-input hari ini
-  const todayIso = getLocalTodayIso();
   const todayStats = useMemo(() => {
     let sum = 0;
     let sampleCount = 0;

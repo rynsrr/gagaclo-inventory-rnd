@@ -15,6 +15,7 @@ import {
   formatDateIndo,
   formatDateIndoFull,
 } from '../utils/dateUtils';
+import { getDailyTargetForDate } from '../utils/targetUtils';
 import { getDynamicMemberQuote } from '../data/motivationalQuotes';
 
 // 8 Anggota Tim R&D Resmi (5 PPIC & 3 Support)
@@ -37,26 +38,24 @@ export function PpicPerformanceView() {
     syncFromSupabase,
   } = useInventory();
 
-  const [dailyTarget, setDailyTarget] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gagaclo_daily_target_pcs');
-      return saved ? Math.max(1, Number(saved)) : 150;
-    } catch {
-      return 150;
-    }
-  });
+  const todayIso = getLocalTodayIso();
+  const [selectedDailyDate, setSelectedDailyDate] = useState(todayIso);
 
-  // Dengarkan perubahan target harian dari banner & bersihkan target individu lama agar seluruh tim sinkron
+  // Target Harian Tim per tanggal (mengikuti aturan: berubah per hari, jika tidak diubah maka sama dengan hari sebelumnya)
+  const [dailyTarget, setDailyTarget] = useState(() => getDailyTargetForDate(selectedDailyDate));
+
+  // Update target saat tanggal dipilih berubah atau saat ada perubahan target dari komponen lain
+  useEffect(() => {
+    setDailyTarget(getDailyTargetForDate(selectedDailyDate));
+  }, [selectedDailyDate]);
+
   useEffect(() => {
     try {
       localStorage.removeItem('gagaclo_individual_targets');
     } catch {}
 
     const handleTargetChange = () => {
-      try {
-        const saved = localStorage.getItem('gagaclo_daily_target_pcs');
-        if (saved) setDailyTarget(Math.max(1, Number(saved)));
-      } catch {}
+      setDailyTarget(getDailyTargetForDate(selectedDailyDate));
     };
     window.addEventListener('storage', handleTargetChange);
     window.addEventListener('gagaclo_target_updated', handleTargetChange);
@@ -64,7 +63,7 @@ export function PpicPerformanceView() {
       window.removeEventListener('storage', handleTargetChange);
       window.removeEventListener('gagaclo_target_updated', handleTargetChange);
     };
-  }, []);
+  }, [selectedDailyDate]);
 
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const [expandedCards, setExpandedCards] = useState({});
@@ -222,9 +221,6 @@ export function PpicPerformanceView() {
 
     return totals;
   }, [dailyTeamRecords]);
-
-  const todayIso = getLocalTodayIso();
-  const [selectedDailyDate, setSelectedDailyDate] = useState(todayIso);
 
   // Otomatis pindah hari ke hari ini saat komponen dibuka atau saat tanggal berubah
   useEffect(() => {

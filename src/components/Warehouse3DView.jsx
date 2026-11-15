@@ -72,6 +72,10 @@ export const Warehouse3DView = ({
   const setHighlightPpic = propOnSelectPic !== undefined ? propOnSelectPic : setInternalHighlightPpic;
   const [hoveredBox, setHoveredBox] = useState(null);
   const [isHudExpanded, setIsHudExpanded] = useState(false);
+  const isHudExpandedRef = useRef(false);
+  useEffect(() => {
+    isHudExpandedRef.current = isHudExpanded;
+  }, [isHudExpanded]);
   const hudRef = useRef(null);
 
   useEffect(() => {
@@ -923,7 +927,7 @@ export const Warehouse3DView = ({
     };
     animate();
 
-    const fitFrontView = (smooth = true) => {
+    const fitFrontView = (smooth = true, hudOffset = isHudExpandedRef.current) => {
       const isAll = activeRackRef.current === 'ALL';
       const bounds = new THREE.Box3();
       for (const mesh of boxMeshes) {
@@ -1203,7 +1207,7 @@ export const Warehouse3DView = ({
         {webGlError && (
           <div className="absolute inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3.5 animate-fade-in font-apple">
             <div className="h-14 w-14 rounded-full bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/10">
-              <BoxIcon className="h-7 w-7" />
+              <Boxes className="h-7 w-7" />
             </div>
             <h3 className="text-base sm:text-lg font-bold text-white">
               Akselerasi 3D (WebGL) Diperlukan
