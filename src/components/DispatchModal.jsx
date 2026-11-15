@@ -129,6 +129,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   // Package Specifications
   const [grossWeight, setGrossWeight] = useState('0,54');
   const [netWeight, setNetWeight] = useState('0,34');
+  const [packageType, setPackageType] = useState('CARTON'); // 'CARTON' | 'BAG'
   const [cartonSize, setCartonSize] = useState('35 x 25 x 8 cm');
 
   // Synchronize weight estimations whenever totalPcs changes
@@ -219,7 +220,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           date: shippingDate,
           qty: row.qty,
           recipient: attn.trim(),
-          notes: `Invoice: ${invoiceNo} | Style: ${row.style} | Detail: ${row.detail} | Carton: ${cartonSize}`,
+          notes: `Invoice: ${invoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
         });
       }
 
@@ -751,19 +752,86 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                     </tr>
 
-                    {/* Carton Row */}
+                    {/* Package Type (CARTON / BAG) & Dimension Adjustment Row */}
                     <tr className="border-b border-black">
                       <td colSpan={6} className="py-2 px-3 border-r border-black font-bold align-middle">
-                        CARTON
+                        <div className="flex items-center justify-between gap-2">
+                          {/* Print text */}
+                          <span className="print:inline hidden font-bold text-xs uppercase">{packageType}</span>
+
+                          {/* Screen interactive selector */}
+                          <div className="no-print flex items-center gap-1 bg-black/[0.04] p-1 rounded-lg border border-black/[0.08]">
+                            <span className="text-[10px] text-[#86868b] uppercase tracking-wider font-semibold mr-1">Kemasan:</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPackageType('CARTON');
+                                if (cartonSize.includes('20 x 5') || cartonSize.includes('18 x 3')) {
+                                  setCartonSize('35 x 25 x 8 cm');
+                                }
+                              }}
+                              className={`px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                                packageType === 'CARTON'
+                                  ? 'bg-[#1d1d1f] text-white shadow-2xs'
+                                  : 'text-[#1d1d1f] hover:bg-white'
+                              }`}
+                            >
+                              📦 CARTON
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPackageType('BAG');
+                                if (cartonSize.includes('35 x 25 x 8') || cartonSize.includes('40 x 30 x 15')) {
+                                  setCartonSize('30 x 20 x 5 cm');
+                                }
+                              }}
+                              className={`px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                                packageType === 'BAG'
+                                  ? 'bg-[#1d1d1f] text-white shadow-2xs'
+                                  : 'text-[#1d1d1f] hover:bg-white'
+                              }`}
+                            >
+                              🛍️ BAG
+                            </button>
+                          </div>
+                        </div>
                       </td>
                       <td colSpan={6} className="py-2 px-3 text-center align-middle">
-                        <div className="font-bold text-[11px]">⬇ CARTON SIZE ⬇</div>
-                        <input
-                          type="text"
-                          value={cartonSize}
-                          onChange={(e) => setCartonSize(e.target.value)}
-                          className="font-semibold text-center w-full max-w-xs mt-0.5 bg-transparent border-b border-dashed border-black/30 focus:outline-none focus:bg-amber-100/50 text-xs"
-                        />
+                        <div className="font-bold text-[11px]">
+                          ⬇ {packageType} SIZE ⬇
+                        </div>
+                        <div className="mt-0.5 flex flex-col items-center gap-1">
+                          <input
+                            type="text"
+                            value={cartonSize}
+                            onChange={(e) => setCartonSize(e.target.value)}
+                            placeholder={packageType === 'CARTON' ? '35 x 25 x 8 cm' : '30 x 20 x 5 cm'}
+                            className="font-semibold text-center w-full max-w-xs bg-transparent border-b border-dashed border-black/30 hover:border-black focus:border-black focus:outline-none focus:bg-amber-100/50 text-xs py-0.5 print:border-none"
+                            title="Ketik dimensi ukuran kemasan (Panjang x Lebar x Tinggi)"
+                          />
+                          {/* Quick preset chips (screen only) */}
+                          <div className="no-print flex items-center justify-center gap-1 flex-wrap pt-0.5">
+                            <span className="text-[9px] text-[#86868b] uppercase font-semibold">Preset:</span>
+                            {(packageType === 'CARTON'
+                              ? ['35 x 25 x 8 cm', '40 x 30 x 15 cm', '50 x 40 x 25 cm', '60 x 40 x 30 cm']
+                              : ['30 x 20 x 5 cm', '35 x 25 x 5 cm', '25 x 18 x 3 cm', '40 x 30 x 6 cm']
+                            ).map((dim) => (
+                              <button
+                                key={dim}
+                                type="button"
+                                onClick={() => setCartonSize(dim)}
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition cursor-pointer ${
+                                  cartonSize === dim
+                                    ? 'bg-blue-600 text-white font-bold'
+                                    : 'bg-black/[0.04] hover:bg-black/[0.08] text-[#1d1d1f]'
+                                }`}
+                              >
+                                {dim}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </td>
                     </tr>
 
