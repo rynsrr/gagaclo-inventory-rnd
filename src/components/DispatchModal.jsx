@@ -73,7 +73,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   const [docDate, setDocDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [shippingDate, setShippingDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [fromLocation, setFromLocation] = useState('SEMARANG, INDONESIA');
-  const [paymentBy, setPaymentBy] = useState('SAMPLES OF NO COMMERCIAL VALUE');
+  const [paymentBy, setPaymentBy] = useState('FREIGHT COLLECT (RECEIVER PAY)');
   const [shipmentBy, setShipmentBy] = useState('COURIER / AIR FREIGHT');
   const [invoiceValue, setInvoiceValue] = useState('SAMPLES OF NO COMMERCIAL VALUE');
 
@@ -723,12 +723,20 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                         </div>
                       </td>
                       <td className="p-0 text-left">
-                        <input
-                          type="text"
+                        {/* Screen: Dropdown 2 Opsi */}
+                        <select
                           value={paymentBy}
-                          onChange={(e) => setPaymentBy(e.target.value.toUpperCase())}
-                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                        />
+                          onChange={(e) => setPaymentBy(e.target.value)}
+                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:hidden tracking-tight cursor-pointer transition-colors"
+                          title="Pilih Payment By (Freight Collect atau Shipper Pay)"
+                        >
+                          <option value="FREIGHT COLLECT (RECEIVER PAY)">FREIGHT COLLECT (RECEIVER PAY)</option>
+                          <option value="SHIPPER PAY">SHIPPER PAY</option>
+                        </select>
+                        {/* Print: Teks resmi cetak */}
+                        <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
+                          {paymentBy}
+                        </div>
                       </td>
                     </tr>
                     <tr className="border-b border-black">
