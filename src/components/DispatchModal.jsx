@@ -313,6 +313,28 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
       return;
     }
 
+    if (!packageType || !packageType.trim()) {
+      setError('Wajib memilih jenis kemasan (CARTON atau BAG).');
+      return;
+    }
+
+    if (!cartonSize.trim()) {
+      setError(`Wajib mengisi ${packageType === 'CARTON' ? 'Carton' : 'Bag'} Dimension (dimensi kemasan).`);
+      return;
+    }
+
+    const nwNum = parseFloat(String(netWeight).replace(',', '.'));
+    if (!netWeight || !String(netWeight).trim() || isNaN(nwNum) || nwNum <= 0) {
+      setError('Wajib mengisi Net Weight (WEIGHT NW).');
+      return;
+    }
+
+    const gwNum = parseFloat(String(grossWeight).replace(',', '.'));
+    if (!grossWeight || !String(grossWeight).trim() || isNaN(gwNum) || gwNum <= 0) {
+      setError('Wajib mengisi Gross Weight (WEIGHT GW).');
+      return;
+    }
+
     if (totalPcs <= 0) {
       setError('Jumlah sampel yang dikirim minimal 1 PCS.');
       return;
@@ -1089,70 +1111,76 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
               <div className="text-[10px]">
                 <table className="w-full border-collapse">
                   <tbody>
-                    {/* Single Row: Package Type, Gross Weight (GW), Dimension, and Net Weight (NW) */}
+                    {/* Single Row: Package Type, Dimension, and Weights (NW & GW Side-by-Side) */}
                     <tr className="border-b border-black font-bold">
-                      {/* Left Column (29%): Package Type Dropdown & Gross Weight */}
+                      {/* Left Column (29%): Package Type Dropdown (No icons, Wajib Dipilih) */}
                       <td className="w-[29%] py-1.5 px-2.5 border-r border-black font-bold align-middle">
                         <div className="flex items-center gap-2">
                           {/* Print text */}
-                          <span className="print:inline hidden text-[10px] uppercase">{packageType}</span>
+                          <span className="print:inline hidden text-[10px] uppercase font-bold">{packageType}</span>
 
-                          {/* Screen interactive dropdown */}
+                          {/* Screen interactive dropdown (Tanpa icon) */}
                           <div className="no-print">
                             <select
                               value={packageType}
                               onChange={(e) => handlePackageTypeChange(e.target.value)}
-                              className="font-bold text-[10px] uppercase bg-white hover:bg-amber-100/40 focus:bg-amber-100/70 border border-neutral-300 rounded px-1.5 py-0.5 outline-none cursor-pointer shadow-2xs transition"
-                              title="Pilih Kemasan (CARTON atau BAG)"
+                              className="font-bold text-[10px] uppercase bg-white hover:bg-amber-100/40 focus:bg-amber-100/70 border border-neutral-300 rounded px-2.5 py-0.5 outline-none cursor-pointer shadow-2xs transition"
+                              title="Pilih Kemasan (CARTON atau BAG) - Wajib Dipilih"
+                              required
                             >
-                              <option value="CARTON">📦 CARTON</option>
-                              <option value="BAG">🛍️ BAG</option>
+                              <option value="CARTON">CARTON</option>
+                              <option value="BAG">BAG</option>
                             </select>
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="text"
-                              value={grossWeight}
-                              onChange={(e) => setGrossWeight(e.target.value)}
-                              className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title="Gross Weight (WEIGHT GW: Untuk CARTON = NW + 1, Untuk BAG = NW)"
-                            />
-                            <span className="text-[9.5px]">KG (WEIGHT GW)</span>
                           </div>
                         </div>
                       </td>
 
-                      {/* Right Column (71%): Dimension (Centered) & Net Weight (Right-Aligned) */}
+                      {/* Right Column (71%): Dimension (Tanpa tanda panah, Wajib Diisi) & Weights (NW & GW Bersebelahan, Wajib Diisi) */}
                       <td className="w-[71%] py-1.5 px-3 font-bold align-middle">
-                        <div className="relative flex items-center justify-end w-full">
-                          {/* Center Dimension */}
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="flex items-center gap-1.5 pointer-events-auto">
-                              <span className="text-[9.5px] uppercase tracking-wide font-bold">
-                                ⬇ {packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} ⬇ :
-                              </span>
-                              <input
-                                type="text"
-                                value={cartonSize}
-                                onChange={(e) => setCartonSize(e.target.value)}
-                                placeholder={packageType === 'CARTON' ? '35 x 25 x 8 cm' : '30 x 20 x 5 cm'}
-                                className="font-bold text-center w-36 bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[9.5px]"
-                                title={`Ketik ${packageType === 'CARTON' ? 'Carton' : 'Bag'} Dimension (Panjang x Lebar x Tinggi)`}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Right Net Weight */}
-                          <div className="flex items-center justify-end gap-1 z-10">
+                        <div className="flex items-center justify-between w-full gap-4">
+                          {/* Dimension (Tanpa tanda panah, Wajib Diisi) */}
+                          <div className="flex items-center gap-1.5 font-bold shrink-0">
+                            <span className="text-[10px] uppercase tracking-wide">
+                              {packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} :
+                            </span>
                             <input
                               type="text"
-                              value={netWeight}
-                              onChange={(e) => handleNetWeightChange(e.target.value)}
-                              className="w-12 font-bold text-right bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
-                              title="Net Weight (WEIGHT NW)"
+                              value={cartonSize}
+                              onChange={(e) => setCartonSize(e.target.value)}
+                              placeholder={packageType === 'CARTON' ? '35 x 25 x 8 cm' : '30 x 20 x 5 cm'}
+                              className="font-bold text-center w-36 bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
+                              title={`Ketik ${packageType === 'CARTON' ? 'Carton' : 'Bag'} Dimension (Panjang x Lebar x Tinggi) - Wajib Diisi`}
+                              required
                             />
-                            <span className="text-[9.5px]">KG (WEIGHT NW)</span>
+                          </div>
+
+                          {/* Weights: NW & GW Bersebelahan (Wajib Diisi) */}
+                          <div className="flex items-center justify-end gap-3 font-bold shrink-0">
+                            {/* WEIGHT NW */}
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={netWeight}
+                                onChange={(e) => handleNetWeightChange(e.target.value)}
+                                className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
+                                title="Net Weight (WEIGHT NW) - Wajib Diisi"
+                                required
+                              />
+                              <span className="text-[9.5px]">KG (WEIGHT NW)</span>
+                            </div>
+
+                            {/* WEIGHT GW */}
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={grossWeight}
+                                onChange={(e) => setGrossWeight(e.target.value)}
+                                className="w-12 font-bold text-center bg-transparent hover:bg-amber-50 focus:bg-amber-100 focus:outline-none rounded-xs py-0.5 text-[10px]"
+                                title="Gross Weight (WEIGHT GW: Untuk CARTON = NW + 1, Untuk BAG = NW) - Wajib Diisi"
+                                required
+                              />
+                              <span className="text-[9.5px]">KG (WEIGHT GW)</span>
+                            </div>
                           </div>
                         </div>
                       </td>
