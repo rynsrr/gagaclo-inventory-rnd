@@ -970,9 +970,9 @@ export const Warehouse3DView = ({
 
       if (isAll) {
         if (hudOffset) {
-          // Sudut pandang offset saat dropdown dibuka: geser gudang ke area kanan agar Rak 1 tidak terhalang
-          lookTarget = new THREE.Vector3(-11.0, 1.5, -52.0);
-          targetPos = new THREE.Vector3(-70.0, 46.0, -96.0);
+          // Sudut pandang offset saat dropdown dibuka: geser & perkecil framing agar seluruh denah 3D terlihat utuh tanpa tertutup dropdown
+          lookTarget = new THREE.Vector3(6.0, 2.0, -32.0);
+          targetPos = new THREE.Vector3(-66.0, 56.0, -90.0);
         } else {
           // Sudut pandang default persis referensi visual pengguna (overview denah arsitektur & seluruh rak)
           lookTarget = new THREE.Vector3(-25.1, 1.5, -34.4);
@@ -1352,7 +1352,7 @@ export const Warehouse3DView = ({
 
           {/* Expanded Floating Glass HUD Card */}
           {isHudExpanded && (
-            <div className="w-[320px] sm:w-[480px] md:w-[560px] max-w-[92vw] max-h-[72vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-[22px] border border-black/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.22)] p-4 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal select-none">
+            <div className="w-[320px] sm:w-[440px] md:w-[480px] max-w-[92vw] max-h-[72vh] overflow-y-auto bg-white/95 backdrop-blur-2xl rounded-[22px] border border-black/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.22)] p-3.5 sm:p-4 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal select-none">
               <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-black/[0.06]">
                 <div className="flex items-center gap-2">
                   <div className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[#0071e3]/10 text-[#0071e3]">
