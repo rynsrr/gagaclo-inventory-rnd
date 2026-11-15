@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Target, Edit2, Check, X, User } from 'lucide-react';
+import { Target, Edit2, Check, X, User, ShieldCheck } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { getDailyTargetForDate, saveDailyTargetForDate } from '../utils/targetUtils';
@@ -25,6 +25,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
     showNotification,
   } = useInventory();
   const isMgr = isManager(currentUser) || isSuperuser(currentUser);
+  const isJasmineActive = currentUser && String(currentUser.name).trim().toLowerCase() === 'jasmine';
 
   const todayIso = getLocalTodayIso();
 
@@ -375,6 +376,37 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                 </button>
               );
             })}
+          </div>
+
+          {/* Akun Khusus Jasmine (Inventory Leader) di Bagian Kanan */}
+          <div className="sm:ml-auto flex items-center pl-1 sm:pl-3 sm:border-l border-white/[0.1] shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenUserProfile) {
+                  onOpenUserProfile('Jasmine');
+                }
+              }}
+              className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer select-none active:scale-95 border ${
+                isJasmineActive
+                  ? 'bg-emerald-500/20 border-emerald-400 text-white ring-2 ring-emerald-500/40 shadow-emerald-500/10'
+                  : 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-500/40 hover:border-emerald-500/60 text-emerald-200'
+              }`}
+              title="Akun Jasmine (Inventory Leader) • Klik untuk kelola profil"
+            >
+              <div className="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-300">
+                <ShieldCheck className="w-3 h-3" />
+              </div>
+              <span className="font-bold text-white">Jasmine</span>
+              <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-emerald-950 border border-emerald-500/40">
+                Leader
+              </span>
+              {isJasmineActive && (
+                <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-full bg-emerald-500 text-white">
+                  Anda
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </div>
