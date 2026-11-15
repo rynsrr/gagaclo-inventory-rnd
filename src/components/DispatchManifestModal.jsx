@@ -472,10 +472,9 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                     Jl. Tambak Aji Timur No 1 Ngaliyan Semarang Tel: 0062-24-8661188 Email : zuniarto@gagaclo.com
                   </p>
                   <h2 className="text-[11.5px] font-bold uppercase tracking-widest mt-1">INVOICE &amp; PACKING LIST</h2>
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider mt-0.5">SENDING INFO REFERENCE</h3>
                 </div>
 
-                {/* Header 2: Sending Info Reference (Free-form Paste Area) */}
+                {/* Header 2: Consignee / Buyer Info (Free-form Paste Area) */}
                 <div className="relative group text-center py-2 px-4 border-b border-black bg-amber-50/15 hover:bg-amber-50/30 print:bg-white transition">
                   <textarea
                     value={sendingInfoText}
@@ -488,7 +487,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                       }
                     }}
                     rows={Math.max(3, sendingInfoText.split('\n').length)}
-                    placeholder="TEMPEL / PASTE SENDING INFO REFERENCE DI SINI..."
+                    placeholder="TEMPEL / PASTE INFO DI SINI..."
                     className="w-full text-center text-[10.5px] leading-relaxed font-bold uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent border-none outline-none resize-none transition cursor-text p-1 tracking-wide"
                     style={{ fontFamily: 'inherit' }}
                     title="Area untuk paste referensi info pengiriman / alamat tujuan (tekan Ctrl+V)"
