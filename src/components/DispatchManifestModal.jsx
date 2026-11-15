@@ -507,13 +507,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={midCode}
                             onChange={(e) => setMidCode(e.target.value.toUpperCase())}
                             placeholder="IDGAGTAMBSEM"
-                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
@@ -524,12 +524,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={invoiceNo}
                             onChange={(e) => setInvoiceNo(e.target.value.toUpperCase())}
-                            className="w-full block font-mono font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            placeholder=""
+                            className="w-full h-full block font-mono font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
@@ -560,7 +561,23 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span className="ml-2">:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{consigneeName}. {consigneeAddress}</td>
+                        <td className="p-0 text-left">
+                          <input
+                            type="text"
+                            value={consigneeName ? `${consigneeName}. ${consigneeAddress}` : consigneeAddress}
+                            onChange={(e) => {
+                              const val = e.target.value.toUpperCase();
+                              const parts = val.split('.');
+                              if (parts.length > 1) {
+                                setConsigneeName(parts[0].trim());
+                                setConsigneeAddress(parts.slice(1).join('.').trim());
+                              } else {
+                                setConsigneeAddress(val);
+                              }
+                            }}
+                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -569,12 +586,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={attn}
                             onChange={(e) => setAttn(e.target.value.toUpperCase())}
-                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            placeholder="WAN LIN"
+                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
@@ -585,12 +603,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={orderNo}
                             onChange={(e) => setOrderNo(e.target.value.toUpperCase())}
-                            className="w-full block font-mono font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            placeholder="ORDER NO..."
+                            className="w-full h-full block font-mono font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
@@ -601,12 +620,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={paymentBy}
                             onChange={(e) => setPaymentBy(e.target.value.toUpperCase())}
-                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
@@ -617,12 +636,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={shipmentBy}
                             onChange={(e) => setShipmentBy(e.target.value.toUpperCase())}
-                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
@@ -633,12 +652,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={invoiceValue}
                             onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
-                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
@@ -669,13 +688,13 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 text-left">
+                        <td className="p-0 text-left">
                           <input
                             type="text"
                             value={fromLocation}
                             onChange={(e) => setFromLocation(e.target.value.toUpperCase())}
                             placeholder="SEMARANG, INDONESIA"
-                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
                           />
                         </td>
                       </tr>
