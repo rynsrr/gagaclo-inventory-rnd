@@ -801,7 +801,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                         <div className="font-bold text-[11px]">
                           ⬇ {packageType} SIZE ⬇
                         </div>
-                        <div className="mt-0.5 flex flex-col items-center gap-1">
+                        <div className="mt-0.5">
                           <input
                             type="text"
                             value={cartonSize}
@@ -810,27 +810,6 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                             className="font-semibold text-center w-full max-w-xs bg-transparent border-b border-dashed border-black/30 hover:border-black focus:border-black focus:outline-none focus:bg-amber-100/50 text-xs py-0.5 print:border-none"
                             title="Ketik dimensi ukuran kemasan (Panjang x Lebar x Tinggi)"
                           />
-                          {/* Quick preset chips (screen only) */}
-                          <div className="no-print flex items-center justify-center gap-1 flex-wrap pt-0.5">
-                            <span className="text-[9px] text-[#86868b] uppercase font-semibold">Preset:</span>
-                            {(packageType === 'CARTON'
-                              ? ['35 x 25 x 8 cm', '40 x 30 x 15 cm', '50 x 40 x 25 cm', '60 x 40 x 30 cm']
-                              : ['30 x 20 x 5 cm', '35 x 25 x 5 cm', '25 x 18 x 3 cm', '40 x 30 x 6 cm']
-                            ).map((dim) => (
-                              <button
-                                key={dim}
-                                type="button"
-                                onClick={() => setCartonSize(dim)}
-                                className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition cursor-pointer ${
-                                  cartonSize === dim
-                                    ? 'bg-blue-600 text-white font-bold'
-                                    : 'bg-black/[0.04] hover:bg-black/[0.08] text-[#1d1d1f]'
-                                }`}
-                              >
-                                {dim}
-                              </button>
-                            ))}
-                          </div>
                         </div>
                       </td>
                     </tr>
