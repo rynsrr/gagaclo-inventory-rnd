@@ -51,7 +51,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
-  User,
   ShieldCheck,
   Settings,
   FileSpreadsheet,
@@ -432,20 +431,6 @@ const AppContent = () => {
                   </div>
                 )}
               </div>
-
-              {/* Akun & Profil User PPIC */}
-              <button
-                type="button"
-                onClick={() => {
-                  setUserProfileTarget(null);
-                  setIsUserProfileOpen(true);
-                }}
-                className="flex items-center justify-center h-8.5 w-8.5 rounded-full text-xs font-medium transition-all duration-150 border bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border-black/[0.08] cursor-pointer shadow-2xs"
-                aria-label={`Akun: ${currentUser?.name || 'PPIC'}`}
-                title={`Login sebagai: ${currentUser?.name || 'PPIC'} (${currentUser?.role || 'Staff'}) • Klik untuk beralih akun`}
-              >
-                <User className="h-4 w-4 text-[#1d1d1f]" aria-hidden="true" />
-              </button>
 
             </div>
 
