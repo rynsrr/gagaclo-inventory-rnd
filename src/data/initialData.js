@@ -79,7 +79,7 @@ export const PPIC_MEMBERS = [
     id: 'royan',
     ppicNumber: 1,
     name: 'Royan',
-    role: 'PPIC Lead',
+    role: 'PPIC Specialist',
     isSuperuser: false,
     email: 'royan@gagaclo.internal',
     totalBoxes: 16,
@@ -189,9 +189,9 @@ export const SUPPORT_MEMBERS = [
 export const MANAGER_MEMBERS = [
   {
     id: 'manager-1',
-    ppicNumber: 'MGR',
+    ppicNumber: 'LEAD',
     name: 'Jasmine',
-    role: 'Inventory Manager',
+    role: 'Inventory Leader',
     isManager: true,
     isSuperuser: true,
     isHelper: false,

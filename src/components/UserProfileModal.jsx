@@ -138,10 +138,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                 }}
                 className="w-full rounded-xl border border-black/[0.08] bg-[#f5f5f7] hover:bg-[#ebebee] focus:bg-white py-2.5 px-3 text-[13px] font-medium text-[#1d1d1f] focus:border-[#0071e3] focus:outline-hidden focus:ring-4 focus:ring-[#0071e3]/15 transition cursor-pointer"
               >
-                <optgroup label="Manajemen & Pengawas">
+                <optgroup label="Manajemen &amp; Inventory Leader">
                   {users.filter(u => isManager(u)).map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} (Manager Inventory)
+                      {u.name} (Inventory Leader)
                     </option>
                   ))}
                 </optgroup>
@@ -170,7 +170,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
               const boxCount = boxes.filter(b => b.picName === selectedUserToLogin.name).length;
 
               const roleLabel = isMgr
-                ? 'Manager Inventory'
+                ? 'Inventory Leader'
                 : isHlp
                 ? 'Tim Support Data'
                 : `PPIC #${selectedUserToLogin.ppicNumber}`;

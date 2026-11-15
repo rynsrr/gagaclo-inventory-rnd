@@ -11,7 +11,8 @@ export function isManager(user) {
   return (
     user.isManager === true ||
     name === 'jasmine' ||
-    role.includes('manager')
+    role.includes('manager') ||
+    role.includes('leader')
   );
 }
 
@@ -22,7 +23,7 @@ export function isSuperuser(user) {
   if (name === 'royan') return false;
   if (name === 'jasmine' || user.isManager === true) return true;
   const role = String(user.role || '').toLowerCase();
-  return user.isSuperuser === true || role.includes('super') || role.includes('manager');
+  return user.isSuperuser === true || role.includes('super') || role.includes('manager') || role.includes('leader');
 }
 
 export function isSupport(user) {

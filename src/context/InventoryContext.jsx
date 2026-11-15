@@ -206,7 +206,7 @@ export const InventoryProvider = ({ children }) => {
       id: m.id,
       username: m.name,
       name: m.name,
-      role: 'Inventory Manager',
+      role: 'Inventory Leader',
       isHelper: false,
       isSupport: false,
       isSuperuser: true,
@@ -238,7 +238,7 @@ export const InventoryProvider = ({ children }) => {
                 isManager: isMgr,
                 isSuperuser: isMgr || isSuperuser(u),
                 isHelper: isHelper(u),
-                role: isMgr ? 'Inventory Manager' : (u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff'))),
+                role: isMgr ? 'Inventory Leader' : (u.role && u.role.includes('Superuser') ? 'PPIC Specialist' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff'))),
               };
             });
           return ensureAllUsersIncluded(sanitized);
@@ -281,7 +281,7 @@ export const InventoryProvider = ({ children }) => {
                 isManager: isMgr,
                 isSuperuser: isMgr || isSuperuser(u),
                 isHelper: isHelper(u),
-                role: isMgr ? 'Inventory Manager' : (u.role && u.role.includes('Superuser') ? 'PPIC Lead' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff'))),
+                role: isMgr ? 'Inventory Leader' : (u.role && u.role.includes('Superuser') ? 'PPIC Specialist' : (u.role || (isHelper(u) ? 'Tim Support' : 'PPIC Staff'))),
               };
             })
         : ALL_INITIAL_USERS.map(p => ({
