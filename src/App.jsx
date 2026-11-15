@@ -60,9 +60,7 @@ import {
   Sparkles,
   Box as BoxIcon,
   Pencil,
-  ChevronDown,
 } from 'lucide-react';
-import { BoxMenuDropdown } from './components/BoxMenuDropdown';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
 import { DispatchModal } from './components/DispatchModal';
@@ -96,10 +94,8 @@ const AppContent = () => {
   const [userProfileTarget, setUserProfileTarget] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isBoxMenuOpen, setIsBoxMenuOpen] = useState(false);
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredSearchBoxNumber, setHoveredSearchBoxNumber] = useState(null);
-  const boxMenuRef = useRef(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchContainerRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -126,13 +122,10 @@ const AppContent = () => {
       if (event.key === 'Escape' && isSearchOpen) {
         setIsSearchOpen(false);
       }
-      if (event.key === 'Escape' && isBoxMenuOpen) {
-        setIsBoxMenuOpen(false);
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen, isBoxMenuOpen]);
+  }, [isSearchOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -155,20 +148,6 @@ const AppContent = () => {
       }, 50);
     }
   }, [isSearchOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (boxMenuRef.current && !boxMenuRef.current.contains(e.target)) {
-        setIsBoxMenuOpen(false);
-      }
-    };
-    if (isBoxMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isBoxMenuOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -290,7 +269,6 @@ const AppContent = () => {
                 type="button"
                 onClick={() => {
                   setAppMode('3d-warehouse');
-                  setIsBoxMenuOpen(false);
                   setIsSearchOpen(false);
                   window.dispatchEvent(new CustomEvent('gagaclo_reset_3d_home_view'));
                 }}
@@ -314,50 +292,17 @@ const AppContent = () => {
               <div className="inline-flex items-center p-1 bg-black/[0.04] rounded-full border border-black/[0.05] gap-0.5 max-w-full">
                 {mainTabs.map((tab) => {
                   const isActive = appMode === tab.id;
-                  if (tab.id === '3d-warehouse') {
-                    return (
-                      <div key={tab.id} className={`relative ${isBoxMenuOpen ? 'z-50' : ''}`} ref={boxMenuRef}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAppMode('3d-warehouse');
-                            setIsBoxMenuOpen((prev) => !prev);
-                          }}
-                          aria-current={isActive ? 'page' : undefined}
-                          className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-[-0.01em] transition-all duration-200 cursor-pointer select-none whitespace-nowrap ${
-                            isActive
-                              ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
-                              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
-                          }`}
-                          title="Klik untuk tampilkan 3D & menu status box"
-                        >
-                          <span>{tab.label}</span>
-                          {tab.count !== null && tab.count !== undefined && (
-                            <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums transition-colors ${
-                              isActive ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'bg-black/[0.05] text-[#86868b]'
-                            }`}>
-                              {tab.count}
-                            </span>
-                          )}
-                          <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isBoxMenuOpen ? 'rotate-180 text-[#0071e3]' : 'text-[#86868b]'}`} aria-hidden="true" />
-                        </button>
-
-                        <BoxMenuDropdown
-                          isOpen={isBoxMenuOpen}
-                          onClose={() => setIsBoxMenuOpen(false)}
-                          activePic={highlightPpic}
-                          onSelectPic={setHighlightPpic}
-                          highlightBoxNumbers={highlightBoxNumbers}
-                        />
-                      </div>
-                    );
-                  }
-
                   return (
                     <button
                       key={tab.id}
                       type="button"
-                      onClick={() => setAppMode(tab.id)}
+                      onClick={() => {
+                        if (tab.id === '3d-warehouse' && appMode === '3d-warehouse') {
+                          window.dispatchEvent(new CustomEvent('gagaclo_toggle_box_hud'));
+                        } else {
+                          setAppMode(tab.id);
+                        }
+                      }}
                       aria-current={isActive ? 'page' : undefined}
                       className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-[-0.01em] transition-all duration-200 cursor-pointer select-none whitespace-nowrap ${
                         isActive
