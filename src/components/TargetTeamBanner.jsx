@@ -242,9 +242,9 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
       aria-label="Target Team Inventory R&D"
       className="w-full bg-slate-900 text-slate-100 border-b border-slate-800 px-3 sm:px-5 lg:px-6 py-2.5 shadow-xs no-print transition-all"
     >
-      <div className="max-w-[1560px] mx-auto space-y-2.5">
-        {/* BARIS ATAS (Row 1): TARGET TEAM (Center Aligned, Rapi & Seimbang) */}
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6">
+      <div className="w-fit max-w-full mx-auto space-y-2.5">
+        {/* BARIS ATAS (Row 1): TARGET TEAM (Rata dengan Row 2) */}
+        <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-6 w-full">
           {/* Keterangan Target Team & Angka Real-Time */}
           <div className="flex items-center gap-2.5 shrink-0">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-950/90 border border-blue-600/70 text-blue-300 shadow-2xs shrink-0">
@@ -313,8 +313,8 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
             )}
           </div>
 
-          {/* Progress Bar Target Team (Tengah, Terpadu & Luas) */}
-          <div className="flex items-center gap-2.5 flex-1 min-w-[200px] max-w-md sm:max-w-lg">
+          {/* Progress Bar Target Team (Rata & Membentang Penuh) */}
+          <div className="flex items-center gap-2.5 flex-1 min-w-[200px]">
             <div className="flex-1 bg-slate-950/90 rounded-full h-2.5 sm:h-3 overflow-hidden border border-slate-700/80 p-0.5">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
@@ -343,8 +343,8 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
           </div>
         </div>
 
-        {/* BARIS BAWAH (Row 2): PERSON TARGET & Semua 8 Nama Personel (Center Aligned) */}
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-2 border-t border-slate-800/80">
+        {/* BARIS BAWAH (Row 2): PERSON TARGET & Semua 8 Nama Personel (Rata Kiri dengan Row 1) */}
+        <div className="flex flex-wrap items-center justify-start gap-2 pt-2 border-t border-slate-800/80 w-full">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/90 border border-slate-700 shadow-2xs shrink-0">
             <User className="w-3.5 h-3.5 text-slate-300 shrink-0" />
             <span className="text-xs font-black uppercase tracking-wider text-slate-200">
@@ -352,7 +352,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
             </span>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {allMemberTargets.map((m) => {
               const isCurrentActive = currentUser && String(currentUser.name).trim().toLowerCase() === String(m.name).trim().toLowerCase();
 
