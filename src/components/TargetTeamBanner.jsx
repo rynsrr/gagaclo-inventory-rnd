@@ -366,61 +366,59 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
             </div>
           </div>
 
-          {/* BARIS BAWAH (Row 2): DAILY PERSON TARGET & Semua 8 Nama Personel */}
-          <div className="flex flex-wrap items-center justify-start gap-1.5 pt-1.5 border-t border-white/[0.08] w-full">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.08] border border-white/[0.1] shadow-xs shrink-0">
+          {/* BARIS BAWAH (Row 2): DAILY PERSON TARGET & Semua 8 Nama Personel (SATU BARIS) */}
+          <div className="flex items-center gap-1.5 pt-1.5 border-t border-white/[0.08] w-full overflow-x-auto no-scrollbar flex-nowrap">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.08] border border-white/[0.1] shadow-xs shrink-0 whitespace-nowrap">
               <User className="w-3.5 h-3.5 text-slate-300 shrink-0" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
                 DAILY PERSON TARGET
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {allMemberTargets.map((m) => {
-                const isCurrentActive = currentUser && String(currentUser.name).trim().toLowerCase() === String(m.name).trim().toLowerCase();
+            {allMemberTargets.map((m) => {
+              const isCurrentActive = currentUser && String(currentUser.name).trim().toLowerCase() === String(m.name).trim().toLowerCase();
 
-                return (
-                  <button
-                    type="button"
-                    key={m.name}
-                    onClick={() => {
-                      if (m.isAchieved) {
-                        try {
-                          window.dispatchEvent(
-                            new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
-                          );
-                        } catch {}
-                      }
-                      if (onOpenUserProfile) {
-                        onOpenUserProfile(m.name);
-                      }
-                    }}
-                    className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer select-none active:scale-95 border ${
-                      isCurrentActive
-                        ? 'bg-[#0071e3]/20 border-[#2997ff]/60 text-white ring-2 ring-[#0071e3]/40'
-                        : m.isAchieved
-                        ? 'bg-[#34c759]/15 hover:bg-[#34c759]/25 border-[#34c759]/35 hover:border-[#34c759]/60 text-[#30d158]'
-                        : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
-                    }`}
-                    title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full ${isCurrentActive ? 'bg-[#2997ff] animate-pulse' : m.isAchieved ? 'bg-[#34c759]' : 'bg-white/30'}`}></span>
-                    <span className="font-semibold text-white">{m.name}</span>
-                    <span className={`tabular-nums font-normal ${isCurrentActive ? 'text-[#2997ff]' : m.isAchieved ? 'text-[#30d158]' : 'text-slate-400'}`}>
-                      · {m.pcs}/{m.target} PCE
+              return (
+                <button
+                  type="button"
+                  key={m.name}
+                  onClick={() => {
+                    if (m.isAchieved) {
+                      try {
+                        window.dispatchEvent(
+                          new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
+                        );
+                      } catch {}
+                    }
+                    if (onOpenUserProfile) {
+                      onOpenUserProfile(m.name);
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer select-none active:scale-95 border shrink-0 whitespace-nowrap ${
+                    isCurrentActive
+                      ? 'bg-[#0071e3]/20 border-[#2997ff]/60 text-white ring-2 ring-[#0071e3]/40'
+                      : m.isAchieved
+                      ? 'bg-[#34c759]/15 hover:bg-[#34c759]/25 border-[#34c759]/35 hover:border-[#34c759]/60 text-[#30d158]'
+                      : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
+                  }`}
+                  title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isCurrentActive ? 'bg-[#2997ff] animate-pulse' : m.isAchieved ? 'bg-[#34c759]' : 'bg-white/30'}`}></span>
+                  <span className="font-semibold text-white">{m.name}</span>
+                  <span className={`tabular-nums font-normal ${isCurrentActive ? 'text-[#2997ff]' : m.isAchieved ? 'text-[#30d158]' : 'text-slate-400'}`}>
+                    · {m.pcs}/{m.target} PCE
+                  </span>
+                  {m.isAchieved && (
+                    <span className="text-[11px] text-[#30d158] font-bold">✓</span>
+                  )}
+                  {isCurrentActive && (
+                    <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-full bg-[#0071e3] text-white">
+                      Anda
                     </span>
-                    {m.isAchieved && (
-                      <span className="text-[11px] text-[#30d158] font-bold">✓</span>
-                    )}
-                    {isCurrentActive && (
-                      <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-full bg-[#0071e3] text-white">
-                        Anda
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 

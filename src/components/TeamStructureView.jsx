@@ -193,24 +193,31 @@ export function TeamStructureView() {
                   
                   {/* Spine horizontal menghubungkan cabang PPIC & Support */}
                   <div className="w-3/4 h-1 bg-gradient-to-r from-amber-500 via-emerald-500 to-cyan-500 rounded-full relative">
-                    {/* Left Drop: Ke PPIC */}
-                    <div className="absolute left-0 top-0 w-1 h-6 bg-amber-500 rounded-full" />
-                    <div className="absolute left-[-4px] top-6 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-amber-500" />
+                    {/* Left Drop: Ke PPIC (Panah & Badge terpusat di tengah) */}
+                    <div className="absolute left-0 top-0 flex flex-col items-center -translate-x-1/2">
+                      <div className="w-1 h-6 bg-amber-500" />
+                      <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-amber-500" />
+                      <div className="mt-2 whitespace-nowrap">
+                        <span className="px-3 py-1 rounded-full bg-amber-950/90 border border-amber-500/60 text-amber-300 shadow-md text-[10px] font-bold tracking-wider uppercase">
+                          ▼ Target &amp; Penugasan Box
+                        </span>
+                      </div>
+                    </div>
                     
-                    {/* Right Drop: Ke Tim Support */}
-                    <div className="absolute right-0 top-0 w-1 h-6 bg-cyan-500 rounded-full" />
-                    <div className="absolute right-[-4px] top-6 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-cyan-500" />
+                    {/* Right Drop: Ke Tim Support (Panah & Badge terpusat di tengah) */}
+                    <div className="absolute right-0 top-0 flex flex-col items-center translate-x-1/2">
+                      <div className="w-1 h-6 bg-cyan-500" />
+                      <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-cyan-500" />
+                      <div className="mt-2 whitespace-nowrap">
+                        <span className="px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-500/60 text-cyan-300 shadow-md text-[10px] font-bold tracking-wider uppercase">
+                          ▼ Penugasan Asistensi
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Badges di atas alur cabang */}
-                  <div className="w-3/4 flex justify-between items-center mt-8 px-2 text-[10px] font-bold tracking-wider uppercase">
-                    <span className="px-3 py-1 rounded-full bg-amber-950/90 border border-amber-500/60 text-amber-300 shadow-md">
-                      ▼ Target &amp; Penugasan Box
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-500/60 text-cyan-300 shadow-md">
-                      ▼ Penugasan Asistensi
-                    </span>
-                  </div>
+                  {/* Spacer vertical agar tingkat 3 tidak menabrak badge absolute */}
+                  <div className="h-10" />
                 </div>
 
                 {/* ========================================================= */}
@@ -223,9 +230,6 @@ export function TeamStructureView() {
                     <div className="flex items-center justify-between mb-1 pb-2 border-b border-amber-500/30">
                       <span className="text-amber-400 font-bold text-sm tracking-wide">
                         📦 5 PPIC &mdash; [ R ] RESPONSIBLE (PENANGGUNG JAWAB UTAMA BOX)
-                      </span>
-                      <span className="text-xs text-amber-300/80 font-medium">
-                        Penanggung Jawab Box
                       </span>
                     </div>
 
@@ -241,8 +245,8 @@ export function TeamStructureView() {
                             </span>
                             <div className="text-base font-extrabold text-white">{p.name}</div>
                           </div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.raciBg}`}>
-                            [ R ] Resp.
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.raciBg} shrink-0`}>
+                            [ R ] Responsible
                           </span>
                         </div>
                       ))}
@@ -255,9 +259,6 @@ export function TeamStructureView() {
                       <div className="flex items-center justify-between mb-1 pb-2 border-b border-cyan-500/30">
                         <span className="text-cyan-400 font-bold text-sm tracking-wide">
                           ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT
-                        </span>
-                        <span className="text-xs text-cyan-300/80 font-medium">
-                          Support Data Entry
                         </span>
                       </div>
 
