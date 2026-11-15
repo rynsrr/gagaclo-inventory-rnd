@@ -221,7 +221,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
       aria-label="Target Team Inventory R&D"
       className="w-full bg-[#161618] text-[#f5f5f7] border-b border-white/[0.08] px-3 sm:px-5 lg:px-6 py-2 shadow-xs no-print transition-all font-apple"
     >
-      <div className="w-fit max-w-full mx-auto flex items-center gap-3 sm:gap-4 lg:gap-5">
+      <div className="w-full mx-auto flex items-center gap-3 sm:gap-4 lg:gap-5">
 
         {/* AKUN KHUSUS JASMINE DI BAGIAN KIRI DENGAN ICON BESAR & MIDDLE ALIGN DENGAN KEDUA BARIS */}
         <div className="shrink-0 flex items-center">
@@ -366,59 +366,62 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
             </div>
           </div>
 
-          {/* BARIS BAWAH (Row 2): DAILY PERSON TARGET & Semua 8 Nama Personel (SATU BARIS) */}
-          <div className="flex items-center gap-1.5 pt-1.5 border-t border-white/[0.08] w-full overflow-x-auto no-scrollbar flex-nowrap">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.08] border border-white/[0.1] shadow-xs shrink-0 whitespace-nowrap">
-              <User className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+          {/* BARIS BAWAH (Row 2): DAILY PERSON TARGET & Semua 8 Nama Personel (FULL WIDTH FIT - TANPA SCROLLBAR) */}
+          <div className="flex items-center gap-1 sm:gap-2 pt-1.5 border-t border-white/[0.08] w-full">
+            <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-white/[0.08] border border-white/[0.1] shadow-xs shrink-0 whitespace-nowrap">
+              <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-300 shrink-0" />
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-300">
                 DAILY PERSON TARGET
               </span>
             </div>
 
-            {allMemberTargets.map((m) => {
-              const isCurrentActive = currentUser && String(currentUser.name).trim().toLowerCase() === String(m.name).trim().toLowerCase();
+            <div className="flex-1 min-w-0 grid grid-cols-8 gap-1 sm:gap-1.5">
+              {allMemberTargets.map((m) => {
+                const isCurrentActive = currentUser && String(currentUser.name).trim().toLowerCase() === String(m.name).trim().toLowerCase();
 
-              return (
-                <button
-                  type="button"
-                  key={m.name}
-                  onClick={() => {
-                    if (m.isAchieved) {
-                      try {
-                        window.dispatchEvent(
-                          new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
-                        );
-                      } catch {}
-                    }
-                    if (onOpenUserProfile) {
-                      onOpenUserProfile(m.name);
-                    }
-                  }}
-                  className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer select-none active:scale-95 border shrink-0 whitespace-nowrap ${
-                    isCurrentActive
-                      ? 'bg-[#0071e3]/20 border-[#2997ff]/60 text-white ring-2 ring-[#0071e3]/40'
-                      : m.isAchieved
-                      ? 'bg-[#34c759]/15 hover:bg-[#34c759]/25 border-[#34c759]/35 hover:border-[#34c759]/60 text-[#30d158]'
-                      : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
-                  }`}
-                  title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isCurrentActive ? 'bg-[#2997ff] animate-pulse' : m.isAchieved ? 'bg-[#34c759]' : 'bg-white/30'}`}></span>
-                  <span className="font-semibold text-white">{m.name}</span>
-                  <span className={`tabular-nums font-normal ${isCurrentActive ? 'text-[#2997ff]' : m.isAchieved ? 'text-[#30d158]' : 'text-slate-400'}`}>
-                    · {m.pcs}/{m.target} PCE
-                  </span>
-                  {m.isAchieved && (
-                    <span className="text-[11px] text-[#30d158] font-bold">✓</span>
-                  )}
-                  {isCurrentActive && (
-                    <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.2 rounded-full bg-[#0071e3] text-white">
-                      Anda
+                return (
+                  <button
+                    type="button"
+                    key={m.name}
+                    onClick={() => {
+                      if (m.isAchieved) {
+                        try {
+                          window.dispatchEvent(
+                            new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
+                          );
+                        } catch {}
+                      }
+                      if (onOpenUserProfile) {
+                        onOpenUserProfile(m.name);
+                      }
+                    }}
+                    className={`w-full min-w-0 px-1 sm:px-2 py-1 rounded-full text-[11px] sm:text-xs font-medium flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer select-none active:scale-95 border truncate ${
+                      isCurrentActive
+                        ? 'bg-[#0071e3]/20 border-[#2997ff]/60 text-white ring-2 ring-[#0071e3]/40'
+                        : m.isAchieved
+                        ? 'bg-[#34c759]/15 hover:bg-[#34c759]/25 border-[#34c759]/35 hover:border-[#34c759]/60 text-[#30d158]'
+                        : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
+                    }`}
+                    title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isCurrentActive ? 'bg-[#2997ff] animate-pulse' : m.isAchieved ? 'bg-[#34c759]' : 'bg-white/30'}`}></span>
+                    <span className="font-semibold text-white truncate">{m.name}</span>
+                    <span className={`tabular-nums font-normal shrink-0 text-[10px] sm:text-[11px] ${isCurrentActive ? 'text-[#2997ff]' : m.isAchieved ? 'text-[#30d158]' : 'text-slate-400'}`}>
+                      · {m.pcs}/{m.target}
                     </span>
-                  )}
-                </button>
-              );
-            })}
+                    <span className="text-[9px] text-slate-400 shrink-0 hidden 2xl:inline">PCE</span>
+                    {m.isAchieved && (
+                      <span className="text-[10px] text-[#30d158] font-bold shrink-0">✓</span>
+                    )}
+                    {isCurrentActive && (
+                      <span className="text-[8px] uppercase tracking-wider font-extrabold px-1 rounded-full bg-[#0071e3] text-white shrink-0 hidden lg:inline">
+                        Anda
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
