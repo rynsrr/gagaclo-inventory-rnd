@@ -7,6 +7,7 @@ import {
   Eye,
   EyeOff,
   Lock,
+  LogOut,
   Crown,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
@@ -17,6 +18,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
     users,
     currentUser,
     loginUser,
+    logoutUser,
     boxes,
   } = useInventory();
 
@@ -65,13 +67,25 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
         type: 'ok',
         text: `Berhasil login sebagai ${res.user.name}.`,
       });
-      setSelectedUserToLogin(null);
       setLoginPassword('');
       setTimeout(() => {
         onClose();
       }, 700);
     } else {
       setLoginError(res.message || 'Password salah.');
+    }
+  };
+
+  // Handle Logout
+  const handleLogout = () => {
+    if (logoutUser) {
+      logoutUser();
+      setStatusMessage({
+        type: 'ok',
+        text: 'Berhasil keluar dari akun.',
+      });
+      setLoginPassword('');
+      setLoginError('');
     }
   };
 
@@ -88,17 +102,17 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
       <div className="relative w-full max-w-md max-h-[92vh] flex flex-col rounded-2xl bg-white shadow-xl border border-slate-200/90 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-gradient-to-r from-slate-50 via-white to-blue-50/40">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50/70">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/25">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <h3 id="user-profile-modal-title" className="text-sm sm:text-base font-black text-slate-900">
+              <h3 id="user-profile-modal-title" className="text-sm sm:text-base font-black text-slate-900 leading-tight">
                 Ganti User / Login Akun
               </h3>
               <p className="text-xs font-medium text-slate-500">
-                Otentikasi &amp; pergantian akun pengguna
+                Kelola akun dan otentikasi pengguna
               </p>
             </div>
           </div>
@@ -106,32 +120,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
             type="button"
             onClick={onClose}
             aria-label="Tutup modal"
-            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
-        </div>
-
-        {/* Current Active User Banner */}
-        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-2.5 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-slate-600">Login sebagai:</span>
-            <span className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-black ${
-              isManager(currentUser)
-                ? 'bg-indigo-100 text-indigo-900'
-                : isHelper(currentUser)
-                ? 'bg-teal-100 text-teal-900'
-                : 'bg-blue-100/80 text-blue-800'
-            }`}>
-              <span className={`inline-block h-2 w-2 rounded-full ${currentUser?.avatarBg || 'bg-blue-600'}`} />
-              {currentUser?.name || 'Tamu'} ({isManager(currentUser) ? 'Manager' : `#${currentUser?.ppicNumber || 1}`})
-            </span>
-          </div>
-          <div className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
-            <Check className="h-3.5 w-3.5" />
-            <span>Akun Aktif</span>
-          </div>
         </div>
 
         {/* Modal Body */}
@@ -171,7 +163,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                   setLoginPassword('');
                   setLoginError('');
                 }}
-                className="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-xs font-bold text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition cursor-pointer"
+                className="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-xs font-bold text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-100 transition cursor-pointer"
               >
                 <optgroup label="Manajemen & Pengawas">
                   {users.filter(u => isManager(u)).map((u) => (
@@ -204,11 +196,29 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
               const isHlp = isHelper(selectedUserToLogin);
               const boxCount = boxes.filter(b => b.picName === selectedUserToLogin.name).length;
 
+              const roleBadgeColor = isMgr
+                ? 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                : isHlp
+                ? 'bg-teal-100 text-teal-900 border-teal-300'
+                : 'bg-blue-100 text-blue-900 border-blue-300';
+
+              const roleLabel = isMgr
+                ? 'Manager Inventory'
+                : isHlp
+                ? 'Tim Support Data'
+                : `PPIC #${selectedUserToLogin.ppicNumber}`;
+
+              const avatarBgClass = isMgr
+                ? 'bg-indigo-600'
+                : isHlp
+                ? 'bg-teal-600'
+                : selectedUserToLogin.avatarBg || 'bg-blue-600';
+
               return (
                 <div
                   className={`rounded-2xl border p-4 sm:p-5 transition space-y-4 ${
                     isCurrent
-                      ? 'border-emerald-300 bg-emerald-50/40'
+                      ? 'border-emerald-300 bg-emerald-50/30'
                       : isMgr
                       ? 'border-indigo-200 bg-indigo-50/30'
                       : isHlp
@@ -219,9 +229,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white font-black text-base shadow-sm ${
-                          isMgr ? 'bg-indigo-600' : selectedUserToLogin.avatarBg || 'bg-blue-600'
-                        }`}
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white font-black text-base shadow-xs ${avatarBgClass}`}
                       >
                         {isMgr ? (
                           <Crown className="w-6 h-6 text-white" />
@@ -232,20 +240,8 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="text-sm font-black text-slate-900">{selectedUserToLogin.name}</h4>
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-black border ${
-                              isMgr
-                                ? 'bg-indigo-100 text-indigo-900 border-indigo-300'
-                                : isHlp
-                                ? 'bg-teal-100 text-teal-900 border-teal-300'
-                                : 'bg-blue-100 text-blue-900 border-blue-300'
-                            }`}
-                          >
-                            {isMgr
-                              ? 'Manager Inventory'
-                              : isHlp
-                              ? 'Tim Support Data'
-                              : `PPIC #${selectedUserToLogin.ppicNumber}`}
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-black border ${roleBadgeColor}`}>
+                            {roleLabel}
                           </span>
                           {isCurrent && (
                             <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-xs font-black text-emerald-800 flex items-center gap-1">
@@ -264,55 +260,89 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                     </div>
                   </div>
 
-                  {/* Form Password Login */}
-                  <form onSubmit={handleSwitchUser} className="space-y-3 pt-3 border-t border-slate-200">
-                    {loginError && (
-                      <div className="flex items-center gap-2 text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
-                        <AlertCircle className="h-4 w-4 shrink-0" />
-                        <span>{loginError}</span>
+                  {/* KONDISI A: Akun Sedang Aktif (Tidak perlu input password lagi) */}
+                  {isCurrent ? (
+                    <div className="space-y-3 pt-3 border-t border-slate-200">
+                      <div className="rounded-xl bg-white/90 border border-emerald-200 p-3 text-xs space-y-1">
+                        <p className="font-bold flex items-center gap-1.5 text-emerald-800">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          Anda sedang menggunakan akun ini
+                        </p>
+                        <p className="text-slate-600 text-[11px] leading-relaxed">
+                          Seluruh input sample, pergeseran status box, dan rekap harian tersimpan atas nama <strong>{selectedUserToLogin.name}</strong>.
+                        </p>
                       </div>
-                    )}
 
-                    <div>
-                      <label htmlFor="login-password-input" className="text-xs font-bold text-slate-700 block mb-1">
-                        Password {selectedUserToLogin.name}
-                      </label>
-                      <div className="relative">
-                        <input
-                          id="login-password-input"
-                          type={showLoginPassword ? 'text' : 'password'}
-                          autoFocus
-                          required
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          placeholder={`Masukkan password ${selectedUserToLogin.name}...`}
-                          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3.5 pr-10 text-xs text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
-                        />
+                      <div className="flex items-center gap-2 pt-1">
                         <button
                           type="button"
-                          onClick={() => setShowLoginPassword((p) => !p)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                          aria-label={showLoginPassword ? 'Sembunyikan password' : 'Lihat password'}
+                          onClick={onClose}
+                          className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-slate-900 hover:bg-slate-800 shadow-xs cursor-pointer transition text-center"
                         >
-                          {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          Lanjut Bekerja
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 cursor-pointer transition"
+                          title="Keluar dari sesi akun ini"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Keluar</span>
                         </button>
                       </div>
                     </div>
+                  ) : (
+                    /* KONDISI B: Hendak Beralih Akun (Input Password) */
+                    <form onSubmit={handleSwitchUser} className="space-y-3 pt-3 border-t border-slate-200">
+                      {loginError && (
+                        <div className="flex items-center gap-2 text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                          <span>{loginError}</span>
+                        </div>
+                      )}
 
-                    <button
-                      type="submit"
-                      className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-black text-white shadow-sm transition cursor-pointer ${
-                        isMgr
-                          ? 'bg-indigo-600 hover:bg-indigo-500'
-                          : isHlp
-                          ? 'bg-teal-600 hover:bg-teal-500'
-                          : 'bg-blue-600 hover:bg-blue-500'
-                      }`}
-                    >
-                      <Lock className="h-4 w-4" />
-                      <span>{isCurrent ? 'Masuk Ulang Akun' : `Masuk sebagai ${selectedUserToLogin.name}`}</span>
-                    </button>
-                  </form>
+                      <div>
+                        <label htmlFor="login-password-input" className="text-xs font-bold text-slate-700 block mb-1">
+                          Password {selectedUserToLogin.name}
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="login-password-input"
+                            type={showLoginPassword ? 'text' : 'password'}
+                            autoFocus
+                            required
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            placeholder={`Masukkan password ${selectedUserToLogin.name}...`}
+                            className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3.5 pr-10 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-100 transition"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginPassword((p) => !p)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                            aria-label={showLoginPassword ? 'Sembunyikan password' : 'Lihat password'}
+                          >
+                            {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-black text-white shadow-xs transition cursor-pointer ${
+                          isMgr
+                            ? 'bg-indigo-600 hover:bg-indigo-500'
+                            : isHlp
+                            ? 'bg-teal-600 hover:bg-teal-500'
+                            : 'bg-blue-600 hover:bg-blue-500'
+                        }`}
+                      >
+                        <Lock className="h-4 w-4" />
+                        <span>Masuk sebagai {selectedUserToLogin.name}</span>
+                      </button>
+                    </form>
+                  )}
                 </div>
               );
             })()}
@@ -321,10 +351,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <Lock className="h-3.5 w-3.5 text-slate-400" />
-            <span>Hak Akses: Setiap PIC mengelola alokasi box dan sampel masing-masing.</span>
+        <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Lock className="h-3 w-3 shrink-0" />
+            <span>Akses terenkripsi per PIC</span>
           </div>
           <button
             type="button"
