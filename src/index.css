@@ -87,6 +87,13 @@
 
 /* Inventory screen appearance. Print keeps the document's own layout. */
 @media screen {
+  .font-apple {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.012em;
+  }
+
   .inventory-shell {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 45%, #eff6ff 100%);
     background-attachment: fixed;
