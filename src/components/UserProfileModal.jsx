@@ -19,17 +19,16 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
     currentUser,
     loginUser,
     logoutUser,
+    showNotification,
     boxes,
   } = useInventory();
 
-  const [statusMessage, setStatusMessage] = useState(null); // { type: 'ok' | 'err', text: '' }
   const [selectedUserToLogin, setSelectedUserToLogin] = useState(null);
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
-    setStatusMessage(null);
     setLoginError('');
     if (isOpen && initialSelectedUserName && users?.length > 0) {
       const target = users.find(
@@ -63,14 +62,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
 
     const res = loginUser(selectedUserToLogin.name, loginPassword);
     if (res.success) {
-      setStatusMessage({
-        type: 'ok',
-        text: `Berhasil login sebagai ${res.user.name}.`,
-      });
+      // Langsung tutup modal dan tampilkan floating toast di pojok layar
       setLoginPassword('');
-      setTimeout(() => {
-        onClose();
-      }, 700);
+      onClose();
+      showNotification?.(`Berhasil login sebagai ${res.user.name}.`, 'target', 3500);
     } else {
       setLoginError(res.message || 'Password salah.');
     }
@@ -79,13 +74,12 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
   // Handle Logout
   const handleLogout = () => {
     if (logoutUser) {
+      const prevName = currentUser?.name || 'User';
       logoutUser();
-      setStatusMessage({
-        type: 'ok',
-        text: 'Berhasil keluar dari akun.',
-      });
       setLoginPassword('');
       setLoginError('');
+      onClose();
+      showNotification?.(`Berhasil keluar dari akun ${prevName}.`, 'info', 3000);
     }
   };
 
@@ -128,25 +122,6 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          
-          {/* Notification Feedback */}
-          {statusMessage && (
-            <div
-              className={`flex items-start gap-2.5 rounded-xl p-3 text-xs font-semibold transition ${
-                statusMessage.type === 'ok'
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                  : 'bg-rose-50 text-rose-800 border border-rose-200'
-              }`}
-            >
-              {statusMessage.type === 'ok' ? (
-                <Check className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
-              ) : (
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-              )}
-              <span>{statusMessage.text}</span>
-            </div>
-          )}
-
           <div className="space-y-4">
             {/* Pemilihan Akun (Dropdown Ringkas & Bersih) */}
             <div className="space-y-1.5">
