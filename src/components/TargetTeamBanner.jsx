@@ -295,16 +295,6 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                   </span>
                 </div>
 
-                <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded-md border font-mono ${
-                    isAchieved
-                      ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/60'
-                      : 'bg-slate-800 text-slate-200 border-slate-700'
-                  }`}
-                >
-                  {percent}%
-                </span>
-
                 {isMgr && (
                   <button
                     type="button"
@@ -333,6 +323,15 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                 style={{ width: `${Math.min(100, percent)}%` }}
               />
             </div>
+            <span
+              className={`text-xs font-bold px-2 py-0.5 rounded-md border font-mono shrink-0 whitespace-nowrap ${
+                isAchieved
+                  ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/60'
+                  : 'bg-slate-800 text-slate-200 border-slate-700'
+              }`}
+            >
+              {percent}%
+            </span>
             {isAchieved && (
               <div className="text-xs font-medium text-slate-300 shrink-0 whitespace-nowrap">
                 <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
