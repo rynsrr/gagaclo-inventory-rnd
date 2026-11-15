@@ -2505,6 +2505,7 @@ export const InventoryProvider = ({ children }) => {
     const isPermanent = dispatchData.type === 'PERMANENT';
     const statusText = `Dispatched: ${destName} (${isPermanent ? 'Permanen' : 'Review'})`;
 
+    const invoiceNumber = dispatchData.invoiceNo || (dispatchData.notes?.match(/Invoice:\s*([^\s|]+)/i)?.[1] || '');
     const dispatchTags = encodeDispatchTags({
       destinationId: dispatchData.destinationId,
       destinationLabel: destName,
@@ -2514,6 +2515,8 @@ export const InventoryProvider = ({ children }) => {
       pic: currentUser?.name || originPic,
       recipient: dispatchData.recipient || '',
       notes: dispatchData.notes || '',
+      buyerName: dispatchData.buyerName || '',
+      invoiceNo: invoiceNumber,
     }, item.tags);
 
     // If partial dispatch (e.g. sending 2 out of 5 PCS)

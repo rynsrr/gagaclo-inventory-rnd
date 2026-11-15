@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Printer,
@@ -64,17 +64,29 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     return '-';
   });
   const [midCode, setMidCode] = useState('IDGAGTAMBSEM');
-  const [invoiceNo, setInvoiceNo] = useState(() => {
+  const defaultInvoiceNo = useMemo(() => {
+    if (initialConfig?.invoiceNo) return initialConfig.invoiceNo;
+    if (firstDispatch?.invoiceNo) return firstDispatch.invoiceNo;
     const cleanDate = String(defaultDate).replace(/[-/]/g, '');
     return `INV-RND-${cleanDate}-${safeItems.length || 1}`;
-  });
+  }, [defaultDate, firstDispatch, initialConfig, safeItems.length]);
+
+  const [invoiceNo, setInvoiceNo] = useState(() => defaultInvoiceNo);
   const [docDate, setDocDate] = useState(() => defaultDate);
   const [shippingDate, setShippingDate] = useState(() => defaultDate);
-  const [fromLocation, setFromLocation] = useState('Semarang,Indonesia');
+  const [fromLocation, setFromLocation] = useState('SEMARANG, INDONESIA');
   const [orderNo, setOrderNo] = useState(() => defaultOrderNo);
   const [paymentBy, setPaymentBy] = useState('SAMPLES OF NO COMMERCIAL VALUE');
   const [shipmentBy, setShipmentBy] = useState('COURIER / AIR FREIGHT');
   const [invoiceValue, setInvoiceValue] = useState('SAMPLES OF NO COMMERCIAL VALUE');
+
+  useEffect(() => {
+    if (firstDispatch?.invoiceNo) {
+      setInvoiceNo(firstDispatch.invoiceNo);
+    } else if (!invoiceNo || invoiceNo.trim() === '') {
+      setInvoiceNo(defaultInvoiceNo);
+    }
+  }, [firstDispatch, defaultInvoiceNo]);
 
   // Package Specifications
   const [grossWeight, setGrossWeight] = useState(() => {
@@ -438,12 +450,48 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                 </div>
 
                 {/* Header 2: Consignee / Buyer Info */}
-                <div className="text-center py-2 px-4 border-b border-black space-y-0.5 bg-slate-50/30 print:bg-white">
-                  <div className="font-bold uppercase text-[12px] tracking-wide">{consigneeName}</div>
-                  <div className="text-[10.5px]">Address: {consigneeAddress}</div>
+                <div className="text-center py-2 px-4 border-b border-black space-y-1 bg-amber-50/15 print:bg-white">
+                  <div>
+                    <input
+                      type="text"
+                      value={consigneeName}
+                      onChange={(e) => setConsigneeName(e.target.value.toUpperCase())}
+                      placeholder="NAMA BUYER / CONSIGNEE..."
+                      className="font-bold uppercase text-[12px] text-center w-full max-w-md bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition cursor-text"
+                      title="Ketik Nama Buyer / Consignee"
+                    />
+                  </div>
+                  <div className="flex items-center justify-center gap-1 text-[10.5px]">
+                    <span className="font-semibold text-neutral-700 print:text-black">Address:</span>
+                    <input
+                      type="text"
+                      value={consigneeAddress}
+                      onChange={(e) => setConsigneeAddress(e.target.value.toUpperCase())}
+                      placeholder="Alamat lengkap tujuan..."
+                      className="text-[10.5px] text-center w-full max-w-xl uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition cursor-text"
+                    />
+                  </div>
                   <div className="flex items-center justify-center gap-6 text-[10.5px] font-semibold">
-                    <div>ATTN: {attn}</div>
-                    <div>TEL: {tel}</div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-neutral-700 print:text-black">ATTN:</span>
+                      <input
+                        type="text"
+                        value={attn}
+                        onChange={(e) => setAttn(e.target.value.toUpperCase())}
+                        placeholder="Nama Penerima..."
+                        className="text-[10.5px] font-semibold text-center w-36 uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition cursor-text"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-neutral-700 print:text-black">TEL:</span>
+                      <input
+                        type="text"
+                        value={tel}
+                        onChange={(e) => setTel(e.target.value.toUpperCase())}
+                        placeholder="Nomor Telepon..."
+                        className="text-[10.5px] text-center w-36 uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition cursor-text"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -458,7 +506,15 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{midCode}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={midCode}
+                            onChange={(e) => setMidCode(e.target.value.toUpperCase())}
+                            placeholder="IDGAGTAMBSEM"
+                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -467,7 +523,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{invoiceNo}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={invoiceNo}
+                            onChange={(e) => setInvoiceNo(e.target.value.toUpperCase())}
+                            className="w-full block font-mono font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -476,7 +539,18 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{formatDateDisplay(docDate)}</td>
+                        <td className="py-1 px-3 text-left">
+                          <div className="flex items-center justify-start gap-2 text-left">
+                            <span className="font-mono font-bold text-[10.5px] leading-none text-left">{formatDateDisplay(docDate)}</span>
+                            <input
+                              type="date"
+                              value={docDate}
+                              onChange={(e) => setDocDate(e.target.value)}
+                              className="w-4 h-4 p-0 m-0 opacity-40 hover:opacity-100 cursor-pointer no-print border-none bg-transparent"
+                              title="Pilih tanggal dokumen"
+                            />
+                          </div>
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -494,7 +568,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{attn}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={attn}
+                            onChange={(e) => setAttn(e.target.value.toUpperCase())}
+                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -503,7 +584,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{orderNo}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={orderNo}
+                            onChange={(e) => setOrderNo(e.target.value.toUpperCase())}
+                            className="w-full block font-mono font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -512,7 +600,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{paymentBy}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={paymentBy}
+                            onChange={(e) => setPaymentBy(e.target.value.toUpperCase())}
+                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -521,7 +616,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{shipmentBy}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={shipmentBy}
+                            onChange={(e) => setShipmentBy(e.target.value.toUpperCase())}
+                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -530,7 +632,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{invoiceValue}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={invoiceValue}
+                            onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
+                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -539,7 +648,18 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{formatDateDisplay(shippingDate)}</td>
+                        <td className="py-1 px-3 text-left">
+                          <div className="flex items-center justify-start gap-2 text-left">
+                            <span className="font-mono font-bold text-[10.5px] leading-none text-left">{formatDateDisplay(shippingDate)}</span>
+                            <input
+                              type="date"
+                              value={shippingDate}
+                              onChange={(e) => setShippingDate(e.target.value)}
+                              className="w-4 h-4 p-0 m-0 opacity-40 hover:opacity-100 cursor-pointer no-print border-none bg-transparent"
+                              title="Pilih tanggal pengiriman"
+                            />
+                          </div>
+                        </td>
                       </tr>
                       <tr>
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -548,7 +668,15 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{fromLocation.toUpperCase()}</td>
+                        <td className="py-1 px-3 text-left">
+                          <input
+                            type="text"
+                            value={fromLocation}
+                            onChange={(e) => setFromLocation(e.target.value.toUpperCase())}
+                            placeholder="SEMARANG, INDONESIA"
+                            className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                          />
+                        </td>
                       </tr>
                     </tbody>
                   </table>

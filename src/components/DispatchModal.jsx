@@ -55,7 +55,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   );
   const [attn, setAttn] = useState('WAN LIN');
   const [tel, setTel] = useState('+41 81 511 23 20');
-  const [midCode] = useState('IDGAGTAMBSEM');
+  const [midCode, setMidCode] = useState('IDGAGTAMBSEM');
   const [invoiceNo, setInvoiceNo] = useState(() => {
     const dStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     return `INV-RND-${dStr}-${itemsToDispatch.length || 1}`;
@@ -63,7 +63,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
   const [docDate, setDocDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [shippingDate, setShippingDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [fromLocation] = useState('Semarang,Indonesia');
+  const [fromLocation, setFromLocation] = useState('SEMARANG, INDONESIA');
   const [paymentBy, setPaymentBy] = useState('SAMPLES OF NO COMMERCIAL VALUE');
   const [shipmentBy, setShipmentBy] = useState('COURIER / AIR FREIGHT');
   const [invoiceValue, setInvoiceValue] = useState('SAMPLES OF NO COMMERCIAL VALUE');
@@ -114,6 +114,18 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
         };
       })
     );
+
+    if (itemsToDispatch.length > 0) {
+      const first = itemsToDispatch[0];
+      if (first?.buyerNo && first.buyerNo !== 'NA' && first.buyerNo !== '-') {
+        setConsigneeName(String(first.buyerNo).trim().toUpperCase());
+      }
+    }
+
+    if (!invoiceNo || invoiceNo.trim() === '') {
+      const dStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      setInvoiceNo(`INV-RND-${dStr}-${itemsToDispatch.length || 1}`);
+    }
   }, [itemsToDispatch]);
 
   // Totals
@@ -211,6 +223,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
         destLabel = `Buyer (${consigneeName.trim()})`;
       }
 
+      const finalInvoiceNo = invoiceNo.trim() || `INV-RND-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-1`;
       for (const row of itemRows) {
         await dispatchItem(row.originalItem, {
           destinationId,
@@ -220,7 +233,8 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
           date: shippingDate,
           qty: row.qty,
           recipient: attn.trim(),
-          notes: `Invoice: ${invoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
+          invoiceNo: finalInvoiceNo,
+          notes: `Invoice: ${finalInvoiceNo} | Style: ${row.style} | Detail: ${row.detail} | ${packageType}: ${cartonSize}`,
         });
       }
 
@@ -484,7 +498,15 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{midCode}</td>
+                      <td className="py-1 px-3 text-left">
+                        <input
+                          type="text"
+                          value={midCode}
+                          onChange={(e) => setMidCode(e.target.value.toUpperCase())}
+                          placeholder="IDGAGTAMBSEM"
+                          className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                        />
+                      </td>
                     </tr>
                     <tr className="border-b border-black">
                       <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -626,7 +648,15 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{fromLocation.toUpperCase()}</td>
+                      <td className="py-1 px-3 text-left">
+                        <input
+                          type="text"
+                          value={fromLocation}
+                          onChange={(e) => setFromLocation(e.target.value.toUpperCase())}
+                          placeholder="SEMARANG, INDONESIA"
+                          className="w-full block font-bold text-[10.5px] uppercase text-left bg-transparent p-0 m-0 border-none outline-none focus:outline-none tracking-tight cursor-text"
+                        />
+                      </td>
                     </tr>
                   </tbody>
                 </table>

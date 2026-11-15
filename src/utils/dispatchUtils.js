@@ -87,6 +87,7 @@ export function decodeDispatchData(item) {
   const pic = getTagValue('dispatch_pic:') || item.picName || 'Royan';
   const recipient = getTagValue('dispatch_recipient:') || '';
   const notes = getTagValue('dispatch_notes:') || item.description || item.deskripsi || '';
+  const invoiceNo = getTagValue('dispatch_invoice:') || (notes.match(/Invoice:\s*([^\s|]+)/i)?.[1] || '');
 
   return {
     destinationId,
@@ -98,13 +99,14 @@ export function decodeDispatchData(item) {
     pic,
     recipient,
     notes,
+    invoiceNo,
   };
 }
 
 /**
  * Encodes dispatch metadata into an array of tags safe for Supabase storage.
  */
-export function encodeDispatchTags({ destinationId, destinationLabel, type, date, originBox, pic, recipient, notes, buyerName }, existingTags = []) {
+export function encodeDispatchTags({ destinationId, destinationLabel, type, date, originBox, pic, recipient, notes, buyerName, invoiceNo }, existingTags = []) {
   const cleanExisting = (Array.isArray(existingTags) ? existingTags : []).filter(
     t => !String(t).startsWith('dispatch') && !String(t).startsWith('dispatch_')
   );
@@ -121,6 +123,10 @@ export function encodeDispatchTags({ destinationId, destinationLabel, type, date
     `dispatch_recipient:${encodeURIComponent(recipient || '')}`,
     `dispatch_notes:${encodeURIComponent(notes || '')}`,
   ];
+
+  if (invoiceNo) {
+    tags.push(`dispatch_invoice:${encodeURIComponent(invoiceNo)}`);
+  }
 
   if (buyerName) {
     tags.push(`dispatch_buyer:${encodeURIComponent(buyerName)}`);
