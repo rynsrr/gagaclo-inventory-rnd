@@ -145,3 +145,52 @@ export function getDestinationColor(destId) {
   const found = DISPATCH_DESTINATIONS.find(d => d.id === cleanId);
   return found ? found.color : 'bg-slate-100 text-slate-800 border-slate-300';
 }
+
+/**
+ * Smart parser for free-form multi-line sending info reference text.
+ * Extracts buyer name, full address, ATTN, and TEL if present.
+ */
+export function parseSendingInfoText(text) {
+  const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) {
+    return { name: '', address: '', attn: '', tel: '' };
+  }
+
+  let name = lines[0] || '';
+  let address = '';
+  let attn = '';
+  let tel = '';
+
+  for (const line of lines) {
+    // Check for ATTN
+    const attnMatch = line.match(/ATTN\s*:\s*([^TEL\n]+)/i);
+    if (attnMatch) {
+      attn = attnMatch[1].trim();
+    }
+    // Check for TEL
+    const telMatch = line.match(/TEL\s*:\s*([^\n]+)/i);
+    if (telMatch) {
+      tel = telMatch[1].trim();
+    }
+    // Check for Address
+    const addrMatch = line.match(/Address\s*:\s*([^ATTN\n]+)/i);
+    if (addrMatch) {
+      address = addrMatch[1].trim();
+    }
+  }
+
+  // If address wasn't prefixed with "Address:", take line 2 if available
+  if (!address && lines.length > 1) {
+    const line2 = lines[1];
+    if (!line2.toUpperCase().startsWith('ATTN:') && !line2.toUpperCase().startsWith('TEL:')) {
+      address = line2.replace(/^Address:\s*/i, '').trim();
+    }
+  }
+
+  // Clean buyer name if line 1 has "BUYER:"
+  if (name.toUpperCase().startsWith('BUYER:')) {
+    name = name.replace(/^BUYER:\s*/i, '').trim();
+  }
+
+  return { name, address, attn, tel };
+}

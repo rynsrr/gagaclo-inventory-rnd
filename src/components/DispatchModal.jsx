@@ -11,7 +11,7 @@ import {
   Sparkles,
   Check,
 } from 'lucide-react';
-import { DISPATCH_DESTINATIONS } from '../utils/dispatchUtils';
+import { DISPATCH_DESTINATIONS, parseSendingInfoText } from '../utils/dispatchUtils';
 
 export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) {
   const { dispatchItem, currentUser, suggestions, items: allItems, clearDispatchCart } = useInventory();
@@ -55,6 +55,17 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   );
   const [attn, setAttn] = useState('WAN LIN');
   const [tel, setTel] = useState('+41 81 511 23 20');
+  const [sendingInfoText, setSendingInfoText] = useState(() => {
+    const name = singleItem?.buyerNo && singleItem.buyerNo !== 'NA' && singleItem.buyerNo !== '-'
+      ? String(singleItem.buyerNo).trim().toUpperCase()
+      : 'FLINK PRODUCTION GMBH';
+    return [
+      name,
+      'Address: OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND',
+      'ATTN: WAN LIN          TEL: +41 81 511 23 20',
+    ].join('\n');
+  });
+
   const [midCode, setMidCode] = useState('IDGAGTAMBSEM');
   const [invoiceNo, setInvoiceNo] = useState('');
 
@@ -169,19 +180,41 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     });
   };
 
+  // Handler for free-form multi-line sending info paste / edit
+  const handleSendingInfoChange = (val) => {
+    const upperVal = String(val || '').toUpperCase();
+    setSendingInfoText(upperVal);
+    const parsed = parseSendingInfoText(upperVal);
+    if (parsed.name) setConsigneeName(parsed.name);
+    if (parsed.address) setConsigneeAddress(parsed.address);
+    if (parsed.attn) setAttn(parsed.attn);
+    if (parsed.tel) setTel(parsed.tel);
+  };
+
   // Preset buyer selector helper
   const handleSelectBuyer = (name) => {
     setDestinationId('BUYER');
     setConsigneeName(name);
+    let addr = '';
+    let a = attn;
+    let t = tel;
     if (name.toUpperCase().includes('FLINK')) {
-      setConsigneeAddress('OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND');
-      setAttn('WAN LIN');
-      setTel('+41 81 511 23 20');
+      addr = 'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND';
+      a = 'WAN LIN';
+      t = '+41 81 511 23 20';
     } else {
-      setConsigneeAddress(`Industrial Park Zone, Destination ${name}`);
-      if (attn === 'WAN LIN') setAttn('Receiving Dept / Sample Review');
-      if (tel === '+41 81 511 23 20') setTel('-');
+      addr = `Industrial Park Zone, Destination ${name}`;
+      if (attn === 'WAN LIN') a = 'Receiving Dept / Sample Review';
+      if (tel === '+41 81 511 23 20') t = '-';
     }
+    setConsigneeAddress(addr);
+    setAttn(a);
+    setTel(t);
+    setSendingInfoText([
+      name,
+      `Address: ${addr}`,
+      `ATTN: ${a}          TEL: ${t}`,
+    ].join('\n'));
   };
 
   const handleSelectChannel = (channel) => {
@@ -435,49 +468,42 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                 <h3 className="text-[11px] font-bold uppercase tracking-wider mt-0.5">SENDING INFO REFERENCE</h3>
               </div>
 
-              {/* Header 2: Consignee / Buyer Live Inputs */}
-              <div className="text-center py-2 px-4 border-b border-black space-y-1 bg-amber-50/15 print:bg-white">
-                <div>
-                  <input
-                    type="text"
-                    value={consigneeName}
-                    onChange={(e) => setConsigneeName(e.target.value.toUpperCase())}
-                    placeholder="NAMA BUYER / CONSIGNEE..."
-                    className="font-bold uppercase text-[12px] text-center w-full max-w-md bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
-                    title="Ketik atau pilih Nama Buyer dari baris tombol di atas"
-                  />
-                </div>
-                <div className="flex items-center justify-center gap-1 text-[10.5px]">
-                  <span className="font-semibold text-neutral-700 print:text-black">Address:</span>
-                  <input
-                    type="text"
-                    value={consigneeAddress}
-                    onChange={(e) => setConsigneeAddress(e.target.value.toUpperCase())}
-                    placeholder="Alamat lengkap tujuan..."
-                    className="text-[10.5px] text-center w-full max-w-xl uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
-                  />
-                </div>
-                <div className="flex items-center justify-center gap-6 text-[10.5px] font-semibold">
-                  <div className="flex items-center gap-1">
-                    <span className="text-neutral-700 print:text-black">ATTN:</span>
-                    <input
-                      type="text"
-                      value={attn}
-                      onChange={(e) => setAttn(e.target.value.toUpperCase())}
-                      placeholder="Nama Penerima (WAN LIN)..."
-                      className="text-[10.5px] font-semibold text-center w-36 uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-neutral-700 print:text-black">TEL:</span>
-                    <input
-                      type="text"
-                      value={tel}
-                      onChange={(e) => setTel(e.target.value.toUpperCase())}
-                      placeholder="Nomor Telepon..."
-                      className="text-[10.5px] text-center w-36 uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
-                    />
-                  </div>
+              {/* Header 2: Sending Info Reference (Free-form Paste Area) */}
+              <div className="relative group text-center py-2 px-4 border-b border-black bg-amber-50/15 hover:bg-amber-50/30 print:bg-white transition">
+                <textarea
+                  value={sendingInfoText}
+                  onChange={(e) => handleSendingInfoChange(e.target.value)}
+                  onPaste={(e) => {
+                    const text = e.clipboardData?.getData('text') || '';
+                    if (text) {
+                      e.preventDefault();
+                      handleSendingInfoChange(text);
+                    }
+                  }}
+                  rows={Math.max(3, sendingInfoText.split('\n').length)}
+                  placeholder="TEMPEL / PASTE SENDING INFO REFERENCE DI SINI..."
+                  className="w-full text-center text-[10.5px] leading-relaxed font-bold uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent border-none outline-none resize-none transition cursor-text p-1 tracking-wide"
+                  style={{ fontFamily: 'inherit' }}
+                  title="Area untuk paste referensi info pengiriman / alamat tujuan (tekan Ctrl+V)"
+                />
+                <div className="no-print absolute top-1.5 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const clip = await navigator.clipboard.readText();
+                        if (clip && clip.trim()) {
+                          handleSendingInfoChange(clip.trim());
+                        }
+                      } catch (err) {
+                        console.error('Clipboard paste failed:', err);
+                      }
+                    }}
+                    className="px-2 py-0.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-[9.5px] font-bold flex items-center gap-1 shadow-sm cursor-pointer transition"
+                    title="Paste dari clipboard (Ctrl+V)"
+                  >
+                    <span>📋 Paste Info</span>
+                  </button>
                 </div>
               </div>
 
