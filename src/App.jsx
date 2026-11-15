@@ -24,6 +24,9 @@ const FeedbackIssuesView = lazy(() =>
 const DispatchOutgoingView = lazy(() =>
   import('./components/DispatchOutgoingView').then((m) => ({ default: m.DispatchOutgoingView }))
 );
+const TeamStructureView = lazy(() =>
+  import('./components/TeamStructureView').then((m) => ({ default: m.TeamStructureView }))
+);
 const SupabaseModal = lazy(() =>
   import('./components/SupabaseModal').then((m) => ({ default: m.SupabaseModal }))
 );
@@ -243,6 +246,13 @@ const AppContent = () => {
       label: 'ISU & USULAN',
       subtitle: 'Laporan & ide tim',
       count: activeIssuesCount > 0 ? activeIssuesCount : null,
+      primary: false,
+    },
+    {
+      id: 'team-structure',
+      label: 'STRUKTUR TIM',
+      subtitle: 'Organisasi & RACI',
+      count: 9,
       primary: false,
     },
   ];
@@ -726,6 +736,11 @@ const AppContent = () => {
           {appMode === 'issues' && (
             <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Saran &amp; Kendala...</div>}>
               <FeedbackIssuesView />
+            </Suspense>
+          )}
+          {appMode === 'team-structure' && (
+            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Struktur Organisasi...</div>}>
+              <TeamStructureView />
             </Suspense>
           )}
         </main>
