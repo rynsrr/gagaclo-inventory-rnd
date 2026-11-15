@@ -167,6 +167,13 @@ const AppContent = () => {
       primary: true,
     },
     {
+      id: 'ppic-performance',
+      label: 'REKAP HARIAN',
+      subtitle: 'Penyimpanan per hari',
+      count: null,
+      primary: false,
+    },
+    {
       id: 'summary',
       label: 'RINGKASAN',
       subtitle: 'Semua barang',
@@ -177,13 +184,6 @@ const AppContent = () => {
       id: 'dispatch',
       label: 'KIRIM KELUAR',
       subtitle: 'Buyer, ANZO QC/TW/CHINA, RDTW, RDC',
-      count: null,
-      primary: false,
-    },
-    {
-      id: 'ppic-performance',
-      label: 'REKAP HARIAN',
-      subtitle: 'Penyimpanan per hari',
       count: null,
       primary: false,
     },
