@@ -6,8 +6,10 @@ import {
   SlidersHorizontal,
   Building2,
   User,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
-import { decodeDispatchData, parseSendingInfoText } from '../utils/dispatchUtils';
+import { decodeDispatchData, parseSendingInfoText, exportInvoiceToExcel } from '../utils/dispatchUtils';
 
 export function DispatchManifestModal({ isOpen, onClose, items = [], initialConfig = null }) {
   const safeItems = Array.isArray(items) ? items : [];
@@ -229,6 +231,54 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     window.print();
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const itemRows = safeItems.map((it) => {
+        const itemQty = Number(it.dispatchQty ?? it.jumlah ?? it.qty ?? 1);
+        const detailStr = it.category || it.tipe || it.namaBarang || 'SWATCHES MATERIAL';
+        const styleStr = it.style || it.deskripsi || it.name || '-';
+        const orderNameStr = it.sampleNo && it.sampleNo !== 'NA' ? it.sampleNo : (it.buyerNo || orderNo || '-');
+        return {
+          hsCode: it.hsCode || '-',
+          kode: it.kode || it.sku || '-',
+          orderName: orderNameStr,
+          detail: detailStr,
+          style: styleStr,
+          color: it.color || 'Multi Color',
+          size: it.size || 'ONE SIZE',
+          qty: itemQty,
+          unit: it.satuan || 'PCS',
+          unitPrice: Number(unitPrice || 1),
+        };
+      });
+
+      await exportInvoiceToExcel({
+        invoiceNo,
+        shippingDate: date,
+        fromLocation,
+        consigneeName,
+        consigneeAddress,
+        attn,
+        tel,
+        email,
+        paymentBy,
+        courierName,
+        courierAccount,
+        packageType,
+        cartonSize,
+        netWeight,
+        grossWeight,
+        itemRows,
+        totalPcs,
+        totalPrice,
+        picName: firstDispatch?.pic || 'Royan',
+      });
+    } catch (err) {
+      console.error('Export Excel error:', err);
+      alert('Gagal mengunduh file Excel: ' + (err?.message || 'Terjadi kesalahan'));
+    }
+  };
+
   // Helper formatting date for display: DD/MM/YYYY
   const formatDateDisplay = (dStr) => {
     if (!dStr) return '-';
@@ -332,6 +382,17 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>{isEditing ? 'Tutup Pengaturan' : 'Ubah Data Info'}</span>
+            </button>
+
+            {/* Export Excel Action */}
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer active:scale-95"
+              title="Unduh Invoice & Packing List dalam format Microsoft Excel (.xlsx)"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Unduh File Excel</span>
             </button>
 
             {/* Print Action */}

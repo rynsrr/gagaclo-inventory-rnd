@@ -10,8 +10,10 @@ import {
   Printer,
   Sparkles,
   Check,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
-import { DISPATCH_DESTINATIONS, parseSendingInfoText } from '../utils/dispatchUtils';
+import { DISPATCH_DESTINATIONS, parseSendingInfoText, exportInvoiceToExcel } from '../utils/dispatchUtils';
 
 export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) {
   const { dispatchItem, currentUser, suggestions, items: allItems, clearDispatchCart } = useInventory();
@@ -278,8 +280,38 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     }
   };
 
+  // Helper to export current invoice data directly to Excel (.xlsx)
+  const handleExportExcelOnly = async () => {
+    try {
+      await exportInvoiceToExcel({
+        invoiceNo,
+        shippingDate,
+        fromLocation,
+        consigneeName,
+        consigneeAddress,
+        attn,
+        tel,
+        email,
+        paymentBy,
+        courierName,
+        courierAccount,
+        packageType,
+        cartonSize,
+        netWeight,
+        grossWeight,
+        itemRows,
+        totalPcs,
+        totalPrice,
+        picName: currentUser?.name || singleItem?.picName || 'Royan',
+      });
+    } catch (err) {
+      console.error('Export Excel error:', err);
+      setError('Gagal mengunduh file Excel: ' + (err?.message || 'Terjadi kesalahan'));
+    }
+  };
+
   // Submit dispatch action
-  const handleSubmit = async (e, shouldPrintAfter = false) => {
+  const handleSubmit = async (e, shouldExportExcel = false) => {
     if (e && e.preventDefault) e.preventDefault();
     setError(null);
 
@@ -366,12 +398,11 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
       clearDispatchCart();
 
-      if (shouldPrintAfter) {
-        window.print();
-        onClose();
-      } else {
-        onClose();
+      if (shouldExportExcel) {
+        await handleExportExcelOnly();
       }
+
+      onClose();
     } catch (err) {
       console.error('Dispatch error:', err);
       setError(err?.message || 'Gagal memproses pengiriman sampel.');
@@ -1224,16 +1255,28 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
               Batal
             </button>
 
-            {/* Save & Print PDF */}
+            {/* Download Excel Only (without dispatching) */}
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleExportExcelOnly}
+              className="px-3.5 py-2 rounded-full border border-emerald-600/30 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Unduh Invoice & Packing List dalam format Excel tanpa memotong stok"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Unduh Excel Saja</span>
+            </button>
+
+            {/* Save & Export Excel */}
             <button
               type="button"
               disabled={isSubmitting}
               onClick={(e) => handleSubmit(e, true)}
-              className="px-4 py-2 rounded-full bg-[#5856d6] hover:bg-[#4b49b8] text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-md shadow-indigo-500/20 cursor-pointer disabled:opacity-50 active:scale-95"
-              title="Simpan pengiriman ke sistem database dan langsung buka dialog cetak PDF"
+              className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-50 active:scale-95"
+              title="Simpan pengiriman ke sistem database dan otomatis unduh file Excel (.xlsx)"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Kirim &amp; Cetak PDF</span>
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Kirim &amp; Unduh Excel</span>
             </button>
 
             {/* Confirm Dispatch Only */}

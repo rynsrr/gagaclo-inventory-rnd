@@ -214,3 +214,178 @@ export function parseSendingInfoText(text) {
 
   return { name, address, attn, email, tel, courier, accountNo };
 }
+
+/**
+ * Exports an Invoice & Packing List document into a formatted Excel (.xlsx) file.
+ */
+export async function exportInvoiceToExcel({
+  invoiceNo,
+  shippingDate,
+  fromLocation,
+  consigneeName,
+  consigneeAddress,
+  attn,
+  tel,
+  email,
+  paymentBy,
+  courierName,
+  courierAccount,
+  packageType,
+  cartonSize,
+  netWeight,
+  grossWeight,
+  itemRows,
+  totalPcs,
+  totalPrice,
+  picName,
+}) {
+  const XLSX = await import('xlsx');
+
+  const fullAddress = [consigneeName, consigneeAddress].filter(Boolean).join('. ');
+  const courierInfo = [courierName || 'COURIER / AIR FREIGHT', courierAccount ? `ACC NO: ${courierAccount}` : ''].filter(Boolean).join('    ');
+
+  const aoa = [
+    ['PT GAGACLO'],
+    ['Jl. Tambak Aji Timur No 1 Ngaliyan Semarang Tel: 0062-24-8661188 Email : zuniarto@gagaclo.com'],
+    ['INVOICE & PACKING LIST'],
+    [],
+    ['DATE', ':', shippingDate || new Date().toISOString().slice(0, 10), '', '', '', '', 'FROM', ':', fromLocation || 'SEMARANG, INDONESIA'],
+    ['INVOICE NO', ':', invoiceNo || '-'],
+    ['SHIP TO (COMPANY NAME, ADDRESS)', ':', fullAddress],
+    ['ATTN', ':', attn || '-', '', 'TEL :', tel || '-', '', 'EMAIL :', email || '-'],
+    ['PAYMENT BY', ':', paymentBy || 'FREIGHT COLLECT (RECEIVER PAY)'],
+    ['SHIPMENT BY', ':', courierInfo],
+    ['INVOICE VALUE', ':', 'USD'],
+    [],
+    [
+      'NO',
+      'HS CODE',
+      'ITEM NO.',
+      'ORDER NAME',
+      'DETAIL',
+      'STYLE',
+      'COLOR',
+      'SIZE',
+      'AMOUNT',
+      'UNIT',
+      'UNIT PRICE (USD)',
+      'TOTAL PRICE (USD)',
+    ],
+  ];
+
+  (itemRows || []).forEach((row, idx) => {
+    const qty = Number(row.qty || 1);
+    const unitPrice = Number(row.unitPrice || 1);
+    const rowTotal = (qty * unitPrice).toFixed(2);
+
+    aoa.push([
+      idx + 1,
+      row.hsCode || '-',
+      row.kode || row.sku || '-',
+      row.orderName || row.sampleNo || '-',
+      row.detail || row.category || row.namaBarang || '-',
+      row.style || '-',
+      row.color || 'Multi Color',
+      row.size || 'ONE SIZE',
+      qty,
+      row.unit || 'PCS',
+      unitPrice,
+      parseFloat(rowTotal),
+    ]);
+  });
+
+  // Total Row
+  aoa.push([
+    'TOTAL',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    Number(totalPcs || 0),
+    'PCS',
+    '',
+    parseFloat(String(totalPrice || 0).replace(',', '.')),
+  ]);
+
+  aoa.push([]);
+
+  // Specifications Footer: Package Type, Dimension, and Weights
+  aoa.push([
+    packageType || 'CARTON',
+    '',
+    `${packageType === 'CARTON' ? 'CARTON DIMENSION' : 'BAG DIMENSION'} :`,
+    cartonSize || '35 x 25 x 8 cm',
+    '',
+    '',
+    '',
+    '',
+    `${netWeight || '0,17'} KG (WEIGHT NW)`,
+    '',
+    `${grossWeight || '1,17'} KG (WEIGHT GW)`,
+    '',
+  ]);
+
+  aoa.push(['SAMPLES OF NO COMMERCIAL VALUE']);
+  aoa.push([]);
+
+  // Signature Block
+  aoa.push([
+    'Yang Menyerahkan (R&D)',
+    '',
+    '',
+    'Yang Membawa (Driver/Kurir)',
+    '',
+    '',
+    `Yang Menerima (${consigneeName || 'Buyer'})`,
+  ]);
+  aoa.push([]);
+  aoa.push([]);
+  aoa.push([
+    `( ${picName || 'Royan'} )`,
+    '',
+    '',
+    '( ..................................... )',
+    '',
+    '',
+    `( ${attn || '.....................................'} )`,
+  ]);
+  aoa.push([
+    'PIC Sample Studio',
+    '',
+    '',
+    'Ekspedisi / Internal',
+    '',
+    '',
+    'Nama Jelas & Cap',
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Column widths
+  ws['!cols'] = [
+    { wch: 6 },  // NO
+    { wch: 15 }, // HS CODE
+    { wch: 16 }, // ITEM NO.
+    { wch: 20 }, // ORDER NAME
+    { wch: 24 }, // DETAIL
+    { wch: 26 }, // STYLE
+    { wch: 16 }, // COLOR
+    { wch: 14 }, // SIZE
+    { wch: 10 }, // AMOUNT
+    { wch: 8 },  // UNIT
+    { wch: 18 }, // UNIT PRICE
+    { wch: 18 }, // TOTAL PRICE
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'INVOICE & PACKING LIST');
+
+  const safeInv = String(invoiceNo || 'DRAFT').replace(/[^a-zA-Z0-9-_]/g, '_');
+  const safeBuyer = String(consigneeName || 'BUYER').replace(/[^a-zA-Z0-9-_]/g, '_');
+  const fileName = `INVOICE_${safeInv}_${safeBuyer}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+}
