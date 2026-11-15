@@ -36,6 +36,7 @@ export const Warehouse3DView = ({
   onClearSearch,
   highlightPpic: propHighlightPpic,
   onSelectPic: propOnSelectPic,
+  previewFocusBoxNumber = null,
 }) => {
   const containerRef = useRef(null);
   const { 
@@ -53,6 +54,7 @@ export const Warehouse3DView = ({
   const flyControlsTargetRef = useRef(null);
   const isUserInteractingRef = useRef(false);
   const selectedBoxNumberRef = useRef(selectedBoxNumber);
+  const focusRackRef = useRef(null);
 
   useEffect(() => {
     selectedBoxNumberRef.current = selectedBoxNumber;
@@ -629,6 +631,7 @@ export const Warehouse3DView = ({
       flyControlsTargetRef.current = centerTarget;
       flyCameraTargetRef.current = camTarget;
     };
+    focusRackRef.current = focusRackFaceSide;
 
     // Raycasting for Mouse Hover & Click
     const raycaster = new THREE.Raycaster();
@@ -963,6 +966,7 @@ export const Warehouse3DView = ({
 
       forest?.dispose();
       renderer.dispose();
+      focusRackRef.current = null;
     };
   }, [boxesStructureKey, racks, ppicMembers, retryKey]);
 
@@ -1017,27 +1021,77 @@ export const Warehouse3DView = ({
     return () => clearInterval(interval);
   }, [dogReminderActive]);
 
+  // Smooth flight kamera ke rak/box saat mouse meng-hover sampel pada fitur search
+  useEffect(() => {
+    if (!previewFocusBoxNumber) return;
+    lastUserInteractionTimeRef.current = Date.now();
+    const boxNum = Number(previewFocusBoxNumber);
+    const boxData = boxes.find(b => Number(b.boxNumber) === boxNum);
+    if (!boxData) return;
+
+    setHoveredBox(boxData);
+
+    const targetRackId = Number(boxData.rackId);
+    if (targetRackId && targetRackId !== 0 && focusRackRef.current) {
+      focusRackRef.current(targetRackId);
+    } else {
+      // Box di lantai (rackId 0)
+      const mesh = boxMeshesRef.current.find(m => Number(m.userData?.boxNumber) === boxNum);
+      if (mesh) {
+        const worldPos = new THREE.Vector3();
+        mesh.getWorldPosition(worldPos);
+        const forwardDir = new THREE.Vector3(0, 0, 1).applyQuaternion(
+          mesh.getWorldQuaternion(new THREE.Quaternion())
+        );
+        flyControlsTargetRef.current = worldPos.clone().add(new THREE.Vector3(0, 0.1, 0));
+        flyCameraTargetRef.current = worldPos.clone()
+          .add(forwardDir.clone().multiplyScalar(3.4))
+          .add(new THREE.Vector3(0, 0.35, 0));
+      }
+    }
+  }, [previewFocusBoxNumber, boxes]);
+
+  // Listener untuk klik logo brand header: kembali ke sudut pandang home default 3D
+  useEffect(() => {
+    const handleResetHome = () => {
+      lastUserInteractionTimeRef.current = Date.now();
+      activeRackRef.current = 'ALL';
+      fitCameraRef.current?.(true);
+      setHoveredBox(null);
+    };
+    window.addEventListener('gagaclo_reset_3d_home_view', handleResetHome);
+    return () => window.removeEventListener('gagaclo_reset_3d_home_view', handleResetHome);
+  }, []);
+
   // Reapply PIC/search selection whenever filters change or cloud sync rebuilds
   // the scene. A box stays solid only when it satisfies every active filter.
   useEffect(() => {
     const picFilterActive = highlightPpic !== 'ALL';
+    const targetHoverNum = previewFocusBoxNumber ? Number(previewFocusBoxNumber) : null;
 
     for (const mesh of boxMeshesRef.current) {
+      const meshBoxNum = Number(mesh.userData.boxNumber);
+      const isTargetHover = targetHoverNum !== null && meshBoxNum === targetHoverNum;
       const picMatches = !picFilterActive || matchesPic(mesh.userData.picName, highlightPpic);
-      const searchMatches = !searchActive || highlightBoxNumbers.has(Number(mesh.userData.boxNumber));
-      const dimmed = !picMatches || !searchMatches;
-      const highlighted = !dimmed && (picFilterActive || searchActive);
+      const searchMatches = !searchActive || highlightBoxNumbers.has(meshBoxNum);
+      const dimmed = !isTargetHover && (!picMatches || !searchMatches);
+      const highlighted = isTargetHover || (!dimmed && (picFilterActive || searchActive));
       mesh.castShadow = !dimmed;
 
       for (const material of new Set(mesh.material)) {
         material.transparent = dimmed;
         material.depthWrite = !dimmed;
-        material.opacity = dimmed ? 0.12 : 1;
-        material.color.setHex(highlighted && !material.map ? mesh.userData.baseColor : 0xffffff);
+        material.opacity = isTargetHover ? 1 : dimmed ? 0.12 : 1;
+        if (isTargetHover) {
+          // Box yang di-hover: sorot dengan warna emas/kuning menyala
+          material.color.setHex(0xffd700);
+        } else {
+          material.color.setHex(highlighted && !material.map ? mesh.userData.baseColor : 0xffffff);
+        }
         material.needsUpdate = true;
       }
     }
-  }, [highlightPpic, highlightBoxNumbers, searchActive, boxes, racks, ppicMembers]);
+  }, [highlightPpic, highlightBoxNumbers, searchActive, boxes, racks, ppicMembers, previewFocusBoxNumber]);
 
   return (
     <div className="warehouse-layout space-y-4 font-apple">

@@ -98,6 +98,7 @@ const AppContent = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isBoxMenuOpen, setIsBoxMenuOpen] = useState(false);
   const [highlightPpic, setHighlightPpic] = useState('ALL');
+  const [hoveredSearchBoxNumber, setHoveredSearchBoxNumber] = useState(null);
   const boxMenuRef = useRef(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchContainerRef = useRef(null);
@@ -131,7 +132,7 @@ const AppContent = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen]);
+  }, [isSearchOpen, isBoxMenuOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -285,8 +286,19 @@ const AppContent = () => {
           <div className="inventory-header-scroll">
             <div className="inventory-header-row font-apple">
 
-              <div className="inventory-header-brand flex shrink-0 items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#0071e3] text-white shadow-xs ring-1 ring-black/[0.06]">
+              <button
+                type="button"
+                onClick={() => {
+                  setAppMode('3d-warehouse');
+                  setIsBoxMenuOpen(false);
+                  setIsSearchOpen(false);
+                  window.dispatchEvent(new CustomEvent('gagaclo_reset_3d_home_view'));
+                }}
+                className="inventory-header-brand flex shrink-0 items-center gap-2.5 text-left cursor-pointer hover:opacity-85 active:scale-98 transition select-none group focus:outline-hidden"
+                title="Kembali ke Tampilan Utama 3D (Home)"
+                aria-label="Kembali ke Tampilan Utama 3D (Home)"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#0071e3] text-white shadow-xs ring-1 ring-black/[0.06] group-hover:shadow-md transition">
                   <Boxes className="h-4.5 w-4.5 stroke-[2.2]" />
                 </div>
                 <div className="flex items-center gap-2">
@@ -295,7 +307,7 @@ const AppContent = () => {
                   </span>
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 bg-black/[0.04] border border-black/[0.06] px-1.5 py-0.5 rounded-full">v2.0</span>
                 </div>
-              </div>
+              </button>
 
             {/* Top Navigation Tabs (Apple Segmented Control Style) */}
             <nav className="flex flex-1 items-center justify-center mx-2 sm:mx-4 font-apple" aria-label="Menu navigasi utama">
@@ -470,6 +482,8 @@ const AppContent = () => {
                                 <button
                                   key={`head-box-${box.boxNumber}`}
                                   type="button"
+                                  onMouseEnter={() => setHoveredSearchBoxNumber(Number(box.boxNumber))}
+                                  onMouseLeave={() => setHoveredSearchBoxNumber(null)}
                                   onClick={() => {
                                     setSelectedBoxNumber(box.boxNumber);
                                     setIsSearchOpen(false);
@@ -496,6 +510,8 @@ const AppContent = () => {
                               {searchResults.itemMatches.slice(0, 8).map((item, idx) => (
                                 <div
                                   key={item.id || `head-item-${idx}`}
+                                  onMouseEnter={() => setHoveredSearchBoxNumber(Number(item.boxNumber))}
+                                  onMouseLeave={() => setHoveredSearchBoxNumber(null)}
                                   className="flex items-center justify-between gap-2 p-2 rounded-[12px] bg-black/[0.02] hover:bg-[#0071e3]/5 border border-black/[0.06] hover:border-[#0071e3]/30 transition-all text-xs group"
                                 >
                                   <button
@@ -744,6 +760,7 @@ const AppContent = () => {
                 onClearSearch={() => setSearchQuery('')}
                 highlightPpic={highlightPpic}
                 onSelectPic={setHighlightPpic}
+                previewFocusBoxNumber={hoveredSearchBoxNumber}
               />
             </Suspense>
           )}
