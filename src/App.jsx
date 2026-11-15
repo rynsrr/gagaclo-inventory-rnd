@@ -56,16 +56,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
-  Crown,
   User,
-  Zap,
   ShieldCheck,
   Settings,
   ChevronDown,
 } from 'lucide-react';
-import { getItemRecordDate, getLocalTodayIso } from './utils/dateUtils';
-import { isItemDispatched } from './utils/dispatchUtils';
-import { isSuperuser, isHelper, isManager } from './utils/authUtils';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
 import { DispatchModal } from './components/DispatchModal';
@@ -160,28 +155,6 @@ const AppContent = () => {
     ? 'Pemakaian: -'
     : `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(databaseBytes / 1_000_000)} MB`;
 
-  const todayIso = getLocalTodayIso();
-  const todayDailyPcs = useMemo(() => {
-    let todaySum = 0;
-    items.forEach((item) => {
-      const dateKey = item.recordDate || getItemRecordDate(item);
-      if (dateKey === todayIso) {
-        todaySum += Number(item.jumlah) || 0;
-      }
-    });
-    return `${todaySum} PCS`;
-  }, [items, todayIso]);
-
-  const dispatchedSummaryCount = useMemo(() => {
-    let pcs = 0;
-    items.forEach((item) => {
-      if (isItemDispatched(item)) {
-        pcs += Number(item.jumlah ?? item.qty ?? 1);
-      }
-    });
-    return `${pcs} PCS`;
-  }, [items]);
-
   const mainTabs = [
     {
       id: '3d-warehouse',
@@ -204,7 +177,7 @@ const AppContent = () => {
       label: 'Kirim Keluar',
       subtitle: 'Buyer, ANZO QC/TW/CHINA, RDTW, RDC',
       icon: Send,
-      count: dispatchedSummaryCount,
+      count: null,
       primary: false,
     },
     {
@@ -212,7 +185,7 @@ const AppContent = () => {
       label: 'Rekap Harian',
       subtitle: 'Penyimpanan per hari',
       icon: Calendar,
-      count: todayDailyPcs,
+      count: null,
       primary: false,
     },
     {
@@ -220,7 +193,7 @@ const AppContent = () => {
       label: 'Isu & Usulan',
       subtitle: 'Laporan & ide tim',
       icon: MessageSquarePlus,
-      count: activeIssuesCount,
+      count: activeIssuesCount > 0 ? activeIssuesCount : null,
       primary: false,
     },
   ];
@@ -268,11 +241,13 @@ const AppContent = () => {
                   >
                     <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} aria-hidden="true" />
                     <span>{tab.label}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-md font-bold tabular-nums ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
-                    }`}>
-                      {tab.count}
-                    </span>
+                    {tab.count !== null && tab.count !== undefined && (
+                      <span className={`text-xs px-2 py-0.5 rounded-md font-bold tabular-nums ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                      }`}>
+                        {tab.count}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -309,18 +284,17 @@ const AppContent = () => {
               <button
                 type="button"
                 onClick={() => setIsCartOpen(true)}
-                className={`relative flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                className={`relative flex items-center justify-center p-2 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
                   dispatchCart?.length > 0
-                    ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'
+                    ? 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 shadow-xs'
                     : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
                 aria-label="Keranjang Pengiriman Sampel"
-                title="Buka Keranjang Pengiriman Sampel (Model Marketplace)"
+                title={`Keranjang Pengiriman Sampel (${dispatchCart?.length || 0} item)`}
               >
-                <ShoppingBasket className="h-3.5 w-3.5 text-rose-600" aria-hidden="true" />
-                <span>Keranjang</span>
+                <ShoppingBasket className="h-4 w-4 text-rose-600" aria-hidden="true" />
                 {dispatchCart?.length > 0 && (
-                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-xs font-black text-white">
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-xs">
                     {dispatchCart.length}
                   </span>
                 )}
@@ -383,31 +357,11 @@ const AppContent = () => {
               <button
                 type="button"
                 onClick={() => setIsUserProfileOpen(true)}
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-50 text-slate-800 border-slate-200 cursor-pointer"
-                aria-label="Akun & Profil PPIC"
-                title={`Login sebagai: ${currentUser?.name || 'PPIC'} • Klik untuk beralih akun PPIC`}
+                className="flex items-center justify-center p-2 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 cursor-pointer shadow-2xs"
+                aria-label={`Akun: ${currentUser?.name || 'PPIC'}`}
+                title={`Login sebagai: ${currentUser?.name || 'PPIC'} (${currentUser?.role || 'Staff'}) • Klik untuk beralih akun`}
               >
-                <span className={`flex h-4 w-4 items-center justify-center rounded text-xs font-black text-white ${currentUser?.avatarBg || 'bg-blue-600'}`}>
-                  {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'P'}
-                </span>
-                <span className="font-bold text-slate-900">{currentUser?.name || 'PPIC'}</span>
-                {isManager(currentUser) ? (
-                  <span className="text-xs font-bold uppercase text-indigo-900 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    <Crown className="w-3 h-3 text-indigo-600" /> Manager
-                  </span>
-                ) : isSuperuser(currentUser) ? (
-                  <span className="text-xs font-bold uppercase text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-600" /> Superuser
-                  </span>
-                ) : isHelper(currentUser) ? (
-                  <span className="text-xs font-bold uppercase text-teal-900 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    <User className="w-3 h-3 text-teal-600" /> Support
-                  </span>
-                ) : (
-                  <span className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md">
-                    #{currentUser?.ppicNumber || 1}
-                  </span>
-                )}
+                <User className="h-4 w-4 text-slate-700" aria-hidden="true" />
               </button>
 
             </div>
