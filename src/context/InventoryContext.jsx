@@ -42,6 +42,26 @@ import {
 
 const InventoryContext = createContext(null);
 
+export const DEFAULT_ANNOUNCEMENT = {
+  id: 'announcement_rnd_current',
+  title: 'Standardisasi Kode Sampel IT & Sampel Baru',
+  badge: 'PENGUMUMAN PPIC & R&D • BERLAKU HARI INI',
+  badgeType: 'amber',
+  content: `Per hari ini, seluruh kode sampel untuk divisi IT dan sampel fisik yang baru masuk WAJIB mengikuti format kode inventory R&D.
+
+1. Sampel IT: Kode sampel dari IT disinkronkan dan mengikuti kode master R&D.
+2. Sampel Baru: Segera input dan beri label box sesuai penomoran inventori baku R&D.
+3. Format Input: Wajib HURUF BESAR (UPPERCASE) dan satuan standar PCE.
+
+Mohon seluruh PPIC dan Tim Support mematuhi aturan ini demi keteraturan data dan pelacakan fisik sampel.`,
+  exampleCorrect: 'Mengikuti struktur kode resmi inventory R&D Gagaclo (UPPERCASE & PCE)',
+  exampleWrong: 'Menggunakan kode manual acak atau format lama non-standar',
+  exampleNotes: 'Pastikan Style, Buyer No, Art, Size, Color, dan Qty (PCE) terisi akurat.',
+  author: 'Supervisor / Leader R&D',
+  updatedAt: '2026-11-16T06:14:00.000Z',
+  isActive: true,
+};
+
 const STORAGE_KEY = 'gagaclo_inventory_data_v1';
 const DELETED_IDS_KEY = 'gagaclo_deleted_item_ids_v1';
 
@@ -598,6 +618,52 @@ export const InventoryProvider = ({ children }) => {
     broadcastChange('TIMER_UPDATED', { deadline: 0, note: '' });
   };
 
+  // Dynamic Announcement State & Operations
+  const [announcement, setAnnouncement] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_active_announcement');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.title) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load announcement from localStorage', e);
+    }
+    return DEFAULT_ANNOUNCEMENT;
+  });
+
+  const updateAnnouncement = async (newAnnouncement) => {
+    const updated = {
+      ...newAnnouncement,
+      updatedAt: new Date().toISOString(),
+    };
+    setAnnouncement(updated);
+    try {
+      localStorage.setItem('gagaclo_active_announcement', JSON.stringify(updated));
+    } catch {}
+
+    if (supabase) {
+      try {
+        await supabase.from('items').upsert({
+          id: 'SYSTEM_CONFIG_ANNOUNCEMENT',
+          sku: 'SYSTEM_ANNOUNCEMENT',
+          kode: 'SYSTEM_ANNOUNCEMENT',
+          name: 'SYSTEM ANNOUNCEMENT CONFIG',
+          description: updated.title,
+          deskripsi: JSON.stringify(updated),
+          box_number: 999999,
+          rack_id: -1,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+        broadcastChange('ANNOUNCEMENT_UPDATED', { announcement: updated });
+      } catch (err) {
+        console.error('Failed to sync announcement to Supabase:', err);
+      }
+    }
+    return updated;
+  };
+
   // Issues, Errors & Feature Proposals State
   const [issues, setIssues] = useState(() => {
     try {
@@ -810,6 +876,22 @@ export const InventoryProvider = ({ children }) => {
         } catch {}
       }
 
+      // Check for remote announcement config in items
+      if (dbItems && dbItems.length > 0) {
+        const announcementItem = dbItems.find(i => i.id === 'SYSTEM_CONFIG_ANNOUNCEMENT');
+        if (announcementItem?.deskripsi) {
+          try {
+            const parsed = JSON.parse(announcementItem.deskripsi);
+            if (parsed && parsed.title) {
+              setAnnouncement(parsed);
+              try {
+                localStorage.setItem('gagaclo_active_announcement', JSON.stringify(parsed));
+              } catch {}
+            }
+          } catch {}
+        }
+      }
+
       // Check for remote issues config in boxes
       if (dbBoxes && dbBoxes.length > 0) {
         const issuesBox = dbBoxes.find(b => Number(b.box_number) === 999998 || b.code === 'SYSTEM_ISSUES');
@@ -850,6 +932,7 @@ export const InventoryProvider = ({ children }) => {
         const deletedIds = getDeletedItemIds();
         const userItems = dbItems.filter(i => (
           i.id !== 'SYSTEM_CONFIG_TIMER' &&
+          i.id !== 'SYSTEM_CONFIG_ANNOUNCEMENT' &&
           Number(i.box_number) !== 999999 &&
           Number(i.box_number) > 0 &&
           i.status !== 'DELETED' &&
@@ -1140,6 +1223,13 @@ export const InventoryProvider = ({ children }) => {
               } catch {}
             }
           }
+          // If announcement changed, update local state immediately
+          if (data?.action === 'ANNOUNCEMENT_UPDATED' && data.announcement) {
+            setAnnouncement(data.announcement);
+            try {
+              localStorage.setItem('gagaclo_active_announcement', JSON.stringify(data.announcement));
+            } catch {}
+          }
           // Trigger silent full sync to pull authoritative data from Supabase
           syncFromSupabase(supabase, true);
         })
@@ -1147,6 +1237,21 @@ export const InventoryProvider = ({ children }) => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'items' },
           (payload) => {
+            // Realtime Sync for Announcement
+            if (payload.new?.id === 'SYSTEM_CONFIG_ANNOUNCEMENT') {
+              if (payload.new?.deskripsi) {
+                try {
+                  const parsed = JSON.parse(payload.new.deskripsi);
+                  if (parsed && parsed.title) {
+                    setAnnouncement(parsed);
+                    try { localStorage.setItem('gagaclo_active_announcement', JSON.stringify(parsed)); } catch {}
+                  }
+                } catch {}
+              }
+              return;
+            }
+            if (payload.old?.id === 'SYSTEM_CONFIG_ANNOUNCEMENT' || payload.new?.id === 'SYSTEM_CONFIG_ANNOUNCEMENT') return;
+
             // Realtime Sync for Global Timer
             if (payload.new?.id === 'SYSTEM_CONFIG_TIMER') {
               const d = Number(payload.new.description) || 0;
@@ -1741,7 +1846,7 @@ export const InventoryProvider = ({ children }) => {
           await supabase.from('transactions').update({ item_id: null }).neq('id', 'NONE');
         } catch {}
 
-        const { error: delError } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER');
+        const { error: delError } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT');
         if (delError) {
           console.warn('Hard delete all dibatasi, update status DELETED:', delError.message);
           await supabase.from('items').update({
@@ -1753,7 +1858,7 @@ export const InventoryProvider = ({ children }) => {
             qty: 0,
             jumlah: 0,
             updated_at: new Date().toISOString(),
-          }).neq('id', 'SYSTEM_CONFIG_TIMER');
+          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT');
         }
       } catch (err) {
         console.error('Supabase bulk delete items error:', err);
@@ -1767,7 +1872,7 @@ export const InventoryProvider = ({ children }) => {
             qty: 0,
             jumlah: 0,
             updated_at: new Date().toISOString(),
-          }).neq('id', 'SYSTEM_CONFIG_TIMER');
+          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT');
         } catch {}
       }
     }
@@ -2999,6 +3104,9 @@ export const InventoryProvider = ({ children }) => {
     systemNotification,
     showNotification,
     setSystemNotification,
+    // Dynamic Announcement State & Operations
+    announcement,
+    updateAnnouncement,
   };
 
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;

@@ -45,6 +45,9 @@ const UserProfileModal = lazy(() =>
 const BackupModal = lazy(() =>
   import('./components/BackupModal').then((m) => ({ default: m.BackupModal }))
 );
+const AnnouncementModal = lazy(() =>
+  import('./components/AnnouncementModal').then((m) => ({ default: m.AnnouncementModal }))
+);
 import {
   Boxes,
   Database,
@@ -63,6 +66,7 @@ import {
   Sparkles,
   Box as BoxIcon,
   Pencil,
+  Megaphone,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -89,6 +93,8 @@ const AppContent = () => {
     exportToExcel,
     setSelectedBoxNumber,
     setItemModalConfig,
+    announcement,
+    updateAnnouncement,
   } = useInventory();
 
   const [databaseBytes, setDatabaseBytes] = useState(null);
@@ -97,6 +103,7 @@ const AppContent = () => {
   const [userProfileTarget, setUserProfileTarget] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredSearchBoxNumber, setHoveredSearchBoxNumber] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -207,6 +214,29 @@ const AppContent = () => {
       clearInterval(timer);
     };
   }, [connected]);
+
+  // Auto-open dynamic announcement popup on app load if active and not marked as seen
+  useEffect(() => {
+    if (!announcement?.isActive) return;
+    try {
+      const lastSeen = localStorage.getItem('gagaclo_last_seen_announcement_ts');
+      if (lastSeen !== announcement.updatedAt) {
+        const timer = setTimeout(() => {
+          setIsAnnouncementOpen(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    } catch {}
+  }, [announcement?.updatedAt, announcement?.isActive]);
+
+  const handleDismissAnnouncement = () => {
+    try {
+      if (announcement?.updatedAt) {
+        localStorage.setItem('gagaclo_last_seen_announcement_ts', announcement.updatedAt);
+      }
+    } catch {}
+    setIsAnnouncementOpen(false);
+  };
 
   const usageLabel = databaseBytes === null
     ? 'Pemakaian: -'
@@ -558,15 +588,30 @@ const AppContent = () => {
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen((prev) => !prev)}
-                  className={`flex items-center justify-center h-8.5 w-8.5 rounded-full text-xs font-medium transition-all duration-150 border cursor-pointer ${
+                  className={`relative flex items-center justify-center h-8.5 w-8.5 rounded-full text-xs font-medium transition-all duration-150 border cursor-pointer ${
                     isSettingsOpen
                       ? 'bg-[#1d1d1f] text-white border-[#1d1d1f] shadow-xs'
                       : 'bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] border-black/[0.08] shadow-2xs'
                   }`}
                   aria-label="Menu Setting & Pengaturan"
-                  title="Menu Setting: Kelola Box & Rak, Backup & Pulihkan, Impor & Ekspor Excel"
+                  title="Menu Setting: Pengumuman Tim, Kelola Box & Rak, Backup & Pulihkan, Impor & Ekspor Excel"
                 >
                   <Settings className={`h-4 w-4 transition-transform duration-200 ${isSettingsOpen ? 'rotate-90 text-white' : 'text-[#1d1d1f]'}`} aria-hidden="true" />
+                  {/* Indikator titik jika ada pengumuman aktif yang belum dibuka */}
+                  {(() => {
+                    try {
+                      const lastSeen = localStorage.getItem('gagaclo_last_seen_announcement_ts');
+                      if (announcement?.isActive && lastSeen !== announcement?.updatedAt) {
+                        return (
+                          <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f59e0b] opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#f59e0b]"></span>
+                          </span>
+                        );
+                      }
+                    } catch {}
+                    return null;
+                  })()}
                 </button>
 
                 {isSettingsOpen && (
@@ -575,11 +620,11 @@ const AppContent = () => {
                     style={{ whiteSpace: 'normal' }}
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Kolom 1: KELOLA GUDANG */}
+                      {/* Kolom 1: KELOLA GUDANG & PENGUMUMAN */}
                       <div className="flex flex-col gap-2 min-w-0">
                         <div className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] px-2 flex items-center justify-between">
-                          <span>Kelola Gudang</span>
-                          <span className="text-[10px] text-[#86868b] bg-black/[0.04] px-1.5 py-0.5 rounded-full font-medium">Fisik</span>
+                          <span>Operasional &amp; Gudang</span>
+                          <span className="text-[10px] text-[#86868b] bg-black/[0.04] px-1.5 py-0.5 rounded-full font-medium">Sistem</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           <button
@@ -600,6 +645,28 @@ const AppContent = () => {
                                   <span className="text-[11px] text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition-all">›</span>
                                 </div>
                                 <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Atur nomor box, rak 1–5 &amp; PIC</div>
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAnnouncementOpen(true);
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#f59e0b]/10 text-[#f59e0b] group-hover:bg-[#f59e0b] group-hover:text-white transition-colors shrink-0">
+                                <Megaphone className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
+                                  <span>Pengumuman Tim</span>
+                                  <span className="text-[11px] text-[#86868b] group-hover:text-[#f59e0b] group-hover:translate-x-0.5 transition-all">›</span>
+                                </div>
+                                <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Atur &amp; siarkan pengumuman popup</div>
                               </div>
                             </div>
                           </button>
@@ -968,6 +1035,17 @@ const AppContent = () => {
           onClose={() => setCelebrationAchiever(null)}
         />
       )}
+
+      {/* Modal Pengumuman Resmi (Center Monitor) */}
+      <Suspense fallback={null}>
+        <AnnouncementModal
+          isOpen={isAnnouncementOpen}
+          onClose={handleDismissAnnouncement}
+          announcement={announcement}
+          onSaveAnnouncement={updateAnnouncement}
+          currentUser={currentUser}
+        />
+      </Suspense>
 
     </div>
   );
