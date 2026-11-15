@@ -91,6 +91,7 @@ const AppContent = () => {
   const [databaseBytes, setDatabaseBytes] = useState(null);
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [userProfileTarget, setUserProfileTarget] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -203,7 +204,12 @@ const AppContent = () => {
       {/* Sticky Top Header Section: Full-Width Target Team Banner + Navigation Header */}
       <div className="no-print sticky top-0 z-40 w-full shrink-0">
         {/* Full-Width Target Team Banner (Fokus & Dinamis) */}
-        <TargetTeamBanner onOpenRekap={() => setAppMode('ppic-performance')} />
+        <TargetTeamBanner
+          onOpenUserProfile={(userName) => {
+            setUserProfileTarget(userName);
+            setIsUserProfileOpen(true);
+          }}
+        />
 
         {/* Top Navigation Bar */}
         <header className="inventory-header">
@@ -424,7 +430,10 @@ const AppContent = () => {
               {/* Akun & Profil User PPIC */}
               <button
                 type="button"
-                onClick={() => setIsUserProfileOpen(true)}
+                onClick={() => {
+                  setUserProfileTarget(null);
+                  setIsUserProfileOpen(true);
+                }}
                 className="flex items-center justify-center p-2 rounded-lg text-xs font-bold transition-all border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 cursor-pointer shadow-2xs"
                 aria-label={`Akun: ${currentUser?.name || 'PPIC'}`}
                 title={`Login sebagai: ${currentUser?.name || 'PPIC'} (${currentUser?.role || 'Staff'}) • Klik untuk beralih akun`}
@@ -517,7 +526,11 @@ const AppContent = () => {
         <Suspense fallback={null}>
           <UserProfileModal
             isOpen={isUserProfileOpen}
-            onClose={() => setIsUserProfileOpen(false)}
+            onClose={() => {
+              setIsUserProfileOpen(false);
+              setUserProfileTarget(null);
+            }}
+            initialSelectedUserName={userProfileTarget}
           />
         </Suspense>
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Target, Edit2, Check, X, ArrowUpRight, User } from 'lucide-react';
+import { Target, Edit2, Check, X, User } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
@@ -16,7 +16,7 @@ const TEAM_MEMBERS = [
   { name: 'Tri', role: 'Support #3' },
 ];
 
-export function TargetTeamBanner({ onOpenRekap }) {
+export function TargetTeamBanner({ onOpenRekap, onOpenUserProfile }) {
   const {
     items = [],
     boxes = [],
@@ -345,21 +345,6 @@ export function TargetTeamBanner({ onOpenRekap }) {
               )}
             </div>
           </div>
-
-          {/* Tombol Aksi Cepat */}
-          {onOpenRekap && (
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={onOpenRekap}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 transition-all shadow-2xs cursor-pointer active:scale-95"
-                title="Buka rincian Rekap Harian tim"
-              >
-                <span>Rekap Harian</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-slate-300" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* BARIS BAWAH (Row 2): PERSON TARGET & Semua 8 Nama Personel (Center Aligned) */}
@@ -372,42 +357,50 @@ export function TargetTeamBanner({ onOpenRekap }) {
           </div>
 
           <div className="flex items-center justify-center gap-1.5 flex-wrap">
-            {allMemberTargets.map((m) => (
-              <button
-                type="button"
-                key={m.name}
-                onClick={() => {
-                  if (m.isAchieved) {
-                    try {
-                      window.dispatchEvent(
-                        new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
-                      );
-                    } catch {}
-                  } else if (showNotification) {
-                    showNotification(
-                      `${m.name} (${m.role}): Capaian saat ini ${m.pcs}/${m.target} PCS (kurang ${m.remaining} PCS).`,
-                      'info',
-                      3000
-                    );
-                  }
-                }}
-                className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 hover:scale-[1.02] border ${
-                  m.isAchieved
-                    ? 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 hover:border-emerald-400 text-emerald-200'
-                    : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 hover:border-slate-600 text-slate-300'
-                }`}
-                title={`${m.name} (${m.role}) — Target: ${m.target} PCS, Capaian: ${m.pcs} PCS (${m.percent}%)${m.isAchieved ? ' — Target Tercapai! Klik untuk selebrasi.' : ` — Kurang ${m.remaining} PCS lagi.`}`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${m.isAchieved ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
-                <span className="text-white font-extrabold">{m.name}</span>
-                <span className={`font-mono font-bold ${m.isAchieved ? 'text-emerald-400' : 'text-slate-400'}`}>
-                  · {m.pcs}/{m.target} PCS
-                </span>
-                {m.isAchieved && (
-                  <span className="text-[10px] text-emerald-400 font-extrabold">✓</span>
-                )}
-              </button>
-            ))}
+            {allMemberTargets.map((m) => {
+              const isCurrentActive = currentUser && String(currentUser.name).trim().toLowerCase() === String(m.name).trim().toLowerCase();
+
+              return (
+                <button
+                  type="button"
+                  key={m.name}
+                  onClick={() => {
+                    if (m.isAchieved) {
+                      try {
+                        window.dispatchEvent(
+                          new CustomEvent('gagaclo_trigger_celebration_flare', { detail: m })
+                        );
+                      } catch {}
+                    }
+                    if (onOpenUserProfile) {
+                      onOpenUserProfile(m.name);
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 hover:scale-[1.02] border ${
+                    isCurrentActive
+                      ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-slate-900 border-blue-400 bg-blue-950/70 text-blue-200'
+                      : m.isAchieved
+                      ? 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/60 hover:border-emerald-400 text-emerald-200'
+                      : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 hover:border-slate-600 text-slate-300'
+                  }`}
+                  title={`${m.name} (${m.role}) — Target: ${m.target} PCS, Capaian: ${m.pcs} PCS (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isCurrentActive ? 'bg-blue-400 animate-pulse' : m.isAchieved ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+                  <span className="text-white font-extrabold">{m.name}</span>
+                  <span className={`font-mono font-bold ${isCurrentActive ? 'text-blue-300' : m.isAchieved ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    · {m.pcs}/{m.target} PCS
+                  </span>
+                  {m.isAchieved && (
+                    <span className="text-[10px] text-emerald-400 font-extrabold">✓</span>
+                  )}
+                  {isCurrentActive && (
+                    <span className="text-[9px] uppercase tracking-wider font-black px-1 rounded bg-blue-500/30 text-blue-300 border border-blue-400/50">
+                      Anda
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

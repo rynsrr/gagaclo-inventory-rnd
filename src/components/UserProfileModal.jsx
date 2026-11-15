@@ -15,7 +15,7 @@ import {
 import { useInventory } from '../context/InventoryContext';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
 
-export const UserProfileModal = ({ isOpen, onClose }) => {
+export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) => {
   const {
     users,
     currentUser,
@@ -32,9 +32,19 @@ export const UserProfileModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     setStatusMessage(null);
     setLoginError('');
+    if (isOpen && initialSelectedUserName && users?.length > 0) {
+      const target = users.find(
+        (u) => u.name.toLowerCase() === String(initialSelectedUserName).toLowerCase()
+      );
+      if (target) {
+        setSelectedUserToLogin(target);
+        setLoginPassword('');
+        return;
+      }
+    }
     setSelectedUserToLogin(null);
     setLoginPassword('');
-  }, [currentUser, isOpen]);
+  }, [currentUser, isOpen, initialSelectedUserName, users]);
 
   if (!isOpen) return null;
 
