@@ -13,7 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-export function TeamStructureView({ onSelectPic, onNavigateTo3D }) {
+export function TeamStructureView() {
   const { boxes, items } = useInventory();
   const [activeTab, setActiveTab] = useState('chart'); // 'chart' | 'matrix' | 'boxes'
 
@@ -189,15 +189,15 @@ export function TeamStructureView({ onSelectPic, onNavigateTo3D }) {
         {/* 2. Main Content Area */}
         {activeTab === 'chart' && (
           <div className="space-y-6">
-            {/* Landscape Organizational Chart Card */}
+            {/* Landscape Organizational Chart Card with Flowchart Arrows */}
             <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 md:p-8 shadow-xl backdrop-blur-sm overflow-x-auto">
-              <div className="min-w-[1200px] flex flex-col lg:flex-row gap-6 items-stretch">
+              <div className="min-w-[1320px] flex items-stretch">
 
-                {/* Left Column: Management & Leader */}
-                <div className="w-full lg:w-[380px] shrink-0 flex flex-col justify-center space-y-6">
+                {/* Left Column: Management (Sururi) & Operational Leader (Jasmine) */}
+                <div className="w-[360px] shrink-0 flex flex-col justify-between py-2">
                   
                   {/* SURURI (SPV) */}
-                  <div className="relative rounded-xl bg-slate-950/80 border-2 border-blue-500/80 p-5 shadow-lg shadow-blue-500/10">
+                  <div className="relative rounded-xl bg-slate-950/90 border-2 border-blue-500 p-5 shadow-lg shadow-blue-500/10">
                     <div className="flex items-center justify-between mb-3">
                       <span className="px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wider uppercase border border-blue-500/60 text-blue-400 bg-blue-950/50">
                         SPV SAMPLE
@@ -213,17 +213,19 @@ export function TeamStructureView({ onSelectPic, onNavigateTo3D }) {
                     </div>
                   </div>
 
-                  {/* Connecting Line Downward with Label */}
-                  <div className="flex flex-col items-center justify-center my-1">
-                    <div className="w-0.5 h-6 bg-blue-500" />
-                    <span className="text-[11px] font-bold text-blue-400 tracking-wider uppercase py-0.5">
-                      Supervisi Kebijakan
-                    </span>
-                    <div className="w-0.5 h-6 bg-emerald-500" />
+                  {/* Downward Connector with Arrow to Jasmine */}
+                  <div className="flex flex-col items-center justify-center my-3 relative">
+                    <div className="w-1 h-5 bg-gradient-to-b from-blue-500 to-blue-400 rounded-full" />
+                    <div className="my-1 px-3 py-1 rounded-full bg-blue-950/90 border border-blue-500/60 text-[10px] font-bold text-blue-300 uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-1.5">
+                      <span>SUPERVISI KEBIJAKAN</span>
+                    </div>
+                    <div className="w-1 h-5 bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-full" />
+                    {/* Real Arrowhead pointing down */}
+                    <div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[9px] border-t-emerald-500 -mt-0.5 drop-shadow-[0_2px_4px_rgba(16,185,129,0.5)]" />
                   </div>
 
                   {/* JASMINE (Leader) */}
-                  <div className="relative rounded-xl bg-emerald-950/30 border-2 border-emerald-500/90 p-6 shadow-xl shadow-emerald-500/10">
+                  <div className="relative rounded-xl bg-emerald-950/30 border-2 border-emerald-500 p-6 shadow-xl shadow-emerald-500/10">
                     <div className="flex items-center justify-between mb-3">
                       <span className="px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wider uppercase border border-emerald-500/60 text-emerald-400 bg-emerald-950/50">
                         LEADER
@@ -241,11 +243,94 @@ export function TeamStructureView({ onSelectPic, onNavigateTo3D }) {
 
                 </div>
 
-                {/* Right Column: 5 PPIC + 3 Support Team */}
-                <div className="flex-1 flex flex-col justify-between space-y-6">
+                {/* Middle Column: Dynamic Flowchart Branch Connectors from Jasmine */}
+                <div className="w-[84px] shrink-0 relative flex flex-col justify-between py-2">
+                  <svg
+                    className="w-full h-full overflow-visible"
+                    viewBox="0 0 84 560"
+                    preserveAspectRatio="none"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <defs>
+                      {/* Arrowhead Marker Amber for PPIC */}
+                      <marker id="arrow-ppic" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+                        <polygon points="0 0, 8 3.5, 0 7" fill="#f59e0b" />
+                      </marker>
+                      {/* Arrowhead Marker Cyan for Support */}
+                      <marker id="arrow-supp" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+                        <polygon points="0 0, 8 3.5, 0 7" fill="#06b6d4" />
+                      </marker>
+                      {/* Glow filters */}
+                      <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#10b981" floodOpacity="0.6" />
+                      </filter>
+                      <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#f59e0b" floodOpacity="0.6" />
+                      </filter>
+                      <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#06b6d4" floodOpacity="0.6" />
+                      </filter>
+                    </defs>
+
+                    {/* 1. Horizontal trunk out of Jasmine (middle of Jasmine card ~y=450) */}
+                    <path
+                      d="M 0 450 L 36 450"
+                      stroke="#10b981"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      filter="url(#glow-emerald)"
+                    />
+
+                    {/* 2. Vertical spine linking branches */}
+                    <path
+                      d="M 36 130 L 36 490"
+                      stroke="#10b981"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      filter="url(#glow-emerald)"
+                    />
+
+                    {/* 3. Upper Branch to 5 PPIC (with arrowhead pointing right) */}
+                    <path
+                      d="M 36 130 L 80 130"
+                      stroke="#f59e0b"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      markerEnd="url(#arrow-ppic)"
+                      filter="url(#glow-amber)"
+                    />
+
+                    {/* 4. Lower Branch to 3 Support (with arrowhead pointing right) */}
+                    <path
+                      d="M 36 490 L 80 490"
+                      stroke="#06b6d4"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      markerEnd="url(#arrow-supp)"
+                      filter="url(#glow-cyan)"
+                    />
+                  </svg>
+
+                  {/* Flow labels floating alongside branches */}
+                  <div className="absolute top-[88px] left-[6px] pointer-events-none">
+                    <span className="px-2 py-0.5 rounded bg-amber-950/90 border border-amber-500/60 text-[9px] font-bold text-amber-300 tracking-wider uppercase whitespace-nowrap shadow-md">
+                      Target Box →
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-[88px] left-[6px] pointer-events-none">
+                    <span className="px-2 py-0.5 rounded bg-cyan-950/90 border border-cyan-500/60 text-[9px] font-bold text-cyan-300 tracking-wider uppercase whitespace-nowrap shadow-md">
+                      Penugasan →
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right Column: 5 PPIC + 3 Support Team with Collaboration Flow */}
+                <div className="flex-1 flex flex-col justify-between py-2">
 
                   {/* Top Wing: 5 PPIC (Responsible - Box Owners) */}
-                  <div className="rounded-xl bg-slate-950/70 border border-amber-500/40 p-5 shadow-lg">
+                  <div className="rounded-xl bg-slate-950/80 border-2 border-amber-500/60 p-5 shadow-lg shadow-amber-500/5">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <span className="text-amber-400 font-bold text-sm tracking-wide">
@@ -285,15 +370,57 @@ export function TeamStructureView({ onSelectPic, onNavigateTo3D }) {
                     </div>
                   </div>
 
-                  {/* Mid Connector: Collaboration Arrow */}
-                  <div className="flex items-center justify-center gap-3 py-1 bg-slate-950/50 border border-slate-800 rounded-lg px-4">
-                    <span className="text-cyan-400 text-xs font-bold flex items-center gap-2">
-                      ▲ Asistensi Langsung: Menghitung &amp; Input Fisik Sampel Bersama PPIC di Rak
-                    </span>
+                  {/* Upward Arrows Channel: Support Direct Assistance to 5 PPIC */}
+                  <div className="my-3 py-2 px-6 rounded-xl bg-slate-950/70 border border-cyan-500/40 shadow-inner flex items-center justify-between">
+                    {/* Left 3 Upward Flow Indicators */}
+                    <div className="flex items-center gap-8">
+                      <div className="flex flex-col items-center">
+                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
+                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Sheva</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
+                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Ade</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
+                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Tri</span>
+                      </div>
+                    </div>
+
+                    {/* Central Assistance Badge */}
+                    <div className="px-5 py-1.5 rounded-full bg-cyan-950/90 border border-cyan-500/60 shadow-lg shadow-cyan-500/10 flex items-center gap-2">
+                      <span className="text-cyan-400 font-extrabold text-sm animate-pulse">▲</span>
+                      <span className="text-cyan-200 text-xs font-bold tracking-wide">
+                        Asistensi Langsung: Menghitung &amp; Input Fisik Sampel Bersama PPIC di Rak
+                      </span>
+                    </div>
+
+                    {/* Right 3 Upward Flow Indicators */}
+                    <div className="flex items-center gap-8">
+                      <div className="flex flex-col items-center">
+                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
+                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Rak 1-2</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
+                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Rak 3-4</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
+                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Rak 5</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Bottom Wing: 3 Support Team */}
-                  <div className="rounded-xl bg-slate-950/70 border border-cyan-500/40 p-5 shadow-lg">
+                  <div className="rounded-xl bg-slate-950/80 border-2 border-cyan-500/60 p-5 shadow-lg shadow-cyan-500/5">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <span className="text-cyan-400 font-bold text-sm tracking-wide">
