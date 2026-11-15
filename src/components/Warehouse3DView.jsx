@@ -1167,6 +1167,11 @@ export const Warehouse3DView = ({
 
   // Reapply PIC/search/hover selection whenever filters change, cloud sync rebuilds
   // the scene, or user hovers a box in the dropdown / search list.
+  // Aturan pengguna:
+  // 1. "jika difilter nama keep boxnya": Seluruh box tetap solid di rak (tidak transparan/hantu).
+  //    Box milik PIC aktif ditandai warna PIC, box PIC lain tetap berbentuk box solid dengan warna netral.
+  // 2. "jika hover keep box juga hanya tandai dengan warna beda": Seluruh box tetap utuh solid (tidak meredup/transparan),
+  //    hanya box yang di-hover yang ditandai dengan warna highlight mencolok (emas / amber glowing).
   useEffect(() => {
     const picFilterActive = highlightPpic !== 'ALL';
     const targetHoverNum = previewFocusBoxNumber
@@ -1178,36 +1183,59 @@ export const Warehouse3DView = ({
       const isTargetHover = targetHoverNum !== null && meshBoxNum === targetHoverNum;
       const picMatches = !picFilterActive || matchesPic(mesh.userData.picName, highlightPpic);
       const searchMatches = !searchActive || highlightBoxNumbers.has(meshBoxNum);
-      const dimmed = !isTargetHover && (
-        targetHoverNum !== null
-          ? true
-          : ((picFilterActive || searchActive) && (!picMatches || !searchMatches))
-      );
-      const highlighted = isTargetHover || (!dimmed && (picFilterActive || searchActive));
-      mesh.castShadow = !dimmed;
+      const isFilterSelected = (picFilterActive || searchActive) && picMatches && searchMatches;
+
+      mesh.castShadow = true;
 
       for (const material of new Set(mesh.material)) {
-        material.transparent = dimmed;
-        material.depthWrite = !dimmed;
-        material.opacity = isTargetHover ? 1 : dimmed ? 0.22 : 1;
+        // SELURUH BOX TETAP SOLID & KEEPS (tidak ada ghosting / transparan)
+        material.transparent = false;
+        material.depthWrite = true;
+        material.opacity = 1;
+
         if (isTargetHover) {
-          // Box yang di-hover: sorot dengan warna emas/kuning-amber menyala
+          // Box yang di-hover: ditandai dengan warna berbeda yang mencolok (emas / amber glowing)
           if (material.map) {
             material.color.setHex(0xffffff);
             material.emissive.setHex(0xff9f0a);
-            material.emissiveIntensity = 0.6;
+            material.emissiveIntensity = 0.7;
           } else {
             material.color.setHex(0xff9f0a);
             material.emissive.setHex(0xff9f0a);
-            material.emissiveIntensity = 0.4;
+            material.emissiveIntensity = 0.45;
+          }
+        } else if (picFilterActive || searchActive) {
+          if (isFilterSelected) {
+            // Box yang cocok dengan filter PIC / Search: warna PIC aktif bersinar
+            if (material.map) {
+              material.color.setHex(0xffffff);
+              material.emissive.setHex(0x0071e3);
+              material.emissiveIntensity = 0.25;
+            } else {
+              material.color.setHex(mesh.userData.baseColor);
+              material.emissive.setHex(0x000000);
+              material.emissiveIntensity = 0;
+            }
+          } else {
+            // Box lain saat ada filter: tetap keep box solid dengan warna netral bersih (tidak transparan)
+            if (material.map) {
+              material.color.setHex(0xffffff);
+              material.emissive.setHex(0x000000);
+              material.emissiveIntensity = 0;
+            } else {
+              material.color.setHex(0xd1d5db); // Solid muted clean gray cardboard
+              material.emissive.setHex(0x000000);
+              material.emissiveIntensity = 0;
+            }
           }
         } else {
+          // Kondisi normal tanpa filter & tanpa hover: warna natural tiap box
           if (material.map) {
             material.color.setHex(0xffffff);
             material.emissive.setHex(0x000000);
             material.emissiveIntensity = 0;
           } else {
-            material.color.setHex(highlighted && !material.map ? mesh.userData.baseColor : 0xffffff);
+            material.color.setHex(mesh.userData.baseColor);
             material.emissive.setHex(0x000000);
             material.emissiveIntensity = 0;
           }
