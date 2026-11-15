@@ -44,8 +44,8 @@ const InventoryContext = createContext(null);
 
 export const DEFAULT_ANNOUNCEMENT = {
   id: 'announcement_rnd_multi',
-  title: 'Standardisasi Kode Sampel IT & Sampel Baru',
-  updatedAt: '2026-11-16T06:30:00.000Z',
+  title: 'Pengumuman Penting Operasional R&D',
+  updatedAt: '2026-11-16T06:34:00.000Z',
   isActive: true,
   items: [
     {
@@ -63,15 +63,15 @@ Dilarang menggunakan format kode manual bebas atau format lama internal IT. Selu
     },
     {
       id: 'point-2',
-      title: 'Penomoran Sampel Baru yang Masuk ke Area R&D',
-      badge: 'POIN 2 • SAMPEL BARU MASUK',
-      badgeType: 'blue',
-      content: `Setiap sampel fisik baru yang baru tiba di area R&D wajib langsung didata menggunakan standar kode inventory R&D ke dalam box terkait.
+      title: 'Prioritas Asistensi & Support Style Alokasi Ami',
+      badge: 'POIN 2 • PRIORITAS SUPPORT (AMI KELUAR)',
+      badgeType: 'rose',
+      content: `Sehubungan dengan Ami yang telah keluar dari tim, seluruh Tim Support (Sheva, Ade, Tri) dan rekan PPIC diinstruksikan untuk MENGUTAMAKAN support dan pendataan style sampel yang sebelumnya dipegang oleh Ami.
 
-Pastikan fisik sampel ditata rapi ke dalam box dan status box segera diperbarui. Dilarang menumpuk sampel baru di meja atau lantai tanpa pencatatan ke sistem web.`,
-      exampleCorrect: 'Input langsung ke sistem web & pastikan label fisik box sinkron',
-      exampleWrong: 'Menumpuk sampel fisik di box tanpa input data sistem',
-      exampleNotes: 'Format input teks wajib HURUF BESAR (UPPERCASE) dan satuan standar PCE.',
+Mohon bantu percepat penataan fisik sampel, pengecekan kelengkapan, dan input data ke dalam box alokasi Ami agar target harian tim tercapai dan tidak ada sampel yang tertinggal atau terbengkalai.`,
+      exampleCorrect: 'Tim Support mengutamakan asistensi pendataan & penataan box/style jatah Ami',
+      exampleWrong: 'Membiarkan sampel jatah Ami menumpuk tanpa bantuan asistensi tim',
+      exampleNotes: 'Segera koordinasikan dengan Leader (Jasmine) apabila ditemukan kendala fisik atau data sampel Ami.',
       author: 'Supervisor / Leader R&D',
     },
   ],
@@ -682,7 +682,13 @@ export const InventoryProvider = ({ children }) => {
       const saved = localStorage.getItem('gagaclo_active_announcement');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed) return normalizeAnnouncement(parsed);
+        if (parsed) {
+          // Jika data tersimpan lebih lama dari default terbaru, prioritaskan default terbaru
+          if (parsed.updatedAt && new Date(parsed.updatedAt) < new Date(DEFAULT_ANNOUNCEMENT.updatedAt)) {
+            return DEFAULT_ANNOUNCEMENT;
+          }
+          return normalizeAnnouncement(parsed);
+        }
       }
     } catch (e) {
       console.error('Failed to load announcement from localStorage', e);
