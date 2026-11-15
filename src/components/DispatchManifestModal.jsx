@@ -458,7 +458,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{midCode}</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{midCode}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -467,7 +467,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{invoiceNo}</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{invoiceNo}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -476,7 +476,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{formatDateDisplay(docDate)}</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{formatDateDisplay(docDate)}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -485,7 +485,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span className="ml-2">:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{consigneeName}. {consigneeAddress}</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{consigneeName}. {consigneeAddress}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -494,7 +494,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{attn}</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{attn}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -503,7 +503,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{orderNo}</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{orderNo}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -512,7 +512,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{paymentBy}</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{paymentBy}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -521,7 +521,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{shipmentBy}</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{shipmentBy}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -530,7 +530,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{invoiceValue}</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{invoiceValue}</td>
                       </tr>
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -539,7 +539,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">{formatDateDisplay(shippingDate)}</td>
+                        <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">{formatDateDisplay(shippingDate)}</td>
                       </tr>
                       <tr>
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -548,7 +548,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                             <span>:</span>
                           </div>
                         </td>
-                        <td className="py-1 px-3 font-bold uppercase tracking-tight">{fromLocation.toUpperCase()}</td>
+                        <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{fromLocation.toUpperCase()}</td>
                       </tr>
                     </tbody>
                   </table>

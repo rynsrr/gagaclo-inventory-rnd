@@ -444,9 +444,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                   <input
                     type="text"
                     value={consigneeAddress}
-                    onChange={(e) => setConsigneeAddress(e.target.value)}
+                    onChange={(e) => setConsigneeAddress(e.target.value.toUpperCase())}
                     placeholder="Alamat lengkap tujuan..."
-                    className="text-[10.5px] text-center w-full max-w-xl bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
+                    className="text-[10.5px] text-center w-full max-w-xl uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
                   />
                 </div>
                 <div className="flex items-center justify-center gap-6 text-[10.5px] font-semibold">
@@ -455,9 +455,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                     <input
                       type="text"
                       value={attn}
-                      onChange={(e) => setAttn(e.target.value)}
+                      onChange={(e) => setAttn(e.target.value.toUpperCase())}
                       placeholder="Nama Penerima (WAN LIN)..."
-                      className="text-[10.5px] font-semibold text-center w-36 bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
+                      className="text-[10.5px] font-semibold text-center w-36 uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
                     />
                   </div>
                   <div className="flex items-center gap-1">
@@ -465,9 +465,9 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                     <input
                       type="text"
                       value={tel}
-                      onChange={(e) => setTel(e.target.value)}
+                      onChange={(e) => setTel(e.target.value.toUpperCase())}
                       placeholder="Nomor Telepon..."
-                      className="text-[10.5px] text-center w-36 bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
+                      className="text-[10.5px] text-center w-36 uppercase bg-transparent hover:bg-amber-100/40 focus:bg-amber-100/70 focus:outline-none rounded-xs py-0.5 transition"
                     />
                   </div>
                 </div>
@@ -484,7 +484,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3 font-bold uppercase tracking-tight">{midCode}</td>
+                      <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{midCode}</td>
                     </tr>
                     <tr className="border-b border-black">
                       <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -493,12 +493,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3">
+                      <td className="py-1 px-3 text-left">
                         <input
                           type="text"
                           value={invoiceNo}
                           onChange={(e) => setInvoiceNo(e.target.value.toUpperCase())}
-                          className="w-full font-mono font-bold text-[10.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 tracking-tight"
+                          className="w-full font-mono font-bold text-[10.5px] uppercase text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 tracking-tight"
                         />
                       </td>
                     </tr>
@@ -509,15 +509,15 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3">
-                        <div className="flex items-center gap-2">
+                      <td className="py-1 px-3 text-left">
+                        <div className="flex items-center justify-start gap-2 text-left">
                           <input
                             type="date"
                             value={docDate}
                             onChange={(e) => setDocDate(e.target.value)}
-                            className="font-mono font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print"
+                            className="font-mono font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print text-left"
                           />
-                          <span className="font-mono font-bold text-[10.5px] print:inline hidden">{formatDateDisplay(docDate)}</span>
+                          <span className="font-mono font-bold text-[10.5px] print:inline hidden text-left">{formatDateDisplay(docDate)}</span>
                         </div>
                       </td>
                     </tr>
@@ -528,7 +528,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span className="ml-2">:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3 font-bold uppercase tracking-tight">{consigneeName}. {consigneeAddress}</td>
+                      <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{consigneeName}. {consigneeAddress}</td>
                     </tr>
                     <tr className="border-b border-black">
                       <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -537,7 +537,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3 font-bold uppercase tracking-tight">{attn}</td>
+                      <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{attn}</td>
                     </tr>
                     <tr className="border-b border-black">
                       <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
@@ -546,7 +546,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">
+                      <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight text-left">
                         {itemRows.map((r) => r.orderName).filter((n) => n && n !== '-').join(', ') || '-'}
                       </td>
                     </tr>
@@ -557,12 +557,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3">
+                      <td className="py-1 px-3 text-left">
                         <input
                           type="text"
                           value={paymentBy}
                           onChange={(e) => setPaymentBy(e.target.value.toUpperCase())}
-                          className="w-full font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
+                          className="w-full font-bold text-[10.5px] text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
                         />
                       </td>
                     </tr>
@@ -573,12 +573,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3">
+                      <td className="py-1 px-3 text-left">
                         <input
                           type="text"
                           value={shipmentBy}
                           onChange={(e) => setShipmentBy(e.target.value.toUpperCase())}
-                          className="w-full font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
+                          className="w-full font-bold text-[10.5px] text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
                         />
                       </td>
                     </tr>
@@ -589,12 +589,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3">
+                      <td className="py-1 px-3 text-left">
                         <input
                           type="text"
                           value={invoiceValue}
                           onChange={(e) => setInvoiceValue(e.target.value.toUpperCase())}
-                          className="w-full font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
+                          className="w-full font-bold text-[10.5px] text-left bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 uppercase tracking-tight"
                         />
                       </td>
                     </tr>
@@ -605,15 +605,15 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3">
-                        <div className="flex items-center gap-2">
+                      <td className="py-1 px-3 text-left">
+                        <div className="flex items-center justify-start gap-2 text-left">
                           <input
                             type="date"
                             value={shippingDate}
                             onChange={(e) => setShippingDate(e.target.value)}
-                            className="font-mono font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print"
+                            className="font-mono font-bold text-[10.5px] bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 px-1 no-print text-left"
                           />
-                          <span className="font-mono font-bold text-[10.5px] print:inline hidden">{formatDateDisplay(shippingDate)}</span>
+                          <span className="font-mono font-bold text-[10.5px] print:inline hidden text-left">{formatDateDisplay(shippingDate)}</span>
                         </div>
                       </td>
                     </tr>
@@ -624,7 +624,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                           <span>:</span>
                         </div>
                       </td>
-                      <td className="py-1 px-3 font-bold uppercase tracking-tight">{fromLocation.toUpperCase()}</td>
+                      <td className="py-1 px-3 font-bold uppercase tracking-tight text-left">{fromLocation.toUpperCase()}</td>
                     </tr>
                   </tbody>
                 </table>
