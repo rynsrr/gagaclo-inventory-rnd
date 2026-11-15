@@ -97,12 +97,6 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
 
   // Hitung target harian individu untuk seluruh 8 personil tim R&D
   const allMemberTargets = useMemo(() => {
-    let savedTargets = {};
-    try {
-      const saved = localStorage.getItem('gagaclo_individual_targets');
-      if (saved) savedTargets = JSON.parse(saved);
-    } catch {}
-
     const pcsMap = {};
     TEAM_MEMBERS.forEach((m) => {
       pcsMap[m.name] = 0;

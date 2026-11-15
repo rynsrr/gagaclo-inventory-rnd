@@ -6,9 +6,6 @@ import {
   ChevronDown,
   ChevronUp,
   Users,
-  Edit2,
-  Check,
-  X,
   Eye,
 } from 'lucide-react';
 import {
@@ -17,7 +14,6 @@ import {
   formatDateIndo,
   formatDateIndoFull,
 } from '../utils/dateUtils';
-import { isManager, isSuperuser } from '../utils/authUtils';
 import { getDynamicMemberQuote } from '../data/motivationalQuotes';
 
 // 8 Anggota Tim R&D Resmi (5 PPIC & 3 Support)
@@ -36,12 +32,9 @@ export function PpicPerformanceView() {
   const {
     boxes,
     items,
-    currentUser,
     showNotification,
     syncFromSupabase,
   } = useInventory();
-
-  const isMgr = isManager(currentUser) || isSuperuser(currentUser);
 
   const [dailyTarget, setDailyTarget] = useState(() => {
     try {
@@ -52,8 +45,12 @@ export function PpicPerformanceView() {
     }
   });
 
-  // Dengarkan perubahan target harian dari banner
+  // Dengarkan perubahan target harian dari banner & bersihkan target individu lama agar seluruh tim sinkron
   useEffect(() => {
+    try {
+      localStorage.removeItem('gagaclo_individual_targets');
+    } catch {}
+
     const handleTargetChange = () => {
       try {
         const saved = localStorage.getItem('gagaclo_daily_target_pcs');
@@ -67,31 +64,6 @@ export function PpicPerformanceView() {
       window.removeEventListener('gagaclo_target_updated', handleTargetChange);
     };
   }, []);
-
-  // Target Harian per Individu (5 PPIC & 3 Support)
-  const [individualTargets, setIndividualTargets] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gagaclo_individual_targets');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-  const [editingMemberTarget, setEditingMemberTarget] = useState(null);
-  const [tempMemberTarget, setTempMemberTarget] = useState('');
-
-  const handleSaveIndividualTarget = (memberName, val) => {
-    const num = Math.max(1, parseInt(val, 10) || 20);
-    const updated = { ...individualTargets, [memberName]: num };
-    setIndividualTargets(updated);
-    try {
-      localStorage.setItem('gagaclo_individual_targets', JSON.stringify(updated));
-    } catch {}
-    setEditingMemberTarget(null);
-    if (showNotification) {
-      showNotification(`Target harian untuk ${memberName} disetel ke ${num} PCS.`, 'success', 2500);
-    }
-  };
 
   const [isManualSyncing, setIsManualSyncing] = useState(false);
   const [expandedCards, setExpandedCards] = useState({});
@@ -420,10 +392,9 @@ export function PpicPerformanceView() {
             const autoTarget = isPicAsli
               ? Math.max(1, Math.round((dailyTarget / 8.5) * 1.1))
               : Math.max(1, Math.round(dailyTarget / 8.5));
-            const personTarget = Number(individualTargets[member.name]) > 0 ? Number(individualTargets[member.name]) : autoTarget;
+            const personTarget = autoTarget;
             const personPercent = Math.round((stats.pcs / personTarget) * 100);
             const isPersonAchieved = stats.pcs >= personTarget;
-            const isEditingThis = editingMemberTarget === member.name;
             const memberQuote = getDynamicMemberQuote(member, stats, personTarget, quoteTick);
 
             return (
@@ -443,84 +414,30 @@ export function PpicPerformanceView() {
                   <div className="mt-1">
                     <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wide">
                       <span>Di-Input Hari Ini:</span>
-                      {isMgr && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isEditingThis) {
-                              setEditingMemberTarget(null);
-                            } else {
-                              setEditingMemberTarget(member.name);
-                              setTempMemberTarget(String(personTarget));
-                            }
-                          }}
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer lowercase"
-                          title={`Ubah target harian ${member.name} (Wewenang Manager)`}
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                          <span>{isEditingThis ? 'batal' : 'target'}</span>
-                        </button>
-                      )}
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 lowercase">
+                        {isPicAsli ? 'pic asli (+10%)' : 'support'}
+                      </span>
                     </div>
 
-                    {isEditingThis ? (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleSaveIndividualTarget(member.name, tempMemberTarget);
-                        }}
-                        className="mt-1.5 p-2 bg-white/95 rounded-xl border border-indigo-200 shadow-2xs space-y-1.5"
+                    <div className="mt-0.5 flex items-baseline justify-between gap-1">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-slate-900 tabular-nums">
+                          {stats.pcs.toLocaleString('id-ID')}
+                        </span>
+                        <span className="text-xs font-bold text-indigo-700">
+                          / {personTarget} PCS
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs font-black px-1.5 py-0.5 rounded-md ${
+                          isPersonAchieved
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-indigo-100 text-indigo-900'
+                        }`}
                       >
-                        <div className="flex items-center justify-between text-xs font-bold text-indigo-950">
-                          <span>Set Target {member.name}:</span>
-                          <button
-                            type="button"
-                            onClick={() => setEditingMemberTarget(null)}
-                            className="text-slate-400 hover:text-slate-600"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="number"
-                            min="1"
-                            max="1000"
-                            autoFocus
-                            value={tempMemberTarget}
-                            onChange={(e) => setTempMemberTarget(e.target.value)}
-                            className="w-full px-2 py-1 text-xs font-black text-slate-900 border border-indigo-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
-                          />
-                          <span className="text-xs font-bold text-slate-600 shrink-0">PCS</span>
-                          <button
-                            type="submit"
-                            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold cursor-pointer shrink-0"
-                          >
-                            Simpan
-                          </button>
-                        </div>
-                      </form>
-                    ) : (
-                      <>
-                        <div className="mt-0.5 flex items-baseline justify-between gap-1">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black text-slate-900 tabular-nums">
-                              {stats.pcs.toLocaleString('id-ID')}
-                            </span>
-                            <span className="text-xs font-bold text-indigo-700">
-                              / {personTarget} PCS
-                            </span>
-                          </div>
-                          <span
-                            className={`text-xs font-black px-1.5 py-0.5 rounded-md ${
-                              isPersonAchieved
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : 'bg-indigo-100 text-indigo-900'
-                            }`}
-                          >
-                            {personPercent}%
-                          </span>
-                        </div>
+                        {personPercent}%
+                      </span>
+                    </div>
 
                         {/* Mini Progress Bar Target */}
                         <div className="w-full bg-slate-200/90 rounded-full h-1.5 mt-1.5 overflow-hidden">
@@ -558,8 +475,6 @@ export function PpicPerformanceView() {
                         >
                           {memberQuote.text}
                         </div>
-                      </>
-                    )}
                   </div>
 
                   {/* Keterangan jika membantu input ke box PPIC lain */}
