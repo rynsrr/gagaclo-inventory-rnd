@@ -159,11 +159,17 @@ export function parseSendingInfoText(text) {
   let name = lines[0] || '';
   let address = '';
   let attn = '';
+  let email = '';
   let tel = '';
 
   for (const line of lines) {
+    // Check for Email
+    const emailMatch = line.match(/(?:EMAIL\s*:\s*|mailto:)?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+    if (emailMatch) {
+      email = emailMatch[1].trim();
+    }
     // Check for ATTN
-    const attnMatch = line.match(/ATTN\s*:\s*([^TEL\n]+)/i);
+    const attnMatch = line.match(/ATTN\s*:\s*([^EMAIL\nTEL]+)/i);
     if (attnMatch) {
       attn = attnMatch[1].trim();
     }
@@ -182,7 +188,7 @@ export function parseSendingInfoText(text) {
   // If address wasn't prefixed with "Address:", take line 2 if available
   if (!address && lines.length > 1) {
     const line2 = lines[1];
-    if (!line2.toUpperCase().startsWith('ATTN:') && !line2.toUpperCase().startsWith('TEL:')) {
+    if (!line2.toUpperCase().startsWith('ATTN:') && !line2.toUpperCase().startsWith('TEL:') && !line2.toUpperCase().startsWith('EMAIL:')) {
       address = line2.replace(/^Address:\s*/i, '').trim();
     }
   }
@@ -192,5 +198,5 @@ export function parseSendingInfoText(text) {
     name = name.replace(/^BUYER:\s*/i, '').trim();
   }
 
-  return { name, address, attn, tel };
+  return { name, address, attn, email, tel };
 }

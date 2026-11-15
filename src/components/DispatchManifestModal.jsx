@@ -59,6 +59,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     return 'Industrial Zone, Consignee Destination Area';
   });
   const [attn, setAttn] = useState(() => firstDispatch?.recipient || 'WAN LIN');
+  const [email, setEmail] = useState('wanlin@flink.com');
   const [tel, setTel] = useState(() => {
     if (String(defaultBuyer).toUpperCase().includes('FLINK')) return '+41 81 511 23 20';
     return '-';
@@ -70,11 +71,12 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
       ? 'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND'
       : 'Industrial Zone, Consignee Destination Area';
     const a = firstDispatch?.recipient || 'WAN LIN';
+    const em = 'wanlin@flink.com';
     const t = String(defaultBuyer).toUpperCase().includes('FLINK') ? '+41 81 511 23 20' : '-';
     return [
       name,
       `Address: ${addr}`,
-      `ATTN: ${a}          TEL: ${t}`,
+      `ATTN: ${a}          EMAIL: ${em}          TEL: ${t}`,
     ].join('\n');
   });
 
@@ -85,6 +87,7 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     if (parsed.name) setConsigneeName(parsed.name);
     if (parsed.address) setConsigneeAddress(parsed.address);
     if (parsed.attn) setAttn(parsed.attn);
+    if (parsed.email) setEmail(parsed.email);
     if (parsed.tel) setTel(parsed.tel);
   };
 
@@ -138,6 +141,14 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
     }
     if (!consigneeAddress.trim()) {
       alert('Wajib mengisi Address sebelum mencetak invoice.');
+      return;
+    }
+    if (!attn.trim()) {
+      alert('Wajib mengisi ATTN Name sebelum mencetak invoice.');
+      return;
+    }
+    if (!email.trim()) {
+      alert('Wajib mengisi ATTN Email sebelum mencetak invoice.');
       return;
     }
     window.print();
@@ -628,18 +639,62 @@ export function DispatchManifestModal({ isOpen, onClose, items = [], initialConf
                       <tr className="border-b border-black">
                         <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
                           <div className="flex items-center justify-between">
-                            <span>ATTN</span>
+                            <span className="flex items-center">
+                              ATTN
+                              <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                            </span>
                             <span>:</span>
                           </div>
                         </td>
                         <td className="p-0 text-left">
-                          <input
-                            type="text"
-                            value={attn}
-                            onChange={(e) => setAttn(e.target.value.toUpperCase())}
-                            placeholder="WAN LIN"
-                            className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                          />
+                          {/* Screen: 3 input terpisah dalam satu baris (Name, Email, Phone Number) */}
+                          <div className="flex items-center w-full h-full divide-x divide-black no-print">
+                            {/* Name (Wajib) */}
+                            <div className="w-[35%] min-w-0 h-full">
+                              <input
+                                type="text"
+                                value={attn}
+                                onChange={(e) => setAttn(e.target.value.toUpperCase())}
+                                placeholder="NAME (WAJIB) *"
+                                required
+                                className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                  !attn.trim() ? 'placeholder:text-rose-400' : ''
+                                }`}
+                                title="ATTN Name (Wajib diisi)"
+                              />
+                            </div>
+                            {/* Email (Wajib) */}
+                            <div className="w-[40%] min-w-0 h-full">
+                              <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                                placeholder="EMAIL (WAJIB) *"
+                                required
+                                className={`w-full h-full block font-bold text-[10.5px] text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                  !email.trim() ? 'placeholder:text-rose-400' : ''
+                                }`}
+                                title="ATTN Email (Wajib diisi)"
+                              />
+                            </div>
+                            {/* Phone Number / TEL (Opsional) */}
+                            <div className="w-[25%] min-w-0 h-full">
+                              <input
+                                type="text"
+                                value={tel}
+                                onChange={(e) => setTel(e.target.value)}
+                                placeholder="PHONE / TEL (OPSIONAL)"
+                                className="w-full h-full block font-bold text-[10.5px] text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors"
+                                title="Phone Number (Opsional)"
+                              />
+                            </div>
+                          </div>
+                          {/* Print: Teks resmi tersambung rapi */}
+                          <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
+                            <span>{attn}</span>
+                            {email && <span className="ml-3 font-mono lowercase font-normal">EMAIL: {email}</span>}
+                            {tel && tel !== '-' && <span className="ml-3 font-mono">TEL: {tel}</span>}
+                          </div>
                         </td>
                       </tr>
                       <tr className="border-b border-black">

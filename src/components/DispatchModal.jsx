@@ -54,6 +54,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND'
   );
   const [attn, setAttn] = useState('WAN LIN');
+  const [email, setEmail] = useState('wanlin@flink.com');
   const [tel, setTel] = useState('+41 81 511 23 20');
   const [sendingInfoText, setSendingInfoText] = useState(() => {
     const name = singleItem?.buyerNo && singleItem.buyerNo !== 'NA' && singleItem.buyerNo !== '-'
@@ -62,7 +63,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     return [
       name,
       'Address: OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND',
-      'ATTN: WAN LIN          TEL: +41 81 511 23 20',
+      'ATTN: WAN LIN          EMAIL: wanlin@flink.com          TEL: +41 81 511 23 20',
     ].join('\n');
   });
 
@@ -188,6 +189,7 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     if (parsed.name) setConsigneeName(parsed.name);
     if (parsed.address) setConsigneeAddress(parsed.address);
     if (parsed.attn) setAttn(parsed.attn);
+    if (parsed.email) setEmail(parsed.email);
     if (parsed.tel) setTel(parsed.tel);
   };
 
@@ -197,23 +199,27 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     setConsigneeName(name);
     let addr = '';
     let a = attn;
+    let em = email;
     let t = tel;
     if (name.toUpperCase().includes('FLINK')) {
       addr = 'OBERALPSTRASSE 16, CH-7000 CHUR, SWITZERLAND';
       a = 'WAN LIN';
+      em = 'wanlin@flink.com';
       t = '+41 81 511 23 20';
     } else {
       addr = `Industrial Park Zone, Destination ${name}`;
       if (attn === 'WAN LIN') a = 'Receiving Dept / Sample Review';
+      if (email === 'wanlin@flink.com') em = 'sample@buyer.com';
       if (tel === '+41 81 511 23 20') t = '-';
     }
     setConsigneeAddress(addr);
     setAttn(a);
+    setEmail(em);
     setTel(t);
     setSendingInfoText([
       name,
       `Address: ${addr}`,
-      `ATTN: ${a}          TEL: ${t}`,
+      `ATTN: ${a}          EMAIL: ${em}          TEL: ${t}`,
     ].join('\n'));
   };
 
@@ -238,6 +244,16 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
     if (!consigneeAddress.trim()) {
       setError('Wajib mengisi Address (Alamat Lengkap Pengiriman) pada invoice.');
+      return;
+    }
+
+    if (!attn.trim()) {
+      setError('Wajib mengisi ATTN Name (Nama Penerima) pada invoice.');
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('Wajib mengisi ATTN Email pada invoice.');
       return;
     }
 
@@ -624,18 +640,68 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                     <tr className="border-b border-black">
                       <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
                         <div className="flex items-center justify-between">
-                          <span>ATTN</span>
+                          <span className="flex items-center">
+                            ATTN
+                            <span className="text-red-500 font-bold ml-1 no-print" title="Wajib diisi">*</span>
+                          </span>
                           <span>:</span>
                         </div>
                       </td>
                       <td className="p-0 text-left">
-                        <input
-                          type="text"
-                          value={attn}
-                          onChange={(e) => setAttn(e.target.value.toUpperCase())}
-                          placeholder="WAN LIN"
-                          className="w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 print:focus:ring-0 print:hover:bg-transparent print:focus:bg-transparent tracking-tight cursor-text transition-colors"
-                        />
+                        {/* Screen: 3 input terpisah dalam satu baris (Name, Email, Phone Number) */}
+                        <div className="flex items-center w-full h-full divide-x divide-black no-print">
+                          {/* Name (Wajib) */}
+                          <div className="w-[35%] min-w-0 h-full">
+                            <input
+                              type="text"
+                              value={attn}
+                              onChange={(e) => {
+                                setAttn(e.target.value.toUpperCase());
+                                if (error) setError(null);
+                              }}
+                              placeholder="NAME (WAJIB) *"
+                              required
+                              className={`w-full h-full block font-bold text-[10.5px] uppercase text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                !attn.trim() ? 'placeholder:text-rose-400' : ''
+                              }`}
+                              title="ATTN Name (Wajib diisi)"
+                            />
+                          </div>
+                          {/* Email (Wajib) */}
+                          <div className="w-[40%] min-w-0 h-full">
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => {
+                                setEmail(e.target.value.toLowerCase());
+                                if (error) setError(null);
+                              }}
+                              placeholder="EMAIL (WAJIB) *"
+                              required
+                              className={`w-full h-full block font-bold text-[10.5px] text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors ${
+                                !email.trim() ? 'placeholder:text-rose-400' : ''
+                              }`}
+                              title="ATTN Email (Wajib diisi)"
+                            />
+                          </div>
+                          {/* Phone Number / TEL (Opsional) */}
+                          <div className="w-[25%] min-w-0 h-full">
+                            <input
+                              type="text"
+                              value={tel}
+                              onChange={(e) => setTel(e.target.value)}
+                              placeholder="PHONE / TEL (OPSIONAL)"
+                              className="w-full h-full block font-bold text-[10.5px] text-left bg-transparent py-1 px-3 border-none outline-none hover:bg-amber-100/40 focus:bg-amber-100/70 focus:ring-1 focus:ring-amber-400 tracking-tight cursor-text transition-colors"
+                              title="Phone Number (Opsional)"
+                            />
+                          </div>
+                        </div>
+                        {/* Print: Teks resmi tersambung rapi */}
+                        <div className="hidden print:block py-1 px-3 font-bold text-[10.5px] uppercase text-left">
+                          <span>{attn}</span>
+                          {email && <span className="ml-3 font-mono lowercase font-normal">EMAIL: {email}</span>}
+                          {tel && tel !== '-' && <span className="ml-3 font-mono">TEL: {tel}</span>}
+                        </div>
                       </td>
                     </tr>
                     <tr className="border-b border-black">
@@ -1029,18 +1095,6 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
               className="px-4 py-2 rounded-full border border-black/[0.08] bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] font-medium text-xs transition cursor-pointer"
             >
               Batal
-            </button>
-
-            {/* Print Directly */}
-            <button
-              type="button"
-              onClick={() => window.print()}
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-full border border-black/[0.08] bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Cetak format invoice & packing list ini ke printer / PDF"
-            >
-              <Printer className="w-3.5 h-3.5 text-[#0071e3]" />
-              <span>Cetak Dokumen Saja</span>
             </button>
 
             {/* Save & Print PDF */}
