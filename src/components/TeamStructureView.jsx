@@ -245,6 +245,30 @@ export function TeamStructureView() {
                       </span>
                     </div>
 
+                    {/* Rincian Tugas 5 PPIC */}
+                    <div className="rounded-lg bg-amber-950/30 border border-amber-500/20 p-3 text-xs text-slate-300 leading-relaxed space-y-1.5 mb-2">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-amber-400 font-bold select-none">-</span>
+                        <span>Mengumpulkan &amp; mendata sampel yang menjadi tanggung jawabnya, atau mendelegasikannya ke Tim Support lengkap dengan info Buyer, lokasi, dan jenis sampel</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-amber-400 font-bold select-none">-</span>
+                        <span>Melakukan pendataan &amp; input sampel fisik secara akurat ke dalam sistem</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-amber-400 font-bold select-none">-</span>
+                        <span>Mencapai target kuota harian personal</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-amber-400 font-bold select-none">-</span>
+                        <span>Memverifikasi fisik sampel saat box penuh melalui cetak list sample, lalu menyerahkannya ke Leader untuk verifikasi checklist &amp; tanda tangan</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-amber-400 font-bold select-none">-</span>
+                        <span>Melaporkan segera ke Leader apabila ditemukan kendala operasional lapangan</span>
+                      </div>
+                    </div>
+
                     <div className="flex flex-col gap-2.5">
                       {ppicList.map((p) => (
                         <div
@@ -272,6 +296,30 @@ export function TeamStructureView() {
                         <span className="text-cyan-400 font-bold text-sm tracking-wide">
                           ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT
                         </span>
+                      </div>
+
+                      {/* Rincian Tugas 3 Tim Support */}
+                      <div className="rounded-lg bg-cyan-950/30 border border-cyan-500/20 p-3 text-xs text-slate-300 leading-relaxed space-y-1.5 mb-3 mt-3">
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-cyan-400 font-bold select-none">-</span>
+                          <span>Menerima sampel fisik yang didelegasikan oleh PPIC beserta kelengkapan keterangan Buyer, lokasi rak/box, dan jenis sampel</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-cyan-400 font-bold select-none">-</span>
+                          <span>Melakukan input data sampel ke dalam sistem secara cepat, teliti, dan akurat berdasarkan arahan PPIC</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-cyan-400 font-bold select-none">-</span>
+                          <span>Mencapai target kuota harian asistensi (target harian personal tim support)</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-cyan-400 font-bold select-none">-</span>
+                          <span>Membantu penataan fisik sampel di rak/box dan membantu persiapan fisik sebelum box diverifikasi penuh</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-cyan-400 font-bold select-none">-</span>
+                          <span>Menginfokan segera ke PPIC terkait atau Leader jika data sampel tidak lengkap, barcode bermasalah, atau terjadi kendala teknis</span>
+                        </div>
                       </div>
 
                       <div className="flex flex-col gap-2.5 mt-3">
@@ -322,7 +370,8 @@ export function TeamStructureView() {
                     [ R ] RESPONSIBLE
                   </span>
                   <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white">5 PPIC (Royan, Cynara, Ami, Ryan, Hanami):</strong> Pelaksana inti yang bertanggung jawab penuh atas fisik dan data pada box yang telah ditentukan.
+                    <strong className="text-white block mb-0.5">5 PPIC (Royan, Cynara, Ami, Ryan, Hanami):</strong>
+                    <span>Mengumpulkan &amp; input sampel box, verifikasi box penuh dengan cetak list &amp; TTD Leader, serta capai kuota harian.</span>
                   </div>
                 </div>
 
@@ -331,7 +380,8 @@ export function TeamStructureView() {
                     [ S ] SUPPORT
                   </span>
                   <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white">3 Support (Sheva, Ade, Tri):</strong> Tenaga pendukung lapangan yang membantu percepatan proses input data fisik bersama PPIC.
+                    <strong className="text-white block mb-0.5">3 Support (Sheva, Ade, Tri):</strong>
+                    <span>Menerima delegasi sampel dari PPIC (Buyer/lokasi/jenis), input cepat ke sistem, dan bantu penataan fisik box.</span>
                   </div>
                 </div>
 
