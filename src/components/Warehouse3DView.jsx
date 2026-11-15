@@ -1174,12 +1174,8 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls Hint & Meadow Badge (Bottom Right - Apple Floating Capsule) */}
+        {/* Controls Hint (Bottom Right - Apple Floating Capsule) */}
         <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-black/75 backdrop-blur-2xl px-3.5 py-1.5 rounded-full border border-white/[0.1] text-xs text-white/90 pointer-events-none flex flex-wrap items-center gap-2 shadow-lg font-apple">
-          <span className="text-[#30d158] font-semibold flex items-center gap-1">
-            <span>🌱</span> Padang Rumput 3D
-          </span>
-          <span className="text-white/20">|</span>
           <span className="text-[#ff9f0a] font-medium">Klik 2x: Buka Popup</span>
           <span className="text-white/20">•</span>
           <span className="text-white/70">Putar: Klik Kiri</span>
