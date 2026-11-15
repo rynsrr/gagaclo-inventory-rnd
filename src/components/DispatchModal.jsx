@@ -478,11 +478,21 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                 <table className="w-full border-collapse">
                   <tbody>
                     <tr className="border-b border-black">
-                      <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">MID CODE :</td>
+                      <td className="w-[30%] py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>MID CODE</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3 font-bold uppercase tracking-tight">{midCode}</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">INVOICE NO :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>INVOICE NO</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3">
                         <input
                           type="text"
@@ -493,7 +503,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">DATE :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>DATE</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3">
                         <div className="flex items-center gap-2">
                           <input
@@ -507,21 +522,41 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">SHIP TO (COMPANY NAME, ADDRESS) :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>SHIP TO (COMPANY NAME, ADDRESS)</span>
+                          <span className="ml-2">:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3 font-bold uppercase tracking-tight">{consigneeName}. {consigneeAddress}</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">ATTN :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>ATTN</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3 font-bold uppercase tracking-tight">{attn}</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">ORDER NO. :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>ORDER NO.</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3 font-mono font-bold uppercase tracking-tight">
                         {itemRows.map((r) => r.orderName).filter((n) => n && n !== '-').join(', ') || '-'}
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">PAYMENT BY :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>PAYMENT BY</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3">
                         <input
                           type="text"
@@ -532,7 +567,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">SHIPMENT BY :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>SHIPMENT BY</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3">
                         <input
                           type="text"
@@ -543,7 +583,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">INVOICE VALUE :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>INVOICE VALUE</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3">
                         <input
                           type="text"
@@ -554,7 +599,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">SHIPPING DATE :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>SHIPPING DATE</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3">
                         <div className="flex items-center gap-2">
                           <input
@@ -568,7 +618,12 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">FROM :</td>
+                      <td className="py-1 px-3 font-bold border-r border-black uppercase tracking-tight">
+                        <div className="flex items-center justify-between">
+                          <span>FROM</span>
+                          <span>:</span>
+                        </div>
+                      </td>
                       <td className="py-1 px-3 font-bold uppercase tracking-tight">{fromLocation.toUpperCase()}</td>
                     </tr>
                   </tbody>
