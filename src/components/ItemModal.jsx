@@ -142,7 +142,7 @@ const ItemModalContent = () => {
         size: item.size || '',
         color: item.color && item.color !== '-' ? item.color : '',
         jumlah: item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : (item.qty || 1),
-        satuan: 'PCS',
+        satuan: 'PCE',
         boxNumber: bNum,
         place: item.place || defaultBoxPlace,
         status: item.status || 'In Storage',
@@ -164,7 +164,7 @@ const ItemModalContent = () => {
         size: '',
         color: '',
         jumlah: 1,
-        satuan: 'PCS',
+        satuan: 'PCE',
         boxNumber: bNum,
         place: defaultBoxPlace,
         status: 'In Storage',
@@ -301,15 +301,15 @@ const ItemModalContent = () => {
       return;
     }
 
-    const styleTrim = clean(formData.style);
-    const sampleNoTrim = clean(formData.sampleNo);
-    const buyerNoTrim = clean(formData.buyerNo);
+    const styleTrim = clean(formData.style).toUpperCase();
+    const sampleNoTrim = clean(formData.sampleNo).toUpperCase();
+    const buyerNoTrim = clean(formData.buyerNo).toUpperCase();
     const sizeTrim = clean(formData.size).toUpperCase();
-    const colorTrim = clean(formData.color);
-    const trackClean = clean(formData.track);
+    const colorTrim = clean(formData.color).toUpperCase();
+    const trackClean = clean(formData.track).toUpperCase();
     const rawTanggal = clean(formData.tanggal);
     const tanggalClean = formatToDDMMYYYY(rawTanggal) || rawTanggal;
-    const satuanClean = 'PCS';
+    const satuanClean = 'PCE';
     const placeClean = clean(formData.place) || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`);
     const fullDeskripsi = sampleNoTrim
       ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
@@ -537,11 +537,11 @@ const ItemModalContent = () => {
                   list="track-datalist"
                   value={formData.track}
                   onChange={(e) => {
-                    setFormData(p => ({ ...p, track: e.target.value }));
+                    setFormData(p => ({ ...p, track: e.target.value.toUpperCase() }));
                     if (errors.track) setErrors(prev => ({ ...prev, track: null }));
                   }}
                   placeholder="Contoh: DHL : 5475890895 / NA"
-                  className="w-full text-xs font-semibold text-slate-900 focus:outline-none font-mono bg-transparent"
+                  className="w-full text-xs font-semibold text-slate-900 focus:outline-none font-mono bg-transparent uppercase"
                 />
                 <datalist id="track-datalist">
                   {(suggestions.track || []).map((t, idx) => (
@@ -708,11 +708,11 @@ const ItemModalContent = () => {
                   list="style-datalist"
                   value={formData.style}
                   onChange={(e) => {
-                    setFormData(p => ({ ...p, style: e.target.value }));
+                    setFormData(p => ({ ...p, style: e.target.value.toUpperCase() }));
                     if (errors.style) setErrors(prev => ({ ...prev, style: null }));
                   }}
                   placeholder="Contoh: WL920FR / 6435 / NA"
-                  className="w-full text-xs font-bold text-slate-900 focus:outline-none bg-transparent"
+                  className="w-full text-xs font-bold text-slate-900 focus:outline-none bg-transparent uppercase"
                 />
                 <datalist id="style-datalist">
                   {(suggestions.style || []).map((s, idx) => (
@@ -913,19 +913,19 @@ const ItemModalContent = () => {
                 />
               </div>
 
-              {/* Satuan (Terkunci ke PCS) */}
+              {/* Satuan (Terkunci ke PCE) */}
               <div className="border border-slate-300 rounded-lg p-1.5 bg-slate-50/80 transition">
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Satuan <span className="text-rose-500">*</span>:
                   </label>
                   <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                    PCS
+                    PCE
                   </span>
                 </div>
                 <input
                   type="text"
-                  value="PCS"
+                  value="PCE"
                   readOnly
                   disabled
                   className="w-full text-xs font-black font-mono text-slate-800 bg-transparent cursor-not-allowed select-none focus:outline-none"

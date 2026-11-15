@@ -173,19 +173,19 @@ export function CelebrationFlareOverlay({ achiever, onClose }) {
           </p>
         </div>
 
-        {/* Skor Angka Capaian (PCS) */}
+        {/* Skor Angka Capaian (PCE) */}
         <div className="p-3.5 rounded-lg bg-slate-950/90 border border-emerald-500/40 space-y-1 shadow-inner">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">
             Capaian Input Hari Ini:
           </div>
           <div className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-tight tabular-nums">
-            {achiever.pcs} <span className="text-base text-slate-300 font-bold">/ {achiever.target} PCS</span>
+            {achiever.pcs} <span className="text-base text-slate-300 font-bold">/ {achiever.target} PCE</span>
           </div>
           <div className="text-xs font-semibold text-emerald-300 flex items-center justify-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             <span>
               {achiever.surplus > 0
-                ? `Melampaui target (+${achiever.surplus} PCS Surplus)`
+                ? `Melampaui target (+${achiever.surplus} PCE Surplus)`
                 : 'Target harian 100% terpenuhi'}
             </span>
           </div>

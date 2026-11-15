@@ -121,7 +121,7 @@ function BoxDetail({ box }) {
     const selected = itemsInBox.filter(i => selectedItemIds.has(i.id));
     if (selected.length === 0) return;
     const textLines = selected.map((i, idx) => 
-      `${idx + 1}. [${i.kode || i.sku || '-'}] ${i.style || i.deskripsi || i.name || 'Sample'} | Sample No: ${i.sampleNo || '-'} | Size: ${i.size || '-'} | Color: ${i.color || '-'} | Qty: ${i.jumlah || i.qty || 1} ${i.satuan || i.unit || 'PCS'}`
+      `${idx + 1}. [${i.kode || i.sku || '-'}] ${i.style || i.deskripsi || i.name || 'Sample'} | Sample No: ${i.sampleNo || '-'} | Size: ${i.size || '-'} | Color: ${i.color || '-'} | Qty: ${i.jumlah || i.qty || 1} ${String(i.satuan || i.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (i.satuan || i.unit || 'PCE')}`
     ).join('\n');
 
     try {
@@ -805,7 +805,7 @@ function BoxDetail({ box }) {
                           <td className="py-2 px-1.5 text-center font-mono font-black text-slate-900 text-xs">
                             {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
                             <span className="text-xs font-normal text-slate-500 uppercase">
-                              {item.satuan || item.unit || 'PCS'}
+                              {String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (item.satuan || item.unit || 'PCE')}
                             </span>
                           </td>
 
@@ -1024,7 +1024,7 @@ function BoxDetail({ box }) {
                         {it.style || it.deskripsi || it.name}
                       </span>
                       <span className="text-[#86868b] ml-auto whitespace-nowrap text-xs tabular-nums">
-                        {it.jumlah || it.qty} {it.satuan || it.unit || 'PCS'}
+                        {it.jumlah || it.qty} {String(it.satuan || it.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (it.satuan || it.unit || 'PCE')}
                       </span>
                     </div>
                   ))}

@@ -152,7 +152,7 @@ export function TotalItemsSummaryView() {
           size: item.size || 'NA',
           color: item.color && item.color !== '-' ? item.color : 'NA',
           jumlah: Number.isFinite(Number(item.jumlah)) ? Number(item.jumlah) : (Number(item.qty) || 0),
-          satuan: (item.satuan || item.unit || 'PCS').toUpperCase(),
+          satuan: String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : String(item.satuan || item.unit || 'PCE').toUpperCase(),
           place: item.place || (box ? `BOX ${box.boxNumber} (${box.rackName} - ${box.picName})` : 'NA'),
           boxLabel: `BOX ${item.boxNumber}`,
           boxNumber: Number(item.boxNumber) || 1,
@@ -520,7 +520,7 @@ export function TotalItemsSummaryView() {
                       </div>
 
                       <div className="text-xs text-slate-500 font-medium">
-                        Total Kuantitas: <strong>{group.totalPcs} PCS</strong>
+                        Total Kuantitas: <strong>{group.totalPcs} PCE</strong>
                       </div>
                     </div>
 
@@ -562,7 +562,7 @@ export function TotalItemsSummaryView() {
                                   </span>
                                 </td>
                                 <td className="px-3 py-2.5 text-right font-black text-slate-800 tabular-nums">
-                                  {item.jumlah} <span className="text-xs text-slate-400 font-normal">PCS</span>
+                                  {item.jumlah} <span className="text-xs text-slate-400 font-normal">PCE</span>
                                 </td>
                                 <td className="px-3 py-2.5 font-semibold text-slate-700">
                                   {item.picName}
@@ -810,7 +810,7 @@ export function TotalItemsSummaryView() {
                                 Buyer: {buyerDisplay}
                               </span>
                               <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
-                                {group.items.length} Sampel • {group.totalPcs} PCS
+                                {group.items.length} Sampel • {group.totalPcs} PCE
                               </span>
                             </div>
 

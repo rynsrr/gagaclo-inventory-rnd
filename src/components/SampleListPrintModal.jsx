@@ -324,7 +324,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                           )}
                         </td>
                         <td className="py-1.5 px-2.5 text-center font-bold text-slate-900 border-r border-slate-300 print:border-slate-300 whitespace-nowrap">
-                          {item.qty || item.jumlah || 1} {item.satuan || item.unit || 'PCS'}
+                          {item.qty || item.jumlah || 1} {String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (item.satuan || item.unit || 'PCE')}
                         </td>
                         <td className="py-1.5 px-2.5 text-center border-r border-slate-300 print:border-slate-300 text-xs">
                           <span className={`inline-block px-1.5 py-0.5 rounded font-bold ${

@@ -248,7 +248,7 @@ export function PpicPerformanceView() {
               <h1 className="text-base font-bold text-[#1d1d1f] flex items-center gap-2 tracking-tight">
                 Rekap Harian Penyimpanan Tim R&amp;D
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#34c759]/15 text-[#30d158] border border-[#34c759]/30 tabular-nums">
-                  {currentDailyData.totalPcs} PCS
+                  {currentDailyData.totalPcs} PCE
                 </span>
               </h1>
               <p className="text-xs text-[#86868b]">
@@ -331,7 +331,7 @@ export function PpicPerformanceView() {
                     topPerson = `${m.name} (${m.role})`;
                   }
                 });
-                return maxPcs > 0 ? `${topPerson} - ${maxPcs} PCS` : 'Belum Ada Input';
+                return maxPcs > 0 ? `${topPerson} - ${maxPcs} PCE` : 'Belum Ada Input';
               })()}
             </div>
           </div>
@@ -409,7 +409,7 @@ export function PpicPerformanceView() {
                           {stats.pcs.toLocaleString('id-ID')}
                         </span>
                         <span className="text-xs font-bold text-indigo-700">
-                          / {personTarget} PCS
+                          / {personTarget} PCE
                         </span>
                       </div>
                       <span
@@ -438,8 +438,8 @@ export function PpicPerformanceView() {
                           <span>{stats.items > 0 ? `${stats.items} sampel masuk` : 'Belum ada input'}</span>
                           <span className={`font-bold ${isPersonAchieved ? 'text-emerald-700' : 'text-slate-500'}`}>
                             {isPersonAchieved
-                              ? (stats.pcs > personTarget ? `✓ +${stats.pcs - personTarget} PCS surplus` : '✓ Tercapai')
-                              : `Sisa ${Math.max(0, personTarget - stats.pcs)} PCS`}
+                              ? (stats.pcs > personTarget ? `✓ +${stats.pcs - personTarget} PCE surplus` : '✓ Tercapai')
+                              : `Sisa ${Math.max(0, personTarget - stats.pcs)} PCE`}
                           </span>
                         </div>
 
@@ -468,7 +468,7 @@ export function PpicPerformanceView() {
                       <div className="flex flex-wrap gap-1 mt-1">
                         {assistedList.map(([pName, pPcs]) => (
                           <span key={pName} className="text-xs font-bold px-1.5 py-0.5 rounded bg-white/90 text-slate-700 border border-slate-200">
-                            {pName}: <strong>{pPcs} PCS</strong>
+                            {pName}: <strong>{pPcs} PCE</strong>
                           </span>
                         ))}
                       </div>
@@ -479,7 +479,7 @@ export function PpicPerformanceView() {
                   <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
                     <span className="text-slate-500 font-medium">Total Akumulasi:</span>
                     <span className="font-black text-slate-900 tabular-nums">
-                      {allTime.pcs.toLocaleString('id-ID')} PCS
+                      {allTime.pcs.toLocaleString('id-ID')} PCE
                     </span>
                   </div>
                 </div>
@@ -513,7 +513,7 @@ export function PpicPerformanceView() {
                                 {it.boxLabel} ({it.boxPic}) • {it.kode}
                               </span>
                               <span className="font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                                {it.jumlah} PCS
+                                {it.jumlah} PCE
                               </span>
                             </div>
                             <div className="text-xs text-slate-400 mt-1 flex justify-between items-center border-t border-slate-100 pt-1">
@@ -563,7 +563,7 @@ export function PpicPerformanceView() {
                     <div className="text-xs font-semibold text-slate-400 lowercase mt-0.5">{m.role}</div>
                   </th>
                 ))}
-                <th scope="col" className="px-4 py-3.5 sm:px-5 sm:py-4 text-right font-black text-slate-900 whitespace-nowrap">Total (PCS)</th>
+                <th scope="col" className="px-4 py-3.5 sm:px-5 sm:py-4 text-right font-black text-slate-900 whitespace-nowrap">Total (PCE)</th>
                 <th scope="col" className="px-4 py-3.5 sm:px-5 sm:py-4 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>

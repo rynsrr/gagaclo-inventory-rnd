@@ -355,14 +355,21 @@ export const InventoryProvider = ({ children }) => {
               !String(i.id || '').startsWith('demo-achieve-')
             ))
             .map(item => {
+              let updated = item;
               const rawDate = item.tanggal || item.dateIn;
-              if (!rawDate || rawDate === 'NA' || rawDate === '-') return item;
-              const fixedDate = formatToDDMMYYYY(rawDate);
-              if (fixedDate && (fixedDate !== item.tanggal || fixedDate !== item.dateIn)) {
-                datesRepaired = true;
-                return { ...item, tanggal: fixedDate, dateIn: fixedDate };
+              if (rawDate && rawDate !== 'NA' && rawDate !== '-') {
+                const fixedDate = formatToDDMMYYYY(rawDate);
+                if (fixedDate && (fixedDate !== item.tanggal || fixedDate !== item.dateIn)) {
+                  datesRepaired = true;
+                  updated = { ...updated, tanggal: fixedDate, dateIn: fixedDate };
+                }
               }
-              return item;
+              const u = String(updated.satuan || updated.unit || '').toUpperCase();
+              if (u === 'PCS' || !u) {
+                datesRepaired = true;
+                updated = { ...updated, satuan: 'PCE', unit: 'PCE' };
+              }
+              return updated;
             });
 
           if (datesRepaired || cleanItems.length !== parsed.length) {
@@ -379,10 +386,17 @@ export const InventoryProvider = ({ children }) => {
       console.error('Failed to load items from localStorage', e);
     }
     return INITIAL_ITEMS.map(item => {
+      let updated = item;
       const rawDate = item.tanggal || item.dateIn;
-      if (!rawDate || rawDate === 'NA' || rawDate === '-') return item;
-      const fixedDate = formatToDDMMYYYY(rawDate);
-      return fixedDate ? { ...item, tanggal: fixedDate, dateIn: fixedDate } : item;
+      if (rawDate && rawDate !== 'NA' && rawDate !== '-') {
+        const fixedDate = formatToDDMMYYYY(rawDate);
+        if (fixedDate) updated = { ...updated, tanggal: fixedDate, dateIn: fixedDate };
+      }
+      const u = String(updated.satuan || updated.unit || '').toUpperCase();
+      if (u === 'PCS' || !u) {
+        updated = { ...updated, satuan: 'PCE', unit: 'PCE' };
+      }
+      return updated;
     });
   });
 
@@ -1272,7 +1286,7 @@ export const InventoryProvider = ({ children }) => {
       boxNumber: newItem.boxNumber,
       rackName: targetBox ? targetBox.rackName : 'RACK ?',
       qty: newItem.qty,
-      unit: newItem.unit || 'pcs',
+      unit: newItem.unit || 'PCE',
       picName: newItem.picName || (targetBox ? targetBox.picName : 'Royan'),
       actor: createdBy,
       recipientOrSource: isByHelper ? `Diinput oleh ${createdBy} (Tim Support)` : 'Direct Entry / Masuk Baru',
@@ -1425,7 +1439,8 @@ export const InventoryProvider = ({ children }) => {
     const oldBox = Number(oldItem.boxNumber);
     const newBox = updatedData.boxNumber !== undefined ? Number(updatedData.boxNumber) : oldBox;
     const finalQty = Number(updatedData.qty !== undefined ? updatedData.qty : (updatedData.jumlah !== undefined ? updatedData.jumlah : oldItem.qty)) || 1;
-    const finalUnit = updatedData.unit || updatedData.satuan || oldItem.unit || 'PCS';
+    const rawUnit = updatedData.unit || updatedData.satuan || oldItem.unit || 'PCE';
+    const finalUnit = String(rawUnit).toUpperCase() === 'PCS' ? 'PCE' : rawUnit;
 
     const finalItem = {
       ...oldItem,

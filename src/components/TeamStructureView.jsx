@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
-import { useInventory } from '../context/InventoryContext';
 import {
-  Users,
   ShieldCheck,
-  Award,
   Layers,
-  ArrowRight,
-  ExternalLink,
   Info,
-  CheckCircle2,
   Box as BoxIcon,
-  Sparkles,
 } from 'lucide-react';
 
 export function TeamStructureView() {
-  const { boxes, items } = useInventory();
   const [activeTab, setActiveTab] = useState('chart'); // 'chart' | 'matrix' | 'boxes'
 
   // Perhitungan box per PPIC
@@ -103,7 +95,7 @@ export function TeamStructureView() {
       <div className="max-w-[1600px] mx-auto space-y-6">
 
         {/* 1. Header Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-slate-900/80 border border-slate-700/60 p-6 md:p-8 shadow-2xl backdrop-blur-md">
+        <div className="relative overflow-hidden rounded-2xl bg-slate-900/80 border border-slate-700/60 p-5 md:p-6 shadow-2xl backdrop-blur-md">
           {/* Subtle Grid overlay */}
           <div
             className="absolute inset-0 opacity-15 pointer-events-none"
@@ -113,43 +105,14 @@ export function TeamStructureView() {
             }}
           />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="px-3 py-1 rounded-md bg-blue-600 text-white font-bold text-xs tracking-wider uppercase shadow-sm">
-                  GAGACLO R&D
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700">
-                  ISO 9001:2015 Clause 5.3
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 text-xs font-semibold border border-emerald-700/50">
-                  RACI Matrix
-                </span>
-              </div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
-                STRUKTUR ORGANISASI TIM INVENTORY SAMPLE
-              </h1>
-              <p className="text-sm md:text-base text-slate-400 font-normal">
-                Model Lini &amp; Staf &bull; Rantai Komando, Akuntabilitas, dan Pembagian 72 Box Tersebar
-              </p>
-            </div>
-
-            {/* Quick Status Pill */}
-            <div className="flex flex-row sm:flex-col sm:items-end justify-between items-center bg-slate-950/70 border border-emerald-500/40 rounded-xl px-5 py-3 shadow-inner">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                  STATUS RESMI
-                </span>
-              </div>
-              <div className="text-xs text-slate-300 font-medium mt-1">
-                72 Box &bull; 5 Rak &bull; 9 Personil
-              </div>
-            </div>
+          <div className="relative z-10">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
+              STRUKTUR ORGANISASI TIM INVENTORY SAMPLE
+            </h1>
           </div>
 
           {/* Tab Selector */}
-          <div className="relative z-10 flex items-center gap-2 mt-6 pt-4 border-t border-slate-800/80">
+          <div className="relative z-10 flex items-center gap-2 mt-4 pt-3 border-t border-slate-800/80">
             <button
               onClick={() => setActiveTab('chart')}
               className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 ${

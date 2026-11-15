@@ -53,7 +53,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
     setDailyTarget(num);
     setIsEditingTarget(false);
     if (showNotification) {
-      showNotification(`Target team hari ini (${todayIso}) berhasil disetel ke ${num} PCS oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
+      showNotification(`Target team hari ini (${todayIso}) berhasil disetel ke ${num} PCE oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
     }
   };
   const todayStats = useMemo(() => {
@@ -185,7 +185,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
         // 1. In-App Floating Toast Notification
         if (showNotification) {
           showNotification(
-            `Target tercapai: ${achiever.name} (${achiever.role}) berhasil menyelesaikan input harian ${achiever.pcs}/${achiever.target} PCS.`,
+            `Target tercapai: ${achiever.name} (${achiever.role}) berhasil menyelesaikan input harian ${achiever.pcs}/${achiever.target} PCE.`,
             'target',
             5000
           );
@@ -203,7 +203,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
           if (typeof window !== 'undefined' && 'Notification' in window) {
             if (Notification.permission === 'granted') {
               new Notification(`Target Tercapai: ${achiever.name}`, {
-                body: `${achiever.name} (${achiever.role}) telah menyelesaikan target input harian ${achiever.pcs}/${achiever.target} PCS.`,
+                body: `${achiever.name} (${achiever.role}) telah menyelesaikan target input harian ${achiever.pcs}/${achiever.target} PCE.`,
                 icon: '/favicon.ico',
               });
             } else if (Notification.permission === 'default') {
@@ -245,7 +245,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                   onChange={(e) => setTempTarget(e.target.value)}
                   className="w-20 px-2 py-0.5 bg-white/[0.08] border border-white/[0.2] text-white font-mono font-bold text-xs rounded-full focus:outline-hidden focus:ring-1 focus:ring-[#2997ff]"
                 />
-                <span className="text-xs font-semibold text-slate-400">PCS</span>
+                <span className="text-xs font-semibold text-slate-400">PCE</span>
                 <button
                   type="submit"
                   className="p-1 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-bold cursor-pointer transition"
@@ -269,7 +269,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                     {todayStats.pcs.toLocaleString('id-ID')}
                   </span>
                   <span className="text-xs sm:text-sm font-medium text-slate-400 tabular-nums">
-                    / {dailyTarget.toLocaleString('id-ID')} PCS
+                    / {dailyTarget.toLocaleString('id-ID')} PCE
                   </span>
                 </div>
 
@@ -357,12 +357,12 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                       ? 'bg-[#34c759]/15 hover:bg-[#34c759]/25 border-[#34c759]/35 hover:border-[#34c759]/60 text-[#30d158]'
                       : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
                   }`}
-                  title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCS, Capaian ${m.pcs} PCS (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
+                  title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${isCurrentActive ? 'bg-[#2997ff] animate-pulse' : m.isAchieved ? 'bg-[#34c759]' : 'bg-white/30'}`}></span>
                   <span className="font-semibold text-white">{m.name}</span>
                   <span className={`tabular-nums font-normal ${isCurrentActive ? 'text-[#2997ff]' : m.isAchieved ? 'text-[#30d158]' : 'text-slate-400'}`}>
-                    · {m.pcs}/{m.target} PCS
+                    · {m.pcs}/{m.target} PCE
                   </span>
                   {m.isAchieved && (
                     <span className="text-[11px] text-[#30d158] font-bold">✓</span>
