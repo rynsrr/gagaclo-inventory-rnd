@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { Users } from 'lucide-react';
 
-export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
+export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL', compact = false }) => {
   const { ppicMembers, boxes, getItemsInBox } = useInventory();
 
   // Calculate missing (kurang) boxes for each PIC
@@ -45,18 +45,23 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
   }, [picStats]);
 
   return (
-    <div className="inventory-panel p-3.5 sm:p-4 space-y-3 border border-black/[0.08] bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] font-apple">
+    <div className={compact 
+      ? "p-3 space-y-2 border border-black/[0.06] bg-black/[0.02] rounded-[16px] font-apple"
+      : "inventory-panel p-3.5 sm:p-4 space-y-3 border border-black/[0.08] bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] font-apple"
+    }>
       {/* Header bar: flattened & apple-styled */}
-      <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-black/[0.06] flex-wrap">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-[#0071e3]/10 text-[#0071e3] shrink-0">
-            <Users className="w-4 h-4 stroke-[2.2]" />
+      <div className={`flex items-center justify-between gap-2 flex-wrap ${compact ? 'pb-2 border-b border-black/[0.05]' : 'pb-2.5 border-b border-black/[0.06]'}`}>
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center justify-center rounded-[8px] bg-[#0071e3]/10 text-[#0071e3] shrink-0 ${compact ? 'h-6 w-6' : 'h-7 w-7'}`}>
+            <Users className={compact ? "w-3.5 h-3.5 stroke-[2.2]" : "w-4 h-4 stroke-[2.2]"} />
           </div>
-          <h2 className="text-xs sm:text-sm font-bold text-[#1d1d1f] tracking-tight">
+          <h2 className={`font-bold text-[#1d1d1f] tracking-tight ${compact ? 'text-xs' : 'text-xs sm:text-sm'}`}>
             Rekap Box Kurang per PIC
           </h2>
         </div>
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full tabular-nums border ${
+        <span className={`font-semibold rounded-full tabular-nums border ${
+          compact ? 'text-[11px] px-2.5 py-0.5' : 'text-xs px-3 py-1'
+        } ${
           totalKurang > 0
             ? 'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/25'
             : 'bg-[#34c759]/15 text-[#30d158] border-[#34c759]/30'

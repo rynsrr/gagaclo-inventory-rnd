@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildLowPolyForestScene } from './lowPolyForestScene';
-import { PpicMissingMentionBar } from './PpicMissingMentionBar';
 import { useInventory } from '../context/InventoryContext';
 import { 
   RotateCcw, 
@@ -34,7 +33,9 @@ export const Warehouse3DView = ({
   searchQuery = '',
   onSearchQueryChange,
   searchResults = null,
-  onClearSearch 
+  onClearSearch,
+  highlightPpic: propHighlightPpic,
+  onSelectPic: propOnSelectPic,
 }) => {
   const containerRef = useRef(null);
   const { 
@@ -60,7 +61,9 @@ export const Warehouse3DView = ({
   }, [selectedBoxNumber]);
 
   // Filter / view state
-  const [highlightPpic, setHighlightPpic] = useState('ALL');
+  const [internalHighlightPpic, setInternalHighlightPpic] = useState('ALL');
+  const highlightPpic = propHighlightPpic !== undefined ? propHighlightPpic : internalHighlightPpic;
+  const setHighlightPpic = propOnSelectPic !== undefined ? propOnSelectPic : setInternalHighlightPpic;
   const [hoveredBox, setHoveredBox] = useState(null);
   const activeRackRef = useRef('ALL');
   const fitCameraRef = useRef(null);
@@ -85,34 +88,6 @@ export const Warehouse3DView = ({
 
   // A Set of box numbers matching the sidebar search (null = no active search).
   const searchActive = highlightBoxNumbers !== null;
-
-  const occupancyGroups = [
-    {
-      label: 'Tanpa data',
-      badgeClass: 'bg-black/[0.05] text-[#86868b] border border-black/[0.06]',
-      boxClass: 'bg-black/[0.03] hover:bg-black/[0.06] text-[#86868b] border-black/[0.06]',
-      boxes: []
-    },
-    {
-      label: 'Sedang diisi',
-      badgeClass: 'bg-[#ff9500]/15 text-[#c96700] border border-[#ff9500]/25',
-      boxClass: 'bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border-[#ff9500]/20',
-      boxes: []
-    },
-    {
-      label: 'Penuh',
-      badgeClass: 'bg-[#34c759]/15 text-[#30d158] border border-[#34c759]/25',
-      boxClass: 'bg-[#34c759]/10 hover:bg-[#34c759]/20 text-[#30d158] border-[#34c759]/20',
-      boxes: []
-    },
-  ];
-  for (const box of boxes) {
-    if (highlightPpic !== 'ALL' && !matchesPic(box.picName, highlightPpic)) continue;
-    if (searchActive && !highlightBoxNumbers.has(Number(box.boxNumber))) continue;
-    const hasData = getItemsInBox(box.boxNumber).length > 0;
-    const group = box.isFull ? 2 : hasData ? 1 : 0;
-    occupancyGroups[group].boxes.push(box);
-  }
 
   // References for Three.js scene objects
   const sceneRef = useRef(null);
@@ -629,21 +604,27 @@ export const Warehouse3DView = ({
       const rackWidth = cols * 1.8 + 0.4;
       const shelfHeight = 1.9;
       const totalRackHeight = rows * shelfHeight + 0.5;
-      const midY = totalRackHeight / 2;
+
+      // Hitung dimensi & posisi plang judul rak (rack sign sprite) di atas rak
+      const spriteW = Math.max(5.5, rackWidth * 0.78);
+      const spriteH = spriteW * (320 / 1024);
+      const signTopY = totalRackHeight + 1.85 + (spriteH / 2) + 0.9; // Headroom nyaman di atas sign
+      const floorBottomY = -0.2; // Level lantai kaki rak
+      const totalSpanY = signTopY - floorBottomY;
+      const midY = (signTopY + floorBottomY) / 2;
 
       const verticalSlope = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
       const fitDistance = 1.15 * Math.max(
-        totalRackHeight / (2 * verticalSlope),
-        rackWidth / (2 * verticalSlope * camera.aspect)
-      ) + 1.2;
+        totalSpanY / (2 * verticalSlope),
+        (rackWidth * 1.12) / (2 * verticalSlope * camera.aspect)
+      ) + 0.8;
 
       // Vektor hadap muka depan rak (+Z lokal) di dunia 3D
       const forwardDir = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationY);
 
       const centerTarget = new THREE.Vector3(rx, midY, rz);
       const camTarget = centerTarget.clone()
-        .add(forwardDir.clone().multiplyScalar(fitDistance))
-        .add(new THREE.Vector3(0, 0.15, 0));
+        .add(forwardDir.clone().multiplyScalar(fitDistance));
 
       flyControlsTargetRef.current = centerTarget;
       flyCameraTargetRef.current = camTarget;
@@ -884,10 +865,10 @@ export const Warehouse3DView = ({
         bounds.expandByPoint(new THREE.Vector3(-30, 0, 50));
       } else {
         // Include room for the frame and rack sign above the boxes.
-        bounds.min.x -= 1;
-        bounds.max.x += 1;
-        bounds.min.y -= 1;
-        bounds.max.y += 2;
+        bounds.min.x -= 1.2;
+        bounds.max.x += 1.2;
+        bounds.min.y -= 0.5;
+        bounds.max.y += 4.2; // Pastikan seluruh plang / sign rak terlihat utuh
       }
 
       const size = bounds.getSize(new THREE.Vector3());
@@ -1060,33 +1041,6 @@ export const Warehouse3DView = ({
 
   return (
     <div className="warehouse-layout space-y-4 font-apple">
-      <PpicMissingMentionBar activePic={highlightPpic} onSelectPic={setHighlightPpic} />
-
-      {/* Status Pengisian Box (3 Kolom Apple Cards) */}
-      <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
-        {occupancyGroups.map(group => (
-          <div key={group.label} className="inventory-panel p-4 bg-white/90 backdrop-blur-xl rounded-[20px] border border-black/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)] transition-all">
-            <h2 className="mb-2.5 flex items-center justify-between text-xs font-bold text-[#1d1d1f]">
-              <span>{group.label}</span>
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums ${group.badgeClass}`}>
-                {group.boxes.length} Box
-              </span>
-            </h2>
-            <div className="flex flex-wrap gap-1.5 p-0.5 max-h-56 overflow-y-auto">
-              {group.boxes.map(box => (
-                <button key={box.boxNumber} type="button"
-                  aria-label={`Box ${box.boxNumber}, ${group.label}`}
-                  onClick={() => setSelectedBoxNumber(box.boxNumber)}
-                  className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[9px] px-2 text-xs font-semibold tabular-nums transition-all border active:scale-95 cursor-pointer ${group.boxClass}`}>
-                  {box.boxNumber}
-                </button>
-              ))}
-              {group.boxes.length === 0 && <span className="text-xs text-[#86868b] italic py-1">Tidak ada box</span>}
-            </div>
-          </div>
-        ))}
-      </section>
-
       {/* Main 3D Canvas Container */}
       <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-[24px] border border-black/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-500 bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50">
         
@@ -1155,25 +1109,40 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Active search indicator (top left) */}
-        {searchActive && (
-          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-[#0071e3] shadow-sm backdrop-blur-xl font-apple">
-            <Search className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>
-              {highlightBoxNumbers.size} box cocok &amp; disorot
-            </span>
-            {onClearSearch && (
+        {/* Active search / PIC filter indicators (top left) */}
+        <div className="absolute left-4 top-4 z-10 flex flex-wrap items-center gap-2 font-apple">
+          {searchActive && (
+            <div className="flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-[#0071e3] shadow-sm backdrop-blur-xl">
+              <Search className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>
+                {highlightBoxNumbers.size} box cocok &amp; disorot
+              </span>
+              {onClearSearch && (
+                <button
+                  type="button"
+                  onClick={onClearSearch}
+                  className="rounded-full px-1.5 py-0.5 text-[#0071e3] underline underline-offset-2 transition hover:bg-blue-50 cursor-pointer"
+                  title="Hapus pencarian"
+                >
+                  Hapus
+                </button>
+              )}
+            </div>
+          )}
+          {highlightPpic !== 'ALL' && (
+            <div className="flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-[#0071e3] shadow-sm backdrop-blur-xl">
+              <span>Filter PIC: @{highlightPpic}</span>
               <button
                 type="button"
-                onClick={onClearSearch}
+                onClick={() => setHighlightPpic('ALL')}
                 className="rounded-full px-1.5 py-0.5 text-[#0071e3] underline underline-offset-2 transition hover:bg-blue-50 cursor-pointer"
-                title="Hapus pencarian"
+                title="Reset filter PIC"
               >
-                Hapus
+                Reset
               </button>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* Hovered Box HUD Card (Bottom Left - Apple VisionOS / macOS Glass Card) */}
         {hoveredBox && (
