@@ -970,9 +970,9 @@ export const Warehouse3DView = ({
 
       if (isAll) {
         if (hudOffset) {
-          // Sudut pandang offset saat dropdown dibuka: geser & perkecil framing agar seluruh denah 3D terlihat utuh tanpa tertutup dropdown
-          lookTarget = new THREE.Vector3(6.0, 2.0, -32.0);
-          targetPos = new THREE.Vector3(-66.0, 56.0, -90.0);
+          // Geser ke kanan maksimal saat dropdown 3D dibuka persis referensi visual screenshot pengguna agar seluruh denah 3D terlihat utuh tanpa tertutup dropdown
+          lookTarget = new THREE.Vector3(12.0, 1.5, -35.0);
+          targetPos = new THREE.Vector3(-75.0, 68.0, -102.0);
         } else {
           // Sudut pandang default persis referensi visual pengguna (overview denah arsitektur & seluruh rak)
           lookTarget = new THREE.Vector3(-25.1, 1.5, -34.4);
