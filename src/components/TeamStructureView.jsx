@@ -149,7 +149,7 @@ export function TeamStructureView() {
                       </span>
                     </div>
                     <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-400 leading-relaxed">
-                      Supervisi strategis, kebijakan mutu sampel, persetujuan target besar, dan eskalasi manajemen puncak.
+                      Pengawasan stok fisik sample rak dan box, persetujuan target, serta penerima laporan input data inventory.
                     </div>
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export function TeamStructureView() {
                     [ C / I ] CONSULTED &amp; INFORMED
                   </span>
                   <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white">Sururi (SPV Sample):</strong> Konsultasi kebijakan tingkat pimpinan, eskalasi manajemen, serta penerima laporan eksekutif berkala.
+                    <strong className="text-white">Sururi (SPV Sample):</strong> Pengawasan stok fisik sample rak dan box, persetujuan target, serta penerima laporan input data inventory.
                   </div>
                 </div>
               </div>
