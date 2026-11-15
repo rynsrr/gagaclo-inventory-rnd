@@ -19,7 +19,6 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
     currentUser,
     loginUser,
     logoutUser,
-    showNotification,
     boxes,
   } = useInventory();
 
@@ -62,10 +61,9 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
 
     const res = loginUser(selectedUserToLogin.name, loginPassword);
     if (res.success) {
-      // Langsung tutup modal dan tampilkan floating toast di pojok layar
+      // Langsung tutup modal seketika tanpa notifikasi
       setLoginPassword('');
       onClose();
-      showNotification?.(`Berhasil login sebagai ${res.user.name}.`, 'target', 3500);
     } else {
       setLoginError(res.message || 'Password salah.');
     }
@@ -74,12 +72,10 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
   // Handle Logout
   const handleLogout = () => {
     if (logoutUser) {
-      const prevName = currentUser?.name || 'User';
       logoutUser();
       setLoginPassword('');
       setLoginError('');
       onClose();
-      showNotification?.(`Berhasil keluar dari akun ${prevName}.`, 'info', 3000);
     }
   };
 
