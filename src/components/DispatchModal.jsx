@@ -193,6 +193,55 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  // Unique list of items / samples from database for ITEM NO autocomplete & autofill
+  const uniqueItemOptions = useMemo(() => {
+    const list = [];
+    const seenCodes = new Set();
+
+    (allItems || []).forEach((it) => {
+      if (!it) return;
+      const k = String(it.kode || it.sku || '').trim().toUpperCase();
+      const s = String(it.sampleNo || '').trim().toUpperCase();
+      const style = it.style || it.deskripsi || it.name || '-';
+      const color = it.color || it.warna || '';
+      const box = it.boxNumber ? `BOX ${it.boxNumber}` : '';
+
+      if (k && !seenCodes.has(k)) {
+        seenCodes.add(k);
+        const parts = [k];
+        if (s && s !== 'NA' && s !== '-' && s !== k) parts.push(`(${s})`);
+        if (style && style !== '-') parts.push(`- ${style}`);
+        if (color) parts.push(`[${color}]`);
+        if (box) parts.push(`• ${box}`);
+
+        list.push({
+          code: k,
+          sampleNo: s,
+          label: parts.join(' '),
+          item: it,
+        });
+      }
+
+      if (s && s !== 'NA' && s !== '-' && s !== k && !seenCodes.has(s)) {
+        seenCodes.add(s);
+        const parts = [s];
+        if (k) parts.push(`(Kode: ${k})`);
+        if (style && style !== '-') parts.push(`- ${style}`);
+        if (color) parts.push(`[${color}]`);
+        if (box) parts.push(`• ${box}`);
+
+        list.push({
+          code: s,
+          sampleNo: s,
+          label: parts.join(' '),
+          item: it,
+        });
+      }
+    });
+
+    return list.sort((a, b) => a.code.localeCompare(b.code));
+  }, [allItems]);
+
   // Helper row updating
   const handleRowQtyChange = (idx, value) => {
     setItemRows((prev) => {
@@ -216,6 +265,52 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
     });
   };
 
+  // Handler for ITEM NO change with database auto-lookup and autofill
+  const handleItemCodeChange = (idx, value) => {
+    const rawVal = String(value || '');
+    const upperVal = rawVal.trim().toUpperCase();
+
+    // Look for matching item in allItems by kode, sku, or sampleNo
+    const matched = (allItems || []).find((it) => {
+      if (!it) return false;
+      const k = String(it.kode || it.sku || '').trim().toUpperCase();
+      const s = String(it.sampleNo || '').trim().toUpperCase();
+      return (k && k === upperVal) || (s && s === upperVal);
+    });
+
+    if (matched) {
+      const maxAvailable = Math.max(1, Number(matched.jumlah ?? matched.qty ?? 1));
+      setItemRows((prev) => {
+        const next = [...prev];
+        next[idx] = {
+          ...next[idx],
+          originalItem: matched,
+          isManual: false,
+          kode: matched.kode || matched.sku || upperVal,
+          hsCode: matched.hsCode || next[idx].hsCode || '',
+          orderName: matched.sampleNo && matched.sampleNo !== 'NA' ? matched.sampleNo : (matched.buyerNo || next[idx].orderName || ''),
+          detail: matched.category || matched.tipe || matched.namaBarang || next[idx].detail || 'SAMPLE',
+          style: matched.style || matched.deskripsi || matched.name || next[idx].style || '-',
+          color: matched.color || matched.warna || next[idx].color || 'Multi Color',
+          size: matched.size || matched.ukuran || next[idx].size || 'ONE SIZE',
+          qty: 1,
+          maxQty: maxAvailable,
+          unit: matched.satuan || next[idx].unit || 'PCS',
+        };
+        return next;
+      });
+    } else {
+      setItemRows((prev) => {
+        const next = [...prev];
+        next[idx] = {
+          ...next[idx],
+          kode: upperVal,
+        };
+        return next;
+      });
+    }
+  };
+
   const handleAddManualRow = () => {
     setItemRows((prev) => [
       ...prev,
@@ -223,11 +318,11 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
         id: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         isManual: true,
         hsCode: '',
-        kode: '-',
-        orderName: consigneeName ? `${consigneeName}` : 'RSD-MANUAL',
+        kode: '',
+        orderName: consigneeName ? `${consigneeName}` : '',
         detail: 'SAMPLE',
         style: '',
-        color: 'Multi Color',
+        color: '',
         size: 'ONE SIZE',
         qty: 1,
         maxQty: 9999,
@@ -1027,6 +1122,13 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
               {/* Table: 12 Columns Items List (Direct Interactive Input Grid) */}
               <div className="overflow-x-auto border-b border-black">
+                <datalist id="inventory-item-codes-list">
+                  {uniqueItemOptions.map((opt, i) => (
+                    <option key={`${opt.code}-${i}`} value={opt.code}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </datalist>
                 <table className="w-full text-left border-collapse text-[10px]">
                   <thead>
                     <tr className="border-b border-black font-bold text-center bg-slate-50/60 print:bg-white text-[9.5px] leading-tight">
@@ -1081,17 +1183,15 @@ export function DispatchModal({ isOpen, onClose, item, preselectedItems = [] }) 
 
                           {/* 3. ITEM NO. */}
                           <td className="py-0.5 px-1.5 border-r border-black font-mono font-bold text-center text-neutral-900 print:text-black">
-                            {row.isManual ? (
-                              <input
-                                type="text"
-                                value={row.kode === '-' ? '' : row.kode}
-                                onChange={(e) => handleRowFieldChange(idx, 'kode', e.target.value.toUpperCase())}
-                                placeholder="ITEM NO"
-                                className="w-full text-center font-mono font-bold text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5"
-                              />
-                            ) : (
-                              row.kode
-                            )}
+                            <input
+                              type="text"
+                              list="inventory-item-codes-list"
+                              value={row.kode === '-' ? '' : row.kode}
+                              onChange={(e) => handleItemCodeChange(idx, e.target.value)}
+                              placeholder="ITEM NO"
+                              className="w-full text-center font-mono font-bold text-[9.5px] uppercase bg-transparent hover:bg-amber-50 focus:bg-amber-100/60 focus:outline-none rounded-xs py-0.5 cursor-text"
+                              title="Ketik atau pilih Kode / Sample dari database (data baris otomatis mengikuti)"
+                            />
                           </td>
 
                           {/* 4. ORDER NAME */}
