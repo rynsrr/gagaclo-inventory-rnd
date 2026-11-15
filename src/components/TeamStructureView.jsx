@@ -3,19 +3,16 @@ import {
   ShieldCheck,
   Layers,
   Info,
-  Box as BoxIcon,
 } from 'lucide-react';
 
 export function TeamStructureView() {
-  const [activeTab, setActiveTab] = useState('chart'); // 'chart' | 'matrix' | 'boxes'
+  const [activeTab, setActiveTab] = useState('chart'); // 'chart' | 'matrix'
 
-  // Perhitungan box per PPIC
-  const ppicStats = [
+  // Daftar 5 PPIC (Responsible)
+  const ppicList = [
     {
       name: 'Royan',
       code: 'PPIC #1',
-      boxes: [1, 2, 3, 16, 17, 18, 19, 20, 37, 38, 47, 49, 50, 61, 62, 72],
-      rackBreakdown: 'Rak 1 (4), Rak 2 (4), Rak 3 (3), Rak 4 (2), Rak 5 (3)',
       border: 'border-blue-500/80',
       badgeBg: 'bg-blue-900/60 text-blue-300 border border-blue-500/40',
       raciBg: 'bg-blue-950 text-blue-300 border border-blue-600/40',
@@ -24,8 +21,6 @@ export function TeamStructureView() {
     {
       name: 'Cynara',
       code: 'PPIC #2',
-      boxes: [4, 5, 6, 21, 22, 23, 24, 39, 40, 48, 51, 52, 63, 64],
-      rackBreakdown: 'Rak 1 (3), Rak 2 (4), Rak 3 (3), Rak 4 (2), Rak 5 (2)',
       border: 'border-purple-500/80',
       badgeBg: 'bg-purple-900/60 text-purple-300 border border-purple-500/40',
       raciBg: 'bg-purple-950 text-purple-300 border border-purple-600/40',
@@ -34,8 +29,6 @@ export function TeamStructureView() {
     {
       name: 'Ami',
       code: 'PPIC #3',
-      boxes: [7, 8, 9, 25, 26, 27, 28, 41, 42, 53, 54, 59, 65, 66],
-      rackBreakdown: 'Rak 1 (3), Rak 2 (4), Rak 3 (2), Rak 4 (3), Rak 5 (2)',
       border: 'border-emerald-500/80',
       badgeBg: 'bg-emerald-900/60 text-emerald-300 border border-emerald-500/40',
       raciBg: 'bg-emerald-950 text-emerald-300 border border-emerald-600/40',
@@ -44,8 +37,6 @@ export function TeamStructureView() {
     {
       name: 'Ryan',
       code: 'PPIC #4',
-      boxes: [10, 11, 12, 29, 30, 31, 32, 43, 44, 55, 56, 60, 67, 68],
-      rackBreakdown: 'Rak 1 (3), Rak 2 (4), Rak 3 (2), Rak 4 (3), Rak 5 (2)',
       border: 'border-amber-500/80',
       badgeBg: 'bg-amber-900/60 text-amber-300 border border-amber-500/40',
       raciBg: 'bg-amber-950 text-amber-300 border border-amber-600/40',
@@ -54,8 +45,6 @@ export function TeamStructureView() {
     {
       name: 'Hanami',
       code: 'PPIC #5',
-      boxes: [13, 14, 15, 33, 34, 35, 36, 45, 46, 57, 58, 69, 70, 71],
-      rackBreakdown: 'Rak 1 (3), Rak 2 (4), Rak 3 (2), Rak 4 (2), Rak 5 (3)',
       border: 'border-rose-500/80',
       badgeBg: 'bg-rose-900/60 text-rose-300 border border-rose-500/40',
       raciBg: 'bg-rose-950 text-rose-300 border border-rose-600/40',
@@ -63,40 +52,37 @@ export function TeamStructureView() {
     },
   ];
 
-  const supportTeam = [
+  // Daftar 3 Support Team (Support)
+  const supportList = [
     {
       name: 'Sheva',
       code: 'SUPPORT #1',
-      role: 'Data Entry Assistant',
-      desc: 'Membantu fisik & input sampel perbantuan di box 5 PPIC',
-      border: 'border-teal-500/80',
-      badgeBg: 'bg-teal-900/60 text-teal-300 border border-teal-500/40',
+      border: 'border-cyan-500/80',
+      badgeBg: 'bg-cyan-900/60 text-cyan-300 border border-cyan-500/40',
+      raciBg: 'bg-cyan-950 text-cyan-300 border border-cyan-600/40',
     },
     {
       name: 'Ade',
       code: 'SUPPORT #2',
-      role: 'Data Entry Assistant',
-      desc: 'Membantu fisik & input sampel perbantuan di box 5 PPIC',
-      border: 'border-cyan-500/80',
-      badgeBg: 'bg-cyan-900/60 text-cyan-300 border border-cyan-500/40',
+      border: 'border-teal-500/80',
+      badgeBg: 'bg-teal-900/60 text-teal-300 border border-teal-500/40',
+      raciBg: 'bg-teal-950 text-teal-300 border border-teal-600/40',
     },
     {
       name: 'Tri',
       code: 'SUPPORT #3',
-      role: 'Data Entry Assistant',
-      desc: 'Membantu fisik & input sampel perbantuan di box 5 PPIC',
       border: 'border-sky-500/80',
       badgeBg: 'bg-sky-900/60 text-sky-300 border border-sky-500/40',
+      raciBg: 'bg-sky-950 text-sky-300 border border-sky-600/40',
     },
   ];
 
   return (
-    <div className="w-full min-h-[calc(100vh-140px)] bg-[#090d16] text-slate-100 p-4 md:p-8 font-sans selection:bg-blue-600 selection:text-white">
-      <div className="max-w-[1600px] mx-auto space-y-6">
+    <div className="min-h-screen bg-[#070b14] text-slate-100 p-4 md:p-6 lg:p-8 font-sans">
+      <div className="max-w-6xl mx-auto space-y-6">
 
-        {/* 1. Header Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-slate-900/80 border border-slate-700/60 p-5 md:p-6 shadow-2xl backdrop-blur-md">
-          {/* Subtle Grid overlay */}
+        {/* 1. Header Minimalis & Tab Selector */}
+        <div className="relative rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 p-5 md:p-6 shadow-2xl overflow-hidden">
           <div
             className="absolute inset-0 opacity-15 pointer-events-none"
             style={{
@@ -105,90 +91,86 @@ export function TeamStructureView() {
             }}
           />
 
-          <div className="relative z-10">
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-white">
               STRUKTUR ORGANISASI TIM INVENTORY SAMPLE
             </h1>
-          </div>
 
-          {/* Tab Selector */}
-          <div className="relative z-10 flex items-center gap-2 mt-4 pt-3 border-t border-slate-800/80">
-            <button
-              onClick={() => setActiveTab('chart')}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 ${
-                activeTab === 'chart'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Bagan Visual Lini &amp; Staf</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('matrix')}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 ${
-                activeTab === 'matrix'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Matriks RACI Lengkap</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('boxes')}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 ${
-                activeTab === 'boxes'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <BoxIcon className="w-4 h-4" />
-              <span>Daftar Alokasi 72 Box</span>
-            </button>
+            {/* Tab Selector */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('chart')}
+                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'chart'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>Bagan Visual Hirarki</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('matrix')}
+                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'matrix'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Matriks RACI Lengkap</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* 2. Main Content Area */}
         {activeTab === 'chart' && (
           <div className="space-y-6">
-            {/* Landscape Organizational Chart Card with Flowchart Arrows */}
-            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 md:p-8 shadow-xl backdrop-blur-sm overflow-x-auto">
-              <div className="min-w-[1320px] flex items-stretch">
+            
+            {/* Top-Down Hierarchical Flowchart Card */}
+            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 md:p-8 shadow-xl backdrop-blur-sm">
+              <div className="flex flex-col items-center">
 
-                {/* Left Column: Management (Sururi) & Operational Leader (Jasmine) */}
-                <div className="w-[360px] shrink-0 flex flex-col justify-between py-2">
-                  
-                  {/* SURURI (SPV) */}
-                  <div className="relative rounded-xl bg-slate-950/90 border-2 border-blue-500 p-5 shadow-lg shadow-blue-500/10">
+                {/* ========================================================= */}
+                {/* TINGKAT 1 (ATAS): SUPERVISOR SAMPLE R&D (SURURI)           */}
+                {/* ========================================================= */}
+                <div className="w-full max-w-md">
+                  <div className="relative rounded-xl bg-slate-950/90 border-2 border-blue-500 p-5 shadow-xl shadow-blue-500/10 transition hover:shadow-blue-500/20">
                     <div className="flex items-center justify-between mb-3">
                       <span className="px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wider uppercase border border-blue-500/60 text-blue-400 bg-blue-950/50">
                         SPV SAMPLE
                       </span>
                       <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-blue-900 text-blue-200 border border-blue-600">
-                        [ C / I ] Consulted
+                        [ C / I ] Consulted &amp; Informed
                       </span>
                     </div>
-                    <div className="text-xl font-extrabold text-white">SURURI</div>
+                    <div className="text-xl md:text-2xl font-black text-white">SURURI</div>
                     <div className="text-xs font-semibold text-blue-300 mt-0.5">Supervisor Sample R&amp;D</div>
                     <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-400 leading-relaxed">
                       Supervisi strategis, kebijakan mutu sampel, persetujuan target besar, dan eskalasi manajemen puncak.
                     </div>
                   </div>
+                </div>
 
-                  {/* Downward Connector with Arrow to Jasmine */}
-                  <div className="flex flex-col items-center justify-center my-3 relative">
-                    <div className="w-1 h-5 bg-gradient-to-b from-blue-500 to-blue-400 rounded-full" />
-                    <div className="my-1 px-3 py-1 rounded-full bg-blue-950/90 border border-blue-500/60 text-[10px] font-bold text-blue-300 uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-1.5">
-                      <span>SUPERVISI KEBIJAKAN</span>
-                    </div>
-                    <div className="w-1 h-5 bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-full" />
-                    {/* Real Arrowhead pointing down */}
-                    <div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[9px] border-t-emerald-500 -mt-0.5 drop-shadow-[0_2px_4px_rgba(16,185,129,0.5)]" />
+                {/* Panah Alur Komando: Sururi ➔ Jasmine */}
+                <div className="flex flex-col items-center my-3 relative">
+                  <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-emerald-400 rounded-full" />
+                  <div className="my-1 px-3 py-1 rounded-full bg-slate-950 border border-emerald-500/60 text-[10px] font-bold text-emerald-300 uppercase tracking-wider shadow-md shadow-emerald-500/10 flex items-center gap-1.5">
+                    <span>▼</span>
+                    <span>SUPERVISI &amp; ARAHAN KEBIJAKAN</span>
                   </div>
+                  <div className="w-1 h-6 bg-gradient-to-b from-emerald-400 to-emerald-500 rounded-full" />
+                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[9px] border-t-emerald-500 drop-shadow-[0_0_4px_rgba(16,185,129,0.8)]" />
+                </div>
 
-                  {/* JASMINE (Leader) */}
-                  <div className="relative rounded-xl bg-emerald-950/30 border-2 border-emerald-500 p-6 shadow-xl shadow-emerald-500/10">
+                {/* ========================================================= */}
+                {/* TINGKAT 2 (BAWAHNYA): LEADER INVENTORY (JASMINE)           */}
+                {/* ========================================================= */}
+                <div className="w-full max-w-lg">
+                  <div className="relative rounded-xl bg-emerald-950/30 border-2 border-emerald-500 p-6 shadow-xl shadow-emerald-500/10 transition hover:shadow-emerald-500/20">
                     <div className="flex items-center justify-between mb-3">
                       <span className="px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wider uppercase border border-emerald-500/60 text-emerald-400 bg-emerald-950/50">
                         LEADER
@@ -197,116 +179,58 @@ export function TeamStructureView() {
                         [ A ] Accountable
                       </span>
                     </div>
-                    <div className="text-2xl font-black text-white">JASMINE</div>
+                    <div className="text-2xl md:text-3xl font-black text-white">JASMINE</div>
                     <div className="text-xs font-semibold text-emerald-300 mt-0.5">Inventory Team Leader (Superuser)</div>
                     <div className="mt-3 pt-3 border-t border-emerald-900/50 text-xs text-slate-300 leading-relaxed">
-                      Penanggung jawab mutlak target tim (400 pcs/hari), validasi kelengkapan 72 box, monitoring kinerja PIC, dan penugasan tim support.
+                      Penanggung jawab mutlak target tim, validasi kelengkapan box, monitoring kinerja PIC, dan penugasan tim support.
                     </div>
                   </div>
-
                 </div>
 
-                {/* Middle Column: Dynamic Flowchart Branch Connectors from Jasmine */}
-                <div className="w-[84px] shrink-0 relative flex flex-col justify-between py-2">
-                  <svg
-                    className="w-full h-full overflow-visible"
-                    viewBox="0 0 84 560"
-                    preserveAspectRatio="none"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <defs>
-                      {/* Arrowhead Marker Amber for PPIC */}
-                      <marker id="arrow-ppic" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
-                        <polygon points="0 0, 8 3.5, 0 7" fill="#f59e0b" />
-                      </marker>
-                      {/* Arrowhead Marker Cyan for Support */}
-                      <marker id="arrow-supp" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
-                        <polygon points="0 0, 8 3.5, 0 7" fill="#06b6d4" />
-                      </marker>
-                      {/* Glow filters */}
-                      <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#10b981" floodOpacity="0.6" />
-                      </filter>
-                      <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#f59e0b" floodOpacity="0.6" />
-                      </filter>
-                      <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#06b6d4" floodOpacity="0.6" />
-                      </filter>
-                    </defs>
-
-                    {/* 1. Horizontal trunk out of Jasmine (middle of Jasmine card ~y=450) */}
-                    <path
-                      d="M 0 450 L 36 450"
-                      stroke="#10b981"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      filter="url(#glow-emerald)"
-                    />
-
-                    {/* 2. Vertical spine linking branches */}
-                    <path
-                      d="M 36 130 L 36 490"
-                      stroke="#10b981"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      filter="url(#glow-emerald)"
-                    />
-
-                    {/* 3. Upper Branch to 5 PPIC (with arrowhead pointing right) */}
-                    <path
-                      d="M 36 130 L 80 130"
-                      stroke="#f59e0b"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      markerEnd="url(#arrow-ppic)"
-                      filter="url(#glow-amber)"
-                    />
-
-                    {/* 4. Lower Branch to 3 Support (with arrowhead pointing right) */}
-                    <path
-                      d="M 36 490 L 80 490"
-                      stroke="#06b6d4"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      markerEnd="url(#arrow-supp)"
-                      filter="url(#glow-cyan)"
-                    />
-                  </svg>
-
-                  {/* Flow labels floating alongside branches */}
-                  <div className="absolute top-[88px] left-[6px] pointer-events-none">
-                    <span className="px-2 py-0.5 rounded bg-amber-950/90 border border-amber-500/60 text-[9px] font-bold text-amber-300 tracking-wider uppercase whitespace-nowrap shadow-md">
-                      Target Box →
-                    </span>
+                {/* Panah Alur Cabang: Jasmine ➔ PPIC & Tim Support */}
+                <div className="w-full max-w-4xl my-4 relative flex flex-col items-center">
+                  <div className="w-1 h-6 bg-emerald-500 rounded-full" />
+                  
+                  {/* Spine horizontal menghubungkan cabang PPIC & Support */}
+                  <div className="w-3/4 h-1 bg-gradient-to-r from-amber-500 via-emerald-500 to-cyan-500 rounded-full relative">
+                    {/* Left Drop: Ke PPIC */}
+                    <div className="absolute left-0 top-0 w-1 h-6 bg-amber-500 rounded-full" />
+                    <div className="absolute left-[-4px] top-6 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-amber-500" />
+                    
+                    {/* Right Drop: Ke Tim Support */}
+                    <div className="absolute right-0 top-0 w-1 h-6 bg-cyan-500 rounded-full" />
+                    <div className="absolute right-[-4px] top-6 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[8px] border-t-cyan-500" />
                   </div>
 
-                  <div className="absolute bottom-[88px] left-[6px] pointer-events-none">
-                    <span className="px-2 py-0.5 rounded bg-cyan-950/90 border border-cyan-500/60 text-[9px] font-bold text-cyan-300 tracking-wider uppercase whitespace-nowrap shadow-md">
-                      Penugasan →
+                  {/* Badges di atas alur cabang */}
+                  <div className="w-3/4 flex justify-between items-center mt-8 px-2 text-[10px] font-bold tracking-wider uppercase">
+                    <span className="px-3 py-1 rounded-full bg-amber-950/90 border border-amber-500/60 text-amber-300 shadow-md">
+                      ▼ Target &amp; Penugasan Box
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-500/60 text-cyan-300 shadow-md">
+                      ▼ Penugasan Asistensi
                     </span>
                   </div>
                 </div>
 
-                {/* Right Column: 5 PPIC + 3 Support Team with Collaboration Flow */}
-                <div className="flex-1 flex flex-col justify-between py-2">
+                {/* ========================================================= */}
+                {/* TINGKAT 3 (DI BAWAHNYA LAGI): PPIC & TIM SUPPORT          */}
+                {/* ========================================================= */}
+                <div className="w-full space-y-6 mt-2">
 
-                  {/* Top Wing: 5 PPIC (Responsible - Box Owners) */}
+                  {/* 3A. WING 5 PPIC (Responsible) */}
                   <div className="rounded-xl bg-slate-950/80 border-2 border-amber-500/60 p-5 shadow-lg shadow-amber-500/5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-amber-400 font-bold text-sm tracking-wide">
-                          📦 5 PPIC &mdash; [ R ] RESPONSIBLE (PENANGGUNG JAWAB UTAMA 72 BOX)
-                        </span>
-                      </div>
+                      <span className="text-amber-400 font-bold text-sm tracking-wide">
+                        📦 5 PPIC &mdash; [ R ] RESPONSIBLE (PENANGGUNG JAWAB UTAMA BOX)
+                      </span>
                       <span className="text-xs text-amber-300/80 font-medium">
-                        Total: 72 Box Tersebar di Rak 1–5
+                        Penanggung Jawab Box Tersebar
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-3">
-                      {ppicStats.map((p) => (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                      {ppicList.map((p) => (
                         <div
                           key={p.name}
                           className={`rounded-lg bg-slate-900/90 border-2 ${p.border} p-3.5 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-lg`}
@@ -321,100 +245,72 @@ export function TeamStructureView() {
                               </span>
                             </div>
                             <div className="text-base font-extrabold text-white">{p.name}</div>
-                            <div className="text-xs font-semibold text-amber-400 mt-0.5">
-                              {p.boxes.length} Box Tersebar
+                            <div className="text-xs font-semibold text-slate-400 mt-0.5">
+                              PPIC Specialist
                             </div>
-                          </div>
-                          <div className="mt-2.5 pt-2 border-t border-slate-800 text-[11px] text-slate-400 leading-tight">
-                            {p.rackBreakdown}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Upward Arrows Channel: Support Direct Assistance to 5 PPIC */}
-                  <div className="my-3 py-2 px-6 rounded-xl bg-slate-950/70 border border-cyan-500/40 shadow-inner flex items-center justify-between">
-                    {/* Left 3 Upward Flow Indicators */}
-                    <div className="flex items-center gap-8">
-                      <div className="flex flex-col items-center">
-                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
-                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
-                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Sheva</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
-                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
-                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Ade</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
-                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
-                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Tri</span>
-                      </div>
+                  {/* Channel Panah Asistensi: Support ➔ PPIC */}
+                  <div className="py-2.5 px-6 rounded-xl bg-slate-950/70 border border-cyan-500/40 shadow-inner flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                      {['Sheva', 'Ade', 'Tri'].map((name) => (
+                        <div key={name} className="flex flex-col items-center">
+                          <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+                          <div className="w-0.5 h-3 border-l-2 border-dashed border-cyan-400 my-0.5" />
+                          <span className="text-[10px] text-cyan-300 font-mono font-bold">{name}</span>
+                        </div>
+                      ))}
                     </div>
 
-                    {/* Central Assistance Badge */}
-                    <div className="px-5 py-1.5 rounded-full bg-cyan-950/90 border border-cyan-500/60 shadow-lg shadow-cyan-500/10 flex items-center gap-2">
+                    <div className="px-4 py-1.5 rounded-full bg-cyan-950/90 border border-cyan-500/60 shadow-lg shadow-cyan-500/10 flex items-center gap-2">
                       <span className="text-cyan-400 font-extrabold text-sm animate-pulse">▲</span>
                       <span className="text-cyan-200 text-xs font-bold tracking-wide">
                         Asistensi Langsung: Menghitung &amp; Input Fisik Sampel Bersama PPIC di Rak
                       </span>
                     </div>
 
-                    {/* Right 3 Upward Flow Indicators */}
-                    <div className="flex items-center gap-8">
-                      <div className="flex flex-col items-center">
-                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
-                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
-                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Rak 1-2</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
-                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
-                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Rak 3-4</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-cyan-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
-                        <div className="w-0.5 h-3.5 border-l-2 border-dashed border-cyan-400 my-0.5" />
-                        <span className="text-[10px] text-cyan-300 font-mono font-bold">Rak 5</span>
-                      </div>
+                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-cyan-300 font-medium">
+                      <span>Bantuan Input &amp; Pengecekan</span>
                     </div>
                   </div>
 
-                  {/* Bottom Wing: 3 Support Team */}
+                  {/* 3B. WING 3 TIM SUPPORT (Support) */}
                   <div className="rounded-xl bg-slate-950/80 border-2 border-cyan-500/60 p-5 shadow-lg shadow-cyan-500/5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-cyan-400 font-bold text-sm tracking-wide">
-                          ⚡ 3 SUPPORT TEAM &mdash; [ S ] SUPPORT (ASISTENSI PERCEPATAN DATA ENTRY FISIK)
-                        </span>
-                      </div>
+                      <span className="text-cyan-400 font-bold text-sm tracking-wide">
+                        ⚡ 3 TIM SUPPORT &mdash; [ S ] SUPPORT (ASISTENSI PERCEPATAN DATA ENTRY FISIK)
+                      </span>
                       <span className="text-xs text-cyan-300/80 font-medium">
-                        Tenaga Percepatan Pengisian 72 Box
+                        Tenaga Percepatan Pengisian Box
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      {supportTeam.map((s) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      {supportList.map((s) => (
                         <div
                           key={s.name}
-                          className={`rounded-lg bg-slate-900/90 border-2 ${s.border} p-4 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-lg`}
+                          className={`rounded-lg bg-slate-900/90 border-2 ${s.border} p-3.5 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-lg`}
                         >
                           <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${s.badgeBg}`}>
+                            <div className="flex items-center justify-between gap-1 mb-2">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${s.badgeBg}`}>
                                 {s.code}
                               </span>
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-teal-950 text-teal-300 border border-teal-600/40">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${s.raciBg}`}>
                                 [ S ] Support
                               </span>
                             </div>
-                            <div className="text-lg font-extrabold text-white">{s.name}</div>
-                            <div className="text-xs font-semibold text-cyan-300 mt-0.5">{s.role}</div>
+                            <div className="text-base font-extrabold text-white">{s.name}</div>
+                            <div className="text-xs font-semibold text-cyan-300 mt-0.5">
+                              Data Entry Assistant
+                            </div>
                           </div>
-                          <div className="mt-3 pt-2.5 border-t border-slate-800 text-xs text-slate-400 leading-relaxed">
-                            {s.desc}
+                          <div className="mt-2.5 pt-2 border-t border-slate-800 text-[11px] text-slate-400 leading-tight">
+                            Membantu fisik &amp; input sampel perbantuan di box 5 PPIC
                           </div>
                         </div>
                       ))}
@@ -426,9 +322,9 @@ export function TeamStructureView() {
               </div>
             </div>
 
-            {/* RACI Legend Bar */}
-            <div className="rounded-xl bg-slate-900/70 border border-slate-800 p-6 shadow-lg">
-              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-4 flex items-center gap-2">
+            {/* RACI Legend Card */}
+            <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-5 md:p-6 shadow-xl">
+              <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Info className="w-4 h-4 text-blue-400" />
                 LEGENDA METODE RACI (ISO 9001:2015 CLAUSE 5.3)
               </h3>
@@ -438,7 +334,7 @@ export function TeamStructureView() {
                     [ A ] ACCOUNTABLE
                   </span>
                   <div className="text-slate-300 leading-relaxed">
-                    <strong className="text-white">Jasmine (Leader):</strong> Pemilik keputusan mutlak &amp; penanggung jawab hasil akhir target tim harian, status 72 box, dan alur kerja.
+                    <strong className="text-white">Jasmine (Leader):</strong> Pemilik keputusan mutlak &amp; penanggung jawab hasil akhir target tim harian, status kelengkapan box, dan alur kerja.
                   </div>
                 </div>
 
@@ -451,8 +347,8 @@ export function TeamStructureView() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/60 border border-teal-900/40">
-                  <span className="px-2 py-1 rounded font-bold bg-teal-950 text-teal-300 border border-teal-600 shrink-0">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/60 border border-cyan-900/40">
+                  <span className="px-2 py-1 rounded font-bold bg-cyan-950 text-cyan-300 border border-cyan-600 shrink-0">
                     [ S ] SUPPORT
                   </span>
                   <div className="text-slate-300 leading-relaxed">
@@ -489,14 +385,14 @@ export function TeamStructureView() {
               </thead>
               <tbody className="divide-y divide-slate-800 text-slate-300 text-xs md:text-sm">
                 <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Penetapan Kebijakan &amp; Alokasi 72 Box</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Penetapan Kebijakan &amp; Alokasi Box Inventory</td>
                   <td className="py-3.5 px-4 text-center font-bold text-blue-400">Accountable [A]</td>
                   <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Consulted [C]</td>
                   <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
                   <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
                 </tr>
                 <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Penentuan Target Harian (400 Pcs/Hari)</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Penentuan Target Harian Tim &amp; PIC (PCE/Hari)</td>
                   <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
                   <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
                   <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
@@ -517,14 +413,21 @@ export function TeamStructureView() {
                   <td className="py-3.5 px-4 text-center font-bold text-teal-400">Responsible [R]</td>
                 </tr>
                 <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Pencatatan Kirim Keluar (Dispatch)</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Pencatatan Kirim Keluar (Dispatch Outgoing)</td>
                   <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
                   <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
                   <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
-                  <td className="py-3.5 px-4 text-center font-bold text-teal-400">Support [S]</td>
+                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
                 </tr>
                 <tr className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-semibold text-white">Audit Akurasi Data &amp; Status Box Penuh</td>
+                  <td className="py-3.5 px-4 font-semibold text-white">Perbantuan Fisik &amp; Input Cross-Box Antar PIC</td>
+                  <td className="py-3.5 px-4 text-center text-slate-400">Informed [I]</td>
+                  <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
+                  <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
+                  <td className="py-3.5 px-4 text-center font-bold text-cyan-400">Support [S]</td>
+                </tr>
+                <tr className="hover:bg-slate-800/40 transition">
+                  <td className="py-3.5 px-4 font-semibold text-white">Eskalasi Kendala Stok &amp; Audit Mutu Lapangan</td>
                   <td className="py-3.5 px-4 text-center font-bold text-blue-400">Consulted [C]</td>
                   <td className="py-3.5 px-4 text-center font-bold text-emerald-400">Accountable [A]</td>
                   <td className="py-3.5 px-4 text-center font-bold text-amber-400">Responsible [R]</td>
@@ -532,48 +435,6 @@ export function TeamStructureView() {
                 </tr>
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* Tab 3: Detailed 72 Box Allocations */}
-        {activeTab === 'boxes' && (
-          <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-6 md:p-8 shadow-xl space-y-6">
-            <h2 className="text-lg font-bold text-white">Rincian Pembagian 72 Box Fisik per PPIC</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ppicStats.map((p) => (
-                <div key={p.name} className={`rounded-xl bg-slate-950/80 border-2 ${p.border} p-5 space-y-4`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${p.badgeBg}`}>
-                        {p.code}
-                      </span>
-                      <h3 className="text-xl font-extrabold text-white mt-1">{p.name}</h3>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-slate-800 text-amber-400 font-bold text-xs border border-slate-700">
-                      {p.boxes.length} Box
-                    </span>
-                  </div>
-
-                  <div className="text-xs text-slate-400">
-                    <strong>Distribusi Rak:</strong> {p.rackBreakdown}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="text-xs font-semibold text-slate-300">Daftar Nomor Box:</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {p.boxes.map((b) => (
-                        <span
-                          key={b}
-                          className="px-2 py-1 rounded bg-slate-900 text-slate-200 text-xs font-mono font-bold border border-slate-700"
-                        >
-                          Box #{b}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 

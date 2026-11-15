@@ -138,7 +138,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                 }}
                 className="w-full rounded-xl border border-black/[0.08] bg-[#f5f5f7] hover:bg-[#ebebee] focus:bg-white py-2.5 px-3 text-[13px] font-medium text-[#1d1d1f] focus:border-[#0071e3] focus:outline-hidden focus:ring-4 focus:ring-[#0071e3]/15 transition cursor-pointer"
               >
-                <optgroup label="Manajemen &amp; Inventory Leader">
+                <optgroup label="Inventory Leader">
                   {users.filter(u => isManager(u)).map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name} (Inventory Leader)

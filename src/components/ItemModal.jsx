@@ -220,6 +220,44 @@ const ItemModalContent = () => {
     );
   }, [formData.kode, items, itemModalConfig.item]);
 
+  // Fast Selection: Rekomendasi Buyer No, Size, dan Color yang paling sering & banyak digunakan di inventory
+  const fastSelectionRecommendations = useMemo(() => {
+    const buyerFreq = {};
+    const sizeFreq = {};
+    const colorFreq = {};
+
+    (items || []).forEach((it) => {
+      const b = String(it.buyerNo || it.buyer_no || '').trim().toUpperCase();
+      if (b && b !== 'NA' && b !== '-') {
+        buyerFreq[b] = (buyerFreq[b] || 0) + 1;
+      }
+      const s = String(it.size || '').trim().toUpperCase();
+      if (s && s !== 'NA' && s !== '-' && s !== 'FREE') {
+        sizeFreq[s] = (sizeFreq[s] || 0) + 1;
+      }
+      const c = String(it.color || '').trim().toUpperCase();
+      if (c && c !== 'NA' && c !== '-') {
+        colorFreq[c] = (colorFreq[c] || 0) + 1;
+      }
+    });
+
+    const getTopList = (freqMap, defaultList, limit = 5) => {
+      const sortedByFreq = Object.entries(freqMap)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k]) => k);
+      const combined = [...new Set([...sortedByFreq, ...defaultList])].filter(
+        (x) => x && x !== 'FREE' && x !== 'NA' && x !== '-'
+      );
+      return combined.slice(0, limit);
+    };
+
+    return {
+      buyerNo: [...getTopList(buyerFreq, ['AN05', 'AN01', 'AN02', 'UNIQLO', 'GAP'], 5), 'NA'],
+      size: [...getTopList(sizeFreq, ['S', 'M', 'L', 'XL', 'XXL'], 5), 'NA'],
+      color: [...getTopList(colorFreq, ['BLACK', 'WHITE', 'NAVY', 'GREY', 'BEIGE'], 5), 'NA'],
+    };
+  }, [items]);
+
   // Handle box selection change
   const handleBoxSelect = (selectedPlaceValue) => {
     const match = selectedPlaceValue.match(/BOX\s+(\d+)/i);
@@ -625,41 +663,70 @@ const ItemModalContent = () => {
               </div>
             </div>
 
-            {/* BARIS 2: Buyer No (Kode Sample & Lokasi Box Otomatis Mengikuti Box Terpilih) */}
-            <div className={`border rounded-lg p-1.5 bg-white transition ${
+            {/* BARIS 2: Buyer No dengan Fast Selection Rekomendasi */}
+            <div className={`border rounded-lg p-2 bg-white transition flex flex-col justify-between ${
               errors.buyerNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
             }`}>
-              <div className="flex items-center justify-between mb-0.5">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Buyer No <span className="text-rose-500">*</span>:
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormData(p => ({ ...p, buyerNo: 'NA' }));
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Buyer No <span className="text-rose-500">*</span>:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(p => ({ ...p, buyerNo: 'NA' }));
+                      if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                    }}
+                    className="text-xs font-black px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
+                  >
+                    + NA
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  list="buyer-datalist"
+                  value={formData.buyerNo}
+                  onChange={(e) => {
+                    setFormData(p => ({ ...p, buyerNo: e.target.value.toUpperCase() }));
                     if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
                   }}
-                  className="text-xs font-black px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
-                >
-                  + NA
-                </button>
+                  placeholder="Contoh: AN05 / RSD-250015-2 / NA"
+                  className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent"
+                />
+                <datalist id="buyer-datalist">
+                  {(suggestions.buyerNo || []).map((b, idx) => (
+                    <option key={`by-${idx}`} value={b} />
+                  ))}
+                </datalist>
               </div>
-              <input
-                type="text"
-                list="buyer-datalist"
-                value={formData.buyerNo}
-                onChange={(e) => {
-                  setFormData(p => ({ ...p, buyerNo: e.target.value.toUpperCase() }));
-                  if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
-                }}
-                placeholder="Contoh: RSD-250015-2 / NA"
-                className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent"
-              />
-              <datalist id="buyer-datalist">
-                {(suggestions.buyerNo || []).map((b, idx) => (
-                  <option key={`by-${idx}`} value={b} />
-                ))}
-              </datalist>
+
+              {/* Fast Selection Rekomendasi Paling Sering Digunakan */}
+              <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-slate-200/80 overflow-x-auto">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight shrink-0 mr-0.5">
+                  Pilihan:
+                </span>
+                {fastSelectionRecommendations.buyerNo.map((b) => {
+                  const isSelected = formData.buyerNo === b;
+                  return (
+                    <button
+                      key={b}
+                      type="button"
+                      onClick={() => {
+                        setFormData(p => ({ ...p, buyerNo: b }));
+                        if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                      }}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase transition cursor-pointer text-center whitespace-nowrap ${
+                        isSelected
+                          ? 'bg-[#0071e3] text-white shadow-xs'
+                          : 'bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] border border-black/[0.06]'
+                      }`}
+                    >
+                      {b}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* BARIS 3: Jenis Sample (Chip Buttons) & Deskripsi / Style */}
@@ -806,7 +873,10 @@ const ItemModalContent = () => {
                   </datalist>
                 </div>
                 <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-black/[0.04] overflow-x-auto">
-                  {['S', 'M', 'L', 'XL', 'FREE', 'NA'].map(sz => {
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight shrink-0 mr-0.5">
+                    Pilihan:
+                  </span>
+                  {fastSelectionRecommendations.size.map(sz => {
                     const isSelected = formData.size === sz;
                     return (
                       <button
@@ -868,7 +938,10 @@ const ItemModalContent = () => {
                   </datalist>
                 </div>
                 <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-black/[0.04] overflow-x-auto">
-                  {['BLACK', 'WHITE', 'NAVY', 'GREY', 'NA'].map(c => {
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight shrink-0 mr-0.5">
+                    Pilihan:
+                  </span>
+                  {fastSelectionRecommendations.color.map(c => {
                     const isSelected = formData.color === c;
                     return (
                       <button

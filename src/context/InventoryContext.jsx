@@ -141,6 +141,24 @@ const DEFAULT_ISSUES = [
   },
 ];
 
+export function normalizeItemTextUppercase(item) {
+  if (!item) return { item, changed: false };
+  let changed = false;
+  const upperObj = { ...item };
+  const keys = ['style', 'sampleNo', 'buyerNo', 'track', 'size', 'color', 'deskripsi', 'description', 'name', 'kode', 'sku', 'jenisSample'];
+
+  for (const k of keys) {
+    if (typeof upperObj[k] === 'string' && upperObj[k].length > 0) {
+      const up = upperObj[k].trim().toUpperCase();
+      if (up !== upperObj[k]) {
+        upperObj[k] = up;
+        changed = true;
+      }
+    }
+  }
+  return { item: upperObj, changed };
+}
+
 export const InventoryProvider = ({ children }) => {
   // Racks and PPIC members are now stateful (editable at runtime)
   const [racks, setRacks] = useState(() => {
@@ -369,6 +387,11 @@ export const InventoryProvider = ({ children }) => {
                 datesRepaired = true;
                 updated = { ...updated, satuan: 'PCE', unit: 'PCE' };
               }
+              const { item: upperItem, changed: upperChanged } = normalizeItemTextUppercase(updated);
+              if (upperChanged) {
+                datesRepaired = true;
+                updated = upperItem;
+              }
               return updated;
             });
 
@@ -396,7 +419,8 @@ export const InventoryProvider = ({ children }) => {
       if (u === 'PCS' || !u) {
         updated = { ...updated, satuan: 'PCE', unit: 'PCE' };
       }
-      return updated;
+      const { item: upperItem } = normalizeItemTextUppercase(updated);
+      return upperItem;
     });
   });
 
@@ -869,6 +893,38 @@ export const InventoryProvider = ({ children }) => {
           }
           return hasChange ? mapped : prev;
         });
+
+        if (supabase) {
+          const itemsNeedingRemoteUpdate = userItems.filter(db => {
+            const up = (s) => (typeof s === 'string' ? s.trim().toUpperCase() : '');
+            return (
+              (db.style && db.style !== up(db.style)) ||
+              (db.sample_no && db.sample_no !== up(db.sample_no)) ||
+              (db.size && db.size !== up(db.size)) ||
+              (db.color && db.color !== up(db.color)) ||
+              (db.buyer_no && db.buyer_no !== up(db.buyer_no)) ||
+              (db.track && db.track !== up(db.track)) ||
+              (db.deskripsi && db.deskripsi !== up(db.deskripsi)) ||
+              (db.name && db.name !== up(db.name)) ||
+              (db.unit && String(db.unit).toUpperCase() === 'PCS') ||
+              (db.satuan && String(db.satuan).toUpperCase() === 'PCS')
+            );
+          });
+
+          if (itemsNeedingRemoteUpdate.length > 0) {
+            (async () => {
+              try {
+                for (const it of itemsNeedingRemoteUpdate) {
+                  const local = dbItemToLocal(it);
+                  const payload = localItemToDb(local);
+                  await supabase.from('items').update(payload).eq('id', it.id);
+                }
+              } catch (e) {
+                console.warn('Background Supabase uppercase repair error:', e);
+              }
+            })();
+          }
+        }
       }
 
       if (dbBoxes && dbBoxes.length > 0) {
@@ -1251,8 +1307,9 @@ export const InventoryProvider = ({ children }) => {
       ...(isByHelper ? [`helper:${encodeURIComponent(createdBy)}`] : []),
     ];
 
+    const { item: upperItemData } = normalizeItemTextUppercase(itemData);
     const newItem = {
-      ...itemData,
+      ...upperItemData,
       kode: finalCode,
       sku: finalCode,
       id: 'item-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
@@ -1261,6 +1318,8 @@ export const InventoryProvider = ({ children }) => {
       updatedAt: nowIso,
       status: itemData.status || 'In Storage',
       qty: Number(itemData.qty) || 1,
+      unit: 'PCE',
+      satuan: 'PCE',
       picName: boxOwner || (targetBox ? targetBox.picName : 'Royan'), // Ownership stays with PIC
       createdBy: createdBy,
       inputtedBy: createdBy,
@@ -1441,10 +1500,11 @@ export const InventoryProvider = ({ children }) => {
     const finalQty = Number(updatedData.qty !== undefined ? updatedData.qty : (updatedData.jumlah !== undefined ? updatedData.jumlah : oldItem.qty)) || 1;
     const rawUnit = updatedData.unit || updatedData.satuan || oldItem.unit || 'PCE';
     const finalUnit = String(rawUnit).toUpperCase() === 'PCS' ? 'PCE' : rawUnit;
+    const { item: upperUpdatedData } = normalizeItemTextUppercase(updatedData);
 
     const finalItem = {
       ...oldItem,
-      ...updatedData,
+      ...upperUpdatedData,
       kode: finalCode,
       sku: finalCode,
       boxNumber: newBox,
