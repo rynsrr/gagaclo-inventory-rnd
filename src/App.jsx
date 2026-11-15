@@ -59,7 +59,6 @@ import {
   User,
   ShieldCheck,
   Settings,
-  ChevronDown,
   FileSpreadsheet,
   Upload,
 } from 'lucide-react';
@@ -301,22 +300,20 @@ const AppContent = () => {
                 )}
               </button>
 
-              {/* Menu Tab Setting Dropdown (Kelola Box & Rak + Backup & Pulihkan) */}
+              {/* Menu Tab Setting Dropdown (Icon Only) */}
               <div className={`relative ${isSettingsOpen ? 'z-50' : ''}`} ref={settingsRef}>
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen((prev) => !prev)}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                  className={`flex items-center justify-center p-2 rounded-lg text-xs font-bold transition-all border cursor-pointer shadow-2xs ${
                     isSettingsOpen
-                      ? 'bg-slate-100 text-slate-900 border-slate-300 shadow-xs'
+                      ? 'bg-slate-100 text-slate-900 border-slate-300'
                       : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                   aria-label="Menu Setting & Pengaturan"
-                  title="Menu Setting: Kelola Box & Rak, Backup & Pulihkan"
+                  title="Menu Setting: Kelola Box & Rak, Backup & Pulihkan, Impor & Ekspor Excel"
                 >
-                  <Settings className="h-3.5 w-3.5 text-slate-600" aria-hidden="true" />
-                  <span>Setting</span>
-                  <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${isSettingsOpen ? 'rotate-180 text-slate-600' : ''}`} />
+                  <Settings className={`h-4 w-4 text-slate-700 transition-transform duration-200 ${isSettingsOpen ? 'rotate-45 text-slate-900' : ''}`} aria-hidden="true" />
                 </button>
 
                 {isSettingsOpen && (
@@ -324,9 +321,9 @@ const AppContent = () => {
                     className="absolute right-0 mt-2.5 w-[310px] sm:w-[480px] bg-slate-900 text-slate-100 border border-slate-700/90 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-1 duration-150 whitespace-normal"
                     style={{ whiteSpace: 'normal' }}
                   >
-                    {/* Caret Triangle Pointing to Setting Tab (DHL Style) */}
-                    <div className="absolute -top-2 right-12 w-0 h-0 border-x-[8px] border-x-transparent border-b-[8px] border-b-slate-700 pointer-events-none">
-                      <div className="absolute -left-[7px] top-[1px] w-0 h-0 border-x-[7px] border-x-transparent border-b-[8px] border-b-slate-900" />
+                    {/* Caret Triangle Pointing to Setting Icon (DHL Style) */}
+                    <div className="absolute -top-2 right-[10px] w-0 h-0 border-x-[7px] border-x-transparent border-b-[8px] border-b-slate-700 pointer-events-none">
+                      <div className="absolute -left-[6px] top-[1px] w-0 h-0 border-x-[6px] border-x-transparent border-b-[7px] border-b-slate-900" />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -16,7 +16,7 @@ const TEAM_MEMBERS = [
   { name: 'Tri', role: 'Support #3' },
 ];
 
-export function TargetTeamBanner({ onOpenRekap, onOpenUserProfile }) {
+export function TargetTeamBanner({ onOpenUserProfile }) {
   const {
     items = [],
     boxes = [],
