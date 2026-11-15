@@ -204,7 +204,7 @@ const AppContent = () => {
     <div className={`inventory-shell min-h-screen flex flex-col font-sans ${appMode === '3d-warehouse' ? 'warehouse-screen' : ''}`}>
 
       {/* Sticky Top Header Section: Full-Width Target Team Banner + Navigation Header */}
-      <div className="no-print sticky top-0 z-30 w-full shrink-0">
+      <div className="no-print sticky top-0 z-40 w-full shrink-0">
         {/* Full-Width Target Team Banner (Fokus & Dinamis) */}
         <TargetTeamBanner onOpenRekap={() => setAppMode('ppic-performance')} />
 
@@ -224,7 +224,7 @@ const AppContent = () => {
               </div>
 
             {/* Top Navigation Tabs */}
-            <nav className="flex items-center gap-1.5 mx-1 sm:mx-3" aria-label="Menu navigasi utama">
+            <nav className="flex items-center gap-1.5 mx-1 sm:mx-3 overflow-x-auto scrollbar-none" aria-label="Menu navigasi utama">
               {mainTabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = appMode === tab.id;
@@ -303,7 +303,7 @@ const AppContent = () => {
               </button>
 
               {/* Menu Tab Setting Dropdown (Kelola Box & Rak + Backup & Pulihkan) */}
-              <div className="relative" ref={settingsRef}>
+              <div className={`relative ${isSettingsOpen ? 'z-50' : ''}`} ref={settingsRef}>
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen((prev) => !prev)}

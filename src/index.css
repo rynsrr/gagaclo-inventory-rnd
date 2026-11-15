@@ -101,9 +101,13 @@
     backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid rgba(226, 232, 240, 0.85);
     box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: visible;
   }
 
-  .inventory-header-scroll { overflow-x: auto; }
+  .inventory-header-scroll {
+    overflow: visible;
+  }
 
   .inventory-header-row {
     display: flex;
