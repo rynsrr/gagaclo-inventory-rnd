@@ -351,21 +351,6 @@ const AppContent = () => {
                             </div>
                             <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Atur nomor box, rak 1–5 &amp; PIC</div>
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAppMode('3d-warehouse');
-                              setIsSettingsOpen(false);
-                            }}
-                            className="w-full text-left p-2.5 rounded-lg hover:bg-slate-800/90 transition group cursor-pointer block"
-                          >
-                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition flex items-center justify-between">
-                              <span>Denah Gudang 3D</span>
-                              <span className="text-[10px] text-blue-400 opacity-60 group-hover:opacity-100 transition">↗</span>
-                            </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 leading-snug">Visualisasi 3D denah fisik rak</div>
-                          </button>
                         </div>
                       </div>
 
