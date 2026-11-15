@@ -111,9 +111,24 @@ export const Warehouse3DView = ({
   const searchActive = highlightBoxNumbers !== null;
 
   const occupancyGroups = [
-    { label: 'Tanpa data', color: 'bg-slate-100 text-slate-800', boxes: [] },
-    { label: 'Sedang diisi', color: 'bg-amber-100 text-amber-900', boxes: [] },
-    { label: 'Penuh', color: 'bg-emerald-100 text-emerald-900', boxes: [] },
+    {
+      label: 'Tanpa data',
+      badgeClass: 'bg-black/[0.05] text-[#86868b] border border-black/[0.06]',
+      boxClass: 'bg-black/[0.03] hover:bg-black/[0.06] text-[#86868b] border-black/[0.06]',
+      boxes: []
+    },
+    {
+      label: 'Sedang diisi',
+      badgeClass: 'bg-[#ff9500]/15 text-[#c96700] border border-[#ff9500]/25',
+      boxClass: 'bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border-[#ff9500]/20',
+      boxes: []
+    },
+    {
+      label: 'Penuh',
+      badgeClass: 'bg-[#34c759]/15 text-[#30d158] border border-[#34c759]/25',
+      boxClass: 'bg-[#34c759]/10 hover:bg-[#34c759]/20 text-[#30d158] border-[#34c759]/20',
+      boxes: []
+    },
   ];
   for (const box of boxes) {
     if (highlightPpic !== 'ALL' && !matchesPic(box.picName, highlightPpic)) continue;
@@ -1070,11 +1085,11 @@ export const Warehouse3DView = ({
   }, [highlightPpic, highlightBoxNumbers, searchActive, boxes, racks, ppicMembers]);
 
   return (
-    <div className="warehouse-layout space-y-4">
+    <div className="warehouse-layout space-y-4 font-apple">
       {/* Pencarian Cepat di Halaman Depan */}
-      <section className="inventory-panel p-3 sm:p-3.5 bg-white/95 backdrop-blur-md shadow-sm border border-slate-200/80 rounded-lg" aria-label="Pencarian halaman depan">
+      <section className="inventory-panel p-3.5 sm:p-4 bg-white/90 backdrop-blur-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-black/[0.08] rounded-[20px]" aria-label="Pencarian halaman depan">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86868b]" aria-hidden="true" />
           <input
             id="frontpage-search"
             ref={searchInputRef}
@@ -1084,7 +1099,7 @@ export const Warehouse3DView = ({
             onChange={(e) => onSearchQueryChange?.(e.target.value)}
             placeholder="Cari nomor box, kode sampel, buyer, style, warna, PIC, atau rak..."
             autoComplete="off"
-            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/70 py-2.5 pl-10 pr-9 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100/60 transition shadow-2xs"
+            className="w-full rounded-full border border-black/[0.07] bg-black/[0.03] py-2.5 pl-10 pr-9 text-xs sm:text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:border-[#0071e3] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 transition shadow-xs"
           />
           {searchQuery && (
             <button
@@ -1093,7 +1108,7 @@ export const Warehouse3DView = ({
                 onClearSearch?.();
                 searchInputRef.current?.focus();
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-[#86868b] hover:bg-black/[0.06] hover:text-[#1d1d1f] transition cursor-pointer"
               title="Hapus pencarian"
               aria-label="Hapus pencarian"
             >
@@ -1104,10 +1119,10 @@ export const Warehouse3DView = ({
 
         {/* Live Search Results on Front Page */}
         {searchResults?.active && (
-          <div className="mt-3 pt-3 border-t border-slate-100 space-y-3 animate-fade-in">
+          <div className="mt-3 pt-3 border-t border-black/[0.06] space-y-3 animate-fade-in">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50/90 px-3 py-1 rounded-xl border border-blue-200 shadow-2xs">
-                <Sparkles className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 px-3 py-1 rounded-full border border-[#0071e3]/20 shadow-xs">
+                <Sparkles className="h-3.5 w-3.5 text-[#0071e3]" aria-hidden="true" />
                 <span>
                   {searchResults.matchedBoxNumbers.size} box cocok ditemukan &amp; disorot di rak 3D
                 </span>
@@ -1115,7 +1130,7 @@ export const Warehouse3DView = ({
               <button
                 type="button"
                 onClick={onClearSearch}
-                className="text-xs text-slate-500 hover:text-rose-600 underline font-semibold transition"
+                className="text-xs text-[#86868b] hover:text-[#ff3b30] underline font-medium transition cursor-pointer"
               >
                 Reset Pencarian
               </button>
@@ -1124,7 +1139,7 @@ export const Warehouse3DView = ({
             {/* Matched Boxes Chips */}
             {searchResults.boxMatches.length > 0 && (
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">
                   Box Ditemukan ({searchResults.boxMatches.length}). Klik untuk langsung buka:
                 </p>
                 <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
@@ -1133,12 +1148,12 @@ export const Warehouse3DView = ({
                       key={`front-box-${box.boxNumber}`}
                       type="button"
                       onClick={() => setSelectedBoxNumber(box.boxNumber)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition shadow-xs hover:-translate-y-0.5 active:scale-95"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border border-[#ff9500]/25 transition shadow-xs cursor-pointer active:scale-95"
                       title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName})`}
                     >
-                      <BoxIcon className="h-3 w-3 text-amber-600" aria-hidden="true" />
+                      <BoxIcon className="h-3 w-3 text-[#ff9500]" aria-hidden="true" />
                       <span>BOX #{box.boxNumber}</span>
-                      <span className="text-xs font-normal text-amber-700">({box.rackName || 'LANTAI'})</span>
+                      <span className="text-xs font-normal opacity-80">({box.rackName || 'LANTAI'})</span>
                     </button>
                   ))}
                 </div>
@@ -1148,29 +1163,29 @@ export const Warehouse3DView = ({
             {/* Matched Items List */}
             {searchResults.itemMatches.length > 0 && (
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">
                   Barang / Sampel Cocok ({searchResults.itemMatches.length}). Klik nama untuk buka box, klik pensil untuk edit:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
                   {searchResults.itemMatches.slice(0, 10).map((item, idx) => (
                     <div
                       key={item.id || `front-item-${idx}`}
-                      className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 hover:bg-blue-50 border border-slate-200 transition-all text-xs group"
+                      className="flex items-center justify-between gap-2 p-2.5 rounded-[14px] bg-black/[0.02] hover:bg-[#0071e3]/5 border border-black/[0.06] hover:border-[#0071e3]/30 transition-all text-xs group"
                     >
                       <button
                         type="button"
                         onClick={() => setSelectedBoxNumber(Number(item.boxNumber))}
-                        className="flex items-center gap-2 min-w-0 flex-1 text-left"
+                        className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer"
                         title={`Buka BOX #${item.boxNumber} tempat barang ini disimpan`}
                       >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-blue-100 text-blue-700 font-bold text-xs">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[#0071e3]/10 text-[#0071e3] font-bold text-xs tabular-nums">
                           #{item.boxNumber}
                         </span>
                         <div className="min-w-0">
-                          <div className="font-semibold text-slate-800 truncate text-xs group-hover:text-blue-700">
+                          <div className="font-semibold text-[#1d1d1f] truncate text-xs group-hover:text-[#0071e3]">
                             {item.kode || item.sku || item.style || item.name || 'Sample'}
                           </div>
-                          <div className="text-xs text-slate-500 truncate">
+                          <div className="text-[11px] text-[#86868b] truncate">
                             {item.style && item.style !== (item.kode || item.sku) ? `${item.style} • ` : ''}
                             Buyer: {item.buyerNo || '-'} • PIC: {item.picName || '-'}
                           </div>
@@ -1183,7 +1198,7 @@ export const Warehouse3DView = ({
                           item,
                           targetBoxNumber: Number(item.boxNumber)
                         })}
-                        className="shrink-0 p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-white border border-transparent hover:border-slate-200 transition"
+                        className="shrink-0 p-1.5 rounded-full text-[#86868b] hover:text-[#0071e3] hover:bg-white border border-transparent hover:border-black/[0.06] transition cursor-pointer"
                         title="Edit rincian barang ini"
                         aria-label={`Edit ${item.kode || item.sku || item.name || 'barang'}`}
                       >
@@ -1193,7 +1208,7 @@ export const Warehouse3DView = ({
                   ))}
                 </div>
                 {searchResults.itemMatches.length > 10 && (
-                  <p className="text-xs text-slate-400 mt-1 italic">
+                  <p className="text-xs text-[#86868b] mt-1.5 italic">
                     +{searchResults.itemMatches.length - 10} barang lainnya cocok. Persempit kata kunci pencarian.
                   </p>
                 )}
@@ -1201,7 +1216,7 @@ export const Warehouse3DView = ({
             )}
 
             {searchResults.matchedBoxNumbers.size === 0 && (
-              <p className="text-center py-3 text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+              <p className="text-center py-4 text-xs text-[#86868b] border border-dashed border-black/[0.1] rounded-[16px] bg-black/[0.02]">
                 Tidak ada box atau sampel yang cocok dengan kata kunci <strong>"{searchQuery}"</strong>.
               </p>
             )}
@@ -1211,41 +1226,44 @@ export const Warehouse3DView = ({
 
       <PpicMissingMentionBar activePic={highlightPpic} onSelectPic={setHighlightPpic} />
 
+      {/* Status Pengisian Box (3 Kolom Apple Cards) */}
       <section aria-label="Status pengisian box" className="grid gap-3 sm:grid-cols-3">
         {occupancyGroups.map(group => (
-          <div key={group.label} className="inventory-panel px-4 py-3 bg-white rounded-lg border border-slate-200 transition-all">
-            <h2 className="mb-2 flex items-center justify-between text-xs font-bold text-slate-700">
+          <div key={group.label} className="inventory-panel p-4 bg-white/90 backdrop-blur-xl rounded-[20px] border border-black/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)] transition-all">
+            <h2 className="mb-2.5 flex items-center justify-between text-xs font-bold text-[#1d1d1f]">
               <span>{group.label}</span>
-              <span className={`rounded px-2 py-0.5 text-xs font-bold ${group.color}`}>{group.boxes.length} Box</span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums ${group.badgeClass}`}>
+                {group.boxes.length} Box
+              </span>
             </h2>
             <div className="flex flex-wrap gap-1.5 p-0.5 max-h-56 overflow-y-auto">
               {group.boxes.map(box => (
                 <button key={box.boxNumber} type="button"
                   aria-label={`Box ${box.boxNumber}, ${group.label}`}
                   onClick={() => setSelectedBoxNumber(box.boxNumber)}
-                  className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-xs font-bold tabular-nums transition-all border border-slate-200/60 hover:ring-2 hover:ring-blue-400 active:scale-95 cursor-pointer ${group.color}`}>
+                  className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[9px] px-2 text-xs font-semibold tabular-nums transition-all border active:scale-95 cursor-pointer ${group.boxClass}`}>
                   {box.boxNumber}
                 </button>
               ))}
-              {group.boxes.length === 0 && <span className="text-xs text-slate-400 italic py-1">Tidak ada box</span>}
+              {group.boxes.length === 0 && <span className="text-xs text-[#86868b] italic py-1">Tidak ada box</span>}
             </div>
           </div>
         ))}
       </section>
 
       {/* Main 3D Canvas Container */}
-      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-xl border shadow-md ring-1 ring-slate-900/5 transition-all duration-500 bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50 border-slate-200/80">
+      <div className="warehouse-viewport inventory-panel relative w-full h-[380px] sm:h-[480px] lg:h-[580px] overflow-hidden rounded-[24px] border border-black/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-500 bg-gradient-to-b from-emerald-200 via-teal-100 to-amber-50">
         
         {/* Three.js viewport */}
         <div ref={containerRef} className="w-full h-full" />
 
         {/* WebGL Fallback Overlay if GPU context is unavailable */}
         {webGlError && (
-          <div className="absolute inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3.5 animate-fade-in">
-            <div className="h-14 w-14 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/10">
+          <div className="absolute inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3.5 animate-fade-in font-apple">
+            <div className="h-14 w-14 rounded-full bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/10">
               <BoxIcon className="h-7 w-7" />
             </div>
-            <h3 className="text-base sm:text-lg font-black text-white">
+            <h3 className="text-base sm:text-lg font-bold text-white">
               Akselerasi 3D (WebGL) Diperlukan
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
@@ -1254,7 +1272,7 @@ export const Warehouse3DView = ({
             <button
               type="button"
               onClick={handleRetryWebGl}
-              className="mt-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition flex items-center gap-2 cursor-pointer active:scale-95"
+              className="mt-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-lg shadow-blue-600/30 transition flex items-center gap-2 cursor-pointer active:scale-95"
             >
               <RefreshCw className="h-4 w-4" />
               <span>Coba Muat Ulang 3D</span>
@@ -1262,27 +1280,27 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls (Top Right): Fit View Default */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+        {/* Controls (Top Right): Fit View Default (Apple Floating Pill) */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2 font-apple">
           <button
             type="button"
             onClick={() => {
               activeRackRef.current = 'ALL';
               fitCameraRef.current?.(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md backdrop-blur-md border cursor-pointer active:scale-95 bg-white/95 text-slate-700 border-slate-200 hover:bg-slate-100 shadow-slate-900/10"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md backdrop-blur-2xl border border-black/[0.08] cursor-pointer active:scale-95 bg-white/85 text-[#1d1d1f] hover:bg-white"
             title="Kembalikan sudut pandang kamera ke posisi default (Fit View Default)"
           >
-            <Maximize2 className="h-3.5 w-3.5 text-blue-600" />
+            <Maximize2 className="h-3.5 w-3.5 text-[#0071e3]" />
             <span>Fit View Default</span>
           </button>
         </div>
 
         {/* Anjing Penjaga 15-Menit Inactivity Reminder Banner */}
         {dogReminderActive && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-slate-950 px-5 py-3.5 rounded-xl shadow-xl border-2 border-white ring-4 ring-amber-400/50 animate-bounce">
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 text-slate-950 px-5 py-3.5 rounded-[20px] shadow-xl border-2 border-white ring-4 ring-amber-400/50 animate-bounce font-apple">
             <div className="space-y-2">
-              <p className="text-xs sm:text-sm font-black text-slate-950 leading-snug">
+              <p className="text-xs sm:text-sm font-bold text-slate-950 leading-snug">
                 "Woof woof! 🐾 Hey, please fill data on the box!"
               </p>
               <div className="flex justify-end">
@@ -1292,7 +1310,7 @@ export const Warehouse3DView = ({
                     setDogReminderActive(false);
                     lastInputTimeRef.current = Date.now();
                   }}
-                  className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition shadow-md cursor-pointer active:scale-95"
+                  className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-amber-300 rounded-full text-xs font-bold transition shadow-md cursor-pointer active:scale-95"
                 >
                   OK, Siap! 🐾
                 </button>
@@ -1303,7 +1321,7 @@ export const Warehouse3DView = ({
 
         {/* Active search indicator (top left) */}
         {searchActive && (
-          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-md border border-blue-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm backdrop-blur-xs">
+          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-[#0071e3] shadow-sm backdrop-blur-xl font-apple">
             <Search className="h-3.5 w-3.5" aria-hidden="true" />
             <span>
               {highlightBoxNumbers.size} box cocok &amp; disorot
@@ -1312,7 +1330,7 @@ export const Warehouse3DView = ({
               <button
                 type="button"
                 onClick={onClearSearch}
-                className="rounded px-1.5 py-0.5 text-blue-600 underline underline-offset-2 transition hover:bg-blue-50 hover:text-blue-800"
+                className="rounded-full px-1.5 py-0.5 text-[#0071e3] underline underline-offset-2 transition hover:bg-blue-50 cursor-pointer"
                 title="Hapus pencarian"
               >
                 Hapus
@@ -1321,49 +1339,49 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Hovered Box HUD Card (Bottom Left) */}
+        {/* Hovered Box HUD Card (Bottom Left - Apple VisionOS / macOS Glass Card) */}
         {hoveredBox && (
-          <div className="absolute bottom-5 left-5 z-10 bg-slate-900/95 backdrop-blur-md p-4 rounded-lg border border-slate-700 text-white text-xs max-w-sm shadow-lg animate-fade-in pointer-events-none">
+          <div className="absolute bottom-5 left-5 z-10 bg-black/80 backdrop-blur-2xl p-4 rounded-[20px] border border-white/[0.12] text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none font-apple">
             <div className="flex items-center space-x-2">
-              <span className="text-xl font-black text-white">
+              <span className="text-xl font-bold text-white tabular-nums">
                 #{hoveredBox.boxNumber}
               </span>
-              <span className="font-mono text-xs text-slate-400">
+              <span className="font-mono text-xs text-white/60">
                 {hoveredBox.code}
               </span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${
-                hoveredBox.category === 'SAMPLE' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full uppercase ${
+                hoveredBox.category === 'SAMPLE' ? 'bg-[#ff9500]/20 text-[#ff9f0a] border border-[#ff9500]/30' : 'bg-[#34c759]/20 text-[#30d158] border border-[#34c759]/30'
               }`}>
                 {hoveredBox.category} BOX
               </span>
             </div>
 
-            <div className="mt-2 space-y-1 text-slate-300">
+            <div className="mt-2.5 space-y-1 text-white/80">
               <p>📍 <strong>{hoveredBox.rackName}</strong> • {hoveredBox.rackDescription}</p>
-              <p>👤 PIC PPIC: <strong className="text-white font-bold">{hoveredBox.picName}</strong></p>
-              <p>📦 Tersimpan: <strong className="text-emerald-400">{getItemsInBox(hoveredBox.boxNumber).length} item</strong></p>
+              <p>👤 PIC PPIC: <strong className="text-white font-semibold">{hoveredBox.picName}</strong></p>
+              <p>📦 Tersimpan: <strong className="text-[#30d158] font-semibold">{getItemsInBox(hoveredBox.boxNumber).length} item</strong></p>
             </div>
 
-            <div className="mt-2.5 pt-2 border-t border-slate-700/80 text-xs text-blue-400 font-bold flex items-center space-x-1">
+            <div className="mt-3 pt-2.5 border-t border-white/[0.1] text-xs text-[#2997ff] font-semibold flex items-center space-x-1">
               <span>Klik 1x fokus • Klik 2x buka popup jendela</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </div>
           </div>
         )}
 
-        {/* Controls Hint & Meadow Badge (Bottom Right) */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-slate-900/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-200 pointer-events-none flex flex-wrap items-center gap-2 shadow-md">
-          <span className="text-emerald-400 font-bold flex items-center gap-1">
+        {/* Controls Hint & Meadow Badge (Bottom Right - Apple Floating Capsule) */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-black/75 backdrop-blur-2xl px-3.5 py-1.5 rounded-full border border-white/[0.1] text-xs text-white/90 pointer-events-none flex flex-wrap items-center gap-2 shadow-lg font-apple">
+          <span className="text-[#30d158] font-semibold flex items-center gap-1">
             <span>🌱</span> Padang Rumput 3D
           </span>
-          <span className="text-slate-500">|</span>
-          <span className="text-amber-300 font-bold">Klik 2x: Buka Popup</span>
-          <span className="text-slate-600">•</span>
-          <span>Putar: Klik Kiri</span>
-          <span className="text-slate-600">•</span>
-          <span>Zoom: Scroll</span>
-          <span className="text-slate-600">•</span>
-          <span>Geser: Klik Kanan</span>
+          <span className="text-white/20">|</span>
+          <span className="text-[#ff9f0a] font-medium">Klik 2x: Buka Popup</span>
+          <span className="text-white/20">•</span>
+          <span className="text-white/70">Putar: Klik Kiri</span>
+          <span className="text-white/20">•</span>
+          <span className="text-white/70">Zoom: Scroll</span>
+          <span className="text-white/20">•</span>
+          <span className="text-white/70">Geser: Klik Kanan</span>
         </div>
 
       </div>

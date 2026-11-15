@@ -96,26 +96,26 @@ export const RackView = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-apple">
       
-      {/* Control & Filter Toolbar */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5">
+      {/* Control & Filter Toolbar (Apple Glass Style) */}
+      <div className="bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-black/[0.08] p-4 sm:p-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
           {/* Search Input */}
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#86868b]" />
             <input
               type="text"
               placeholder="Cari nomor box (cth: 16), nama PIC, atau nama barang..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+              className="w-full pl-10 pr-4 py-2 text-sm bg-black/[0.03] border border-black/[0.07] rounded-full focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 focus:bg-white text-[#1d1d1f] placeholder:text-[#86868b] transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#86868b] hover:text-[#1d1d1f] font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -125,12 +125,12 @@ export const RackView = () => {
           {/* Filter Dropdowns */}
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Filter Rak */}
-            <div className="flex items-center space-x-1.5 text-xs font-medium text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
-              <span className="text-slate-500">Rak:</span>
+            <div className="flex items-center space-x-1.5 text-xs font-medium text-[#1d1d1f] bg-black/[0.03] px-3 py-1.5 rounded-full border border-black/[0.06]">
+              <span className="text-[#86868b]">Rak:</span>
               <select
                 value={selectedRackFilter}
                 onChange={(e) => setSelectedRackFilter(e.target.value)}
-                className="bg-transparent font-semibold focus:outline-none cursor-pointer"
+                className="bg-transparent font-semibold focus:outline-hidden cursor-pointer"
               >
                 <option value="ALL">Semua Rak (1-5)</option>
                 {racks.map((r) => (
@@ -142,12 +142,12 @@ export const RackView = () => {
             </div>
 
             {/* Filter Kategori */}
-            <div className="flex items-center space-x-1.5 text-xs font-medium text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
-              <span className="text-slate-500">Kategori:</span>
+            <div className="flex items-center space-x-1.5 text-xs font-medium text-[#1d1d1f] bg-black/[0.03] px-3 py-1.5 rounded-full border border-black/[0.06]">
+              <span className="text-[#86868b]">Kategori:</span>
               <select
                 value={selectedCategoryFilter}
                 onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                className="bg-transparent font-semibold focus:outline-none cursor-pointer"
+                className="bg-transparent font-semibold focus:outline-hidden cursor-pointer"
               >
                 <option value="ALL">Semua Kategori</option>
                 <option value="SAMPLE">SAMPLE (Rak 1-2)</option>
@@ -156,12 +156,12 @@ export const RackView = () => {
             </div>
 
             {/* Filter PPIC PIC */}
-            <div className="flex items-center space-x-1.5 text-xs font-medium text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
-              <span className="text-slate-500">PIC PPIC:</span>
+            <div className="flex items-center space-x-1.5 text-xs font-medium text-[#1d1d1f] bg-black/[0.03] px-3 py-1.5 rounded-full border border-black/[0.06]">
+              <span className="text-[#86868b]">PIC:</span>
               <select
                 value={selectedPpicFilter}
                 onChange={(e) => setSelectedPpicFilter(e.target.value)}
-                className="bg-transparent font-semibold focus:outline-none cursor-pointer"
+                className="bg-transparent font-semibold focus:outline-hidden cursor-pointer"
               >
                 <option value="ALL">Semua Anggota PPIC</option>
                 {ppicMembers.map((p) => (
@@ -181,7 +181,7 @@ export const RackView = () => {
                   setSelectedPpicFilter('ALL');
                   setSearchQuery('');
                 }}
-                className="text-xs text-blue-600 hover:text-blue-800 font-semibold px-2 py-1 underline"
+                className="text-xs text-[#0071e3] hover:text-[#0077ed] font-semibold px-2.5 py-1 underline cursor-pointer"
               >
                 Reset Filter
               </button>
@@ -190,31 +190,31 @@ export const RackView = () => {
         </div>
 
         {/* Legend bar */}
-        <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
-          <div className="flex items-center flex-wrap gap-3">
-            <span className="font-semibold text-slate-700">Warna PIC PPIC:</span>
+        <div className="mt-4 pt-3 border-t border-black/[0.06] flex flex-wrap items-center justify-between text-xs text-[#86868b] gap-2">
+          <div className="flex items-center flex-wrap gap-2.5">
+            <span className="font-semibold text-[#1d1d1f]">Warna PIC PPIC:</span>
             {ppicMembers.map((pic) => (
               <button
                 key={pic.id}
                 onClick={() => setSelectedPpicFilter(selectedPpicFilter === pic.name ? 'ALL' : pic.name)}
-                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md border text-xs font-medium transition ${
-                  selectedPpicFilter === pic.name ? 'ring-2 ring-blue-500 shadow-sm' : ''
+                className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition cursor-pointer select-none ${
+                  selectedPpicFilter === pic.name ? 'ring-2 ring-[#0071e3] shadow-xs' : ''
                 } ${pic.tagBg}`}
               >
                 <span className={`w-2 h-2 rounded-full ${pic.avatarBg}`}></span>
                 <span>{pic.name}</span>
-                <span className="opacity-70">({pic.totalBoxes})</span>
+                <span className="opacity-70 tabular-nums">({pic.totalBoxes})</span>
               </button>
             ))}
           </div>
 
-          <div className="flex items-center space-x-3 text-slate-400">
-            <span className="flex items-center space-x-1">
-              <span className="w-2.5 h-2.5 rounded bg-emerald-500"></span>
+          <div className="flex items-center space-x-3 text-[#86868b]">
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#34c759]"></span>
               <span>Ada Item</span>
             </span>
-            <span className="flex items-center space-x-1">
-              <span className="w-2.5 h-2.5 rounded bg-slate-200 border border-slate-300"></span>
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-black/10 border border-black/15"></span>
               <span>Kosong</span>
             </span>
           </div>

@@ -45,44 +45,54 @@ export const PpicMissingMentionBar = ({ onSelectPic, activePic = 'ALL' }) => {
   }, [picStats]);
 
   return (
-    <div className="inventory-panel p-3 space-y-2.5 border border-slate-200 bg-white rounded-lg">
-      {/* Header bar: flattened */}
-      <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100 shrink-0">
-            <Users className="w-4 h-4" />
+    <div className="inventory-panel p-3.5 sm:p-4 space-y-3 border border-black/[0.08] bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] font-apple">
+      {/* Header bar: flattened & apple-styled */}
+      <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-black/[0.06] flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-[#0071e3]/10 text-[#0071e3] shrink-0">
+            <Users className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+          <h2 className="text-xs sm:text-sm font-bold text-[#1d1d1f] tracking-tight">
             Rekap Box Kurang per PIC
           </h2>
         </div>
-        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
-          totalKurang > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+        <span className={`text-xs font-semibold px-3 py-1 rounded-full tabular-nums border ${
+          totalKurang > 0
+            ? 'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/25'
+            : 'bg-[#34c759]/15 text-[#30d158] border-[#34c759]/30'
         }`}>
           {totalKurang > 0 ? `Total Kurang: ${totalKurang} Box` : 'Semua Box Terisi'}
         </span>
       </div>
 
-      {/* Inline Summary Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-none text-xs text-slate-600">
-        <span className="text-xs font-semibold text-slate-500 shrink-0">Pilih PIC:</span>
+      {/* Inline Summary Chips (Apple Capsule Style) */}
+      <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none text-xs">
+        <span className="text-xs font-semibold text-[#86868b] shrink-0">Pilih PIC:</span>
         {picStats.map((pic) => (
           <button
             key={pic.id}
             type="button"
             onClick={() => onSelectPic && onSelectPic(activePic === pic.name ? 'ALL' : pic.name)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition cursor-pointer shrink-0 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-all duration-150 cursor-pointer shrink-0 select-none ${
               activePic === pic.name
-                ? 'bg-blue-50 border-blue-300 text-blue-900 font-bold'
-                : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
+                ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                : 'bg-black/[0.03] hover:bg-black/[0.06] border-black/[0.06] text-[#1d1d1f]'
             }`}
             title={`Klik untuk sorot box milik @${pic.name}`}
           >
-            <span className={`w-4 h-4 rounded text-white font-bold text-xs flex items-center justify-center ${pic.avatarBg}`}>
+            <span className={`w-4 h-4 rounded-full text-white font-bold text-[10px] flex items-center justify-center ${
+              activePic === pic.name ? 'bg-white/20 text-white' : pic.avatarBg
+            }`}>
               {pic.name.charAt(0)}
             </span>
-            <span>@{pic.name}</span>
-            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${pic.countKurang > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
+            <span className="font-semibold">@{pic.name}</span>
+            <span className={`text-[11px] font-semibold px-1.5 py-0.2 rounded-full tabular-nums ${
+              activePic === pic.name
+                ? 'bg-white/20 text-white'
+                : pic.countKurang > 0
+                ? 'bg-[#ff3b30]/15 text-[#ff3b30]'
+                : 'bg-[#34c759]/15 text-[#30d158]'
+            }`}>
               {pic.countKurang > 0 ? `${pic.countKurang} box` : 'Lengkap'}
             </span>
           </button>
