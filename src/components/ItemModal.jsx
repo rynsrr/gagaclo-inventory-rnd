@@ -78,36 +78,8 @@ export function formatTodayDate() {
   return `${dd}-${mm}-${yyyy}`;
 }
 
-export function formatToDDMMYYYY(str) {
-  if (!str || str === 'NA' || str === '-') return str || '';
-  const cleanStr = String(str).trim();
-  // If already dd-mm-yyyy or dd/mm/yyyy (4 digit year)
-  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(cleanStr)) {
-    const parts = cleanStr.split(/[-/]/);
-    return `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-${parts[2]}`;
-  }
-  // If dd-mm-yy or dd/mm/yy (2 digit year, e.g. 06-11-26) -> convert to 2026
-  if (/^\d{1,2}[-/]\d{1,2}[-/]\d{2}$/.test(cleanStr)) {
-    const parts = cleanStr.split(/[-/]/);
-    return `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-20${parts[2]}`;
-  }
-  // If YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
-    const [y, m, d] = cleanStr.split('-');
-    return `${d}-${m}-${y}`;
-  }
-  // Month name e.g. "4-Nov-2026" or "04-Nov-2026"
-  const monthMap = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
-  const textMatch = cleanStr.match(/^(\d{1,2})[-/ ]([A-Za-z]{3})[-/ ](\d{2,4})$/);
-  if (textMatch) {
-    const d = textMatch[1].padStart(2, '0');
-    const m = monthMap[textMatch[2].toLowerCase()] || '01';
-    let y = textMatch[3];
-    if (y.length === 2) y = `20${y}`;
-    return `${d}-${m}-${y}`;
-  }
-  return cleanStr;
-}
+import { formatToDDMMYYYY } from '../utils/dateUtils';
+export { formatToDDMMYYYY };
 
 export const ItemModal = () => {
   const { itemModalConfig } = useInventory();
@@ -335,7 +307,8 @@ const ItemModalContent = () => {
     const sizeTrim = clean(formData.size).toUpperCase();
     const colorTrim = clean(formData.color);
     const trackClean = clean(formData.track);
-    const tanggalClean = clean(formData.tanggal);
+    const rawTanggal = clean(formData.tanggal);
+    const tanggalClean = formatToDDMMYYYY(rawTanggal) || rawTanggal;
     const satuanClean = 'PCS';
     const placeClean = clean(formData.place) || (boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`);
     const fullDeskripsi = sampleNoTrim
@@ -618,7 +591,16 @@ const ItemModalContent = () => {
                       setFormData(p => ({ ...p, tanggal: e.target.value }));
                       if (errors.tanggal) setErrors(prev => ({ ...prev, tanggal: null }));
                     }}
-                    placeholder="dd-mm-yyyy (contoh: 06-11-2026) / NA"
+                    onBlur={(e) => {
+                      const raw = e.target.value;
+                      if (raw) {
+                        const formatted = formatToDDMMYYYY(raw);
+                        if (formatted && formatted !== raw) {
+                          setFormData(p => ({ ...p, tanggal: formatted }));
+                        }
+                      }
+                    }}
+                    placeholder="DD-MM-YYYY (contoh: 06-11-2026) / NA"
                     className="w-full text-xs font-semibold text-slate-900 focus:outline-none bg-transparent"
                   />
                   <button
