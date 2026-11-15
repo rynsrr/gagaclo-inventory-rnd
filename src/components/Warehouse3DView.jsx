@@ -10,13 +10,9 @@ import {
   ZoomOut, 
   Maximize2, 
   Eye, 
-  Box as BoxIcon, 
-  Sparkles, 
   Info, 
   Search, 
   ChevronRight, 
-  X, 
-  Pencil, 
   Package,
   AlertTriangle,
   RefreshCw,
@@ -41,7 +37,6 @@ export const Warehouse3DView = ({
   onClearSearch 
 }) => {
   const containerRef = useRef(null);
-  const searchInputRef = useRef(null);
   const { 
     racks, 
     boxes, 
@@ -49,8 +44,7 @@ export const Warehouse3DView = ({
     ppicMembers, 
     getItemsInBox, 
     selectedBoxNumber,
-    setSelectedBoxNumber,
-    setItemModalConfig
+    setSelectedBoxNumber
   } = useInventory();
 
   // Cinematic fly-to-box interpolation targets
@@ -64,24 +58,6 @@ export const Warehouse3DView = ({
     // Setelah klik 2 kali box atau pilih box: tidak perlu closeup kamera ke box
     // Posisi kamera tetap nyaman pada sudut pandang rak/lokasi saat ini
   }, [selectedBoxNumber]);
-
-  // Ctrl/Cmd + K shortcut for quick search focus
-  useEffect(() => {
-    const onKeyDown = (event) => {
-      const key = event.key.toLowerCase();
-      if ((event.ctrlKey || event.metaKey) && (key === 'f' || key === 'k')) {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
-      }
-      if (event.key === 'Escape' && document.activeElement === searchInputRef.current) {
-        onClearSearch?.();
-        searchInputRef.current?.blur();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClearSearch]);
 
   // Filter / view state
   const [highlightPpic, setHighlightPpic] = useState('ALL');
@@ -1084,144 +1060,6 @@ export const Warehouse3DView = ({
 
   return (
     <div className="warehouse-layout space-y-4 font-apple">
-      {/* Pencarian Cepat di Halaman Depan */}
-      <section className="inventory-panel p-3.5 sm:p-4 bg-white/90 backdrop-blur-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-black/[0.08] rounded-[20px]" aria-label="Pencarian halaman depan">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86868b]" aria-hidden="true" />
-          <input
-            id="frontpage-search"
-            ref={searchInputRef}
-            type="text"
-            inputMode="search"
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange?.(e.target.value)}
-            placeholder="Cari nomor box, kode sampel, buyer, style, warna, PIC, atau rak..."
-            autoComplete="off"
-            className="w-full rounded-full border border-black/[0.07] bg-black/[0.03] py-2.5 pl-10 pr-9 text-xs sm:text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:border-[#0071e3] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 transition shadow-xs"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => {
-                onClearSearch?.();
-                searchInputRef.current?.focus();
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-[#86868b] hover:bg-black/[0.06] hover:text-[#1d1d1f] transition cursor-pointer"
-              title="Hapus pencarian"
-              aria-label="Hapus pencarian"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        {/* Live Search Results on Front Page */}
-        {searchResults?.active && (
-          <div className="mt-3 pt-3 border-t border-black/[0.06] space-y-3 animate-fade-in">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 px-3 py-1 rounded-full border border-[#0071e3]/20 shadow-xs">
-                <Sparkles className="h-3.5 w-3.5 text-[#0071e3]" aria-hidden="true" />
-                <span>
-                  {searchResults.matchedBoxNumbers.size} box cocok ditemukan &amp; disorot di rak 3D
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={onClearSearch}
-                className="text-xs text-[#86868b] hover:text-[#ff3b30] underline font-medium transition cursor-pointer"
-              >
-                Reset Pencarian
-              </button>
-            </div>
-
-            {/* Matched Boxes Chips */}
-            {searchResults.boxMatches.length > 0 && (
-              <div>
-                <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">
-                  Box Ditemukan ({searchResults.boxMatches.length}). Klik untuk langsung buka:
-                </p>
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                  {searchResults.boxMatches.map((box) => (
-                    <button
-                      key={`front-box-${box.boxNumber}`}
-                      type="button"
-                      onClick={() => setSelectedBoxNumber(box.boxNumber)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border border-[#ff9500]/25 transition shadow-xs cursor-pointer active:scale-95"
-                      title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName})`}
-                    >
-                      <BoxIcon className="h-3 w-3 text-[#ff9500]" aria-hidden="true" />
-                      <span>BOX #{box.boxNumber}</span>
-                      <span className="text-xs font-normal opacity-80">({box.rackName || 'LANTAI'})</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Matched Items List */}
-            {searchResults.itemMatches.length > 0 && (
-              <div>
-                <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">
-                  Barang / Sampel Cocok ({searchResults.itemMatches.length}). Klik nama untuk buka box, klik pensil untuk edit:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
-                  {searchResults.itemMatches.slice(0, 10).map((item, idx) => (
-                    <div
-                      key={item.id || `front-item-${idx}`}
-                      className="flex items-center justify-between gap-2 p-2.5 rounded-[14px] bg-black/[0.02] hover:bg-[#0071e3]/5 border border-black/[0.06] hover:border-[#0071e3]/30 transition-all text-xs group"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBoxNumber(Number(item.boxNumber))}
-                        className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer"
-                        title={`Buka BOX #${item.boxNumber} tempat barang ini disimpan`}
-                      >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[#0071e3]/10 text-[#0071e3] font-bold text-xs tabular-nums">
-                          #{item.boxNumber}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="font-semibold text-[#1d1d1f] truncate text-xs group-hover:text-[#0071e3]">
-                            {item.kode || item.sku || item.style || item.name || 'Sample'}
-                          </div>
-                          <div className="text-[11px] text-[#86868b] truncate">
-                            {item.style && item.style !== (item.kode || item.sku) ? `${item.style} • ` : ''}
-                            Buyer: {item.buyerNo || '-'} • PIC: {item.picName || '-'}
-                          </div>
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setItemModalConfig({
-                          isOpen: true,
-                          item,
-                          targetBoxNumber: Number(item.boxNumber)
-                        })}
-                        className="shrink-0 p-1.5 rounded-full text-[#86868b] hover:text-[#0071e3] hover:bg-white border border-transparent hover:border-black/[0.06] transition cursor-pointer"
-                        title="Edit rincian barang ini"
-                        aria-label={`Edit ${item.kode || item.sku || item.name || 'barang'}`}
-                      >
-                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                {searchResults.itemMatches.length > 10 && (
-                  <p className="text-xs text-[#86868b] mt-1.5 italic">
-                    +{searchResults.itemMatches.length - 10} barang lainnya cocok. Persempit kata kunci pencarian.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {searchResults.matchedBoxNumbers.size === 0 && (
-              <p className="text-center py-4 text-xs text-[#86868b] border border-dashed border-black/[0.1] rounded-[16px] bg-black/[0.02]">
-                Tidak ada box atau sampel yang cocok dengan kata kunci <strong>"{searchQuery}"</strong>.
-              </p>
-            )}
-          </div>
-        )}
-      </section>
-
       <PpicMissingMentionBar activePic={highlightPpic} onSelectPic={setHighlightPpic} />
 
       {/* Status Pengisian Box (3 Kolom Apple Cards) */}
