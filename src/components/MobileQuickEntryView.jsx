@@ -116,6 +116,7 @@ export const MobileQuickEntryView = ({
   // Persentase target tim hari ini
   const targetPcs = Math.max(1, dailyTarget || 400);
   const targetPercent = Math.min(100, Math.round((todayTotalPcs / targetPcs) * 100));
+  const targetRemaining = Math.max(0, targetPcs - todayTotalPcs);
 
   // Salin kode ke clipboard
   const handleCopyCode = (code, e) => {
