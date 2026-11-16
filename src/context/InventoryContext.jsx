@@ -39,6 +39,16 @@ import {
   isAutoBackupEnabled,
   setAutoBackupEnabled,
 } from '../utils/autoBackupService';
+import {
+  fetchTargetFromCloudFast,
+  applyCloudTargetPayload,
+  saveDailyTargetForDate,
+  getDailyTargetForDate,
+  getTargetSetBy,
+  getTargetNote,
+  getTargetUpdatedAt,
+  getDailyTargetsHistory,
+} from '../utils/targetUtils';
 
 const InventoryContext = createContext(null);
 
@@ -558,6 +568,30 @@ export const InventoryProvider = ({ children }) => {
     }
   });
 
+  // Target Jasmine Real-Time Cloud Base State
+  const [dailyTarget, setDailyTarget] = useState(() => getDailyTargetForDate(getLocalTodayIso()));
+  const [targetSetBy, setTargetSetBy] = useState(() => getTargetSetBy());
+  const [targetNote, setTargetNoteState] = useState(() => getTargetNote());
+  const [targetUpdatedAt, setTargetUpdatedAt] = useState(() => getTargetUpdatedAt());
+
+  useEffect(() => {
+    const handleTargetUpdated = (e) => {
+      if (e?.detail) {
+        if (e.detail.target) setDailyTarget(e.detail.target);
+        if (e.detail.setBy) setTargetSetBy(e.detail.setBy);
+        if (e.detail.note !== undefined) setTargetNoteState(e.detail.note);
+        if (e.detail.updatedAt) setTargetUpdatedAt(e.detail.updatedAt);
+      } else {
+        setDailyTarget(getDailyTargetForDate(getLocalTodayIso()));
+        setTargetSetBy(getTargetSetBy());
+        setTargetNoteState(getTargetNote());
+        setTargetUpdatedAt(getTargetUpdatedAt());
+      }
+    };
+    window.addEventListener('gagaclo_target_updated', handleTargetUpdated);
+    return () => window.removeEventListener('gagaclo_target_updated', handleTargetUpdated);
+  }, []);
+
   // Global floating notification state (for concurrency alerts, info messages)
   const [systemNotification, setSystemNotification] = useState(null);
   const notificationTimerRef = useRef(null);
@@ -595,6 +629,29 @@ export const InventoryProvider = ({ children }) => {
       }
     }
   }, [currentUser]);
+
+  const updateDailyTarget = useCallback(async (dateIso, targetPcs, note, setBy = 'Jasmine') => {
+    const num = saveDailyTargetForDate(dateIso, targetPcs, {
+      supabase,
+      note,
+      setBy: setBy || 'Jasmine',
+    });
+    setDailyTarget(num);
+    setTargetSetBy(setBy || 'Jasmine');
+    if (note !== undefined) setTargetNoteState(note);
+    setTargetUpdatedAt(new Date().toISOString());
+
+    // Broadcast explicitly to realtime channel as well
+    broadcastChange('TARGET_JASMINE_UPDATED', {
+      dailyTarget: num,
+      history: getDailyTargetsHistory(),
+      setBy: setBy || 'Jasmine',
+      note,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return num;
+  }, [broadcastChange]);
 
   const updateTimerDeadline = async (newDeadline, newNote) => {
     const val = Number(newDeadline) || 0;
@@ -935,10 +992,34 @@ export const InventoryProvider = ({ children }) => {
             }
           } catch {}
         }
+
+        // Check for remote target Jasmine config in items
+        const targetItem = dbItems.find(i => i.id === 'SYSTEM_CONFIG_TARGET_JASMINE');
+        if (targetItem?.deskripsi) {
+          try {
+            const parsed = JSON.parse(targetItem.deskripsi);
+            if (parsed) {
+              applyCloudTargetPayload({
+                ...parsed,
+                updatedAt: parsed.updatedAt || targetItem.updated_at,
+              });
+            }
+          } catch {}
+        }
       }
 
       // Check for remote issues config in boxes
       if (dbBoxes && dbBoxes.length > 0) {
+        const timerBox = dbBoxes.find(b => Number(b.box_number) === 999999 || b.code === 'SYSTEM_TIMER');
+        if (timerBox?.notes) {
+          try {
+            const parsed = JSON.parse(timerBox.notes);
+            if (parsed?.targetJasmine) {
+              applyCloudTargetPayload(parsed.targetJasmine);
+            }
+          } catch {}
+        }
+
         const issuesBox = dbBoxes.find(b => Number(b.box_number) === 999998 || b.code === 'SYSTEM_ISSUES');
         if (issuesBox?.notes) {
           try {
@@ -978,6 +1059,7 @@ export const InventoryProvider = ({ children }) => {
         const userItems = dbItems.filter(i => (
           i.id !== 'SYSTEM_CONFIG_TIMER' &&
           i.id !== 'SYSTEM_CONFIG_ANNOUNCEMENT' &&
+          i.id !== 'SYSTEM_CONFIG_TARGET_JASMINE' &&
           Number(i.box_number) !== 999999 &&
           Number(i.box_number) > 0 &&
           i.status !== 'DELETED' &&
@@ -1241,6 +1323,13 @@ export const InventoryProvider = ({ children }) => {
   // Initial mount sync & realtime subscriptions
   useEffect(() => {
     if (supabaseConfigState.isConfigured && supabase) {
+      if (typeof window !== 'undefined') {
+        window.__gagaclo_supabase = supabase;
+      }
+
+      // Fast fetch target from cloud immediately (low-latency ~50ms)
+      fetchTargetFromCloudFast(supabase).catch(err => console.warn('Fast target fetch failed:', err));
+
       syncFromSupabase();
 
       // Subscribe to Realtime Postgres Changes & Broadcast Channel
@@ -1252,6 +1341,10 @@ export const InventoryProvider = ({ children }) => {
         })
         .on('broadcast', { event: 'INVENTORY_CHANGED' }, (msg) => {
           const data = msg?.payload;
+          // If Jasmine's Target changed, update local state immediately
+          if (data?.action === 'TARGET_JASMINE_UPDATED') {
+            applyCloudTargetPayload(data);
+          }
           // If timer changed, update local state immediately without waiting
           if (data?.action === 'TIMER_UPDATED') {
             if (typeof data.deadline === 'number') {
@@ -1283,6 +1376,23 @@ export const InventoryProvider = ({ children }) => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'items' },
           (payload) => {
+            // Realtime Sync for Target Jasmine
+            if (payload.new?.id === 'SYSTEM_CONFIG_TARGET_JASMINE') {
+              if (payload.new?.deskripsi) {
+                try {
+                  const parsed = JSON.parse(payload.new.deskripsi);
+                  if (parsed) {
+                    applyCloudTargetPayload({
+                      ...parsed,
+                      updatedAt: parsed.updatedAt || payload.new.updated_at,
+                    });
+                  }
+                } catch {}
+              }
+              return;
+            }
+            if (payload.old?.id === 'SYSTEM_CONFIG_TARGET_JASMINE' || payload.new?.id === 'SYSTEM_CONFIG_TARGET_JASMINE') return;
+
             // Realtime Sync for Announcement
             if (payload.new?.id === 'SYSTEM_CONFIG_ANNOUNCEMENT') {
               if (payload.new?.deskripsi) {
@@ -1323,10 +1433,13 @@ export const InventoryProvider = ({ children }) => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'boxes' },
           (payload) => {
-            // Realtime Sync for Global Timer
+            // Realtime Sync for Global Timer & Target Jasmine
             if (Number(payload.new?.box_number) === 999999 || payload.new?.code === 'SYSTEM_TIMER') {
               try {
                 const parsed = JSON.parse(payload.new.notes);
+                if (parsed?.targetJasmine) {
+                  applyCloudTargetPayload(parsed.targetJasmine);
+                }
                 if (typeof parsed?.deadline === 'number') {
                   setTimerDeadline(parsed.deadline);
                   try {
@@ -1893,7 +2006,7 @@ export const InventoryProvider = ({ children }) => {
           await supabase.from('transactions').update({ item_id: null }).neq('id', 'NONE');
         } catch {}
 
-        const { error: delError } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT');
+        const { error: delError } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE');
         if (delError) {
           console.warn('Hard delete all dibatasi, update status DELETED:', delError.message);
           await supabase.from('items').update({
@@ -1905,7 +2018,7 @@ export const InventoryProvider = ({ children }) => {
             qty: 0,
             jumlah: 0,
             updated_at: new Date().toISOString(),
-          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT');
+          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE');
         }
       } catch (err) {
         console.error('Supabase bulk delete items error:', err);
@@ -1919,7 +2032,7 @@ export const InventoryProvider = ({ children }) => {
             qty: 0,
             jumlah: 0,
             updated_at: new Date().toISOString(),
-          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT');
+          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE');
         } catch {}
       }
     }
@@ -3142,6 +3255,13 @@ export const InventoryProvider = ({ children }) => {
     timerNote,
     updateTimerDeadline,
     resetTimerDeadline,
+    // Target Jasmine Real-Time Cloud Base State & Operations
+    dailyTarget,
+    targetSetBy,
+    targetNote,
+    targetUpdatedAt,
+    updateDailyTarget,
+    isTargetCloudSynced: Boolean(supabaseConfigState.isConfigured),
     // Issues, Error Reports & Feature Proposals
     issues,
     addIssue,

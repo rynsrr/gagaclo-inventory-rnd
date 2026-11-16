@@ -8,6 +8,7 @@ import {
   Users,
   Eye,
   Check,
+  Target,
 } from 'lucide-react';
 import {
   getItemRecordDate,
@@ -36,6 +37,8 @@ export function PpicPerformanceView() {
     items,
     showNotification,
     syncFromSupabase,
+    targetSetBy = 'Jasmine',
+    targetNote,
   } = useInventory();
 
   const todayIso = getLocalTodayIso();
@@ -254,6 +257,16 @@ export function PpicPerformanceView() {
               <p className="text-xs text-[#86868b]">
                 Catatan kuantitatif input barang harian 8 anggota tim (5 PPIC &amp; 3 Support) secara setara &amp; transparan
               </p>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-[11px] font-bold">
+                  <Target className="w-3 h-3 text-amber-600" />
+                  <span>Target Ditentukan {targetSetBy || 'Jasmine'}: {dailyTarget.toLocaleString('id-ID')} PCE</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Cloud Base Synced</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>

@@ -23,6 +23,9 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
     boxes = [],
     currentUser,
     showNotification,
+    updateDailyTarget,
+    targetSetBy = 'Jasmine',
+    isTargetCloudSynced,
   } = useInventory();
   const isMgr = isManager(currentUser) || isSuperuser(currentUser);
   const isJasmineActive = currentUser && String(currentUser.name).trim().toLowerCase() === 'jasmine';
@@ -34,10 +37,14 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
   const [isEditingTarget, setIsEditingTarget] = useState(false);
   const [tempTarget, setTempTarget] = useState(dailyTarget.toString());
 
-  // Dengarkan perubahan target dari komponen lain atau saat tanggal berganti
+  // Dengarkan perubahan target dari Cloud atau saat tanggal berganti
   useEffect(() => {
-    const handleStorageChange = () => {
-      setDailyTarget(getDailyTargetForDate(todayIso));
+    const handleStorageChange = (e) => {
+      if (e?.detail?.target) {
+        setDailyTarget(e.detail.target);
+      } else {
+        setDailyTarget(getDailyTargetForDate(todayIso));
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('gagaclo_target_updated', handleStorageChange);
@@ -47,14 +54,18 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
     };
   }, [todayIso]);
 
-  const handleSaveTarget = (e) => {
+  const handleSaveTarget = async (e) => {
     e?.preventDefault?.();
     const num = Math.max(1, parseInt(tempTarget, 10) || 150);
-    saveDailyTargetForDate(todayIso, num);
+    if (updateDailyTarget) {
+      await updateDailyTarget(todayIso, num, undefined, 'Jasmine');
+    } else {
+      saveDailyTargetForDate(todayIso, num, { setBy: 'Jasmine' });
+    }
     setDailyTarget(num);
     setIsEditingTarget(false);
     if (showNotification) {
-      showNotification(`Target team hari ini (${todayIso}) berhasil disetel ke ${num} PCE oleh ${currentUser?.name || 'Manager'}.`, 'success', 3000);
+      showNotification(`Target Jasmine hari ini (${todayIso}) berhasil disetel ke ${num} PCE & disinkron ke Cloud untuk seluruh tim.`, 'success', 3500);
     }
   };
   const todayStats = useMemo(() => {
@@ -250,10 +261,13 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
               )}
             </div>
 
-            {/* Teks Nama Jasmine */}
-            <div className="flex items-center text-left">
+            {/* Teks Nama Jasmine & Subtitle Penentu Target */}
+            <div className="flex flex-col text-left">
               <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight leading-none">
                 Jasmine
+              </span>
+              <span className="text-[9px] font-bold text-emerald-400 tracking-tight leading-none mt-1 hidden sm:block">
+                Penentu Target
               </span>
             </div>
           </button>
@@ -268,10 +282,19 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
           <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-6 w-full">
             {/* Keterangan Target Team & Angka Real-Time */}
             <div className="flex items-center gap-2.5 shrink-0">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0071e3]/15 border border-[#0071e3]/30 text-[#2997ff] shadow-xs shrink-0">
+              <div
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#0071e3]/20 via-[#0071e3]/15 to-emerald-500/15 border border-[#0071e3]/40 text-[#2997ff] shadow-xs shrink-0 select-none"
+                title="Target resmi tim R&D yang ditentukan oleh Jasmine dan tersinkronisasi otomatis via Cloud ke seluruh perangkat tim"
+              >
                 <Target className="w-3.5 h-3.5 text-[#2997ff] shrink-0" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#2997ff]">
-                  DAILY TEAM TARGET
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#2997ff]">
+                  TARGET TEAM • JASMINE
+                </span>
+                <span className="flex items-center gap-1 pl-1.5 ml-0.5 border-l border-white/[0.15]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] shadow-[0_0_6px_#34c759] animate-pulse" />
+                  <span className="text-[9px] font-bold uppercase tracking-tight text-[#30d158] hidden sm:inline">
+                    Cloud Synced
+                  </span>
                 </span>
               </div>
 
