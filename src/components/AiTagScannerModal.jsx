@@ -158,23 +158,47 @@ const AiTagScannerContent = ({
 
       // 3. Panggil scan API
       const result = await scanGarmentTag(compressedBase64, contextSettings);
+      const data = result?.data ? result.data : result;
+
+      if (!data || typeof data !== 'object') {
+        throw new Error('Hasil pemindaian AI tidak valid atau kosong.');
+      }
+
+      // Validasi minimal ada data yang terbaca
+      const hasAnyField = Boolean(
+        (data.style && data.style !== 'NA') ||
+        (data.sampleNo && data.sampleNo !== 'NA') ||
+        (data.size && data.size !== 'NA') ||
+        (data.color && data.color !== 'NA') ||
+        (data.track && data.track !== 'NA' && data.track !== 'SAMPEL FISIK')
+      );
+
+      // Jika sticky buyer/jenis aktif dan AI mengembalikan kosong atau beda, prioritaskan sticky
+      if (isBuyerLocked && stickyBuyer) {
+        data.buyerNo = stickyBuyer;
+      }
+      if (isJenisLocked && stickyJenis) {
+        data.jenisSample = stickyJenis;
+      }
 
       const endTime = performance.now();
       setScanDuration(Math.round(endTime - startTime));
 
-      // Jika sticky buyer/jenis aktif dan AI mengembalikan kosong atau beda, prioritaskan sticky
-      if (isBuyerLocked && stickyBuyer) {
-        result.buyerNo = stickyBuyer;
+      if (!hasAnyField) {
+        setScanError('Tag sampel tidak terbaca dengan jelas oleh AI. Pastikan tulisan tag cukup terang, tegak lurus, dan fokus.');
+        setExtractedData(null);
+      } else {
+        setExtractedData(data);
+        stopCamera();
       }
-      if (isJenisLocked && stickyJenis) {
-        result.jenisSample = stickyJenis;
-      }
-
-      setExtractedData(result);
-      stopCamera();
     } catch (err) {
       console.error('AI Scan Error:', err);
-      setScanError(err?.message || 'Gagal mengenali tag sampel. Pastikan pencahayaan cukup dan foto tegak lurus.');
+      const msg = err?.message || 'Gagal mengenali tag sampel. Pastikan pencahayaan cukup dan foto tegak lurus.';
+      setScanError(msg);
+      setExtractedData(null);
+      if (msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('api_key')) {
+        setShowApiKeySetting(true);
+      }
     } finally {
       setIsScanning(false);
     }
@@ -361,12 +385,14 @@ const AiTagScannerContent = ({
               className={`flex h-7 px-2.5 items-center space-x-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
                 showApiKeySetting
                   ? 'bg-white/20 text-white'
+                  : !apiKeyInput
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                   : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white'
               }`}
               title="Pengaturan Kunci API Gemini"
             >
               <Key className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">API Key</span>
+              <span>{apiKeyInput ? 'API Key' : 'Pasang API Key'}</span>
             </button>
 
             <button
@@ -805,11 +831,22 @@ const AiTagScannerContent = ({
 
               {/* Error Message jika scan gagal */}
               {scanError && (
-                <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 flex items-start gap-2.5 text-xs text-red-200">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                  <div className="flex-1 leading-snug">
-                    <strong>Gagal membaca label:</strong> {scanError}
+                <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-red-200">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 leading-snug">
+                      <strong>Gagal membaca label:</strong> {scanError}
+                    </div>
                   </div>
+                  {!apiKeyInput && (
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKeySetting(true)}
+                      className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs transition cursor-pointer shrink-0"
+                    >
+                      🔑 Pasang API Key
+                    </button>
+                  )}
                 </div>
               )}
 

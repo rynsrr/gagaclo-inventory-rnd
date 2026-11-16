@@ -104,6 +104,7 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
   }
 
   // 2. Coba kirim via serverless backend endpoint (/api/ai-scan-label) jika tersedia
+  let serverHadNoKey = false;
   try {
     const serverResponse = await fetch('/api/ai-scan-label', {
       method: 'POST',
@@ -118,7 +119,16 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     if (serverResponse.ok) {
       const result = await serverResponse.json();
       if (result?.success && result?.data) {
-        return { success: true, data: result.data, source: 'server' };
+        return {
+          ...result.data,
+          _source: 'server',
+          _model: result.modelUsed || 'gemini-flash',
+        };
+      }
+    } else {
+      const errJson = await serverResponse.json().catch(() => ({}));
+      if (errJson?.error === 'SERVER_NO_API_KEY') {
+        serverHadNoKey = true;
       }
     }
   } catch (err) {
@@ -129,11 +139,10 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
   // 3. Fallback: Panggil direct Google Gemini Vision API
   const apiKey = getStoredGeminiKey();
   if (!apiKey) {
-    return {
-      success: false,
-      error: 'NO_API_KEY',
-      message: 'Google Gemini API Key belum diatur. Masukkan API Key gratis di menu Pengaturan AI.',
-    };
+    if (serverHadNoKey) {
+      throw new Error('API Key Google Gemini belum dikonfigurasi. Klik tombol "API Key" di pojok kanan atas untuk memasukkan API Key Google Gemini (gratis), atau pasang GEMINI_API_KEY di Vercel Environment Variables.');
+    }
+    throw new Error('Google Gemini API Key belum diatur. Klik tombol "API Key" di pojok kanan atas untuk memasukkan API Key gratis dari Google AI Studio.');
   }
 
   const prompt = buildExtractionPrompt(contextSettings);
@@ -199,23 +208,16 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
         satuan: 'PCE',
         tanggal: String(parsedData.tanggal || '').trim().toUpperCase(),
         track: String(parsedData.track || '').trim().toUpperCase() || 'SAMPEL FISIK',
+        _source: 'direct',
+        _model: model,
       };
 
-      return {
-        success: true,
-        data: normalizedData,
-        modelUsed: model,
-        source: 'direct',
-      };
+      return normalizedData;
     } catch (err) {
       lastError = err;
       console.warn(`Model ${model} failed, trying next...`, err);
     }
   }
 
-  return {
-    success: false,
-    error: 'API_CALL_FAILED',
-    message: lastError?.message || 'Gagal memindai gambar tag dengan AI',
-  };
+  throw new Error(lastError?.message || 'Gagal memindai gambar tag dengan Gemini AI.');
 }
