@@ -1110,8 +1110,8 @@ const ItemModalContent = () => {
                 />
               </div>
 
-              {/* Penginput */}
-              <div className="col-span-2 md:col-span-6 border border-slate-300 rounded-xl p-2 bg-white transition focus-within:border-blue-500">
+              {/* Penginput (Disembunyikan di Mobile View sesuai permintaan) */}
+              <div className="hidden md:block col-span-2 md:col-span-6 border border-slate-300 rounded-xl p-2 bg-white transition focus-within:border-blue-500">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">
                   Penginput:
                 </label>
