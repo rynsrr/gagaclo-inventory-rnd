@@ -31,18 +31,18 @@ export const MobileLoginModal = ({
       setError('');
       setPassword('');
       setShowPassword(false);
-      // Default to currentUser if logged in, else first user
+      // Pre-select currentUser if exists, else empty so it displays "User / Akun" placeholder
       if (currentUser?.id) {
         setSelectedUserId(String(currentUser.id));
       } else {
-        setSelectedUserId(String(users[0]?.id || ''));
+        setSelectedUserId('');
       }
     }
   }, [isOpen, currentUser, users]);
 
   if (!isOpen) return null;
 
-  const selectedUser = users.find((u) => String(u.id) === String(selectedUserId)) || users[0];
+  const selectedUser = users.find((u) => String(u.id) === String(selectedUserId));
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -97,10 +97,10 @@ export const MobileLoginModal = ({
         )}
 
         {/* Header (Ref: Welcome back) */}
-        <div>
+        <div className="text-center">
           <h2
             id="mobile-login-title"
-            className="text-[28px] font-extrabold tracking-tight text-[#111827] leading-tight"
+            className="text-[28px] font-extrabold tracking-tight text-[#111827] leading-tight text-center"
           >
             Welcome back
           </h2>
@@ -108,7 +108,7 @@ export const MobileLoginModal = ({
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold flex items-center justify-center gap-2 text-center animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -121,7 +121,7 @@ export const MobileLoginModal = ({
           <div>
             <label
               htmlFor="mobile-user-select"
-              className="block text-xs font-semibold text-[#374151] mb-1.5"
+              className="sr-only"
             >
               User / Akun
             </label>
@@ -134,8 +134,13 @@ export const MobileLoginModal = ({
                   setPassword('');
                   setError('');
                 }}
-                className="w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 pl-3.5 pr-10 text-[14px] font-medium text-[#111827] focus:border-black focus:ring-1 focus:ring-black focus:outline-hidden transition cursor-pointer"
+                className={`w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 px-10 text-[14px] text-center [text-align-last:center] ${
+                  !selectedUserId ? 'text-gray-400 font-normal' : 'font-medium text-[#111827]'
+                } focus:border-black focus:ring-1 focus:ring-black focus:outline-hidden transition cursor-pointer`}
               >
+                <option value="" disabled>
+                  User / Akun
+                </option>
                 <optgroup label="Inventory Leader">
                   {users.filter(u => isManager(u)).map((u) => (
                     <option key={u.id} value={u.id}>
@@ -166,7 +171,7 @@ export const MobileLoginModal = ({
           <div>
             <label
               htmlFor="mobile-password-input"
-              className="block text-xs font-semibold text-[#374151] mb-1.5"
+              className="block text-xs font-semibold text-[#374151] mb-1.5 text-center"
             >
               Password
             </label>
@@ -181,8 +186,8 @@ export const MobileLoginModal = ({
                   setPassword(e.target.value);
                   if (error) setError('');
                 }}
-                placeholder="Masukkan password..."
-                className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-3.5 pr-10 text-[14px] text-[#111827] placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black focus:outline-hidden transition"
+                placeholder="Password"
+                className="w-full rounded-xl border border-gray-300 bg-white py-3 px-10 text-[14px] text-[#111827] text-center placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black focus:outline-hidden transition"
               />
               <button
                 type="button"
