@@ -3,6 +3,8 @@
  * Menggunakan Google Gemini Flash (2.0 / 1.5) dengan respon JSON terstruktur.
  */
 
+import { supabase } from '../lib/supabase';
+
 // Kunci penyimpanan lokal untuk API Key cadangan pengguna
 export const GEMINI_API_KEY_STORAGE = 'gagaclo_gemini_api_key';
 
@@ -26,6 +28,79 @@ export function saveStoredGeminiKey(key) {
       localStorage.removeItem(GEMINI_API_KEY_STORAGE);
     }
   } catch {}
+}
+
+/**
+ * Mengambil API Key dari Supabase Cloud (SYSTEM_CONFIG_GEMINI_KEY)
+ * Digunakan agar seluruh perangkat / user tidak perlu setting ulang.
+ */
+export async function fetchCloudGeminiKey(client = supabase) {
+  if (!client) return null;
+  try {
+    const { data, error } = await client
+      .from('items')
+      .select('deskripsi')
+      .eq('id', 'SYSTEM_CONFIG_GEMINI_KEY')
+      .maybeSingle();
+
+    if (!error && data?.deskripsi) {
+      try {
+        const parsed = JSON.parse(data.deskripsi);
+        if (parsed?.apiKey) {
+          saveStoredGeminiKey(parsed.apiKey);
+          return parsed.apiKey;
+        }
+      } catch {}
+    }
+  } catch (err) {
+    console.warn('Gagal membaca Gemini API Key dari cloud:', err);
+  }
+  return null;
+}
+
+/**
+ * Menyimpan API Key ke Supabase Cloud (SYSTEM_CONFIG_GEMINI_KEY)
+ * agar tersinkronisasi otomatis ke semua perangkat (HP, laptop, tablet).
+ */
+export async function saveCloudGeminiKey(client = supabase, apiKey = '', userName = 'Admin') {
+  const cleanKey = (apiKey || '').trim();
+  saveStoredGeminiKey(cleanKey);
+
+  if (!client) return { success: true, cloud: false };
+
+  try {
+    const { error } = await client.from('items').upsert({
+      id: 'SYSTEM_CONFIG_GEMINI_KEY',
+      sku: 'SYSTEM_GEMINI_KEY',
+      kode: 'SYSTEM_GEMINI_KEY',
+      name: 'SYSTEM GEMINI KEY CONFIG',
+      description: 'Google Gemini API Key Cloud Sync',
+      deskripsi: JSON.stringify({
+        apiKey: cleanKey,
+        updatedAt: new Date().toISOString(),
+        updatedBy: userName,
+      }),
+      box_number: 999999,
+      status: 'SYSTEM',
+    });
+
+    if (error) throw error;
+    return { success: true, cloud: true };
+  } catch (err) {
+    console.error('Gagal sinkronisasi API Key ke Supabase Cloud:', err);
+    return { success: false, cloud: false, error: err };
+  }
+}
+
+/**
+ * Ambil API Key yang aktif (cek localStorage terlebih dahulu, lalu fallback ke Supabase Cloud)
+ */
+export async function getEffectiveGeminiKey(client = supabase) {
+  let key = getStoredGeminiKey();
+  if (!key && client) {
+    key = await fetchCloudGeminiKey(client);
+  }
+  return key || '';
 }
 
 /**
@@ -103,12 +178,12 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     rawBase64 = parts[1];
   }
 
-  // 2. Jika user memiliki API Key di browser, prioritaskan pemanggilan LANGSUNG ke Google AI Studio
+  // 2. Ambil API Key (cek localStorage terlebih dahulu, lalu Supabase Cloud)
   // Ini menghindari cold-start & roundtrip Vercel serverless (menghemat 5-10 detik!)
-  const apiKey = getStoredGeminiKey();
+  const apiKey = await getEffectiveGeminiKey(supabase);
 
   if (!apiKey) {
-    // Jika tidak ada API key di browser, baru coba serverless endpoint di Vercel
+    // Jika tidak ada API key di browser maupun cloud, baru coba serverless endpoint di Vercel
     try {
       const serverResponse = await fetch('/api/ai-scan-label', {
         method: 'POST',
@@ -131,7 +206,7 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
       }
     } catch {}
 
-    throw new Error('API Key Google Gemini belum diatur. Klik tombol "API Key" di pojok kanan atas untuk memasukkan API Key gratis dari Google AI Studio.');
+    throw new Error('API Key Google Gemini belum diatur di Cloud maupun browser. Silakan masukkan API Key di tombol "API Key" untuk disinkronkan ke seluruh perangkat tim.');
   }
 
   // 3. Direct Ultra-Fast Gemini Multimodal Vision Call

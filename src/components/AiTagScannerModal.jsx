@@ -24,6 +24,7 @@ import {
   getStoredGeminiKey, 
   saveStoredGeminiKey 
 } from '../utils/aiLabelScanner';
+import { useInventory } from '../context/InventoryContext';
 
 const BUYER_OPTIONS = [
   { code: 'AN05', label: 'AN05 - ERGODYNE' },
@@ -76,6 +77,10 @@ const AiTagScannerContent = ({
   onApplyToForm,
   onDirectSave,
 }) => {
+  const inventoryContext = useInventory();
+  const cloudGeminiKey = inventoryContext?.cloudGeminiKey;
+  const updateCloudGeminiKey = inventoryContext?.updateCloudGeminiKey;
+
   const [inputMode, setInputMode] = useState('camera'); // 'camera' | 'upload'
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' (belakang) | 'user' (depan)
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -107,10 +112,16 @@ const AiTagScannerContent = ({
   const [extractedData, setExtractedData] = useState(null);
   const [sessionSuccessCount, setSessionSuccessCount] = useState(0);
 
-  // Pengaturan API Key Gemini
+  // Pengaturan API Key Gemini (Tersinkron Cloud)
   const [showApiKeySetting, setShowApiKeySetting] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(() => getStoredGeminiKey());
+  const [apiKeyInput, setApiKeyInput] = useState(() => cloudGeminiKey || getStoredGeminiKey());
   const [apiKeySavedSuccess, setApiKeySavedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (cloudGeminiKey) {
+      setApiKeyInput(cloudGeminiKey);
+    }
+  }, [cloudGeminiKey]);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -350,9 +361,13 @@ const AiTagScannerContent = ({
     }
   };
 
-  // Simpan API Key kustom
-  const handleSaveApiKey = () => {
-    saveStoredGeminiKey(apiKeyInput);
+  // Simpan API Key kustom & sinkronkan otomatis ke Supabase Cloud
+  const handleSaveApiKey = async () => {
+    if (updateCloudGeminiKey) {
+      await updateCloudGeminiKey(apiKeyInput);
+    } else {
+      saveStoredGeminiKey(apiKeyInput);
+    }
     setApiKeySavedSuccess(true);
     setTimeout(() => {
       setApiKeySavedSuccess(false);
@@ -395,14 +410,18 @@ const AiTagScannerContent = ({
               className={`flex h-7 px-2.5 items-center space-x-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
                 showApiKeySetting
                   ? 'bg-white/20 text-white'
-                  : !apiKeyInput
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                  : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white'
+                  : apiKeyInput || cloudGeminiKey
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
               }`}
-              title="Pengaturan Kunci API Gemini"
+              title={
+                apiKeyInput || cloudGeminiKey
+                  ? 'API Key Aktif & Tersinkron Cloud (Klik untuk melihat/ubah)'
+                  : 'Pasang API Key'
+              }
             >
               <Key className="w-3.5 h-3.5" />
-              <span>{apiKeyInput ? 'API Key' : 'Pasang API Key'}</span>
+              <span>{apiKeyInput || cloudGeminiKey ? 'Cloud Synced' : 'Pasang API Key'}</span>
             </button>
 
             <button
@@ -422,7 +441,7 @@ const AiTagScannerContent = ({
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex items-center gap-2">
                 <Key className="w-4 h-4 text-[#5ac8fa]" />
-                <span className="text-xs font-semibold text-white">Kunci API Google Gemini (AI Studio)</span>
+                <span className="text-xs font-semibold text-white">Kunci API Google Gemini (Tersinkron di Cloud)</span>
               </div>
               <a
                 href="https://aistudio.google.com/app/apikey"
@@ -435,7 +454,7 @@ const AiTagScannerContent = ({
               </a>
             </div>
             <p className="text-[11px] text-white/60 mb-2.5 leading-relaxed">
-              Jika Vercel Environment belum diset, Anda dapat memasukkan Gemini API Key pribadi di sini. Kunci hanya tersimpan di browser Anda.
+              Kunci ini <strong>tersinkron otomatis ke Supabase Cloud</strong>. Saat disimpan, seluruh perangkat rekan tim (HP Android, laptop, tablet) langsung bisa memindai label tanpa perlu memasukkan API key lagi.
             </p>
             <div className="flex gap-2">
               <input
@@ -451,7 +470,7 @@ const AiTagScannerContent = ({
                 className="px-3.5 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 {apiKeySavedSuccess ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
-                <span>{apiKeySavedSuccess ? 'Tersimpan' : 'Simpan'}</span>
+                <span>{apiKeySavedSuccess ? 'Tersinkron!' : 'Simpan ke Cloud'}</span>
               </button>
             </div>
           </div>

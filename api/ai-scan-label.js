@@ -17,12 +17,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || req.body?.apiKey;
   if (!apiKey) {
     return res.status(500).json({
       success: false,
       error: 'SERVER_NO_API_KEY',
-      message: 'GEMINI_API_KEY belum dikonfigurasi di Environment Variables Vercel.',
+      message: 'GEMINI_API_KEY belum dikonfigurasi di Environment Variables Vercel atau Supabase Cloud.',
     });
   }
 

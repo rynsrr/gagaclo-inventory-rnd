@@ -49,6 +49,7 @@ import {
   getTargetUpdatedAt,
   getDailyTargetsHistory,
 } from '../utils/targetUtils';
+import { getStoredGeminiKey, saveStoredGeminiKey } from '../utils/aiLabelScanner';
 
 const InventoryContext = createContext(null);
 
@@ -765,6 +766,40 @@ export const InventoryProvider = ({ children }) => {
     return updated;
   };
 
+  // Google Gemini API Key Cloud State (Synchronized across all devices)
+  const [cloudGeminiKey, setCloudGeminiKey] = useState(() => getStoredGeminiKey());
+
+  const updateCloudGeminiKey = useCallback(async (newKey) => {
+    const cleanKey = (newKey || '').trim();
+    saveStoredGeminiKey(cleanKey);
+    setCloudGeminiKey(cleanKey);
+
+    if (supabase) {
+      try {
+        await supabase.from('items').upsert({
+          id: 'SYSTEM_CONFIG_GEMINI_KEY',
+          sku: 'SYSTEM_GEMINI_KEY',
+          kode: 'SYSTEM_GEMINI_KEY',
+          name: 'SYSTEM GEMINI KEY CONFIG',
+          description: 'Google Gemini API Key Cloud Sync',
+          deskripsi: JSON.stringify({
+            apiKey: cleanKey,
+            updatedAt: new Date().toISOString(),
+            updatedBy: currentUser?.name || 'Admin',
+          }),
+          box_number: 999999,
+          rack_id: -1,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+        broadcastChange('GEMINI_KEY_UPDATED', { hasKey: Boolean(cleanKey) });
+        showNotification('API Key berhasil disinkronkan ke Cloud untuk semua perangkat!', 'success');
+      } catch (err) {
+        console.error('Failed to sync Gemini Key to Supabase:', err);
+      }
+    }
+  }, [currentUser, broadcastChange, showNotification]);
+
   // Issues, Errors & Feature Proposals State
   const [issues, setIssues] = useState(() => {
     try {
@@ -1006,6 +1041,40 @@ export const InventoryProvider = ({ children }) => {
             }
           } catch {}
         }
+
+        // Check for remote Gemini API Key config in items
+        const geminiKeyItem = dbItems.find(i => i.id === 'SYSTEM_CONFIG_GEMINI_KEY');
+        if (geminiKeyItem?.deskripsi) {
+          try {
+            const parsed = JSON.parse(geminiKeyItem.deskripsi);
+            if (parsed?.apiKey) {
+              saveStoredGeminiKey(parsed.apiKey);
+              setCloudGeminiKey(parsed.apiKey);
+            }
+          } catch {}
+        } else {
+          // Auto-seed: jika di cloud belum ada tapi di local browser sudah ada API Key,
+          // otomatis sinkronkan ke Supabase Cloud agar seluruh perangkat lain langsung dapat memakainya!
+          const localKey = getStoredGeminiKey();
+          if (localKey && client) {
+            client.from('items').upsert({
+              id: 'SYSTEM_CONFIG_GEMINI_KEY',
+              sku: 'SYSTEM_GEMINI_KEY',
+              kode: 'SYSTEM_GEMINI_KEY',
+              name: 'SYSTEM GEMINI KEY CONFIG',
+              description: 'Google Gemini API Key Cloud Sync',
+              deskripsi: JSON.stringify({
+                apiKey: localKey.trim(),
+                updatedAt: new Date().toISOString(),
+                updatedBy: 'Auto-Seed (Cloud Sync)',
+              }),
+              box_number: 999999,
+              status: 'SYSTEM',
+            }).then(() => {
+              setCloudGeminiKey(localKey.trim());
+            }).catch(() => {});
+          }
+        }
       }
 
       // Check for remote issues config in boxes
@@ -1060,6 +1129,7 @@ export const InventoryProvider = ({ children }) => {
           i.id !== 'SYSTEM_CONFIG_TIMER' &&
           i.id !== 'SYSTEM_CONFIG_ANNOUNCEMENT' &&
           i.id !== 'SYSTEM_CONFIG_TARGET_JASMINE' &&
+          i.id !== 'SYSTEM_CONFIG_GEMINI_KEY' &&
           Number(i.box_number) !== 999999 &&
           Number(i.box_number) > 0 &&
           i.status !== 'DELETED' &&
@@ -1424,6 +1494,21 @@ export const InventoryProvider = ({ children }) => {
               return;
             }
             if (payload.old?.id === 'SYSTEM_CONFIG_TIMER' || payload.new?.id === 'SYSTEM_CONFIG_TIMER') return;
+
+            // Realtime Sync for Cloud Gemini API Key
+            if (payload.new?.id === 'SYSTEM_CONFIG_GEMINI_KEY') {
+              if (payload.new?.deskripsi) {
+                try {
+                  const parsed = JSON.parse(payload.new.deskripsi);
+                  if (parsed?.apiKey) {
+                    saveStoredGeminiKey(parsed.apiKey);
+                    setCloudGeminiKey(parsed.apiKey);
+                  }
+                } catch {}
+              }
+              return;
+            }
+            if (payload.old?.id === 'SYSTEM_CONFIG_GEMINI_KEY' || payload.new?.id === 'SYSTEM_CONFIG_GEMINI_KEY') return;
 
             // Trigger silent full sync for item changes
             syncFromSupabase(supabase, true);
@@ -2022,7 +2107,7 @@ export const InventoryProvider = ({ children }) => {
           await supabase.from('transactions').update({ item_id: null }).neq('id', 'NONE');
         } catch {}
 
-        const { error: delError } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE');
+        const { error: delError } = await supabase.from('items').delete().neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE').neq('id', 'SYSTEM_CONFIG_GEMINI_KEY');
         if (delError) {
           console.warn('Hard delete all dibatasi, update status DELETED:', delError.message);
           await supabase.from('items').update({
@@ -2034,7 +2119,7 @@ export const InventoryProvider = ({ children }) => {
             qty: 0,
             jumlah: 0,
             updated_at: new Date().toISOString(),
-          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE');
+          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE').neq('id', 'SYSTEM_CONFIG_GEMINI_KEY');
         }
       } catch (err) {
         console.error('Supabase bulk delete items error:', err);
@@ -2048,7 +2133,7 @@ export const InventoryProvider = ({ children }) => {
             qty: 0,
             jumlah: 0,
             updated_at: new Date().toISOString(),
-          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE');
+          }).neq('id', 'SYSTEM_CONFIG_TIMER').neq('id', 'SYSTEM_CONFIG_ANNOUNCEMENT').neq('id', 'SYSTEM_CONFIG_TARGET_JASMINE').neq('id', 'SYSTEM_CONFIG_GEMINI_KEY');
         } catch {}
       }
     }
@@ -3290,6 +3375,9 @@ export const InventoryProvider = ({ children }) => {
     // Dynamic Announcement State & Operations
     announcement,
     updateAnnouncement,
+    // Google Gemini API Key Cloud State & Sync
+    cloudGeminiKey,
+    updateCloudGeminiKey,
   };
 
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;
