@@ -157,32 +157,58 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     },
   };
 
-  // Endpoint kurasi khusus Vision Flash berkecepatan tinggi (Sub-1.2s)
-  // v1/gemini-1.5-flash adalah endpoint resmi stabil Google AI Studio saat ini
-  const cachedWinner = (() => {
+  // Deteksi model Flash terbaik secara dinamis atau gunakan cache pemenang (Sub-1.2s)
+  let targetBases = [];
+  try {
+    const cached = localStorage.getItem('gagaclo_winning_gemini_endpoint');
+    if (cached) targetBases.push(cached);
+  } catch {}
+
+  if (targetBases.length === 0) {
     try {
-      return localStorage.getItem('gagaclo_winning_gemini_endpoint');
-    } catch {
-      return null;
+      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        const supported = (listData?.models || [])
+          .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+          .map((m) => m.name.replace(/^models\//, ''));
+
+        // Prioritaskan model flash dan gemini-2 yang mendukung vision
+        const flash = supported.filter((m) => m.toLowerCase().includes('flash'));
+        const gemini2 = supported.filter((m) => m.toLowerCase().includes('gemini-2') && !m.toLowerCase().includes('flash'));
+        const pro = supported.filter((m) => m.toLowerCase().includes('pro'));
+        const ranked = [...flash, ...gemini2, ...pro];
+
+        if (ranked.length > 0) {
+          targetBases = ranked.slice(0, 3).map((m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`);
+        }
+      } else {
+        const errJson = await listRes.json().catch(() => ({}));
+        const msg = errJson?.error?.message || '';
+        if (msg.toLowerCase().includes('api key not valid')) {
+          throw new Error('API Key Google Gemini tidak valid. Harap periksa dan salin kembali kunci Anda dari Google AI Studio.');
+        }
+      }
+    } catch (err) {
+      if (err.message?.includes('tidak valid')) throw err;
     }
-  })();
+  }
 
-  const curatedBases = [
-    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
-  ];
-
-  // Dahulukan endpoint yang sudah terbukti bekerja di browser ini
-  const orderedBases = cachedWinner
-    ? [cachedWinner, ...curatedBases.filter((b) => b !== cachedWinner)]
-    : curatedBases;
+  // Fallback candidate list jika belum ada
+  if (targetBases.length === 0) {
+    targetBases = [
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-002:generateContent',
+    ];
+  }
 
   let lastError = null;
 
-  for (const base of orderedBases) {
+  for (const base of targetBases) {
     try {
       const url = `${base}?key=${apiKey}`;
       const response = await fetch(url, {
@@ -235,7 +261,10 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     } catch (err) {
       lastError = err;
       if (err.message?.includes('tidak valid')) throw err;
-      // Jika endpoint gagal/404, coba kandidat kurasi berikutnya
+      // Hapus cache lama jika endpoint tersebut gagal
+      try {
+        localStorage.removeItem('gagaclo_winning_gemini_endpoint');
+      } catch {}
     }
   }
 
