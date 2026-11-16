@@ -3,7 +3,6 @@ import { useInventory } from '../context/InventoryContext';
 import { 
   Camera, 
   Sparkles, 
-  Plus, 
   Copy, 
   Check, 
   Pencil, 
@@ -593,23 +592,6 @@ export const MobileQuickEntryView = ({
               Ekstraksi tulisan tangan &amp; label otomatis &lt; 1.5 detik
             </div>
           </div>
-        </button>
-
-        {/* Input Manual via Form */}
-        <button
-          type="button"
-          onClick={() => {
-            setItemModalConfig({
-              isOpen: true,
-              item: null,
-              targetBoxNumber: activeBoxNumber,
-            });
-          }}
-          className="w-full py-2.5 px-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white flex items-center justify-center gap-2 text-center transition cursor-pointer active:scale-95 text-xs font-bold relative z-10"
-          title="Input Manual dengan Ketik Formulir"
-        >
-          <Plus className="w-4 h-4 text-amber-300" />
-          <span>Ketik Manual (Form Lengkap)</span>
         </button>
       </div>
 
