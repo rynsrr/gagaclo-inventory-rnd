@@ -42,6 +42,9 @@ const QuickScannerModal = lazy(() =>
 const UserProfileModal = lazy(() =>
   import('./components/UserProfileModal').then((m) => ({ default: m.UserProfileModal }))
 );
+const MobileLoginModal = lazy(() =>
+  import('./components/MobileLoginModal').then((m) => ({ default: m.MobileLoginModal }))
+);
 const BackupModal = lazy(() =>
   import('./components/BackupModal').then((m) => ({ default: m.BackupModal }))
 );
@@ -107,7 +110,8 @@ const AppContent = () => {
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [userProfileTarget, setUserProfileTarget] = useState(null);
-  const [isMobileUserGate, setIsMobileUserGate] = useState(false);
+  const [isMobileLoginOpen, setIsMobileLoginOpen] = useState(false);
+  const [isMobileLoginMandatory, setIsMobileLoginMandatory] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
@@ -284,7 +288,7 @@ const AppContent = () => {
     };
   }, [connected]);
 
-  // KHUSUS MOBILE: Wajibkan login / pilih akun saat pertama kali membuka web di browser HP
+  // KHUSUS MOBILE: Wajibkan login "Welcome back" saat pertama kali membuka web di browser HP
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const isMobile = window.innerWidth < 768;
@@ -292,8 +296,8 @@ const AppContent = () => {
       try {
         const hasLoggedInOnMobile = localStorage.getItem('gagaclo_mobile_user_selected');
         if (!hasLoggedInOnMobile) {
-          setIsMobileUserGate(true);
-          setIsUserProfileOpen(true);
+          setIsMobileLoginMandatory(true);
+          setIsMobileLoginOpen(true);
         }
       } catch {}
     }
@@ -941,8 +945,8 @@ const AppContent = () => {
                     }}
                     onOpen3dView={() => setMobileWarehouseView('3d')}
                     onOpenUserProfile={() => {
-                      setIsMobileUserGate(false);
-                      setIsUserProfileOpen(true);
+                      setIsMobileLoginMandatory(false);
+                      setIsMobileLoginOpen(true);
                     }}
                   />
                 )}
@@ -1006,7 +1010,21 @@ const AppContent = () => {
         </Suspense>
       )}
 
-      {/* User Profile & 5 PIC Authentication Modal */}
+      {/* Mobile Login Modal (Ref: Welcome back style) */}
+      {isMobileLoginOpen && (
+        <Suspense fallback={null}>
+          <MobileLoginModal
+            isOpen={isMobileLoginOpen}
+            onClose={() => {
+              setIsMobileLoginOpen(false);
+              setIsMobileLoginMandatory(false);
+            }}
+            isMandatory={isMobileLoginMandatory}
+          />
+        </Suspense>
+      )}
+
+      {/* User Profile & 5 PIC Authentication Modal (Desktop) */}
       {isUserProfileOpen && (
         <Suspense fallback={null}>
           <UserProfileModal
@@ -1014,10 +1032,8 @@ const AppContent = () => {
             onClose={() => {
               setIsUserProfileOpen(false);
               setUserProfileTarget(null);
-              setIsMobileUserGate(false);
             }}
             initialSelectedUserName={userProfileTarget}
-            isMandatory={isMobileUserGate}
           />
         </Suspense>
       )}
