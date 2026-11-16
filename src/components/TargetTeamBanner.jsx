@@ -6,7 +6,7 @@ import { getDailyTargetForDate, saveDailyTargetForDate } from '../utils/targetUt
 import { isManager, isSuperuser } from '../utils/authUtils';
 
 // 8 Anggota Tim Resmi: 5 PIC Asli (PPIC) & 3 Support (Helper)
-const TEAM_MEMBERS = [
+export const TEAM_MEMBERS = [
   { name: 'Royan', role: 'PPIC #1', isPicAsli: true },
   { name: 'Cynara', role: 'PPIC #2', isPicAsli: true },
   { name: 'Ami', role: 'PPIC #3', isPicAsli: true },

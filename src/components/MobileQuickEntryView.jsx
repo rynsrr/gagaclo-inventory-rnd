@@ -18,6 +18,8 @@ import {
   Target,
   Award,
   Users,
+  Package,
+  Layers,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
 import { CardPrintModal } from './CardPrintModal';
@@ -238,10 +240,45 @@ export const MobileQuickEntryView = ({
     return allMemberTargets.filter((m) => m.isAchieved);
   }, [allMemberTargets]);
 
+  // Statistik okupansi 72 box & total sampel gudang
+  const occupiedBoxCount = useMemo(() => {
+    const boxSet = new Set();
+    items.forEach((it) => {
+      if (it.status !== 'DELETED') {
+        const num = Number(it.boxNumber || it.box_number);
+        if (num) boxSet.add(num);
+      }
+    });
+    return boxSet.size;
+  }, [items]);
+
+  const totalAllPcs = useMemo(() => {
+    return items.reduce((acc, it) => {
+      if (it.status === 'DELETED') return acc;
+      return acc + (Number(it.jumlah || it.qty || it.pcs) || 1);
+    }, 0);
+  }, [items]);
+
+  const totalActiveItemsCount = useMemo(() => {
+    return items.filter((it) => it.status !== 'DELETED').length;
+  }, [items]);
+
   return (
     <div className="mobile-quick-entry font-apple space-y-3 pb-20 select-none">
       
-      {/* 2. BENTO GRID: TARGET TEAM & PERSONAL DAILY */}
+      {/* 1. DASHBOARD HEADER */}
+      <div className="flex items-center justify-between pt-1 pb-0.5">
+        <div>
+          <h1 className="text-xl font-extrabold text-[#111827] tracking-tight">Dashboard</h1>
+          <p className="text-[11px] text-gray-500 font-medium">Monitoring &amp; Input Sample R&amp;D</p>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-white text-gray-700 border border-black/[0.08] shadow-2xs">
+          <Calendar className="w-3.5 h-3.5 text-[#0071e3]" />
+          <span>{formatToDDMMYYYY(todayIso)}</span>
+        </div>
+      </div>
+
+      {/* 2. BENTO GRID: TARGET TEAM, PERSONAL & WAREHOUSE METRICS */}
       <div className="grid grid-cols-2 gap-2.5">
         
         {/* Bento 1: Target Team Harian (Col-Span-2 Hero) */}
@@ -353,7 +390,39 @@ export const MobileQuickEntryView = ({
           </div>
         </div>
 
-        {/* Bento 4: Grid Mini 5 PIC Utama & 3 Support (Col-Span-2) */}
+        {/* Bento 4: Total Sampel Gudang (Col-Span-1) */}
+        <div className="col-span-1 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Total Sampel</span>
+              <Package className="w-3.5 h-3.5 text-[#0071e3]" />
+            </div>
+            <div className="text-base font-black tabular-nums text-[#111827] mt-1">
+              {totalAllPcs.toLocaleString('id-ID')} <span className="text-[9px] font-semibold text-gray-400">PCE</span>
+            </div>
+          </div>
+          <div className="mt-2 pt-2 border-t border-black/[0.04] text-[9px] font-medium text-gray-500 truncate">
+            {totalActiveItemsCount.toLocaleString('id-ID')} item terdata
+          </div>
+        </div>
+
+        {/* Bento 5: Okupansi Box (Col-Span-1) */}
+        <div className="col-span-1 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Okupansi Box</span>
+              <Boxes className="w-3.5 h-3.5 text-emerald-500" />
+            </div>
+            <div className="text-base font-black tabular-nums text-[#111827] mt-1">
+              {occupiedBoxCount} <span className="text-[9px] font-semibold text-gray-400">/ 72 Box</span>
+            </div>
+          </div>
+          <div className="mt-2 pt-2 border-t border-black/[0.04] text-[9px] font-medium text-gray-500 truncate">
+            {Math.round((occupiedBoxCount / 72) * 100)}% kapasitas terisi
+          </div>
+        </div>
+
+        {/* Bento 6: Grid Mini 5 PIC Utama & 3 Support (Col-Span-2) */}
         <div className="col-span-2 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">

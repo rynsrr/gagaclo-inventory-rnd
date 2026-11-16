@@ -4,7 +4,11 @@ import {
   EyeOff, 
   ChevronDown, 
   X,
-  AlertCircle 
+  AlertCircle,
+  Lock,
+  ArrowRight,
+  Shield,
+  Sparkles
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { isHelper, isManager } from '../utils/authUtils';
@@ -63,12 +67,17 @@ export const MobileLoginModal = ({
 
   const selectedUser = users.find((u) => String(u.id) === String(selectedUserId));
 
+  // Quick PIC list for tactile one-tap selection (Top 6 most active field operators)
+  const quickPics = users
+    .filter(u => isManager(u) || (!isHelper(u) && !isManager(u)))
+    .slice(0, 6);
+
   const handleLogin = (e) => {
     e.preventDefault();
     setError('');
 
     if (!selectedUser) {
-      setError('Silakan pilih user akun terlebih dahulu.');
+      setError('Silakan pilih akun PIC terlebih dahulu.');
       return;
     }
 
@@ -102,7 +111,7 @@ export const MobileLoginModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#05130f] animate-in fade-in duration-300 font-apple overflow-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/95 backdrop-blur-xl animate-in fade-in duration-300 font-apple overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="mobile-login-title"
@@ -110,32 +119,29 @@ export const MobileLoginModal = ({
         if (!isMandatory && e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Background Decorative Mesh Orbs & Geometric Ambient (Aesthetic & Dinamis) */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Top-Left Emerald Glow Orb */}
-        <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-gradient-to-br from-emerald-500/35 via-teal-600/25 to-transparent blur-3xl animate-pulse" />
+      {/* Background Atmosphere: Futuristic Ambient Mesh & Glowing Orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Top-Left Glowing Cyan/Emerald Orb */}
+        <div className="absolute -top-28 -left-28 w-88 h-88 rounded-full bg-gradient-to-br from-emerald-500/25 via-teal-600/15 to-transparent blur-3xl animate-pulse" />
         
-        {/* Bottom-Right Forest Jade Glow Orb */}
-        <div className="absolute -bottom-28 -right-24 w-96 h-96 rounded-full bg-gradient-to-tl from-emerald-600/30 via-emerald-800/20 to-transparent blur-3xl" />
+        {/* Bottom-Right Deep Jade & Indigo Orb */}
+        <div className="absolute -bottom-32 -right-24 w-96 h-96 rounded-full bg-gradient-to-tl from-cyan-600/20 via-emerald-800/15 to-transparent blur-3xl" />
         
-        {/* Center Card Backlight Halo */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[400px] bg-emerald-400/15 rounded-full blur-[90px]" />
+        {/* Center Backlight Ambient Halo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[440px] bg-emerald-400/10 rounded-full blur-[100px]" />
 
-        {/* Geometric Angled Shapes (Sesuai Referensi Gambar) */}
-        <div className="absolute -top-10 -right-10 w-64 h-64 bg-emerald-800/35 rounded-[60px] rotate-12 blur-xl" />
-        <div className="absolute -bottom-16 -left-10 w-72 h-72 bg-teal-900/40 rounded-[80px] -rotate-12 blur-xl" />
-
-        {/* Subtle Modern Dot Matrix Pattern */}
+        {/* Engineering Dot Matrix Grid */}
         <div 
-          className="absolute inset-0 opacity-[0.08]" 
+          className="absolute inset-0 opacity-[0.06]" 
           style={{ 
-            backgroundImage: 'radial-gradient(rgba(255,255,255,0.8) 1.2px, transparent 1.2px)', 
-            backgroundSize: '24px 24px' 
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 1.2px, transparent 1.2px)', 
+            backgroundSize: '22px 22px' 
           }} 
         />
       </div>
 
-      <div className="relative z-10 w-full max-w-[380px] bg-white rounded-[32px] p-7 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(16,185,129,0.15)] border border-white/20 text-[#111827] space-y-5 animate-in zoom-in-95 duration-200">
+      {/* Modern Dark Glassmorphic Card Container */}
+      <div className="relative z-10 w-full max-w-[390px] bg-[#0c1320]/85 backdrop-blur-2xl rounded-[32px] p-6 sm:p-7 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.9),0_0_35px_rgba(16,185,129,0.12)] border border-white/10 text-white space-y-5 animate-in zoom-in-95 duration-200">
         
         {/* Tombol Tutup (Hanya jika bukan first-time gate wajib) */}
         {!isMandatory && (
@@ -143,141 +149,182 @@ export const MobileLoginModal = ({
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="absolute top-5 right-5 h-8 w-8 rounded-full bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-500 hover:text-gray-800 transition flex items-center justify-center cursor-pointer"
+            className="absolute top-5 right-5 h-8 w-8 rounded-full bg-white/5 hover:bg-white/10 active:scale-95 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer border border-white/10"
           >
             <X className="w-4 h-4" />
           </button>
         )}
 
-        {/* Header (Ref: Welcome back) */}
-        <div className="text-center">
+        {/* Brand Badge & Header */}
+        <div className="text-center space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] font-bold tracking-wider uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span>GAGACLO R&D INVENTORY</span>
+          </div>
+
           <h2
             id="mobile-login-title"
-            className="text-[28px] font-extrabold tracking-tight text-[#111827] leading-tight text-center"
+            className="text-[26px] font-extrabold tracking-tight text-white leading-tight"
           >
             Welcome back
           </h2>
+          <p className="text-xs text-slate-400 font-normal">
+            Pilih akun PIC untuk akses sistem mobile
+          </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold flex items-center justify-center gap-2 text-center animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3 rounded-2xl bg-red-950/60 border border-red-500/40 text-red-300 text-xs font-semibold flex items-center justify-center gap-2 text-center animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{error}</span>
           </div>
         )}
 
+        {/* Tactile Quick PIC Selector (1-Tap Selection) */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 px-1">
+            <span>Pilih Cepat Akun</span>
+            <span className="text-emerald-400 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Quick Tap
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {quickPics.map((u) => {
+              const isSelected = String(u.id) === String(selectedUserId);
+              const isLeader = isManager(u);
+              return (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedUserId(String(u.id));
+                    setPassword('');
+                    setError('');
+                  }}
+                  className={`py-2 px-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center gap-0.5 cursor-pointer ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-emerald-500/25 to-teal-600/20 border-emerald-400/80 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/50'
+                      : 'bg-white/[0.03] border-white/5 hover:border-white/15 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <span className="text-[12px] font-bold truncate max-w-full">
+                    {u.name}
+                  </span>
+                  <span className={`text-[10px] font-medium truncate ${isSelected ? 'text-emerald-300' : 'text-slate-400'}`}>
+                    {isLeader ? 'Leader' : `PPIC #${u.ppicNumber || '1'}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Form Login */}
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-3.5 pt-1">
           
-          {/* 1. Pilih User / Akun */}
-          <div>
-            <label
-              htmlFor="mobile-user-select"
-              className="sr-only"
+          {/* 1. Atau Pilih dari Seluruh Daftar User (Dropdown) */}
+          <div className="relative">
+            <select
+              id="mobile-user-select"
+              aria-label="Pilih Akun PIC"
+              value={selectedUserId}
+              onChange={(e) => {
+                setSelectedUserId(e.target.value);
+                setPassword('');
+                setError('');
+              }}
+              className={`w-full appearance-none rounded-2xl border border-white/10 bg-slate-950/70 py-3 px-10 text-[13.5px] text-center [text-align-last:center] ${
+                !selectedUserId ? 'text-slate-500 font-normal' : 'font-semibold text-white'
+              } focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden transition cursor-pointer`}
             >
-              User / Akun
-            </label>
-            <div className="relative">
-              <select
-                id="mobile-user-select"
-                value={selectedUserId}
-                onChange={(e) => {
-                  setSelectedUserId(e.target.value);
-                  setPassword('');
-                  setError('');
-                }}
-                className={`w-full appearance-none rounded-xl border border-gray-300 bg-white py-3 px-10 text-[14px] text-center [text-align-last:center] ${
-                  !selectedUserId ? 'text-gray-400 font-normal' : 'font-medium text-[#111827]'
-                } focus:border-black focus:ring-1 focus:ring-black focus:outline-hidden transition cursor-pointer`}
-              >
-                <option value="" disabled>
-                  User / Akun
-                </option>
-                <optgroup label="Inventory Leader">
-                  {users.filter(u => isManager(u)).map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} (Leader)
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Tim Utama PPIC (5 PIC)">
-                  {users.filter(u => !isHelper(u) && !isManager(u)).map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} (PPIC #{u.ppicNumber})
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Tim Support Data (3 Support)">
-                  {users.filter(u => isHelper(u)).map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} (Tim Support)
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
+              <option value="" disabled className="bg-slate-900 text-slate-400">
+                Semua User / Akun ({users?.length || 0} Akun)
+              </option>
+              <optgroup label="Inventory Leader" className="bg-slate-900 text-white font-bold">
+                {users.filter(u => isManager(u)).map((u) => (
+                  <option key={u.id} value={u.id} className="bg-slate-900 text-white py-1">
+                    👑 {u.name} (Leader)
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Tim Utama PPIC (5 PIC)" className="bg-slate-900 text-white font-bold">
+                {users.filter(u => !isHelper(u) && !isManager(u)).map((u) => (
+                  <option key={u.id} value={u.id} className="bg-slate-900 text-white py-1">
+                    ⚡ {u.name} (PPIC #{u.ppicNumber})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Tim Support Data (3 Support)" className="bg-slate-900 text-white font-bold">
+                {users.filter(u => isHelper(u)).map((u) => (
+                  <option key={u.id} value={u.id} className="bg-slate-900 text-white py-1">
+                    🤝 {u.name} (Tim Support)
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>
 
-          {/* 2. Password Input with Eye Toggle */}
-          <div>
-            <label
-              htmlFor="mobile-password-input"
-              className="sr-only"
+          {/* 2. Password Input with Lock Icon & Eye Toggle */}
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+            <input
+              id="mobile-password-input"
+              aria-label="Password Akun"
+              type={showPassword ? 'text' : 'password'}
+              autoFocus
+              required
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError('');
+              }}
+              placeholder="Password akun"
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 py-3 px-10 text-[14px] text-white text-center placeholder:text-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-hidden transition"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((p) => !p)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition cursor-pointer"
+              aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
             >
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="mobile-password-input"
-                type={showPassword ? 'text' : 'password'}
-                autoFocus
-                required
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (error) setError('');
-                }}
-                placeholder="Password"
-                className="w-full rounded-xl border border-gray-300 bg-white py-3 px-10 text-[14px] text-[#111827] text-center placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black focus:outline-hidden transition"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((p) => !p)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition cursor-pointer"
-                aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
 
           {/* Remember me Checkbox (Align Center) */}
           <div className="flex items-center justify-center pt-0.5">
-            <label className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-600 hover:text-black cursor-pointer select-none transition">
+            <label className="inline-flex items-center gap-2 text-[13px] font-medium text-slate-400 hover:text-slate-200 cursor-pointer select-none transition">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded-[4px] border-gray-300 text-black accent-black focus:ring-0 cursor-pointer"
+                className="h-4 w-4 rounded-[4px] border-slate-700 bg-slate-950 text-emerald-500 accent-emerald-500 focus:ring-0 cursor-pointer"
               />
-              <span>Remember me</span>
+              <span>Remember me di HP ini</span>
             </label>
           </div>
 
-          {/* 3. Tombol Login (Ref: Sleek Black Pill Button) */}
-          <div className="pt-2">
+          {/* 3. Radiant Emerald Gradient Pill Button */}
+          <div className="pt-1.5">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 px-4 rounded-full bg-black hover:bg-gray-900 active:scale-98 text-white font-bold text-[14px] tracking-wide transition shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 px-5 rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 active:scale-98 text-slate-950 font-bold text-[14.5px] tracking-wide transition shadow-[0_6px_25px_-2px_rgba(16,185,129,0.4)] cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <span>{isSubmitting ? 'Memproses...' : 'Log in'}</span>
+              <span>{isSubmitting ? 'Memverifikasi...' : 'Log in ke Sistem'}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
         </form>
+
+        {/* Footer Security Note */}
+        <div className="pt-1 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 text-center font-medium">
+          <Shield className="w-3.5 h-3.5 text-emerald-400/80" />
+          <span>Sesi terenkripsi aman • R&D Storage Gagaclo</span>
+        </div>
 
       </div>
     </div>
