@@ -291,9 +291,6 @@ export const MobileQuickEntryView = ({
                 Target Tim Harian
               </span>
             </div>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              Jasmine • Leader Inv
-            </span>
           </div>
 
           <div className="flex items-baseline justify-between">
