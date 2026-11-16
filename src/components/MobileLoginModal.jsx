@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Eye, 
   EyeOff, 
@@ -63,14 +63,23 @@ export const MobileLoginModal = ({
     }
   }, [isOpen, currentUser, users]);
 
+  // Seluruh 9 anggota tim resmi: Jasmine (Leader) + 5 PPIC (Royan, Cynara, Ami, Ryan, Hanami) + 3 Support (Sheva, Ade, Tri)
+  const allTeamUsers = useMemo(() => {
+    if (!users || users.length === 0) return [];
+    
+    const managers = users.filter(u => isManager(u));
+    const ppics = users
+      .filter(u => !isHelper(u) && !isManager(u))
+      .sort((a, b) => (Number(a.ppicNumber) || 99) - (Number(b.ppicNumber) || 99));
+    const supports = users.filter(u => isHelper(u));
+    
+    // Gabungkan dengan urutan hierarki resmi: Leader -> PPIC 1-5 -> Support
+    return [...managers, ...ppics, ...supports];
+  }, [users]);
+
   if (!isOpen) return null;
 
   const selectedUser = users.find((u) => String(u.id) === String(selectedUserId));
-
-  // Quick PIC list for tactile one-tap selection (Top 6 most active field operators)
-  const quickPics = users
-    .filter(u => isManager(u) || (!isHelper(u) && !isManager(u)))
-    .slice(0, 6);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -181,18 +190,23 @@ export const MobileLoginModal = ({
           </div>
         )}
 
-        {/* Tactile Quick PIC Selector (1-Tap Selection) */}
+        {/* Tactile Quick PIC Selector (1-Tap Selection: All 9 Team Members) */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 px-1">
-            <span>Pilih Cepat Akun</span>
-            <span className="text-emerald-400 flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
+              <span>Pilih Akun Tim ({allTeamUsers.length} Personel)</span>
+            </span>
+            <span className="text-emerald-400 flex items-center gap-1 text-[10px]">
               <Sparkles className="w-3 h-3" /> Quick Tap
             </span>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {quickPics.map((u) => {
+            {allTeamUsers.map((u) => {
               const isSelected = String(u.id) === String(selectedUserId);
               const isLeader = isManager(u);
+              const isSup = isHelper(u);
+              const roleLabel = isLeader ? 'Leader' : isSup ? 'Support' : `PPIC #${u.ppicNumber || '1'}`;
+
               return (
                 <button
                   key={u.id}
@@ -202,17 +216,29 @@ export const MobileLoginModal = ({
                     setPassword('');
                     setError('');
                   }}
-                  className={`py-2 px-2.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center gap-0.5 cursor-pointer ${
+                  className={`py-2 px-2 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-gradient-to-b from-emerald-500/25 to-teal-600/20 border-emerald-400/80 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/50'
-                      : 'bg-white/[0.03] border-white/5 hover:border-white/15 text-slate-300 hover:text-white'
+                      ? 'bg-gradient-to-b from-emerald-500/25 to-teal-600/20 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/50'
+                      : isLeader
+                        ? 'bg-emerald-950/25 border-emerald-500/25 hover:border-emerald-500/40 text-slate-200'
+                        : isSup
+                          ? 'bg-indigo-950/25 border-indigo-500/25 hover:border-indigo-500/40 text-slate-200'
+                          : 'bg-white/[0.03] border-white/5 hover:border-white/15 text-slate-300 hover:text-white'
                   }`}
                 >
                   <span className="text-[12px] font-bold truncate max-w-full">
                     {u.name}
                   </span>
-                  <span className={`text-[10px] font-medium truncate ${isSelected ? 'text-emerald-300' : 'text-slate-400'}`}>
-                    {isLeader ? 'Leader' : `PPIC #${u.ppicNumber || '1'}`}
+                  <span className={`text-[10px] font-medium truncate ${
+                    isSelected 
+                      ? 'text-emerald-300 font-semibold' 
+                      : isLeader 
+                        ? 'text-emerald-400' 
+                        : isSup 
+                          ? 'text-indigo-400' 
+                          : 'text-slate-400'
+                  }`}>
+                    {roleLabel}
                   </span>
                 </button>
               );
