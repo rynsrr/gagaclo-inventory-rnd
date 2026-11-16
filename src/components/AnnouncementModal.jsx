@@ -73,6 +73,8 @@ export function AnnouncementModal({
   }, [announcement, currentUser, isEditing]);
 
   if (!isOpen) return null;
+  // Nonaktifkan seluruh modal pengumuman di versi mobile (< 768px) sesuai instruksi pengguna
+  if (typeof window !== 'undefined' && window.innerWidth < 768) return null;
 
   const currentItem = items[currentIndex] || items[0] || {};
   const totalPoints = items.length;

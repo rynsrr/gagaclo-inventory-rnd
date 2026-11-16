@@ -284,12 +284,15 @@ const AppContent = () => {
   }, [connected]);
 
   // Auto-open dynamic announcement popup on app load if active and not marked as seen
+  // KHUSUS DESKTOP: Jangan munculkan popup pengumuman otomatis di mobile version (< 768px)
   useEffect(() => {
     if (!announcement?.isActive) return;
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
     try {
       const lastSeen = localStorage.getItem('gagaclo_last_seen_announcement_v2');
       if (lastSeen !== announcement.updatedAt) {
         const timer = setTimeout(() => {
+          if (typeof window !== 'undefined' && window.innerWidth < 768) return;
           setIsAnnouncementOpen(true);
         }, 500);
         return () => clearTimeout(timer);
