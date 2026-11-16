@@ -145,39 +145,6 @@ export const MobileQuickEntryView = ({
   return (
     <div className="mobile-quick-entry font-apple space-y-3.5 pb-20 select-none">
       
-      {/* 1. TOP BAR: Mode Switcher (Kasir vs 3D) & Salutation */}
-      <div className="flex items-center justify-between gap-2 bg-[#161618] text-white p-3 rounded-2xl border border-white/10 shadow-sm">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0071e3] to-[#5ac8fa] text-white shadow-xs shrink-0">
-            <Zap className="h-5 w-5 stroke-[2.2]" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-white truncate">
-                Halo, {currentUser?.name || 'Tim RnD'} 👋
-              </span>
-              <span className="text-[9px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.2 rounded-full shrink-0">
-                {currentUser?.role || 'PPIC'}
-              </span>
-            </div>
-            <p className="text-[10px] text-white/50 leading-tight">
-              Mode Kasir &bull; Siap jepret kartu sampel
-            </p>
-          </div>
-        </div>
-
-        {/* Tombol Ganti Akun Pengguna */}
-        <button
-          type="button"
-          onClick={onOpenUserProfile}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-[11px] font-bold text-white transition cursor-pointer shrink-0"
-          title="Ganti akun pengguna / login"
-        >
-          <UserCheck className="w-3.5 h-3.5 text-[#5ac8fa]" />
-          <span>Ganti Akun</span>
-        </button>
-      </div>
-
       {/* 2. STATS CAPAIAN TARGET TEAM & HARI INI */}
       <div className="bg-white rounded-2xl border border-black/[0.08] p-3 shadow-xs space-y-2">
         <div className="flex items-center justify-between text-xs">

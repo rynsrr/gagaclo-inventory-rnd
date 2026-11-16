@@ -418,6 +418,24 @@ const AppContent = () => {
                 </div>
               </button>
 
+              {/* User Profile Pill khusus Mobile di Header Kanan */}
+              <div className="ml-auto flex items-center md:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileLoginMandatory(false);
+                    setIsMobileLoginOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/[0.04] hover:bg-black/[0.08] active:scale-95 text-xs font-bold text-[#1d1d1f] border border-black/[0.08] transition cursor-pointer"
+                  title="Ganti Akun"
+                >
+                  <div className="w-5 h-5 rounded-full bg-[#0071e3] text-white flex items-center justify-center text-[10px] font-black">
+                    {currentUser?.name?.charAt(0) || 'U'}
+                  </div>
+                  <span className="max-w-[80px] truncate text-xs">{currentUser?.name || 'Login'}</span>
+                </button>
+              </div>
+
             {/* Top Navigation Tabs (Apple Segmented Control Style) - Disembunyikan di Mobile, Digantikan Bottom Bar */}
             <nav className="hidden md:flex flex-1 items-center justify-center mx-2 sm:mx-4 font-apple" aria-label="Menu navigasi utama">
               <div className="inline-flex items-center p-1 bg-black/[0.04] rounded-full border border-black/[0.05] gap-0.5 max-w-full">
