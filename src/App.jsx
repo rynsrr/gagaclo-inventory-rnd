@@ -49,6 +49,7 @@ const AnnouncementModal = lazy(() =>
   import('./components/AnnouncementModal').then((m) => ({ default: m.AnnouncementModal }))
 );
 import { AiTagScannerModal } from './components/AiTagScannerModal';
+import { MobileQuickEntryView } from './components/MobileQuickEntryView';
 import { allocateNextSequentialCode } from './utils/sequenceResolver';
 import {
   Boxes,
@@ -70,6 +71,7 @@ import {
   Pencil,
   Megaphone,
   Calendar,
+  Zap,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -109,6 +111,8 @@ const AppContent = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
   const [isAiScannerOpen, setIsAiScannerOpen] = useState(false);
+  const [aiScannerTargetBox, setAiScannerTargetBox] = useState(1);
+  const [mobileWarehouseView, setMobileWarehouseView] = useState('quick-entry'); // 'quick-entry' | '3d'
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredSearchBoxNumber, setHoveredSearchBoxNumber] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -124,7 +128,7 @@ const AppContent = () => {
   const connected = supabaseStatus.isConnected;
 
   const handleAppDirectSaveAiData = async (extracted) => {
-    const boxNum = 1;
+    const boxNum = Number(aiScannerTargetBox || selectedBoxNumber || 1);
     const boxObj = boxes.find(b => Number(b.boxNumber) === Number(boxNum));
     const isMat = boxObj?.category === 'MATERIAL';
     const finalKode = await allocateNextSequentialCode(
@@ -851,25 +855,76 @@ const AppContent = () => {
       <div className="inventory-body">
         <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 pb-24 md:pb-5">
           {appMode === '3d-warehouse' && (
-            <Suspense
-              fallback={
-                <div className="flex flex-col items-center justify-center min-h-[460px] rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 gap-3">
-                  <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-                  <span className="text-xs font-semibold text-slate-300">Memuat Visualisasi 3D Rak...</span>
-                </div>
-              }
-            >
-              <Warehouse3DView
-                highlightBoxNumbers={highlightBoxNumbers}
-                searchQuery={searchQuery}
-                onSearchQueryChange={setSearchQuery}
-                searchResults={searchResults}
-                onClearSearch={() => setSearchQuery('')}
-                highlightPpic={highlightPpic}
-                onSelectPic={setHighlightPpic}
-                previewFocusBoxNumber={hoveredSearchBoxNumber}
-              />
-            </Suspense>
+            <>
+              {/* Tampilan Desktop (Layar Lebar >= 768px): Visualisasi 3D Warehouse Tetap Utama */}
+              <div className="hidden md:block">
+                <Suspense
+                  fallback={
+                    <div className="flex flex-col items-center justify-center min-h-[460px] rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 gap-3">
+                      <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                      <span className="text-xs font-semibold text-slate-300">Memuat Visualisasi 3D Rak...</span>
+                    </div>
+                  }
+                >
+                  <Warehouse3DView
+                    highlightBoxNumbers={highlightBoxNumbers}
+                    searchQuery={searchQuery}
+                    onSearchQueryChange={setSearchQuery}
+                    searchResults={searchResults}
+                    onClearSearch={() => setSearchQuery('')}
+                    highlightPpic={highlightPpic}
+                    onSelectPic={setHighlightPpic}
+                    previewFocusBoxNumber={hoveredSearchBoxNumber}
+                  />
+                </Suspense>
+              </div>
+
+              {/* Tampilan Khusus Mobile HP Android (< 768px): Mode Kasir Cepat & Jepret Scan AI */}
+              <div className="md:hidden">
+                {mobileWarehouseView === '3d' ? (
+                  <div className="space-y-3 font-apple">
+                    <div className="flex items-center justify-between bg-[#161618] text-white p-2.5 rounded-2xl border border-white/10 shadow-xs">
+                      <span className="text-xs font-bold pl-1">Denah 3D Rak Gudang</span>
+                      <button
+                        type="button"
+                        onClick={() => setMobileWarehouseView('quick-entry')}
+                        className="px-3 py-1 rounded-full text-xs font-bold bg-[#0071e3] text-white transition active:scale-95 cursor-pointer shadow-xs flex items-center gap-1"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>Kembali ke Mode Kasir</span>
+                      </button>
+                    </div>
+                    <Suspense
+                      fallback={
+                        <div className="flex flex-col items-center justify-center min-h-[360px] rounded-2xl bg-slate-900/40 border border-slate-800 text-slate-400 gap-3">
+                          <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                          <span className="text-xs font-semibold text-slate-300">Memuat Visualisasi 3D...</span>
+                        </div>
+                      }
+                    >
+                      <Warehouse3DView
+                        highlightBoxNumbers={highlightBoxNumbers}
+                        searchQuery={searchQuery}
+                        onSearchQueryChange={setSearchQuery}
+                        searchResults={searchResults}
+                        onClearSearch={() => setSearchQuery('')}
+                        highlightPpic={highlightPpic}
+                        onSelectPic={setHighlightPpic}
+                        previewFocusBoxNumber={hoveredSearchBoxNumber}
+                      />
+                    </Suspense>
+                  </div>
+                ) : (
+                  <MobileQuickEntryView
+                    onOpenAiScanner={(boxNum) => {
+                      setAiScannerTargetBox(boxNum || 1);
+                      setIsAiScannerOpen(true);
+                    }}
+                    onOpen3dView={() => setMobileWarehouseView('3d')}
+                  />
+                )}
+              </div>
+            </>
           )}
           {appMode === 'summary' && (
             <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Ringkasan Data...</div>}>
@@ -1137,12 +1192,12 @@ const AppContent = () => {
       <AiTagScannerModal
         isOpen={isAiScannerOpen}
         onClose={() => setIsAiScannerOpen(false)}
-        targetBoxNumber={1}
+        targetBoxNumber={aiScannerTargetBox || selectedBoxNumber || 1}
         onApplyToForm={(extracted) => {
           setItemModalConfig({
             isOpen: true,
             item: null,
-            targetBoxNumber: 1,
+            targetBoxNumber: aiScannerTargetBox || selectedBoxNumber || 1,
             prefill: extracted,
           });
           setIsAiScannerOpen(false);
@@ -1160,18 +1215,19 @@ const AppContent = () => {
             type="button"
             onClick={() => {
               setAppMode('3d-warehouse');
+              setMobileWarehouseView('quick-entry');
               window.dispatchEvent(new CustomEvent('gagaclo_reset_3d_home_view'));
             }}
             className={`flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer ${
-              appMode === '3d-warehouse'
+              appMode === '3d-warehouse' && mobileWarehouseView === 'quick-entry'
                 ? 'text-[#0071e3] font-bold'
                 : 'text-[#86868b] hover:text-[#1d1d1f] font-medium'
             }`}
           >
-            <div className={`flex items-center justify-center h-6 w-6 rounded-full transition-transform ${appMode === '3d-warehouse' ? 'scale-110 bg-[#0071e3]/10' : ''}`}>
-              <Boxes className="h-4 w-4 stroke-[2.2]" />
+            <div className={`flex items-center justify-center h-6 w-6 rounded-full transition-transform ${appMode === '3d-warehouse' && mobileWarehouseView === 'quick-entry' ? 'scale-110 bg-[#0071e3]/10' : ''}`}>
+              <Zap className="h-4 w-4 stroke-[2.2]" />
             </div>
-            <span className="text-[10px] tracking-tight mt-0.5">Box 3D</span>
+            <span className="text-[10px] tracking-tight mt-0.5">Kasir AI</span>
           </button>
 
           <button
