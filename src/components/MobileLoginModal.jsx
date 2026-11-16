@@ -97,16 +97,13 @@ export const MobileLoginModal = ({
         )}
 
         {/* Header (Ref: Welcome back) */}
-        <div className="space-y-1">
+        <div>
           <h2
             id="mobile-login-title"
             className="text-[28px] font-extrabold tracking-tight text-[#111827] leading-tight"
           >
             Welcome back
           </h2>
-          <p className="text-[13px] text-[#6b7280] font-normal leading-snug">
-            Pilih user dan masukkan password untuk masuk ke akun Anda.
-          </p>
         </div>
 
         {/* Error Alert */}
@@ -195,16 +192,6 @@ export const MobileLoginModal = ({
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
-            </div>
-            
-            {/* Hint Password (Ref: Forgot password link position) */}
-            <div className="flex justify-end pt-1.5">
-              <span
-                className="text-[11px] font-semibold text-gray-500 hover:text-black transition"
-                title="Password bawaan sama dengan nama akun Anda"
-              >
-                Password default: <strong className="text-black">{selectedUser?.name || 'nama akun'}</strong>
-              </span>
             </div>
           </div>
 
