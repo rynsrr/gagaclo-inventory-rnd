@@ -230,7 +230,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
   return (
     <section
       aria-label="Target Team Inventory R&D"
-      className="w-full bg-[#161618] text-[#f5f5f7] border-b border-white/[0.08] px-3 sm:px-5 lg:px-6 py-2 shadow-xs no-print transition-all font-apple"
+      className="hidden md:block w-full bg-[#161618] text-[#f5f5f7] border-b border-white/[0.08] px-3 sm:px-5 lg:px-6 py-2 shadow-xs no-print transition-all font-apple"
     >
       <div className="w-full mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 lg:gap-5">
 
