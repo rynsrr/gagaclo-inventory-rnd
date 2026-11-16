@@ -171,7 +171,7 @@ export const MobileLoginModal = ({
           <div>
             <label
               htmlFor="mobile-password-input"
-              className="block text-xs font-semibold text-[#374151] mb-1.5 text-center"
+              className="sr-only"
             >
               Password
             </label>
