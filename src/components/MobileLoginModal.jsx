@@ -102,7 +102,7 @@ export const MobileLoginModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-[#064e3b] via-[#022c22] to-[#011a14] animate-in fade-in duration-200 font-apple"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#09090b] animate-in fade-in duration-200 font-apple"
       role="dialog"
       aria-modal="true"
       aria-labelledby="mobile-login-title"
