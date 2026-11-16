@@ -232,10 +232,10 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
       aria-label="Target Team Inventory R&D"
       className="w-full bg-[#161618] text-[#f5f5f7] border-b border-white/[0.08] px-3 sm:px-5 lg:px-6 py-2 shadow-xs no-print transition-all font-apple"
     >
-      <div className="w-full mx-auto flex items-center gap-3 sm:gap-4 lg:gap-5">
+      <div className="w-full mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 lg:gap-5">
 
         {/* AKUN KHUSUS JASMINE DI BAGIAN KIRI DENGAN ICON BESAR & MIDDLE ALIGN DENGAN KEDUA BARIS */}
-        <div className="shrink-0 flex items-center">
+        <div className="flex items-center justify-between sm:justify-start gap-2 shrink-0">
           <button
             type="button"
             onClick={() => {
@@ -243,7 +243,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                 onOpenUserProfile('Jasmine');
               }
             }}
-            className={`group relative p-2 sm:px-3 sm:py-2 rounded-2xl flex items-center gap-2.5 transition-all shadow-md cursor-pointer select-none active:scale-95 border ${
+            className={`group relative p-1.5 sm:px-3 sm:py-2 rounded-2xl flex items-center gap-2 sm:gap-2.5 transition-all shadow-md cursor-pointer select-none active:scale-95 border ${
               isJasmineActive
                 ? 'bg-gradient-to-br from-emerald-500/25 to-emerald-950/60 border-emerald-400 text-white ring-2 ring-emerald-500/40 shadow-emerald-500/20'
                 : 'bg-gradient-to-br from-emerald-950/60 via-slate-900/90 to-emerald-950/40 hover:from-emerald-900/70 hover:to-emerald-950/80 border-emerald-500/50 hover:border-emerald-400 text-emerald-200'
@@ -266,11 +266,32 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
               <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight leading-none">
                 Jasmine
               </span>
-              <span className="text-[9px] font-bold text-emerald-400 tracking-tight leading-none mt-1 hidden sm:block">
+              <span className="text-[9px] font-bold text-emerald-400 tracking-tight leading-none mt-1 hidden xs:block">
                 Penentu Target
               </span>
             </div>
           </button>
+
+          {/* Quick Target Stat khusus layar HP di samping Jasmine */}
+          <div className="flex items-center gap-2 sm:hidden ml-auto">
+            <div className="flex items-baseline gap-1">
+              <span className="text-base font-bold text-white tabular-nums tracking-tight">
+                {todayStats.pcs.toLocaleString('id-ID')}
+              </span>
+              <span className="text-[11px] font-medium text-slate-400 tabular-nums">
+                / {dailyTarget.toLocaleString('id-ID')} PCE
+              </span>
+            </div>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border tabular-nums ${
+                isAchieved
+                  ? 'bg-[#34c759]/20 text-[#30d158] border-[#34c759]/40'
+                  : 'bg-white/[0.08] text-white/90 border-white/[0.1]'
+              }`}
+            >
+              {percent}%
+            </span>
+          </div>
         </div>
 
         {/* Garis Pemisah Vertikal */}
@@ -279,9 +300,9 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
         {/* SISI KANAN: BARIS TEAM TARGET (ROW 1) & BARIS PERSON TARGET (ROW 2) */}
         <div className="flex-1 min-w-0 space-y-2">
           {/* BARIS ATAS (Row 1): TARGET TEAM */}
-          <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-6 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 lg:gap-6 w-full">
             {/* Keterangan Target Team & Angka Real-Time */}
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="hidden sm:flex items-center gap-2.5 shrink-0">
               <div
                 className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#0071e3]/20 via-[#0071e3]/15 to-emerald-500/15 border border-[#0071e3]/40 text-[#2997ff] shadow-xs shrink-0 select-none"
                 title="Target resmi tim R&D yang ditentukan oleh Jasmine dan tersinkronisasi otomatis via Cloud ke seluruh perangkat tim"
@@ -358,8 +379,8 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
             </div>
 
             {/* Progress Bar Target Team (Apple Fitness Style) */}
-            <div className="flex items-center gap-2.5 flex-1 min-w-[200px]">
-              <div className="flex-1 bg-white/[0.08] rounded-full h-3 overflow-hidden border border-white/[0.08] p-0.5">
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0 sm:min-w-[200px]">
+              <div className="flex-1 bg-white/[0.08] rounded-full h-2.5 sm:h-3 overflow-hidden border border-white/[0.08] p-0.5">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     isAchieved ? 'bg-[#34c759] shadow-[0_0_12px_rgba(52,199,89,0.5)]' : 'bg-[#0071e3] shadow-[0_0_10px_rgba(0,113,227,0.35)]'
@@ -368,7 +389,7 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                 />
               </div>
               <span
-                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border tabular-nums shrink-0 whitespace-nowrap transition-colors ${
+                className={`hidden sm:inline-block text-xs font-bold px-2.5 py-0.5 rounded-full border tabular-nums shrink-0 whitespace-nowrap transition-colors ${
                   isAchieved
                     ? 'bg-[#34c759]/20 text-[#30d158] border-[#34c759]/40'
                     : 'bg-white/[0.08] text-white/90 border-white/[0.1]'
@@ -380,23 +401,25 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                 <div className="text-xs font-semibold text-slate-300 shrink-0 whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5 text-[#30d158] font-bold">
                     <span className="w-2 h-2 rounded-full bg-[#34c759] animate-pulse"></span>
-                    Target Team Tercapai
+                    <span className="hidden sm:inline">Target Team Tercapai</span>
+                    <span className="sm:hidden">Tercapai</span>
                   </span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* BARIS BAWAH (Row 2): DAILY PERSON TARGET & Semua 8 Nama Personel (FULL WIDTH FIT - TANPA SCROLLBAR) */}
-          <div className="flex items-center gap-1 sm:gap-2 pt-1.5 border-t border-white/[0.08] w-full">
+          {/* BARIS BAWAH (Row 2): DAILY PERSON TARGET & Semua 8 Nama Personel (Swipeable Pill Strip on Mobile, Grid on Desktop) */}
+          <div className="flex items-center gap-1 sm:gap-2 pt-1 sm:pt-1.5 border-t border-white/[0.08] w-full">
             <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-white/[0.08] border border-white/[0.1] shadow-xs shrink-0 whitespace-nowrap">
               <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-300 shrink-0" />
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-300">
-                DAILY PERSON TARGET
+              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                <span className="sm:hidden">PIC</span>
+                <span className="hidden sm:inline">DAILY PERSON TARGET</span>
               </span>
             </div>
 
-            <div className="flex-1 min-w-0 grid grid-cols-8 gap-1 sm:gap-1.5">
+            <div className="flex-1 min-w-0 flex overflow-x-auto no-scrollbar gap-1 sm:gap-1.5 py-0.5 sm:grid sm:grid-cols-8 scroll-smooth overscroll-x-contain">
               {allMemberTargets.map((m) => {
                 const isCurrentActive = currentUser && String(currentUser.name).trim().toLowerCase() === String(m.name).trim().toLowerCase();
 
@@ -416,17 +439,17 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
                         onOpenUserProfile(m.name);
                       }
                     }}
-                    className={`w-full min-w-0 px-1 sm:px-2 py-1 rounded-full text-[11px] sm:text-xs font-medium flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer select-none active:scale-95 border truncate ${
+                    className={`shrink-0 sm:shrink min-w-[95px] sm:min-w-0 w-auto sm:w-full px-2 sm:px-2 py-1 rounded-full text-[11px] sm:text-xs font-medium flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer select-none active:scale-95 border whitespace-nowrap ${
                       isCurrentActive
                         ? 'bg-[#0071e3]/20 border-[#2997ff]/60 text-white ring-2 ring-[#0071e3]/40'
                         : m.isAchieved
                         ? 'bg-[#34c759]/15 hover:bg-[#34c759]/25 border-[#34c759]/35 hover:border-[#34c759]/60 text-[#30d158]'
                         : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
                     }`}
-                    title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda (Klik untuk kelola)' : ' • Klik untuk masuk akun ' + m.name}`}
+                    title={`${m.name} (${m.role} • ${m.isPicAsli ? 'PIC Asli +10%' : 'Support'}): Target ${m.target} PCE, Capaian ${m.pcs} PCE (${m.percent}%)${isCurrentActive ? ' • Akun Aktif Anda' : ' • Klik untuk masuk akun ' + m.name}`}
                   >
                     <span className={`rounded-full shrink-0 ${isCurrentActive ? 'w-2 h-2 bg-[#2997ff] shadow-[0_0_8px_#2997ff] animate-pulse ring-2 ring-[#2997ff]/50' : m.isAchieved ? 'w-1.5 h-1.5 bg-[#34c759]' : 'w-1.5 h-1.5 bg-white/30'}`}></span>
-                    <span className="font-semibold text-white truncate">{m.name}</span>
+                    <span className="font-semibold text-white">{m.name}</span>
                     <span className={`tabular-nums font-normal shrink-0 text-[10px] sm:text-[11px] ${isCurrentActive ? 'text-[#2997ff]' : m.isAchieved ? 'text-[#30d158]' : 'text-slate-400'}`}>
                       · {m.pcs}/{m.target}
                     </span>

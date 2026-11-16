@@ -69,6 +69,7 @@ import {
   Box as BoxIcon,
   Pencil,
   Megaphone,
+  Calendar,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -390,8 +391,8 @@ const AppContent = () => {
                 </div>
               </button>
 
-            {/* Top Navigation Tabs (Apple Segmented Control Style) */}
-            <nav className="flex flex-1 items-center justify-center mx-2 sm:mx-4 font-apple" aria-label="Menu navigasi utama">
+            {/* Top Navigation Tabs (Apple Segmented Control Style) - Disembunyikan di Mobile, Digantikan Bottom Bar */}
+            <nav className="hidden md:flex flex-1 items-center justify-center mx-2 sm:mx-4 font-apple" aria-label="Menu navigasi utama">
               <div className="inline-flex items-center p-1 bg-black/[0.04] rounded-full border border-black/[0.05] gap-0.5 max-w-full">
                 {mainTabs.map((tab) => {
                   const isActive = appMode === tab.id;
@@ -467,7 +468,7 @@ const AppContent = () => {
                 {/* Spotlight Popover Dropdown */}
                 {isSearchOpen && (
                   <div
-                    className="absolute right-0 mt-3 w-[340px] sm:w-[480px] bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-3.5 sm:p-4 z-50 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal"
+                    className="absolute -right-2 sm:right-0 mt-3 w-[calc(100vw-24px)] sm:w-[480px] max-w-[480px] bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-3.5 sm:p-4 z-50 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal"
                     style={{ whiteSpace: 'normal' }}
                   >
                     {/* Input Field */}
@@ -679,7 +680,7 @@ const AppContent = () => {
 
                 {isSettingsOpen && (
                   <div
-                    className="absolute right-0 mt-3 w-[320px] sm:w-[490px] bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150 whitespace-normal font-apple"
+                    className="absolute -right-2 sm:right-0 mt-3 w-[calc(100vw-24px)] sm:w-[490px] max-w-[490px] bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150 whitespace-normal font-apple"
                     style={{ whiteSpace: 'normal' }}
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -848,7 +849,7 @@ const AppContent = () => {
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">
-        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 pb-24 md:pb-5">
           {appMode === '3d-warehouse' && (
             <Suspense
               fallback={
@@ -1149,6 +1150,101 @@ const AppContent = () => {
         onDirectSave={handleAppDirectSaveAiData}
       />
 
+      {/* Ergonomic Mobile Bottom Navigation Bar (Android Thumb Accessible) */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/[0.08] shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom,0px)] font-apple"
+        aria-label="Navigasi Bawah Mobile"
+      >
+        <div className="flex items-center justify-around h-14 px-1">
+          <button
+            type="button"
+            onClick={() => {
+              setAppMode('3d-warehouse');
+              window.dispatchEvent(new CustomEvent('gagaclo_reset_3d_home_view'));
+            }}
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer ${
+              appMode === '3d-warehouse'
+                ? 'text-[#0071e3] font-bold'
+                : 'text-[#86868b] hover:text-[#1d1d1f] font-medium'
+            }`}
+          >
+            <div className={`flex items-center justify-center h-6 w-6 rounded-full transition-transform ${appMode === '3d-warehouse' ? 'scale-110 bg-[#0071e3]/10' : ''}`}>
+              <Boxes className="h-4 w-4 stroke-[2.2]" />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Box 3D</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAppMode('ppic-performance')}
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer ${
+              appMode === 'ppic-performance'
+                ? 'text-[#0071e3] font-bold'
+                : 'text-[#86868b] hover:text-[#1d1d1f] font-medium'
+            }`}
+          >
+            <div className={`flex items-center justify-center h-6 w-6 rounded-full transition-transform ${appMode === 'ppic-performance' ? 'scale-110 bg-[#0071e3]/10' : ''}`}>
+              <Calendar className="h-4 w-4 stroke-[2.2]" />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Rekap</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAppMode('summary')}
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer ${
+              appMode === 'summary'
+                ? 'text-[#0071e3] font-bold'
+                : 'text-[#86868b] hover:text-[#1d1d1f] font-medium'
+            }`}
+          >
+            <div className={`relative flex items-center justify-center h-6 w-6 rounded-full transition-transform ${appMode === 'summary' ? 'scale-110 bg-[#0071e3]/10' : ''}`}>
+              <FileSpreadsheet className="h-4 w-4 stroke-[2.2]" />
+              {items.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-3.5 min-w-[14px] items-center justify-center px-1 rounded-full bg-[#0071e3] text-[8px] font-bold text-white">
+                  {items.length > 999 ? '999+' : items.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Ringkasan</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAppMode('dispatch')}
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer ${
+              appMode === 'dispatch'
+                ? 'text-[#0071e3] font-bold'
+                : 'text-[#86868b] hover:text-[#1d1d1f] font-medium'
+            }`}
+          >
+            <div className={`relative flex items-center justify-center h-6 w-6 rounded-full transition-transform ${appMode === 'dispatch' ? 'scale-110 bg-[#0071e3]/10' : ''}`}>
+              <ShoppingBasket className="h-4 w-4 stroke-[2.2]" />
+              {dispatchCart?.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-3.5 min-w-[14px] items-center justify-center px-1 rounded-full bg-[#ff3b30] text-[8px] font-bold text-white animate-pulse">
+                  {dispatchCart.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Kirim</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSettingsOpen((prev) => !prev)}
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer ${
+              isSettingsOpen
+                ? 'text-[#0071e3] font-bold'
+                : 'text-[#86868b] hover:text-[#1d1d1f] font-medium'
+            }`}
+          >
+            <div className={`flex items-center justify-center h-6 w-6 rounded-full transition-transform ${isSettingsOpen ? 'scale-110 bg-[#0071e3]/10' : ''}`}>
+              <Settings className="h-4 w-4 stroke-[2.2]" />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Menu</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 };

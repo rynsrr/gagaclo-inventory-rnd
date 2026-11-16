@@ -769,265 +769,464 @@ function BoxDetail({ box }) {
               </button>
             </div>
           ) : (
-            /* High-Density Compact Table View */
-            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white w-full">
-              <div className="overflow-x-hidden overflow-y-auto max-h-[66vh] scrollbar-thin w-full">
-                <table className="w-full table-fixed text-left border-collapse text-xs">
-                  <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-xs tracking-wider sticky top-0 z-10 border-b border-slate-200">
-                    <tr>
-                      <th className="py-2.5 px-2 w-9 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedItemIds.size === itemsInBox.length && itemsInBox.length > 0}
-                          onChange={handleSelectAll}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
-                          title="Pilih / Batal Pilih Semua"
-                        />
-                      </th>
-                      <th className="py-2.5 px-2.5 w-[17%]">Kode / Sample</th>
-                      <th className="py-2.5 px-2.5 w-[26%]">Style &amp; Deskripsi</th>
-                      <th className="py-2.5 px-2 w-[13%]">Size &amp; Warna</th>
-                      <th className="py-2.5 px-1.5 text-center w-[7%]">Jumlah</th>
-                      <th className="py-2.5 px-1.5 text-center w-[12%]">Penginput</th>
-                      <th className="py-2.5 px-1 text-center w-[10%]">Status</th>
-                      <th className="py-2.5 px-2 text-right w-[15%]">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {sortedItems.map((item, idx) => {
-                      const isSelected = selectedItemIds.has(item.id);
-                      return (
-                        <tr
-                          key={item.id}
-                          className={`transition hover:bg-blue-50/60 ${
-                            isSelected 
-                              ? 'bg-blue-50/80 font-medium' 
-                              : (idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40')
-                          }`}
-                        >
-                          {/* Checkbox */}
-                          <td className="py-2 px-2 text-center">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleItemSelect(item.id)}
-                              className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
-                              title="Centang untuk cetak kartu"
-                            />
-                          </td>
+            <>
+              {/* Mobile Card List View (< sm screens) */}
+              <div className="sm:hidden space-y-2.5 max-h-[66dvh] overflow-y-auto pr-0.5">
+                <div className="flex items-center justify-between px-1 py-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={selectedItemIds.size === itemsInBox.length && itemsInBox.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-0 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Pilih Semua ({itemsInBox.length})</span>
+                  </label>
+                  <span className="text-[11px] text-slate-500">{selectedItemIds.size} terpilih</span>
+                </div>
 
-                          {/* Kode, Jenis Sample & Buyer (Dengan Fitur Copy) */}
-                          <td className="py-2 px-2.5 min-w-0">
-                            <div className="flex items-center space-x-1 min-w-0">
-                              <button
-                                type="button"
-                                onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
-                                className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 px-1.5 py-0.5 rounded-md border border-slate-200 text-xs flex items-center gap-1 transition cursor-pointer shadow-2xs shrink-0"
-                                title="Klik untuk Salin Kode ke Clipboard"
-                              >
-                                <span>{item.kode || item.sku || '-'}</span>
-                                {copiedId === item.id ? (
-                                  <Check className="w-3 h-3 text-emerald-600 animate-pulse" />
-                                ) : (
-                                  <Copy className="w-3 h-3 text-slate-400 group-hover/code:text-blue-600 transition" />
-                                )}
-                              </button>
-                              {item.jenisSample && (
-                                <span className="text-xs font-black uppercase px-1 py-0.5 bg-amber-400 text-slate-950 rounded shrink-0">
-                                  {item.jenisSample}
-                                </span>
-                              )}
-                              {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
-                                <span className="text-xs text-slate-500 font-mono truncate" title={`Buyer: ${item.buyerNo}`}>
-                                  ({item.buyerNo})
-                                </span>
-                              )}
-                            </div>
-                          </td>
+                {sortedItems.map((item) => {
+                  const isSelected = selectedItemIds.has(item.id);
+                  const inputter = resolveItemInputter(item, box);
+                  const isOwnerInput = String(inputter.name).toLowerCase() === String(box.picName || '').toLowerCase();
 
-                          {/* Style & Deskripsi */}
-                          <td className="py-2 px-2.5 min-w-0">
-                            <div className="font-bold text-slate-900 text-xs truncate" title={item.style || item.deskripsi || item.name}>
-                              {item.style || item.deskripsi || item.name}
-                            </div>
-                            {item.sampleNo && item.sampleNo !== '' && (
-                              <div className="text-xs text-slate-500 font-mono truncate" title={`Sample No: ${item.sampleNo}`}>
-                                Sample No: <strong>{item.sampleNo}</strong>
-                              </div>
+                  return (
+                    <div
+                      key={`mob-item-${item.id}`}
+                      className={`p-3 rounded-2xl border transition-all ${
+                        isSelected 
+                          ? 'bg-blue-50/80 border-blue-300 ring-1 ring-blue-400' 
+                          : 'bg-white border-black/[0.08] shadow-2xs'
+                      }`}
+                    >
+                      {/* Header Card: Checkbox + Kode + Jenis + Status */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleItemSelect(item.id)}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-0 w-4 h-4 cursor-pointer shrink-0"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
+                            className="font-mono font-bold text-slate-900 bg-slate-100 active:bg-blue-100 px-2 py-0.5 rounded-md border border-slate-200 text-xs flex items-center gap-1 shrink-0"
+                            title="Salin Kode"
+                          >
+                            <span>{item.kode || item.sku || '-'}</span>
+                            {copiedId === item.id ? (
+                              <Check className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3 h-3 text-slate-400" />
                             )}
-                          </td>
-
-                          {/* Size & Warna */}
-                          <td className="py-2 px-2 min-w-0">
-                            <div className="flex items-center space-x-1 text-xs truncate">
-                              {item.size ? (
-                                <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-xs uppercase shrink-0">
-                                  {item.size}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 text-xs">-</span>
-                              )}
-                              {item.color && item.color !== '-' && item.color !== 'NA' && (
-                                <span className="text-slate-700 text-xs font-medium truncate" title={`Color: ${item.color}`}>
-                                  {item.color}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Qty & Satuan */}
-                          <td className="py-2 px-1.5 text-center font-mono font-black text-slate-900 text-xs">
-                            {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
-                            <span className="text-xs font-normal text-slate-500 uppercase">
-                              {String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (item.satuan || item.unit || 'PCE')}
+                          </button>
+                          {item.jenisSample && (
+                            <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded shrink-0">
+                              {item.jenisSample}
                             </span>
-                          </td>
+                          )}
+                          {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
+                            <span className="text-xs text-slate-500 font-mono truncate">
+                              ({item.buyerNo})
+                            </span>
+                          )}
+                        </div>
+                        <div className="shrink-0">
+                          {getStatusBadge(item.status)}
+                        </div>
+                      </div>
 
-                          {/* Penginput */}
-                          <td className="py-2 px-1.5 text-center min-w-0">
-                            {(() => {
-                              const inputter = resolveItemInputter(item, box);
-                              const isOwnerInput = String(inputter.name).toLowerCase() === String(box.picName || '').toLowerCase();
-                              return (
-                                <div className="flex flex-col items-center justify-center min-w-0">
-                                  <span
-                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border truncate max-w-full shadow-2xs ${inputter.badgeClass}`}
-                                    title={`Diinput oleh: ${inputter.name} (${inputter.role})${!isOwnerInput ? ` • Bantuan untuk PPIC ${box.picName}` : ''}`}
-                                  >
-                                    <User className="w-3 h-3 shrink-0" />
-                                    <span className="truncate">{inputter.name}</span>
-                                  </span>
-                                  {!isOwnerInput && (
-                                    <span className="text-[10px] text-slate-400 font-semibold tracking-tight leading-none mt-0.5 truncate" title={`Bantuan input untuk ${box.picName}`}>
-                                      bantu {box.picName}
-                                    </span>
+                      {/* Style & Deskripsi */}
+                      <div className="mb-2">
+                        <h4 className="font-bold text-slate-900 text-xs sm:text-sm leading-snug">
+                          {item.style || item.deskripsi || item.name}
+                        </h4>
+                        {item.sampleNo && item.sampleNo !== '' && (
+                          <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                            Sample No: <strong className="text-slate-800">{item.sampleNo}</strong>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Info Chips: Size, Warna, Qty, Penginput */}
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px] mb-2.5">
+                        {item.size && (
+                          <span className="font-bold text-slate-800 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] uppercase">
+                            Size: {item.size}
+                          </span>
+                        )}
+                        {item.color && item.color !== '-' && item.color !== 'NA' && (
+                          <span className="text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                            {item.color}
+                          </span>
+                        )}
+                        <span className="font-mono font-bold text-slate-900 bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded text-[10px]">
+                          {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
+                          {String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (item.satuan || item.unit || 'PCE')}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border truncate ${inputter.badgeClass}`}>
+                          <User className="w-2.5 h-2.5" />
+                          <span>{inputter.name}</span>
+                          {!isOwnerInput && <span className="opacity-70">(bantu)</span>}
+                        </span>
+                      </div>
+
+                      {/* Action Bar Mobile */}
+                      <div className="flex items-center justify-between pt-2 border-t border-black/[0.06] gap-1">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {canEditItem(item) && (
+                            <button
+                              type="button"
+                              onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
+                              className="px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                          )}
+                          {isOwner && (
+                            <button
+                              type="button"
+                              onClick={() => handleDuplicateItem(item)}
+                              className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition"
+                              title="Duplikat"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setCardPrintItems([item])}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            title="Cetak Kartu Fisik"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                          {isOwner && (
+                            <button
+                              type="button"
+                              onClick={() => addToDispatchCart(item, 1)}
+                              className={`p-1.5 rounded-lg transition ${
+                                isItemInDispatchCart(item.id) ? 'text-rose-600 bg-rose-100 font-bold' : 'text-slate-500 hover:bg-slate-100'
+                              }`}
+                              title="Keranjang Kirim"
+                            >
+                              <ShoppingCart className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {isOwner && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDispatchModalItem(item);
+                                setDispatchPreselectedItems([]);
+                              }}
+                              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                              title="Kirim Keluar"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isOwner && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
+                                updateItem(item.id, { status: newStatus });
+                              }}
+                              className={`px-2 py-1 text-[11px] font-bold rounded-lg border transition ${
+                                item.status === 'In Storage'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              }`}
+                            >
+                              {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
+                            </button>
+                          )}
+                          {canEditItem(item) && !isHelperUser && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteError(null);
+                                setItemToDelete(item);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop & Tablet Table View (hidden on mobile, block on >= sm) */}
+              <div className="hidden sm:block border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white w-full">
+                <div className="overflow-x-auto overflow-y-auto max-h-[66vh] scrollbar-thin w-full">
+                  <table className="w-full min-w-[700px] table-fixed text-left border-collapse text-xs">
+                    <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-xs tracking-wider sticky top-0 z-10 border-b border-slate-200">
+                      <tr>
+                        <th className="py-2.5 px-2 w-9 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedItemIds.size === itemsInBox.length && itemsInBox.length > 0}
+                            onChange={handleSelectAll}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                            title="Pilih / Batal Pilih Semua"
+                          />
+                        </th>
+                        <th className="py-2.5 px-2.5 w-[17%]">Kode / Sample</th>
+                        <th className="py-2.5 px-2.5 w-[26%]">Style &amp; Deskripsi</th>
+                        <th className="py-2.5 px-2 w-[13%]">Size &amp; Warna</th>
+                        <th className="py-2.5 px-1.5 text-center w-[7%]">Jumlah</th>
+                        <th className="py-2.5 px-1.5 text-center w-[12%]">Penginput</th>
+                        <th className="py-2.5 px-1 text-center w-[10%]">Status</th>
+                        <th className="py-2.5 px-2 text-right w-[15%]">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {sortedItems.map((item, idx) => {
+                        const isSelected = selectedItemIds.has(item.id);
+                        return (
+                          <tr
+                            key={item.id}
+                            className={`transition hover:bg-blue-50/60 ${
+                              isSelected 
+                                ? 'bg-blue-50/80 font-medium' 
+                                : (idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40')
+                            }`}
+                          >
+                            {/* Checkbox */}
+                            <td className="py-2 px-2 text-center">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleItemSelect(item.id)}
+                                className="rounded border-slate-300 text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                                title="Centang untuk cetak kartu"
+                              />
+                            </td>
+
+                            {/* Kode, Jenis Sample & Buyer (Dengan Fitur Copy) */}
+                            <td className="py-2 px-2.5 min-w-0">
+                              <div className="flex items-center space-x-1 min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopyCode(e, item.kode || item.sku, item.id)}
+                                  className="font-mono font-bold text-slate-900 bg-slate-100 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 px-1.5 py-0.5 rounded-md border border-slate-200 text-xs flex items-center gap-1 transition cursor-pointer shadow-2xs shrink-0"
+                                  title="Klik untuk Salin Kode ke Clipboard"
+                                >
+                                  <span>{item.kode || item.sku || '-'}</span>
+                                  {copiedId === item.id ? (
+                                    <Check className="w-3 h-3 text-emerald-600 animate-pulse" />
+                                  ) : (
+                                    <Copy className="w-3 h-3 text-slate-400 group-hover/code:text-blue-600 transition" />
                                   )}
+                                </button>
+                                {item.jenisSample && (
+                                  <span className="text-xs font-black uppercase px-1 py-0.5 bg-amber-400 text-slate-950 rounded shrink-0">
+                                    {item.jenisSample}
+                                  </span>
+                                )}
+                                {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
+                                  <span className="text-xs text-slate-500 font-mono truncate" title={`Buyer: ${item.buyerNo}`}>
+                                    ({item.buyerNo})
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Style & Deskripsi */}
+                            <td className="py-2 px-2.5 min-w-0">
+                              <div className="font-bold text-slate-900 text-xs truncate" title={item.style || item.deskripsi || item.name}>
+                                {item.style || item.deskripsi || item.name}
+                              </div>
+                              {item.sampleNo && item.sampleNo !== '' && (
+                                <div className="text-xs text-slate-500 font-mono truncate" title={`Sample No: ${item.sampleNo}`}>
+                                  Sample No: <strong>{item.sampleNo}</strong>
                                 </div>
-                              );
-                            })()}
-                          </td>
+                              )}
+                            </td>
 
-                          {/* Status */}
-                          <td className="py-2 px-1 text-center">
-                            {getStatusBadge(item.status)}
-                          </td>
+                            {/* Size & Warna */}
+                            <td className="py-2 px-2 min-w-0">
+                              <div className="flex items-center space-x-1 text-xs truncate">
+                                {item.size ? (
+                                  <span className="font-black text-slate-800 bg-slate-100 border border-slate-300 px-1 py-0.5 rounded text-xs uppercase shrink-0">
+                                    {item.size}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 text-xs">-</span>
+                                )}
+                                {item.color && item.color !== '-' && item.color !== 'NA' && (
+                                  <span className="text-slate-700 text-xs font-medium truncate" title={`Color: ${item.color}`}>
+                                    {item.color}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
 
-                          {/* Actions */}
-                          <td className="py-2 px-2 text-right">
-                            <div className="flex items-center justify-end space-x-0.5">
-                              {isOwner && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDuplicateItem(item)}
-                                  className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition cursor-pointer"
-                                  title="Copy / Duplikat Item (Buat item baru)"
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => setCardPrintItems([item])}
-                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition cursor-pointer"
-                                title="Cetak Kartu Fisik Item Ini"
-                              >
-                                <Printer className="w-3.5 h-3.5" />
-                              </button>
-                              {isOwner && (
-                                <button
-                                  type="button"
-                                  onClick={() => addToDispatchCart(item, 1)}
-                                  className={`p-1 rounded transition cursor-pointer flex items-center gap-1 ${
-                                    isItemInDispatchCart(item.id)
-                                      ? 'text-rose-600 bg-rose-100/90 font-black'
-                                      : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
-                                  }`}
-                                  title={isItemInDispatchCart(item.id) ? "Sudah di Keranjang (Klik untuk tambah)" : "Masukkan ke Keranjang Pengiriman (Model Marketplace)"}
-                                >
-                                  <ShoppingCart className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              {isOwner && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setDispatchModalItem(item);
-                                    setDispatchPreselectedItems([]);
-                                  }}
-                                  className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
-                                  title="Kirim Keluar (Buyer / ANZO QC / ANZO TW / ANZO QC CHINA / RDTW / RDC)"
-                                >
-                                  <Send className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              {isOwner && (
-                                <button
-                                  type="button"
-                                  onClick={() => openMoveModal([item])}
-                                  className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
-                                  title="Pindah ke Box Lain"
-                                >
-                                  <ArrowRightLeft className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              {isOwner && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
-                                    updateItem(item.id, { status: newStatus });
-                                  }}
-                                  className={`px-1.5 py-0.5 text-xs font-black rounded transition cursor-pointer ${
-                                    item.status === 'In Storage'
-                                      ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
-                                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                                  }`}
-                                  title="Ganti Status Simpan / Pinjam"
-                                >
-                                  {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
-                                </button>
-                              )}
-                              {canEditItem(item) ? (
-                                <>
+                            {/* Qty & Satuan */}
+                            <td className="py-2 px-1.5 text-center font-mono font-black text-slate-900 text-xs">
+                              {item.jumlah !== undefined && item.jumlah !== null ? item.jumlah : item.qty}{' '}
+                              <span className="text-xs font-normal text-slate-500 uppercase">
+                                {String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (item.satuan || item.unit || 'PCE')}
+                              </span>
+                            </td>
+
+                            {/* Penginput */}
+                            <td className="py-2 px-1.5 text-center min-w-0">
+                              {(() => {
+                                const inputter = resolveItemInputter(item, box);
+                                const isOwnerInput = String(inputter.name).toLowerCase() === String(box.picName || '').toLowerCase();
+                                return (
+                                  <div className="flex flex-col items-center justify-center min-w-0">
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border truncate max-w-full shadow-2xs ${inputter.badgeClass}`}
+                                      title={`Diinput oleh: ${inputter.name} (${inputter.role})${!isOwnerInput ? ` • Bantuan untuk PPIC ${box.picName}` : ''}`}
+                                    >
+                                      <User className="w-3 h-3 shrink-0" />
+                                      <span className="truncate">{inputter.name}</span>
+                                    </span>
+                                    {!isOwnerInput && (
+                                      <span className="text-[10px] text-slate-400 font-semibold tracking-tight leading-none mt-0.5 truncate" title={`Bantuan input untuk ${box.picName}`}>
+                                        bantu {box.picName}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-2 px-1 text-center">
+                              {getStatusBadge(item.status)}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-2 px-2 text-right">
+                              <div className="flex items-center justify-end space-x-0.5">
+                                {isOwner && (
                                   <button
                                     type="button"
-                                    onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
-                                    className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
-                                    title="Edit Item"
+                                    onClick={() => handleDuplicateItem(item)}
+                                    className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition cursor-pointer"
+                                    title="Copy / Duplikat Item (Buat item baru)"
                                   >
-                                    <Edit3 className="w-3.5 h-3.5" />
+                                    <Copy className="w-3.5 h-3.5" />
                                   </button>
-                                  {!isHelperUser && (
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setCardPrintItems([item])}
+                                  className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition cursor-pointer"
+                                  title="Cetak Kartu Fisik Item Ini"
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                </button>
+                                {isOwner && (
+                                  <button
+                                    type="button"
+                                    onClick={() => addToDispatchCart(item, 1)}
+                                    className={`p-1 rounded transition cursor-pointer flex items-center gap-1 ${
+                                      isItemInDispatchCart(item.id)
+                                        ? 'text-rose-600 bg-rose-100/90 font-black'
+                                        : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
+                                    }`}
+                                    title={isItemInDispatchCart(item.id) ? "Sudah di Keranjang (Klik untuk tambah)" : "Masukkan ke Keranjang Pengiriman (Model Marketplace)"}
+                                  >
+                                    <ShoppingCart className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {isOwner && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDispatchModalItem(item);
+                                      setDispatchPreselectedItems([]);
+                                    }}
+                                    className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
+                                    title="Kirim Keluar (Buyer / ANZO QC / ANZO TW / ANZO QC CHINA / RDTW / RDC)"
+                                  >
+                                    <Send className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {isOwner && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openMoveModal([item])}
+                                    className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition cursor-pointer"
+                                    title="Pindah ke Box Lain"
+                                  >
+                                    <ArrowRightLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {isOwner && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newStatus = item.status === 'In Storage' ? 'Borrowed' : 'In Storage';
+                                      updateItem(item.id, { status: newStatus });
+                                    }}
+                                    className={`px-1.5 py-0.5 text-xs font-black rounded transition cursor-pointer ${
+                                      item.status === 'In Storage'
+                                        ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                    }`}
+                                    title="Ganti Status Simpan / Pinjam"
+                                  >
+                                    {item.status === 'In Storage' ? 'Pinjam' : 'Kembali'}
+                                  </button>
+                                )}
+                                {canEditItem(item) ? (
+                                  <>
                                     <button
                                       type="button"
-                                      onClick={() => {
-                                        setDeleteError(null);
-                                        setItemToDelete(item);
-                                      }}
-                                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                                      title="Hapus Item"
+                                      onClick={() => setItemModalConfig({ isOpen: true, item, targetBoxNumber: box.boxNumber })}
+                                      className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
+                                      title="Edit Item"
                                     >
-                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <Edit3 className="w-3.5 h-3.5" />
                                     </button>
-                                  )}
-                                </>
-                              ) : (
-                                <span
-                                  className="p-1 text-slate-400 inline-flex items-center"
-                                  title={`Terkunci: Data item ini milik ${box.picName}`}
-                                >
-                                  <Lock className="w-3 h-3 text-slate-400" />
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                                    {!isHelperUser && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDeleteError(null);
+                                          setItemToDelete(item);
+                                        }}
+                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                        title="Hapus Item"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span
+                                    className="p-1 text-slate-400 inline-flex items-center"
+                                    title={`Terkunci: Data item ini milik ${box.picName}`}
+                                  >
+                                    <Lock className="w-3 h-3 text-slate-400" />
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 
