@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { 
   Camera, 
-  Sparkles, 
   Copy, 
   Check, 
   Pencil, 
@@ -12,11 +11,13 @@ import {
   Clock, 
   ChevronDown, 
   Boxes, 
-  Zap, 
-  Users, 
   Package, 
-  Flame, 
-  Trophy 
+  Users,
+  LayoutDashboard,
+  ScanLine,
+  ArrowRight,
+  TrendingUp,
+  UserCheck
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
 import { CardPrintModal } from './CardPrintModal';
@@ -27,6 +28,7 @@ export const MobileQuickEntryView = ({
   onOpen3dView,
   onDirectScanImage,
   onOpenUserProfile,
+  onOpenRekap,
 }) => {
   const {
     items,
@@ -38,6 +40,9 @@ export const MobileQuickEntryView = ({
     setSelectedBoxNumber,
     showNotification,
   } = useInventory();
+
+  // Tab terpisah: 'dashboard' (Monitoring target & rekap) vs 'input' (Input sampel & kamera)
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   // State target box yang sedang aktif diisi (default ke Box #1 atau box terakhir)
   const [activeBoxNumber, setActiveBoxNumber] = useState(() => {
@@ -58,50 +63,49 @@ export const MobileQuickEntryView = ({
     setIsBoxPickerOpen(false);
   };
 
-  // Detail box yang sedang aktif
+  const todayIso = useMemo(() => getLocalTodayIso(), []);
+
+  // Filter item yang dicatat hari ini
+  const todayItems = useMemo(() => {
+    return items.filter((it) => {
+      if (it.status === 'DELETED') return false;
+      const recordDate = it.recordDate || getItemRecordDate(it);
+      return recordDate === todayIso;
+    });
+  }, [items, todayIso]);
+
+  // Info box aktif
   const currentBox = useMemo(() => {
-    return boxes.find((b) => Number(b.boxNumber) === activeBoxNumber) || boxes[0] || { boxNumber: activeBoxNumber, rackName: 'RAK 1', picName: 'Royan' };
+    return boxes.find((b) => Number(b.boxNumber) === activeBoxNumber) || {
+      boxNumber: activeBoxNumber,
+      rackName: 'RAK 1',
+      picName: 'Royan',
+    };
   }, [boxes, activeBoxNumber]);
 
-  // Sampel di dalam box yang sedang aktif
+  // Item yang sudah ada di box aktif
   const currentBoxItems = useMemo(() => {
-    return items.filter((it) => Number(it.boxNumber || it.box_number) === activeBoxNumber && it.status !== 'DELETED');
+    return items.filter((it) => Number(it.boxNumber) === activeBoxNumber && it.status !== 'DELETED');
   }, [items, activeBoxNumber]);
 
   const currentBoxPcs = useMemo(() => {
     return currentBoxItems.reduce((acc, it) => acc + (Number(it.jumlah || it.qty || it.pcs) || 1), 0);
   }, [currentBoxItems]);
 
-  // Filter sampel yang diinput HARI INI
-  const todayIso = getLocalTodayIso();
-
-  const todayItems = useMemo(() => {
-    return items
-      .filter((it) => {
-        if (it.status === 'DELETED') return false;
-        const recDate = getItemRecordDate(it);
-        return recDate === todayIso;
-      })
-      .sort((a, b) => {
-        // Urutkan dari yang terbaru (newest first)
-        const timeA = new Date(a.createdAt || a.created_at || 0).getTime() || 0;
-        const timeB = new Date(b.createdAt || b.created_at || 0).getTime() || 0;
-        return timeB - timeA;
-      });
-  }, [items, todayIso]);
-
   // Total PCS hari ini oleh semua tim
   const todayTotalPcs = useMemo(() => {
     return todayItems.reduce((acc, it) => acc + (Number(it.jumlah || it.qty || it.pcs) || 1), 0);
   }, [todayItems]);
 
-  // Sampel hari ini khusus user yang sedang login
-  const currentUserName = currentUser?.name ? String(currentUser.name).trim().toLowerCase() : '';
+  const currentUserName = currentUser?.name?.toLowerCase();
+
+  // Item hari ini oleh user yang sedang aktif
   const myTodayItems = useMemo(() => {
-    if (!currentUserName) return todayItems;
+    if (!currentUserName) return [];
     return todayItems.filter((it) => {
-      const penginput = String(it.penginput || it.picName || it.pic || '').trim().toLowerCase();
-      return penginput === currentUserName;
+      const inputted = (it.inputtedBy || it.createdBy || '').toLowerCase();
+      const pic = (it.picName || '').toLowerCase();
+      return inputted === currentUserName || pic === currentUserName;
     });
   }, [todayItems, currentUserName]);
 
@@ -125,28 +129,20 @@ export const MobileQuickEntryView = ({
     try {
       navigator.clipboard.writeText(code);
       setCopiedCode(code);
-      showNotification(`Kode ${code} disalin ke clipboard!`, 'info', 2000);
-      setTimeout(() => setCopiedCode(null), 1500);
-    } catch {}
-  };
-
-  // Hapus item dengan konfirmasi
-  const handleDeleteItem = async (item, e) => {
-    e?.stopPropagation();
-    const name = item.style || item.sampleNo || item.kode || 'item';
-    if (window.confirm(`Yakin ingin menghapus sampel "${name}"?`)) {
-      await deleteItem(item.id);
-      showNotification('Sampel berhasil dihapus.', 'info');
+      setTimeout(() => setCopiedCode(null), 1800);
+      showNotification?.(`Kode ${code} berhasil disalin!`, 'success');
+    } catch {
+      showNotification?.('Gagal menyalin kode.', 'error');
     }
   };
 
-  // Filter 72 box untuk picker
+  // Filter daftar 72 box berdasarkan rak
   const filteredBoxes = useMemo(() => {
     if (boxRackFilter === 'ALL') return boxes;
-    return boxes.filter((b) => String(b.rackName || '').toUpperCase() === boxRackFilter);
+    return boxes.filter((b) => b.rackName === boxRackFilter);
   }, [boxes, boxRackFilter]);
 
-  // Target personal harian untuk seluruh 8 personil tim (5 PIC + 3 Support)
+  // Statistik Target Personal per PIC & Helper
   const allMemberTargets = useMemo(() => {
     const pcsMap = {};
     (TEAM_MEMBERS || []).forEach((m) => {
@@ -262,501 +258,469 @@ export const MobileQuickEntryView = ({
   }, [items]);
 
   return (
-    <div className="mobile-quick-entry font-apple space-y-3 pb-20 select-none">
+    <div className="mobile-quick-entry font-apple space-y-3.5 pb-20 select-none">
       
-      {/* 1. DASHBOARD HEADER - ENERGETIK */}
-      <div className="flex items-center justify-between pt-1 pb-0.5">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <h1 className="text-xl font-black text-[#111827] tracking-tight flex items-center gap-1.5">
-              <span>Misi R&amp;D Hari Ini</span>
-              <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
-            </h1>
-          </div>
-          <p className="text-[11px] text-gray-500 font-semibold">Gagaclo Inventory &bull; Target Fisik 72 Box</p>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-white text-gray-700 border border-black/[0.08] shadow-2xs">
-          <Calendar className="w-3.5 h-3.5 text-[#0071e3]" />
-          <span>{formatToDDMMYYYY(todayIso)}</span>
-        </div>
-      </div>
-
-      {/* 2. HERO TARGET TIM: 400 PCE GASPOL */}
-      <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-[#0e1726] to-[#080d17] text-white p-4 border border-emerald-500/30 shadow-lg relative overflow-hidden">
-        {/* Glow ambient accent */}
-        <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-transparent rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/15 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="flex items-center justify-between mb-2 relative z-10">
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
-              <Flame className="w-3.5 h-3.5 fill-emerald-400" />
-            </div>
-            <span className="text-[10.5px] font-black uppercase tracking-wider text-emerald-300">
-              Target Tim: 400 PCE
-            </span>
-          </div>
-          <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border tabular-nums ${
-            targetPercent >= 100
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
-              : 'bg-white/10 text-white border-white/20'
-          }`}>
-            {targetPercent}% Tercapai
-          </span>
-        </div>
-
-        <div className="flex items-baseline justify-between relative z-10">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-black tabular-nums tracking-tight text-white">
-              {todayTotalPcs.toLocaleString('id-ID')}
-            </span>
-            <span className="text-xs text-slate-300 font-bold">
-              / {targetPcs.toLocaleString('id-ID')} PCE
-            </span>
-          </div>
-          <span className="text-[11px] text-emerald-400 font-extrabold flex items-center gap-1">
-            <Zap className="w-3.5 h-3.5 fill-emerald-400" />
-            <span>{targetRemaining <= 0 ? '✓ Target Tuntas!' : `Sisa ${targetRemaining} PCE`}</span>
-          </span>
-        </div>
-
-        {/* Chunky Neon Progress Bar */}
-        <div className="w-full bg-slate-900/90 rounded-full h-3 overflow-hidden mt-2.5 p-0.5 border border-white/10 relative z-10">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              targetPercent >= 100
-                ? 'bg-gradient-to-r from-emerald-400 to-teal-400 shadow-[0_0_15px_#10b981]'
-                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 shadow-[0_0_10px_rgba(59,130,246,0.6)]'
-            }`}
-            style={{ width: `${Math.min(100, Math.max(targetPercent, 2))}%` }}
-          />
-        </div>
-      </div>
-
-      {/* 3. MOTOR PENGGERAK UTAMA: SCAN AI (Langsung di Jangkauan Jempol) */}
-      <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 p-0.5 shadow-xl shadow-blue-900/30">
+      {/* 1. SEGMENTED TAB SWITCHER (Apple / Linear Elegance) */}
+      <div className="flex p-1 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-semibold select-none">
         <button
           type="button"
-          onClick={() => onOpenAiScanner?.(activeBoxNumber)}
-          className="w-full py-3.5 px-4 rounded-[14px] bg-slate-950/20 backdrop-blur-sm hover:bg-slate-950/10 active:scale-[0.98] transition-all flex items-center justify-between text-white cursor-pointer select-none"
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex-1 min-h-[42px] py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 ${
+            activeTab === 'dashboard'
+              ? 'bg-white text-slate-900 shadow-xs font-bold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-white text-blue-600 flex items-center justify-center shrink-0 shadow-md">
-              <Camera className="w-6 h-6 stroke-[2.3] animate-pulse" />
-            </div>
-            <div className="text-left">
-              <div className="text-[14px] sm:text-base font-black tracking-tight leading-tight flex items-center gap-1.5">
-                <span>JEPRET TAG SAMPEL (AI)</span>
-                <Sparkles className="w-4 h-4 text-amber-300 animate-bounce shrink-0" />
-              </div>
-              <div className="text-[10.5px] text-cyan-200 mt-0.5 font-semibold">
-                Ekstrak tulisan tangan otomatis &lt; 1.5 detik
-              </div>
-            </div>
-          </div>
-          <div className="text-right shrink-0 pl-2">
-            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-white/20 border border-white/30 text-white uppercase tracking-wider block">
-              BOX #{activeBoxNumber}
-            </span>
-          </div>
+          <LayoutDashboard className="w-4 h-4" />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('input')}
+          className={`flex-1 min-h-[42px] py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 ${
+            activeTab === 'input'
+              ? 'bg-white text-slate-900 shadow-xs font-bold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <ScanLine className="w-4 h-4" />
+          <span>Input Sampel</span>
         </button>
       </div>
 
-      {/* 4. BENTO GRID: METRIK PERSONAL, LEADERBOARD & GUDANG */}
-      <div className="grid grid-cols-2 gap-2.5">
-        
-        {/* Bento 2: Target Akun Anda */}
-        <div className="col-span-1 rounded-2xl bg-gradient-to-b from-blue-950/40 to-slate-900/60 p-3.5 border border-blue-500/25 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[9.5px] font-black uppercase tracking-wider text-blue-400">
-                Target Anda
-              </span>
-              <span className="text-[9px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-1.5 py-0.2 rounded-full">
-                {myTarget?.role || 'PPIC'}
-              </span>
-            </div>
-            <div className="text-sm font-black text-white truncate mt-1">
-              {myTarget?.name || currentUser?.name || 'Personal'}
-            </div>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-xl font-black tabular-nums text-white">
-                {myTarget?.pcs || 0}
-              </span>
-              <span className="text-[10px] text-slate-400 font-semibold">
-                / {myTarget?.target || 52} PCE
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-2.5 pt-2 border-t border-white/10">
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  myTarget?.isAchieved ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-cyan-400'
-                }`}
-                style={{ width: `${Math.min(100, Math.max(myTarget?.percent || 0, 3))}%` }}
-              />
-            </div>
-            <span className="text-[9.5px] font-bold text-slate-300 mt-1 block truncate">
-              {myTarget?.isAchieved ? '🔥 Target tercapai mantap!' : `Sisa ${myTarget?.remaining || 0} PCE lagi!`}
-            </span>
-          </div>
-        </div>
-
-        {/* Bento 3: Top Input Hari Ini */}
-        <div className="col-span-1 rounded-2xl bg-gradient-to-b from-amber-950/30 to-slate-900/60 p-3.5 border border-amber-500/25 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-400">
-                Top Input
-              </span>
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            </div>
-            <div className="text-sm font-black text-white truncate mt-1 flex items-center gap-1">
-              <span>👑</span>
-              <span className="truncate">{topContributor ? topContributor.name : 'Belum Ada'}</span>
-            </div>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-xl font-black tabular-nums text-white">
-                {topContributor ? topContributor.pcs : 0}
-              </span>
-              <span className="text-[10px] text-amber-400 font-semibold">PCE</span>
-            </div>
-          </div>
-
-          <div className="mt-2.5 pt-2 border-t border-white/10 text-[9.5px] font-bold text-amber-300 truncate">
-            {topContributor && topContributor.pcs > 0 ? `${topContributor.percent}% capaian juara!` : 'Ayo pimpin nomor 1!'}
-          </div>
-        </div>
-
-        {/* Bento 4: Total Sampel Gudang */}
-        <div className="col-span-1 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Total Sampel</span>
-              <Package className="w-3.5 h-3.5 text-[#0071e3]" />
-            </div>
-            <div className="text-base font-black tabular-nums text-[#111827] mt-1">
-              {totalAllPcs.toLocaleString('id-ID')} <span className="text-[9px] font-semibold text-gray-400">PCE</span>
-            </div>
-          </div>
-          <div className="mt-2 pt-2 border-t border-black/[0.04] text-[9px] font-medium text-gray-500 truncate">
-            {totalActiveItemsCount.toLocaleString('id-ID')} item terdata
-          </div>
-        </div>
-
-        {/* Bento 5: Okupansi Box */}
-        <div className="col-span-1 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Okupansi Box</span>
-              <Boxes className="w-3.5 h-3.5 text-emerald-500" />
-            </div>
-            <div className="text-base font-black tabular-nums text-[#111827] mt-1">
-              {occupiedBoxCount} <span className="text-[9px] font-semibold text-gray-400">/ 72 Box</span>
-            </div>
-          </div>
-          <div className="mt-2 pt-2 border-t border-black/[0.04] text-[9px] font-medium text-gray-500 truncate">
-            {Math.round((occupiedBoxCount / 72) * 100)}% kapasitas terisi
-          </div>
-        </div>
-
-        {/* Bento 6: Target 8 Personel */}
-        <div className="col-span-2 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-blue-600" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-600">
-                Arena Target PIC &amp; Support
-              </span>
-            </div>
-            <span className="text-[10px] text-emerald-600 font-extrabold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              {memberAchievers.length}/8 Tercapai
-            </span>
-          </div>
-
-          {/* 4 Kolom Tile PIC */}
-          <div className="grid grid-cols-4 gap-1.5">
-            {allMemberTargets.map((m) => {
-              const isCurrent = currentUser?.name?.toLowerCase() === m.name.toLowerCase();
-              return (
-                <div
-                  key={m.name}
-                  className={`p-1.5 rounded-xl border text-center transition ${
-                    isCurrent
-                      ? 'bg-blue-50 border-blue-400 text-blue-700 shadow-2xs ring-1 ring-blue-300'
-                      : m.isAchieved
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                      : 'bg-black/[0.02] border-black/[0.06] text-[#374151]'
-                  }`}
-                >
-                  <div className="text-[10px] font-bold truncate">{m.name}</div>
-                  <div className="text-[10px] tabular-nums font-black mt-0.5">
-                    {m.pcs}<span className="text-[8px] font-normal text-gray-400">/{m.target}</span>
-                  </div>
-                  <div className="w-full bg-black/[0.08] rounded-full h-1 mt-1 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${m.isAchieved ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600' : 'bg-gray-400'}`}
-                      style={{ width: `${Math.min(100, m.percent)}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-      </div>
-
-      {/* 5. TARGET BOX SELECTOR (Pilih Box yang Sedang Diisi) */}
-      <div className="bg-white rounded-2xl border border-black/[0.08] p-3.5 shadow-xs space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-[#86868b]">
-            Target Box Pengisian
-          </span>
-          <button
-            type="button"
-            onClick={() => setIsBoxPickerOpen((p) => !p)}
-            className="text-[11px] font-bold text-[#0071e3] hover:underline flex items-center gap-0.5 cursor-pointer"
-          >
-            <span>{isBoxPickerOpen ? 'Tutup Pilihan' : 'Ganti Box'}</span>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isBoxPickerOpen ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-
-        {/* Box Card Info */}
-        <div className="flex items-center justify-between bg-black/[0.03] border border-black/[0.06] rounded-xl p-2.5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0071e3]/10 text-[#0071e3] font-bold text-sm shrink-0 border border-[#0071e3]/20 shadow-2xs">
-              #{activeBoxNumber}
-            </div>
+      {/* ========================================================= */}
+      {/* TAB 1: DASHBOARD MONITORING & REKAP (Bersih, Elegan, Tenang) */}
+      {/* ========================================================= */}
+      {activeTab === 'dashboard' && (
+        <div className="space-y-3 animate-in fade-in duration-150">
+          
+          {/* Header Dashboard */}
+          <div className="flex items-center justify-between pt-0.5 px-0.5">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#1d1d1f]">
-                  BOX #{activeBoxNumber}
-                </span>
-                <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-white border border-black/[0.08] text-[#86868b]">
-                  {currentBox.rackName || 'RAK 1'}
+              <h1 className="text-lg font-bold text-slate-900 tracking-tight">Ringkasan Operasional</h1>
+              <p className="text-[11px] text-slate-500 font-normal">Monitoring progres target tim R&amp;D</p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white text-slate-600 border border-slate-200 shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <span>{formatToDDMMYYYY(todayIso)}</span>
+            </div>
+          </div>
+
+          {/* Hero Target Tim Harian (Elegan & Terukur) */}
+          <div className="rounded-2xl bg-slate-900 text-white p-4 border border-slate-800 shadow-sm relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Target Harian Tim
                 </span>
               </div>
-              <p className="text-[11px] text-[#86868b] mt-0.5">
-                PIC: <strong>@{currentBox.picName || 'Royan'}</strong> &bull; {currentBoxItems.length} item ({currentBoxPcs} PCE)
-              </p>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border tabular-nums ${
+                targetPercent >= 100
+                  ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                  : 'bg-slate-800 text-slate-300 border-slate-700'
+              }`}>
+                {targetPercent}% Tercapai
+              </span>
+            </div>
+
+            <div className="flex items-baseline justify-between mt-1">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-bold tabular-nums tracking-tight text-white">
+                  {todayTotalPcs.toLocaleString('id-ID')}
+                </span>
+                <span className="text-xs text-slate-400 font-normal">
+                  / {targetPcs.toLocaleString('id-ID')} PCE
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium">
+                {targetRemaining <= 0 ? 'Target selesai' : `Sisa ${targetRemaining} PCE`}
+              </span>
+            </div>
+
+            {/* Progress Bar Ramping & Presisi */}
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden mt-3 border border-slate-700/50">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  targetPercent >= 100 ? 'bg-emerald-400' : 'bg-blue-600'
+                }`}
+                style={{ width: `${Math.min(100, targetPercent)}%` }}
+              />
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setSelectedBoxNumber(activeBoxNumber)}
-            className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-black/[0.04] border border-black/[0.08] text-[11px] font-semibold text-[#1d1d1f] shadow-2xs transition cursor-pointer shrink-0"
-          >
-            Lihat Box
-          </button>
-        </div>
+          {/* 2-Kolom Grid Metrik Ramping */}
+          <div className="grid grid-cols-2 gap-2.5">
+            
+            {/* Target Personal */}
+            <div className="col-span-1 rounded-2xl bg-white p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Target Anda</span>
+                  <span className="text-[9px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-100">
+                    {myTarget?.role || 'PPIC'}
+                  </span>
+                </div>
+                <div className="text-[13px] font-bold text-slate-800 truncate mt-1">
+                  {myTarget?.name || currentUser?.name || 'Personal'}
+                </div>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-lg font-bold tabular-nums text-slate-900">
+                    {myTarget?.pcs || 0}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    / {myTarget?.target || 52} PCE
+                  </span>
+                </div>
+              </div>
 
-        {/* Accordion Box Picker (Jika Dibuka) */}
-        {isBoxPickerOpen && (
-          <div className="pt-2 border-t border-black/[0.06] space-y-2 animate-in fade-in duration-150">
-            {/* Filter Rak */}
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
-              {['ALL', 'RAK 1', 'RAK 2', 'RAK 3', 'RAK 4', 'RAK 5'].map((rk) => (
-                <button
-                  key={rk}
-                  type="button"
-                  onClick={() => setBoxRackFilter(rk)}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition cursor-pointer ${
-                    boxRackFilter === rk
-                      ? 'bg-[#1d1d1f] text-white shadow-2xs'
-                      : 'bg-black/[0.04] text-[#86868b] hover:bg-black/[0.08]'
-                  }`}
-                >
-                  {rk === 'ALL' ? 'Semua Rak' : rk}
-                </button>
-              ))}
+              <div className="mt-2 pt-2 border-t border-slate-100">
+                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      myTarget?.isAchieved ? 'bg-emerald-500' : 'bg-blue-600'
+                    }`}
+                    style={{ width: `${Math.min(100, myTarget?.percent || 0)}%` }}
+                  />
+                </div>
+                <span className="text-[9.5px] font-medium text-slate-500 mt-1 block truncate">
+                  {myTarget?.isAchieved ? 'Target tercapai' : `Sisa ${myTarget?.remaining || 0} PCE`}
+                </span>
+              </div>
             </div>
 
-            {/* Grid 72 Box (Scrollable) */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 max-h-48 overflow-y-auto p-1 bg-black/[0.02] rounded-xl border border-black/[0.04]">
-              {filteredBoxes.map((b) => {
-                const bNum = Number(b.boxNumber);
-                const isSelected = bNum === activeBoxNumber;
-                return (
+            {/* Kontributor Utama */}
+            <div className="col-span-1 rounded-2xl bg-white p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Kontributor Utama</span>
+                  <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
+                </div>
+                <div className="text-[13px] font-bold text-slate-800 truncate mt-1">
+                  {topContributor ? topContributor.name : 'Belum Ada'}
+                </div>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-lg font-bold tabular-nums text-slate-900">
+                    {topContributor ? topContributor.pcs : 0}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-normal">PCE</span>
+                </div>
+              </div>
+
+              <div className="mt-2 pt-2 border-t border-slate-100 text-[9.5px] font-medium text-slate-500 truncate">
+                {topContributor && topContributor.pcs > 0 ? `${topContributor.percent}% dari target` : 'Input hari ini'}
+              </div>
+            </div>
+
+            {/* Total Sampel Gudang */}
+            <div className="col-span-1 rounded-2xl bg-white p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Total Sampel</span>
+                  <Package className="w-3.5 h-3.5 text-slate-400" />
+                </div>
+                <div className="text-base font-bold tabular-nums text-slate-900 mt-1">
+                  {totalAllPcs.toLocaleString('id-ID')} <span className="text-[10px] font-normal text-slate-400">PCE</span>
+                </div>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 text-[9.5px] font-medium text-slate-500 truncate">
+                {totalActiveItemsCount.toLocaleString('id-ID')} item terdata
+              </div>
+            </div>
+
+            {/* Okupansi Box */}
+            <div className="col-span-1 rounded-2xl bg-white p-3.5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Okupansi Box</span>
+                  <Boxes className="w-3.5 h-3.5 text-slate-400" />
+                </div>
+                <div className="text-base font-bold tabular-nums text-slate-900 mt-1">
+                  {occupiedBoxCount} <span className="text-[10px] font-normal text-slate-400">/ 72 Box</span>
+                </div>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-100 text-[9.5px] font-medium text-slate-500 truncate">
+                {Math.round((occupiedBoxCount / 72) * 100)}% kapasitas terisi
+              </div>
+            </div>
+
+            {/* Target 8 Personel */}
+            <div className="col-span-2 rounded-2xl bg-white p-3.5 border border-slate-200/80 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Target PIC &amp; Support
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {memberAchievers.length}/8 Tercapai
+                </span>
+              </div>
+
+              {/* 4 Kolom Tile PIC */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {allMemberTargets.map((m) => {
+                  const isCurrent = currentUser?.name?.toLowerCase() === m.name.toLowerCase();
+                  return (
+                    <div
+                      key={m.name}
+                      className={`p-2 rounded-xl border text-center transition ${
+                        isCurrent
+                          ? 'bg-blue-50/60 border-blue-200 text-blue-900 font-bold'
+                          : m.isAchieved
+                          ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 font-semibold'
+                          : 'bg-slate-50 border-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="text-[10.5px] truncate">{m.name}</div>
+                      <div className="text-[10px] tabular-nums mt-0.5">
+                        {m.pcs}<span className="text-[8px] text-slate-400">/{m.target}</span>
+                      </div>
+                      <div className="w-full bg-slate-200/60 rounded-full h-1 mt-1 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${m.isAchieved ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600' : 'bg-slate-400'}`}
+                          style={{ width: `${Math.min(100, m.percent)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Tombol Pintas ke Input Sampel & Rekap */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('input')}
+              className="py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-blue-200/80 active:scale-98"
+            >
+              <span>Input Box #{activeBoxNumber}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenRekap?.()}
+              className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-200 active:scale-98"
+            >
+              <span>Rekap Tim R&amp;D</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* TAB 2: INPUT SAMPEL (Stasiun Kerja Cepat, Fokus Kamera & Box) */}
+      {/* ========================================================= */}
+      {activeTab === 'input' && (
+        <div className="space-y-3 animate-in fade-in duration-150">
+          
+          {/* Target Box Selector */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                Target Box Pengisian
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsBoxPickerOpen((p) => !p)}
+                className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5 cursor-pointer"
+              >
+                <span>{isBoxPickerOpen ? 'Tutup Pilihan' : 'Ganti Box'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isBoxPickerOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Box Card Info */}
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold text-sm shrink-0 border border-blue-100">
+                  #{activeBoxNumber}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900">
+                      BOX #{activeBoxNumber}
+                    </span>
+                    <span className="text-[10px] font-medium px-2 py-0.2 rounded-full bg-white border border-slate-200 text-slate-500">
+                      {currentBox.rackName || 'RAK 1'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    PIC: <strong>@{currentBox.picName || 'Royan'}</strong> &bull; {currentBoxItems.length} item ({currentBoxPcs} PCE)
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedBoxNumber(activeBoxNumber)}
+                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs transition cursor-pointer shrink-0"
+              >
+                Lihat Box
+              </button>
+            </div>
+
+            {/* Accordion Box Picker */}
+            {isBoxPickerOpen && (
+              <div className="pt-2 border-t border-slate-100 space-y-2 animate-in fade-in duration-150">
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                  {['ALL', 'RAK 1', 'RAK 2', 'RAK 3', 'RAK 4', 'RAK 5'].map((rk) => (
+                    <button
+                      key={rk}
+                      type="button"
+                      onClick={() => setBoxRackFilter(rk)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap transition cursor-pointer ${
+                        boxRackFilter === rk
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {rk === 'ALL' ? 'Semua Rak' : rk}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 max-h-48 overflow-y-auto p-1 bg-slate-50/60 rounded-xl border border-slate-100">
+                  {filteredBoxes.map((b) => {
+                    const bNum = Number(b.boxNumber);
+                    const isSelected = bNum === activeBoxNumber;
+                    return (
+                      <button
+                        key={bNum}
+                        type="button"
+                        onClick={() => handleSelectBox(bNum)}
+                        className={`p-1.5 rounded-lg text-center transition cursor-pointer border ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-bold'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/80'
+                        }`}
+                      >
+                        <div className="text-[11px] font-mono leading-tight">#{bNum}</div>
+                        <div className={`text-[8px] truncate ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
+                          {b.picName || 'PIC'}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Kartu Tombol Utama: Pindai Tag Sampel (Kamera) */}
+          <div className="rounded-2xl bg-blue-600 text-white p-4 shadow-sm border border-blue-500">
+            <button
+              type="button"
+              onClick={() => onOpenAiScanner?.(activeBoxNumber)}
+              className="w-full flex items-center justify-between text-left cursor-pointer active:scale-[0.99] transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold tracking-tight leading-tight">
+                    Pindai Tag Sampel (Kamera)
+                  </div>
+                  <div className="text-[11px] text-blue-100 mt-0.5 font-normal">
+                    Ekstraksi tulisan tangan &amp; label otomatis
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white shrink-0 border border-white/25">
+                BOX #{activeBoxNumber}
+              </span>
+            </button>
+          </div>
+
+          {/* Feed: Daftar Sampel Hari Ini */}
+          {displayedItems.length > 0 ? (
+            <div className="space-y-2.5 pt-1">
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>Sampel Masuk Hari Ini</span>
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.2 rounded-full border border-blue-100 tabular-nums">
+                      {displayedItems.length} Item &bull; {displayedPcs} PCE
+                    </span>
+                  </h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Riwayat pendataan ({formatToDDMMYYYY(todayIso)})
+                  </p>
+                </div>
+
+                <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 text-[10px] font-semibold">
                   <button
-                    key={bNum}
                     type="button"
-                    onClick={() => handleSelectBox(bNum)}
-                    className={`p-1.5 rounded-lg text-center transition cursor-pointer border ${
-                      isSelected
-                        ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs font-bold'
-                        : 'bg-white hover:bg-black/[0.04] text-[#1d1d1f] border-black/[0.06]'
+                    onClick={() => setFilterMode('all')}
+                    className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                      filterMode === 'all' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600'
                     }`}
                   >
-                    <div className="text-[11px] font-mono leading-tight">#{bNum}</div>
-                    <div className={`text-[8px] truncate ${isSelected ? 'text-white/80' : 'text-[#86868b]'}`}>
-                      {b.picName || 'PIC'}
-                    </div>
+                    Semua
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
+                  <button
+                    type="button"
+                    onClick={() => setFilterMode('my')}
+                    className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                      filterMode === 'my' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600'
+                    }`}
+                  >
+                    Input Saya
+                  </button>
+                </div>
+              </div>
 
-      {/* 5. FEED: DAFTAR SAMPEL BARU DIMASUKKAN HARI INI (Hanya Tampil Jika Ada Item Hari Ini) */}
-      {displayedItems.length > 0 && (
-        <div className="space-y-2.5 pt-1">
-          <div className="flex items-center justify-between px-1">
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold text-[#1d1d1f] flex items-center gap-1.5">
-                <span>Sampel Masuk Hari Ini</span>
-                <span className="text-[10px] font-bold bg-[#0071e3]/10 text-[#0071e3] px-2 py-0.2 rounded-full tabular-nums">
-                  {displayedItems.length} Item &bull; {displayedPcs} PCE
-                </span>
-              </h3>
-              <p className="text-[10px] text-[#86868b] mt-0.5">
-                Riwayat pendataan real-time hari ini ({formatToDDMMYYYY(todayIso)})
-              </p>
-            </div>
-
-            {/* Filter Pill: Semua vs Saya */}
-            <div className="flex items-center p-0.5 bg-black/[0.04] rounded-full border border-black/[0.06] shrink-0">
-              <button
-                type="button"
-                onClick={() => setFilterMode('all')}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition cursor-pointer ${
-                  filterMode === 'all'
-                    ? 'bg-white text-[#1d1d1f] shadow-2xs font-bold'
-                    : 'text-[#86868b]'
-                }`}
-              >
-                Semua ({todayItems.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterMode('my')}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition cursor-pointer ${
-                  filterMode === 'my'
-                    ? 'bg-white text-[#1d1d1f] shadow-2xs font-bold'
-                    : 'text-[#86868b]'
-                }`}
-              >
-                Saya ({myTodayItems.length})
-              </button>
-            </div>
-          </div>
-
-          {/* List of Cards */}
-          <div className="space-y-2">
-            {displayedItems.map((item) => {
-              const qty = Number(item.jumlah || item.qty || item.pcs) || 1;
-              const isDispatched = item.status === 'Dispatched' || item.status === 'Terkirim';
-              const isBorrowed = item.status === 'Borrowed' || item.status === 'Dipinjam';
-
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-2xl border border-black/[0.08] p-3 shadow-xs space-y-2 hover:border-[#0071e3]/30 transition"
-                >
-                  {/* Row 1: Box Badge, Code & Status */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                      {/* Box Number Pill */}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBoxNumber(Number(item.boxNumber || item.box_number))}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0071e3]/10 text-[#0071e3] text-[10px] font-extrabold border border-[#0071e3]/20 hover:bg-[#0071e3] hover:text-white transition cursor-pointer"
-                        title="Klik untuk membuka box ini"
-                      >
-                        <Boxes className="w-3 h-3" />
-                        <span>BOX #{item.boxNumber || item.box_number || 1}</span>
-                      </button>
-
-                      {/* Unique Code Pill with 1-tap Copy */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleCopyCode(item.kode || item.sku, e)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/[0.04] hover:bg-black/[0.08] text-[#1d1d1f] text-[10px] font-mono font-bold border border-black/[0.08] transition cursor-pointer"
-                        title="Salin kode sampel"
-                      >
-                        {copiedCode === (item.kode || item.sku) ? (
-                          <Check className="w-3 h-3 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3 h-3 text-[#86868b]" />
-                        )}
-                        <span>{item.kode || item.sku || '-'}</span>
-                      </button>
-
-                      {/* Jenis Sample Pill */}
-                      {item.jenisSample && item.jenisSample !== 'NA' && (
-                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20">
-                          {item.jenisSample}
+              {/* Feed List Items */}
+              <div className="space-y-2">
+                {displayedItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3 text-left"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-bold text-blue-600">
+                          {item.kode || item.itemCode || '-'}
                         </span>
-                      )}
+                        <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                          BOX #{item.boxNumber}
+                        </span>
+                      </div>
+                      <div className="text-xs font-bold text-slate-900 truncate mt-0.5">
+                        {item.nama || item.name || 'Sample'}
+                      </div>
+                      <div className="text-[10.5px] text-slate-500 flex items-center gap-2 mt-0.5">
+                        <span>{item.buyer || 'Buyer -'}</span>
+                        <span>&bull;</span>
+                        <span className="font-semibold text-slate-700">{item.jumlah || 1} PCE</span>
+                      </div>
                     </div>
 
-                    {/* Status Pill */}
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
-                      isDispatched
-                        ? 'bg-blue-50 text-blue-600 border-blue-200'
-                        : isBorrowed
-                        ? 'bg-amber-50 text-amber-600 border-amber-200'
-                        : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                    }`}>
-                      {isDispatched ? 'Terkirim' : isBorrowed ? 'Dipinjam' : 'Dalam Box'}
-                    </span>
-                  </div>
-
-                  {/* Row 2: Style & Sample No */}
-                  <div>
-                    <h4 className="text-xs font-bold text-[#1d1d1f] leading-snug">
-                      {item.style || item.name || 'Sample Garmen Tanpa Nama'}
-                    </h4>
-                    {item.sampleNo && item.sampleNo !== 'NA' && (
-                      <p className="text-[11px] font-medium text-[#86868b] mt-0.5">
-                        Artikel: <strong className="text-[#1d1d1f]">{item.sampleNo}</strong>
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Row 3: Detail Chips (Size, Color, Qty, Buyer) */}
-                  <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-[#86868b] pt-0.5">
-                    {item.size && item.size !== 'NA' && (
-                      <span className="bg-black/[0.03] px-2 py-0.5 rounded border border-black/[0.06] font-medium text-[#1d1d1f]">
-                        Size: <strong>{item.size}</strong>
-                      </span>
-                    )}
-                    {item.color && item.color !== 'NA' && (
-                      <span className="bg-black/[0.03] px-2 py-0.5 rounded border border-black/[0.06] font-medium text-[#1d1d1f]">
-                        Warna: <strong>{item.color}</strong>
-                      </span>
-                    )}
-                    <span className="bg-[#0071e3]/10 text-[#0071e3] px-2 py-0.5 rounded font-bold">
-                      {qty} PCE
-                    </span>
-                    {item.buyerNo && item.buyerNo !== 'NA' && (
-                      <span className="text-[#86868b]">
-                        &bull; Buyer: {item.buyerNo}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Row 4: Penginput info & Actions */}
-                  <div className="flex items-center justify-between pt-1 border-t border-black/[0.04] text-[10px] text-[#86868b]">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#86868b]" />
-                      <span>{item.penginput || item.picName || 'Tim'} &bull; Hari ini</span>
-                    </div>
-
-                    {/* Action Buttons: Edit, Print, Delete */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopyCode(item.kode || item.itemCode, e)}
+                        title="Salin Kode"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                      >
+                        {copiedCode === (item.kode || item.itemCode) ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
                       <button
                         type="button"
                         onClick={() => setSelectedPrintItem(item)}
-                        className="p-1.5 rounded-lg text-[#86868b] hover:text-[#0071e3] hover:bg-black/[0.04] transition cursor-pointer"
-                        title="Cetak KTP Sampel"
+                        title="Cetak Kartu"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5" />
                       </button>
@@ -766,35 +730,44 @@ export const MobileQuickEntryView = ({
                           setItemModalConfig({
                             isOpen: true,
                             item,
-                            targetBoxNumber: Number(item.boxNumber || item.box_number || 1),
+                            targetBoxNumber: Number(item.boxNumber),
                           });
                         }}
-                        className="p-1.5 rounded-lg text-[#86868b] hover:text-[#0071e3] hover:bg-black/[0.04] transition cursor-pointer"
-                        title="Edit rincian sampel"
+                        title="Edit Item"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteItem(item, e)}
-                        className="p-1.5 rounded-lg text-[#86868b] hover:text-[#ff3b30] hover:bg-red-50 transition cursor-pointer"
-                        title="Hapus sampel ini"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-center space-y-2 mt-2">
+              <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto border border-slate-200/60">
+                <Package className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="text-xs font-bold text-slate-700">
+                {filterMode === 'my' ? 'Belum Ada Sampel Inputan Anda' : 'Belum Ada Sampel Hari Ini'}
+              </div>
+              <p className="text-[11px] text-slate-500 max-w-[260px] mx-auto leading-relaxed">
+                {filterMode === 'my'
+                  ? `Gunakan tombol kamera di atas untuk mencatat sampel fisik ke BOX #${activeBoxNumber}.`
+                  : `Stasiun siap. Arahkan kamera ke tag sampel fisik untuk mulai mengisi BOX #${activeBoxNumber}.`}
+              </p>
+            </div>
+          )}
+
         </div>
       )}
 
-      {/* Modal Cetak KTP Sampel (Jika Dipilih) */}
+      {/* Modal Cetak Kartu Barcode (Jika Dipilih) */}
       {selectedPrintItem && (
         <CardPrintModal
-          itemsToPrint={[selectedPrintItem]}
+          isOpen={Boolean(selectedPrintItem)}
+          item={selectedPrintItem}
+          boxNumber={Number(selectedPrintItem?.boxNumber) || activeBoxNumber}
           onClose={() => setSelectedPrintItem(null)}
         />
       )}

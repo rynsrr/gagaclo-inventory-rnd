@@ -7,10 +7,7 @@ import {
   Lock,
   ArrowRight,
   Shield,
-  Sparkles,
-  Flame,
-  Zap,
-  CheckCircle2
+  Check
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
 import { isHelper, isManager } from '../utils/authUtils';
@@ -82,19 +79,11 @@ export const MobileLoginModal = ({
 
   const selectedUser = users.find((u) => String(u.id) === String(selectedUserId));
 
-  // Warna avatar energik per profil
-  const getAvatarBadge = (u) => {
-    if (isManager(u)) return { emoji: '👑', color: 'from-amber-400 to-amber-600', ring: 'border-amber-400/50' };
-    if (isHelper(u)) return { emoji: '🤝', color: 'from-sky-400 to-indigo-500', ring: 'border-sky-400/50' };
-    const num = Number(u.ppicNumber) || 1;
-    const colors = [
-      'from-cyan-400 to-blue-600',
-      'from-emerald-400 to-teal-600',
-      'from-rose-400 to-pink-600',
-      'from-violet-400 to-purple-600',
-      'from-amber-400 to-orange-600',
-    ];
-    return { emoji: '⚡', color: colors[(num - 1) % colors.length], ring: 'border-cyan-400/50' };
+  // Inisial rapi 2 huruf
+  const getInitials = (name = '') => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
 
   const handleLogin = (e) => {
@@ -102,7 +91,7 @@ export const MobileLoginModal = ({
     setError('');
 
     if (!selectedUser) {
-      setError('Silakan pilih profil kamu terlebih dahulu.');
+      setError('Silakan pilih profil akun terlebih dahulu.');
       return;
     }
 
@@ -136,7 +125,7 @@ export const MobileLoginModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-[#050b14]/95 backdrop-blur-xl animate-in fade-in duration-300 font-apple overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200 font-apple overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="mobile-login-title"
@@ -144,22 +133,8 @@ export const MobileLoginModal = ({
         if (!isMandatory && e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Background Atmosphere: Electric Cyan & Emerald Pulsing Orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full bg-gradient-to-br from-cyan-500/30 via-emerald-600/20 to-transparent blur-3xl animate-pulse" />
-        <div className="absolute -bottom-32 -right-24 w-96 h-96 rounded-full bg-gradient-to-tl from-emerald-500/25 via-teal-700/20 to-transparent blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[440px] bg-emerald-400/10 rounded-full blur-[100px]" />
-        <div 
-          className="absolute inset-0 opacity-[0.06]" 
-          style={{ 
-            backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 1.2px, transparent 1.2px)', 
-            backgroundSize: '22px 22px' 
-          }} 
-        />
-      </div>
-
-      {/* High-Energy Glassmorphic Card Container */}
-      <div className="relative z-10 w-full max-w-[390px] bg-[#0c1320]/90 backdrop-blur-2xl rounded-[32px] p-5 sm:p-6 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.9),0_0_40px_rgba(16,185,129,0.18)] border border-emerald-500/20 text-white space-y-4 animate-in zoom-in-95 duration-200">
+      {/* Container Modal Bergaya Modern Behance / Apple Slate Minimalis */}
+      <div className="relative z-10 w-full max-w-[380px] bg-[#0f172a] rounded-3xl p-6 shadow-2xl border border-slate-800 text-white space-y-4 animate-in zoom-in-95 duration-150">
         
         {/* Tombol Tutup */}
         {!isMandatory && (
@@ -167,49 +142,43 @@ export const MobileLoginModal = ({
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/5 hover:bg-white/10 active:scale-95 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer border border-white/10"
+            className="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-800/60 hover:bg-slate-800 active:scale-95 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer border border-slate-700/50"
           >
             <X className="w-4 h-4" />
           </button>
         )}
 
-        {/* Motivational Header */}
-        <div className="text-center space-y-1.5 pt-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-cyan-500/15 border border-emerald-400/40 text-emerald-300 text-[11px] font-black tracking-wider uppercase shadow-xs">
-            <Flame className="w-3.5 h-3.5 text-amber-400 animate-bounce shrink-0" />
-            <span>MISI 400 PCE • GASPOL HARI INI</span>
+        {/* Header Elegan & Profesional */}
+        <div className="text-center space-y-1 pt-1">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            <span>Gagaclo R&amp;D Inventory</span>
           </div>
 
           <h2
             id="mobile-login-title"
-            className="text-[24px] font-black tracking-tight text-white leading-tight flex items-center justify-center gap-1.5"
+            className="text-xl font-bold tracking-tight text-white pt-1"
           >
-            <span>Siap Bergerak &amp; Input!</span>
-            <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />
+            Masuk ke Sistem
           </h2>
-          <p className="text-xs text-slate-300 font-medium">
-            Pilih profilmu dan mulai kerja di gudang
+          <p className="text-xs text-slate-400 font-normal">
+            Pilih profil akun untuk memulai pendataan
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3 rounded-2xl bg-red-950/70 border border-red-500/50 text-red-200 text-xs font-semibold flex items-center justify-center gap-2 text-center animate-in fade-in">
+          <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/30 text-red-300 text-xs font-medium flex items-center justify-center gap-2 text-center animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* High-Energy 9-Operative Card Grid (3x3) */}
+        {/* Grid 9 Personel Tim (3x3) - Desain Bersih & Elegan */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-300 px-1">
-            <span className="flex items-center gap-1">
-              <span>Pilih Operatif Lapangan</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">9 Tim</span>
-            </span>
-            <span className="text-emerald-400 flex items-center gap-1 text-[10px]">
-              <Sparkles className="w-3 h-3 text-amber-300" /> 1-Tap Ready
-            </span>
+          <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 px-1">
+            <span>Pilih Profil Personel</span>
+            <span className="text-slate-500">9 Akun</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -218,7 +187,7 @@ export const MobileLoginModal = ({
               const isLeader = isManager(u);
               const isSup = isHelper(u);
               const roleLabel = isLeader ? 'Leader Inv' : isSup ? 'Support' : `PPIC #${u.ppicNumber || '1'}`;
-              const badge = getAvatarBadge(u);
+              const initials = getInitials(u.name);
 
               return (
                 <button
@@ -229,28 +198,34 @@ export const MobileLoginModal = ({
                     setPassword('');
                     setError('');
                   }}
-                  className={`py-2 px-1.5 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 cursor-pointer relative overflow-hidden ${
+                  className={`py-2 px-1.5 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 cursor-pointer relative ${
                     isSelected
-                      ? 'bg-gradient-to-b from-emerald-500/30 via-teal-600/25 to-slate-900 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.35)] ring-2 ring-emerald-400/60 scale-[1.02]'
-                      : 'bg-white/[0.04] border-white/10 hover:border-white/20 text-slate-300 hover:text-white'
+                      ? 'bg-blue-600/15 border-blue-500 text-white shadow-sm ring-1 ring-blue-500/50'
+                      : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700 text-slate-300 hover:text-white'
                   }`}
                 >
-                  {/* Avatar Circle with Emoji */}
-                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${badge.color} text-slate-950 font-black text-xs flex items-center justify-center shadow-md border ${badge.ring}`}>
-                    <span>{badge.emoji}</span>
+                  {/* Avatar Lingkaran Inisial Netral */}
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold border transition ${
+                    isSelected
+                      ? 'bg-blue-600 text-white border-blue-400'
+                      : isLeader
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      : 'bg-slate-800 text-slate-300 border-slate-700'
+                  }`}>
+                    {initials}
                   </div>
 
                   <div className="w-full">
-                    <div className="text-[12px] font-extrabold truncate max-w-full text-white leading-tight">
+                    <div className="text-[11.5px] font-bold truncate max-w-full text-slate-100">
                       {u.name}
                     </div>
-                    <div className={`text-[9.5px] font-semibold truncate ${
+                    <div className={`text-[9.5px] font-medium truncate ${
                       isSelected 
-                        ? 'text-emerald-300' 
+                        ? 'text-blue-400' 
                         : isLeader 
-                          ? 'text-amber-400' 
+                          ? 'text-amber-400/90' 
                           : isSup 
-                            ? 'text-sky-400' 
+                            ? 'text-slate-400' 
                             : 'text-slate-400'
                     }`}>
                       {roleLabel}
@@ -258,8 +233,8 @@ export const MobileLoginModal = ({
                   </div>
 
                   {isSelected && (
-                    <div className="absolute top-1 right-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 fill-emerald-950" />
+                    <div className="absolute top-1.5 right-1.5">
+                      <Check className="w-3 h-3 text-blue-400" />
                     </div>
                   )}
                 </button>
@@ -268,38 +243,12 @@ export const MobileLoginModal = ({
           </div>
         </div>
 
-        {/* Selected User Energy Banner (Replaces redundant dropdown) */}
-        {selectedUser ? (
-          <div className="py-2 px-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-cyan-500/10 border border-emerald-400/40 flex items-center justify-between text-white animate-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-sm">
-                {selectedUser.name[0]}
-              </div>
-              <div>
-                <div className="text-[12px] font-black text-white leading-tight">
-                  {selectedUser.name} <span className="text-[10px] text-emerald-300 font-semibold">• {isManager(selectedUser) ? 'Leader Inv' : isHelper(selectedUser) ? 'Support' : `PPIC #${selectedUser.ppicNumber || '1'}`}</span>
-                </div>
-                <div className="text-[10px] text-emerald-300/90 font-medium">
-                  ⚡ Siap bergerak &amp; kejar target!
-                </div>
-              </div>
-            </div>
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950">
-              SIAP
-            </span>
-          </div>
-        ) : (
-          <div className="py-2 px-3 rounded-2xl bg-white/[0.03] border border-white/5 text-center text-[11px] text-slate-400 font-medium">
-            Ketuk salah satu dari 9 nama di atas untuk mulai
-          </div>
-        )}
-
-        {/* Form Login: Password & Action */}
-        <form onSubmit={handleLogin} className="space-y-3 pt-0.5">
+        {/* Form Login: Password & Masuk */}
+        <form onSubmit={handleLogin} className="space-y-3 pt-1">
           
-          {/* Password Input with Lock Icon & Eye Toggle */}
+          {/* Kolom Password Minimalis */}
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
             <input
               id="mobile-password-input"
               aria-label="Password Akun"
@@ -311,51 +260,50 @@ export const MobileLoginModal = ({
                 setPassword(e.target.value);
                 if (error) setError('');
               }}
-              placeholder="Masukkan password akun"
-              className="w-full rounded-2xl border border-emerald-500/30 bg-slate-950/80 py-3 px-10 text-[14px] text-white text-center font-medium placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/40 focus:outline-hidden transition shadow-inner"
+              placeholder={selectedUser ? `Password untuk ${selectedUser.name}` : 'Masukkan password'}
+              className="w-full rounded-xl border border-slate-800 bg-slate-900/90 py-2.5 px-10 text-[13.5px] text-white text-center font-normal placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden transition"
             />
             <button
               type="button"
               onClick={() => setShowPassword((p) => !p)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition cursor-pointer"
               aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
 
-          {/* Remember me Checkbox (Align Center) */}
+          {/* Remember me Checkbox */}
           <div className="flex items-center justify-center pt-0.5">
-            <label className="inline-flex items-center gap-2 text-[12.5px] font-medium text-slate-300 hover:text-white cursor-pointer select-none transition">
+            <label className="inline-flex items-center gap-2 text-[12px] font-medium text-slate-400 hover:text-slate-200 cursor-pointer select-none transition">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded-[4px] border-slate-700 bg-slate-950 text-emerald-500 accent-emerald-500 focus:ring-0 cursor-pointer"
+                className="h-3.5 w-3.5 rounded-[3px] border-slate-700 bg-slate-900 text-blue-600 accent-blue-600 focus:ring-0 cursor-pointer"
               />
-              <span>Remember me di smartphone ini</span>
+              <span>Ingat akun di perangkat ini</span>
             </label>
           </div>
 
-          {/* High-Energy Action Button (Pulsing Gradient) */}
+          {/* Tombol Masuk Profesional (Gagaclo Blue) */}
           <div className="pt-1">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 hover:brightness-110 active:scale-98 text-slate-950 font-black text-[15px] tracking-wide transition shadow-[0_8px_30px_rgba(16,185,129,0.45)] cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-semibold text-[13.5px] tracking-wide transition shadow-sm cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Zap className="w-4 h-4 fill-slate-950 text-slate-950" />
-              <span>{isSubmitting ? 'Memverifikasi...' : 'GASPOL, MULAI KERJA SEKARANG!'}</span>
-              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+              <span>{isSubmitting ? 'Memverifikasi...' : 'Masuk'}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
         </form>
 
-        {/* Security Footer */}
-        <div className="pt-0.5 flex items-center justify-center gap-1.5 text-[10.5px] text-slate-400 text-center font-medium">
-          <Shield className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Sistem Pencatatan Fisik R&D Gagaclo • 72 Box</span>
+        {/* Security Footer Minimalis */}
+        <div className="pt-1 flex items-center justify-center gap-1.5 text-[10.5px] text-slate-500 text-center font-normal">
+          <Shield className="w-3 h-3 text-slate-500" />
+          <span>Enkripsi Sesi Aman &bull; 72 Box Database</span>
         </div>
 
       </div>

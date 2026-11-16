@@ -53,6 +53,7 @@ const AnnouncementModal = lazy(() =>
 );
 import { AiTagScannerModal } from './components/AiTagScannerModal';
 import { MobileQuickEntryView } from './components/MobileQuickEntryView';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { allocateNextSequentialCode } from './utils/sequenceResolver';
 import {
   Boxes,
@@ -392,7 +393,7 @@ const AppContent = () => {
         />
 
         {/* Top Navigation Bar */}
-        <header className="inventory-header">
+        <header className="inventory-header relative">
           <div className="inventory-header-scroll">
             <div className="inventory-header-row font-apple">
 
@@ -418,8 +419,37 @@ const AppContent = () => {
                 </div>
               </button>
 
-              {/* User Profile Pill khusus Mobile di Header Kanan */}
-              <div className="ml-auto flex items-center md:hidden">
+              {/* Actions khusus Mobile di Header Kanan */}
+              <div className="ml-auto flex items-center gap-1.5 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen((prev) => !prev)}
+                  className={`flex items-center justify-center h-8 w-8 rounded-full border transition cursor-pointer active:scale-95 ${
+                    isSearchOpen || searchQuery
+                      ? 'bg-[#0071e3] text-white border-[#0071e3]'
+                      : 'bg-white hover:bg-slate-100 text-slate-700 border-black/[0.08] shadow-2xs'
+                  }`}
+                  aria-label="Pencarian Cepat"
+                  title="Pencarian Cepat"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                </button>
+
+                {dispatchCart?.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCartOpen(true)}
+                    className="relative flex items-center justify-center h-8 w-8 rounded-full bg-rose-50 text-rose-600 border border-rose-200 transition cursor-pointer active:scale-95"
+                    aria-label="Keranjang Pengiriman"
+                    title={`Keranjang (${dispatchCart.length})`}
+                  >
+                    <ShoppingBasket className="h-3.5 w-3.5" />
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white">
+                      {dispatchCart.length}
+                    </span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -432,7 +462,7 @@ const AppContent = () => {
                   <div className="w-5 h-5 rounded-full bg-[#0071e3] text-white flex items-center justify-center text-[10px] font-black">
                     {currentUser?.name?.charAt(0) || 'U'}
                   </div>
-                  <span className="max-w-[80px] truncate text-xs">{currentUser?.name || 'Login'}</span>
+                  <span className="max-w-[75px] truncate text-xs">{currentUser?.name || 'Login'}</span>
                 </button>
               </div>
 
@@ -495,7 +525,7 @@ const AppContent = () => {
               </div>
 
               {/* Pencarian Cepat (Hanya Icon Kaca Pembesar) */}
-              <div className={`relative ${isSearchOpen ? 'z-50' : ''}`} ref={searchContainerRef}>
+              <div>
                 <button
                   type="button"
                   onClick={() => setIsSearchOpen((prev) => !prev)}
@@ -509,167 +539,6 @@ const AppContent = () => {
                 >
                   <Search className={`h-4 w-4 ${isSearchOpen || searchQuery ? 'text-white' : 'text-[#1d1d1f]'}`} aria-hidden="true" />
                 </button>
-
-                {/* Spotlight Popover Dropdown */}
-                {isSearchOpen && (
-                  <div
-                    className="absolute -right-2 sm:right-0 mt-3 w-[calc(100vw-24px)] sm:w-[480px] max-w-[480px] bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-3.5 sm:p-4 z-50 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal"
-                    style={{ whiteSpace: 'normal' }}
-                  >
-                    {/* Input Field */}
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86868b]" aria-hidden="true" />
-                      <input
-                        ref={searchInputRef}
-                        type="text"
-                        inputMode="search"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Cari nomor box, sampel, buyer, style, PIC..."
-                        autoComplete="off"
-                        className="w-full rounded-full border border-black/[0.08] bg-black/[0.03] py-2 pl-9 pr-8 text-xs sm:text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:border-[#0071e3] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 transition shadow-xs"
-                      />
-                      {searchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSearchQuery('');
-                            searchInputRef.current?.focus();
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#86868b] hover:bg-black/[0.06] hover:text-[#1d1d1f] transition cursor-pointer"
-                          title="Hapus kata kunci"
-                          aria-label="Hapus kata kunci"
-                        >
-                          <X className="h-3.5 w-3.5" aria-hidden="true" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Results Container */}
-                    {searchResults?.active ? (
-                      <div className="mt-3 pt-3 border-t border-black/[0.06] space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 px-2.5 py-0.5 rounded-full border border-[#0071e3]/20 shadow-2xs">
-                            <Sparkles className="h-3 w-3 text-[#0071e3]" aria-hidden="true" />
-                            <span>
-                              {searchResults.matchedBoxNumbers.size} box cocok &amp; disorot di 3D
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setSearchQuery('')}
-                            className="text-xs text-[#86868b] hover:text-[#ff3b30] underline font-medium transition cursor-pointer"
-                          >
-                            Reset
-                          </button>
-                        </div>
-
-                        {/* Matched Boxes Chips */}
-                        {searchResults.boxMatches.length > 0 && (
-                          <div>
-                            <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-1.5">
-                              Box Ditemukan ({searchResults.boxMatches.length}). Klik untuk buka:
-                            </p>
-                            <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
-                              {searchResults.boxMatches.map((box) => (
-                                <button
-                                  key={`head-box-${box.boxNumber}`}
-                                  type="button"
-                                  onMouseEnter={() => setHoveredSearchBoxNumber(Number(box.boxNumber))}
-                                  onMouseLeave={() => setHoveredSearchBoxNumber(null)}
-                                  onClick={() => {
-                                    setSelectedBoxNumber(box.boxNumber);
-                                    setIsSearchOpen(false);
-                                  }}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border border-[#ff9500]/25 transition shadow-2xs cursor-pointer active:scale-95"
-                                  title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName})`}
-                                >
-                                  <BoxIcon className="h-3 w-3 text-[#ff9500]" aria-hidden="true" />
-                                  <span>BOX #{box.boxNumber}</span>
-                                  <span className="text-[11px] font-normal opacity-80">({box.rackName || 'LANTAI'})</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Matched Items List */}
-                        {searchResults.itemMatches.length > 0 && (
-                          <div>
-                            <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-1.5">
-                              Sampel / Material Cocok ({searchResults.itemMatches.length}):
-                            </p>
-                            <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-1">
-                              {searchResults.itemMatches.slice(0, 8).map((item, idx) => (
-                                <div
-                                  key={item.id || `head-item-${idx}`}
-                                  onMouseEnter={() => setHoveredSearchBoxNumber(Number(item.boxNumber))}
-                                  onMouseLeave={() => setHoveredSearchBoxNumber(null)}
-                                  className="flex items-center justify-between gap-2 p-2 rounded-[12px] bg-black/[0.02] hover:bg-[#0071e3]/5 border border-black/[0.06] hover:border-[#0071e3]/30 transition-all text-xs group"
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedBoxNumber(Number(item.boxNumber));
-                                      setIsSearchOpen(false);
-                                    }}
-                                    className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
-                                    title={`Buka BOX #${item.boxNumber} tempat sampel ini disimpan`}
-                                  >
-                                    <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[6px] bg-[#0071e3]/10 text-[#0071e3] font-bold text-[11px] tabular-nums">
-                                      #{item.boxNumber}
-                                    </span>
-                                    <div className="min-w-0">
-                                      <div className="font-semibold text-[#1d1d1f] truncate text-xs group-hover:text-[#0071e3]">
-                                        {item.kode || item.sku || item.style || item.name || 'Sample'}
-                                      </div>
-                                      <div className="text-[11px] text-[#86868b] truncate">
-                                        {item.style && item.style !== (item.kode || item.sku) ? `${item.style} • ` : ''}
-                                        Buyer: {item.buyerNo || '-'} • PIC: {item.picName || '-'}
-                                      </div>
-                                    </div>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setItemModalConfig({
-                                        isOpen: true,
-                                        item,
-                                        targetBoxNumber: Number(item.boxNumber)
-                                      });
-                                      setIsSearchOpen(false);
-                                    }}
-                                    className="shrink-0 p-1.5 rounded-full text-[#86868b] hover:text-[#0071e3] hover:bg-white border border-transparent hover:border-black/[0.06] transition cursor-pointer"
-                                    title="Edit rincian sampel ini"
-                                    aria-label={`Edit ${item.kode || item.sku || item.name || 'barang'}`}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                            {searchResults.itemMatches.length > 8 && (
-                              <p className="text-[11px] text-[#86868b] mt-1 italic">
-                                +{searchResults.itemMatches.length - 8} sampel lainnya cocok.
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {searchResults.matchedBoxNumbers.size === 0 && (
-                          <p className="text-center py-3 text-xs text-[#86868b] border border-dashed border-black/[0.1] rounded-[14px] bg-black/[0.02]">
-                            Tidak ada box atau sampel yang cocok dengan kata kunci <strong>"{searchQuery}"</strong>.
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mt-2.5 pt-2 border-t border-black/[0.04] text-[11px] text-[#86868b] flex items-center justify-between">
-                        <span>Ketik kata kunci untuk mencari box, style, atau buyer.</span>
-                        <kbd className="px-1.5 py-0.5 rounded bg-black/[0.05] text-[10px] font-mono text-[#86868b]">ESC</kbd>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Keranjang Pengiriman */}
@@ -889,12 +758,174 @@ const AppContent = () => {
 
           </div>
         </div>
+
+        {/* Spotlight Popover Dropdown (Mobile & Desktop Shared) */}
+        {isSearchOpen && (
+          <div
+            ref={searchContainerRef}
+            className="fixed inset-x-3 top-14 md:absolute md:top-12 md:right-8 md:inset-x-auto w-auto md:w-[480px] md:max-w-[480px] bg-white/95 backdrop-blur-2xl text-[#1d1d1f] border border-black/[0.08] rounded-[22px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.18)] p-3.5 sm:p-4 z-50 animate-in fade-in zoom-in-95 duration-150 font-apple whitespace-normal"
+            style={{ whiteSpace: 'normal' }}
+          >
+            {/* Input Field */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86868b]" aria-hidden="true" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                inputMode="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari nomor box, sampel, buyer, style, PIC..."
+                autoComplete="off"
+                className="w-full rounded-full border border-black/[0.08] bg-black/[0.03] py-2 pl-9 pr-8 text-xs sm:text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:border-[#0071e3] focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 transition shadow-xs"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    searchInputRef.current?.focus();
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#86868b] hover:bg-black/[0.06] hover:text-[#1d1d1f] transition cursor-pointer"
+                  title="Hapus kata kunci"
+                  aria-label="Hapus kata kunci"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+
+            {/* Results Container */}
+            {searchResults?.active ? (
+              <div className="mt-3 pt-3 border-t border-black/[0.06] space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0071e3] bg-[#0071e3]/10 px-2.5 py-0.5 rounded-full border border-[#0071e3]/20 shadow-2xs">
+                    <Sparkles className="h-3 w-3 text-[#0071e3]" aria-hidden="true" />
+                    <span>
+                      {searchResults.matchedBoxNumbers.size} box cocok &amp; disorot di 3D
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-xs text-[#86868b] hover:text-[#ff3b30] underline font-medium transition cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                {/* Matched Boxes Chips */}
+                {searchResults.boxMatches.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-1.5">
+                      Box Ditemukan ({searchResults.boxMatches.length}). Klik untuk buka:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                      {searchResults.boxMatches.map((box) => (
+                        <button
+                          key={`head-box-${box.boxNumber}`}
+                          type="button"
+                          onMouseEnter={() => setHoveredSearchBoxNumber(Number(box.boxNumber))}
+                          onMouseLeave={() => setHoveredSearchBoxNumber(null)}
+                          onClick={() => {
+                            setSelectedBoxNumber(box.boxNumber);
+                            setIsSearchOpen(false);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border border-[#ff9500]/25 transition shadow-2xs cursor-pointer active:scale-95"
+                          title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName})`}
+                        >
+                          <BoxIcon className="h-3 w-3 text-[#ff9500]" aria-hidden="true" />
+                          <span>BOX #{box.boxNumber}</span>
+                          <span className="text-[11px] font-normal opacity-80">({box.rackName || 'LANTAI'})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Matched Items List */}
+                {searchResults.itemMatches.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-1.5">
+                      Sampel / Material Cocok ({searchResults.itemMatches.length}):
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-1">
+                      {searchResults.itemMatches.slice(0, 8).map((item, idx) => (
+                        <div
+                          key={item.id || `head-item-${idx}`}
+                          onMouseEnter={() => setHoveredSearchBoxNumber(Number(item.boxNumber))}
+                          onMouseLeave={() => setHoveredSearchBoxNumber(null)}
+                          className="flex items-center justify-between gap-2 p-2 rounded-[12px] bg-black/[0.02] hover:bg-[#0071e3]/5 border border-black/[0.06] hover:border-[#0071e3]/30 transition-all text-xs group"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedBoxNumber(Number(item.boxNumber));
+                              setIsSearchOpen(false);
+                            }}
+                            className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
+                            title={`Buka BOX #${item.boxNumber} tempat sampel ini disimpan`}
+                          >
+                            <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[6px] bg-[#0071e3]/10 text-[#0071e3] font-bold text-[11px] tabular-nums">
+                              #{item.boxNumber}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-[#1d1d1f] truncate text-xs group-hover:text-[#0071e3]">
+                                {item.kode || item.sku || item.style || item.name || 'Sample'}
+                              </div>
+                              <div className="text-[11px] text-[#86868b] truncate">
+                                {item.style && item.style !== (item.kode || item.sku) ? `${item.style} • ` : ''}
+                                Buyer: {item.buyerNo || '-'} • PIC: {item.picName || '-'}
+                              </div>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setItemModalConfig({
+                                isOpen: true,
+                                item,
+                                targetBoxNumber: Number(item.boxNumber)
+                              });
+                              setIsSearchOpen(false);
+                            }}
+                            className="shrink-0 p-1.5 rounded-full text-[#86868b] hover:text-[#0071e3] hover:bg-white border border-transparent hover:border-black/[0.06] transition cursor-pointer"
+                            title="Edit rincian sampel ini"
+                            aria-label={`Edit ${item.kode || item.sku || item.name || 'barang'}`}
+                          >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {searchResults.itemMatches.length > 8 && (
+                      <p className="text-[11px] text-[#86868b] mt-1 italic">
+                        +{searchResults.itemMatches.length - 8} sampel lainnya cocok.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {searchResults.matchedBoxNumbers.size === 0 && (
+                  <p className="text-center py-3 text-xs text-[#86868b] border border-dashed border-black/[0.1] rounded-[14px] bg-black/[0.02]">
+                    Tidak ada box atau sampel yang cocok dengan kata kunci <strong>"{searchQuery}"</strong>.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="mt-2.5 pt-2 border-t border-black/[0.04] text-[11px] text-[#86868b] flex items-center justify-between">
+                <span>Ketik kata kunci untuk mencari box, style, atau buyer.</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-black/[0.05] text-[10px] font-mono text-[#86868b]">ESC</kbd>
+              </div>
+            )}
+          </div>
+        )}
       </header>
       </div>
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">
-        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 pb-6 md:pb-5">
+        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 pb-24 md:pb-5">
           {appMode === '3d-warehouse' && (
             <>
               {/* Tampilan Desktop (Layar Lebar >= 768px): Visualisasi 3D Warehouse Tetap Utama */}
@@ -966,6 +997,7 @@ const AppContent = () => {
                       setIsMobileLoginMandatory(false);
                       setIsMobileLoginOpen(true);
                     }}
+                    onOpenRekap={() => setAppMode('ppic-performance')}
                   />
                 )}
               </div>
@@ -1262,6 +1294,39 @@ const AppContent = () => {
           setIsAiScannerOpen(false);
         }}
         onDirectSave={handleAppDirectSaveAiData}
+      />
+
+      {/* Navigasi Dock Bottom Bar & Menu Drawer Khusus Mobile (< 768px) */}
+      <MobileBottomNav
+        appMode={appMode}
+        setAppMode={(mode) => {
+          setAppMode(mode);
+          if (mode === '3d-warehouse') {
+            window.dispatchEvent(new CustomEvent('gagaclo_reset_3d_home_view'));
+          }
+        }}
+        activeIssuesCount={activeIssuesCount}
+        cartCount={dispatchCart?.length || 0}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenCart={() => setIsCartOpen(true)}
+        onOpenBoxManage={() => setIsBoxManageOpen(true)}
+        onOpenBackup={() => {
+          setBackupPasswordInput('');
+          setBackupPasswordError(false);
+          setIsBackupPasswordOpen(true);
+        }}
+        onExportExcel={exportToExcel}
+        onImportExcel={() => setIsImportModalOpen(true)}
+        onOpenSupabase={() => setIsSupabaseModalOpen(true)}
+        onToggle3dView={() => setMobileWarehouseView((prev) => (prev === '3d' ? 'quick-entry' : '3d'))}
+        mobileWarehouseView={mobileWarehouseView}
+        currentUser={currentUser}
+        onOpenUserProfile={() => {
+          setIsMobileLoginMandatory(false);
+          setIsMobileLoginOpen(true);
+        }}
+        supabaseConnected={connected}
+        usageLabel={usageLabel}
       />
     </div>
   );
