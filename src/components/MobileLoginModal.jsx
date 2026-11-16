@@ -205,7 +205,7 @@ export const MobileLoginModal = ({
               const isSelected = String(u.id) === String(selectedUserId);
               const isLeader = isManager(u);
               const isSup = isHelper(u);
-              const roleLabel = isLeader ? 'Leader' : isSup ? 'Support' : `PPIC #${u.ppicNumber || '1'}`;
+              const roleLabel = isLeader ? 'Leader Inv' : isSup ? 'Support' : `PPIC #${u.ppicNumber || '1'}`;
 
               return (
                 <button
@@ -270,7 +270,7 @@ export const MobileLoginModal = ({
               <optgroup label="Inventory Leader" className="bg-slate-900 text-white font-bold">
                 {users.filter(u => isManager(u)).map((u) => (
                   <option key={u.id} value={u.id} className="bg-slate-900 text-white py-1">
-                    👑 {u.name} (Leader)
+                    👑 {u.name} (Leader Inv)
                   </option>
                 ))}
               </optgroup>

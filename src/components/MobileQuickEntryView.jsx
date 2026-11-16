@@ -292,7 +292,7 @@ export const MobileQuickEntryView = ({
               </span>
             </div>
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              Jasmine • Leader
+              Jasmine • Leader Inv
             </span>
           </div>
 
