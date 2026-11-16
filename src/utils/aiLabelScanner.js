@@ -161,17 +161,22 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
   let targetBases = [];
   try {
     const cached = localStorage.getItem('gagaclo_winning_gemini_endpoint');
-    if (cached) targetBases.push(cached);
+    if (cached && !cached.includes('-latest') && cached.includes(':generateContent')) {
+      targetBases.push(cached);
+    } else if (cached) {
+      localStorage.removeItem('gagaclo_winning_gemini_endpoint');
+    }
   } catch {}
 
-  if (targetBases.length === 0) {
+  const getDynamicFlashEndpoints = async () => {
     try {
       const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
       if (listRes.ok) {
         const listData = await listRes.json();
         const supported = (listData?.models || [])
           .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
-          .map((m) => m.name.replace(/^models\//, ''));
+          .map((m) => m.name.replace(/^models\//, ''))
+          .filter((m) => !m.includes('-latest'));
 
         // Prioritaskan model flash dan gemini-2 yang mendukung vision
         const flash = supported.filter((m) => m.toLowerCase().includes('flash'));
@@ -180,7 +185,7 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
         const ranked = [...flash, ...gemini2, ...pro];
 
         if (ranked.length > 0) {
-          targetBases = ranked.slice(0, 3).map((m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`);
+          return ranked.slice(0, 3).map((m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`);
         }
       } else {
         const errJson = await listRes.json().catch(() => ({}));
@@ -192,23 +197,25 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     } catch (err) {
       if (err.message?.includes('tidak valid')) throw err;
     }
-  }
 
-  // Fallback candidate list jika belum ada
-  if (targetBases.length === 0) {
-    targetBases = [
+    return [
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
       'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
       'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-002:generateContent',
     ];
+  };
+
+  if (targetBases.length === 0) {
+    targetBases = await getDynamicFlashEndpoints();
   }
 
   let lastError = null;
 
-  for (const base of targetBases) {
+  for (let i = 0; i < targetBases.length; i++) {
+    const base = targetBases[i];
     try {
       const url = `${base}?key=${apiKey}`;
       const response = await fetch(url, {
@@ -265,6 +272,13 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
       try {
         localStorage.removeItem('gagaclo_winning_gemini_endpoint');
       } catch {}
+
+      // Jika cache gagal dan tidak ada kandidat tersisa, ambil daftar model dinamis secara on-the-fly
+      if (i === targetBases.length - 1 && targetBases.length === 1) {
+        const freshBases = await getDynamicFlashEndpoints();
+        const remaining = freshBases.filter((b) => b !== base);
+        targetBases.push(...remaining);
+      }
     }
   }
 
