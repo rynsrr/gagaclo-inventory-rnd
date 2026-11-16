@@ -176,16 +176,45 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
         const supported = (listData?.models || [])
           .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
           .map((m) => m.name.replace(/^models\//, ''))
-          .filter((m) => !m.includes('-latest'));
+          .filter((m) => {
+            const lower = m.toLowerCase();
+            return (
+              !lower.includes('-latest') &&
+              !lower.includes('tts') &&
+              !lower.includes('transcribe') &&
+              !lower.includes('clip') &&
+              !lower.includes('embedding')
+            );
+          });
 
-        // Prioritaskan model flash dan gemini-2 yang mendukung vision
-        const flash = supported.filter((m) => m.toLowerCase().includes('flash'));
-        const gemini2 = supported.filter((m) => m.toLowerCase().includes('gemini-2') && !m.toLowerCase().includes('flash'));
-        const pro = supported.filter((m) => m.toLowerCase().includes('pro'));
-        const ranked = [...flash, ...gemini2, ...pro];
+        // Urutan prioritas model vision: utamakan seri flash-lite dan 3.5/3.8 yang terbukti aktif & super cepat
+        const priorityOrder = [
+          'gemini-3.5-flash-lite',
+          'gemini-3.1-flash-lite',
+          'gemini-3.5-flash',
+          'gemini-3.8-flash',
+          'gemini-3.7-flash',
+          'gemini-3.6-flash',
+          'gemini-4-hydrogen',
+          'gemini-1.5-flash',
+          'gemini-1.5-flash-002',
+          'gemini-2.0-flash',
+        ];
 
-        if (ranked.length > 0) {
-          return ranked.slice(0, 3).map((m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`);
+        const matched = [];
+        for (const p of priorityOrder) {
+          if (supported.includes(p)) matched.push(p);
+        }
+
+        // Tambahkan model lain yang mengandung flash jika belum ada
+        for (const s of supported) {
+          if (s.toLowerCase().includes('flash') && !matched.includes(s)) {
+            matched.push(s);
+          }
+        }
+
+        if (matched.length > 0) {
+          return matched.slice(0, 4).map((m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`);
         }
       } else {
         const errJson = await listRes.json().catch(() => ({}));
@@ -199,12 +228,13 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     }
 
     return [
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-4-hydrogen:generateContent',
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-002:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent',
     ];
   };
 
