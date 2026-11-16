@@ -538,17 +538,17 @@ const ItemModalContent = () => {
   const isOwner = !isEditing || isRealOwner || isSuper || isSupportUser || isCrossPpic || isInputter;
 
   return (
-    <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-fade-in print:p-0 print:bg-transparent">
-      <div className="bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh]">
+    <div className="font-apple fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 overflow-hidden animate-fade-in print:p-0 print:bg-transparent">
+      <div className="bg-white rounded-none sm:rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border-0 sm:border border-black/[0.08] w-full max-w-4xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[96vh]">
         
         {/* Apple Dark Header */}
-        <div className="no-print px-5 py-3.5 flex items-center justify-between border-b border-white/[0.08] bg-[#161618] text-white shrink-0">
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <span className="inline-flex items-center text-xs font-medium text-white bg-white/10 px-3 py-1 rounded-full border border-white/15 shrink-0">
+        <div className="no-print px-4 sm:px-5 py-3 sm:py-3.5 pt-[max(env(safe-area-inset-top),12px)] flex items-center justify-between border-b border-white/[0.08] bg-[#161618] text-white shrink-0">
+          <div className="flex items-center space-x-2 min-w-0">
+            <span className="inline-flex items-center text-xs font-semibold text-white bg-white/10 px-2.5 sm:px-3 py-1 rounded-full border border-white/15 truncate">
               BOX #{formData.boxNumber} ({currentBoxObj?.rackName || 'LANTAI'} - {currentBoxObj?.picName || 'Royan'})
             </span>
             {isEditing && (itemModalConfig.item?.kode || itemModalConfig.item?.sku) && (
-              <span className="inline-flex items-center text-xs font-mono font-medium text-white/80 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/10 shrink-0">
+              <span className="hidden sm:inline-flex items-center text-xs font-mono font-medium text-white/80 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/10 shrink-0">
                 {itemModalConfig.item?.kode || itemModalConfig.item?.sku}
               </span>
             )}
@@ -558,20 +558,20 @@ const ItemModalContent = () => {
             <button
               type="button"
               onClick={() => setIsAiScannerOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#0071e3] to-[#5ac8fa] hover:brightness-110 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#0071e3] to-[#5ac8fa] hover:brightness-110 text-white text-xs font-bold shadow-xs transition cursor-pointer active:scale-95"
               title="Pindai Kartu / Tag Sampel dengan Gemini AI"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Scan Tag AI</span>
             </button>
 
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer active:scale-95"
               aria-label="Tutup"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -650,8 +650,8 @@ const ItemModalContent = () => {
         )}
 
         {/* Form Body: Apple Inset Grouped layout */}
-        <form onSubmit={handleSubmit} id="direct-card-form" className="p-3 sm:p-4 bg-[#f5f5f7] flex-1 overflow-y-auto">
-          <div className="bg-white border border-black/[0.08] rounded-[22px] p-3.5 sm:p-4 shadow-2xs space-y-2 text-xs">
+        <form onSubmit={handleSubmit} id="direct-card-form" className="p-2 sm:p-4 bg-[#f5f5f7] flex-1 overflow-y-auto overscroll-contain">
+          <div className="bg-white border border-black/[0.08] rounded-2xl sm:rounded-[22px] p-3 sm:p-4 shadow-2xs space-y-2.5 text-xs">
             
             {/* BARIS 1: Track & Tanggal Sample */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
@@ -837,13 +837,13 @@ const ItemModalContent = () => {
             {/* BARIS 3: Jenis Sample (Chip Buttons) & Deskripsi / Style */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
               {/* Jenis Sample Pills */}
-              <div className={`md:col-span-6 border rounded-lg p-1.5 bg-white transition ${
+              <div className={`md:col-span-6 border rounded-xl p-2 bg-white transition ${
                 errors.jenisSample ? 'border-rose-500 bg-rose-50/50 ring-1 ring-rose-400' : 'border-slate-300'
               }`}>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Jenis Sample <span className="text-rose-500">*</span>:
                 </label>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARCHIVE'].map((type) => {
                     const isSelected = formData.jenisSample === type;
                     return (
@@ -854,7 +854,7 @@ const ItemModalContent = () => {
                           setFormData(p => ({ ...p, jenisSample: type }));
                           if (errors.jenisSample) setErrors(prev => ({ ...prev, jenisSample: null }));
                         }}
-                        className={`flex-1 py-1 px-1 rounded-md text-xs sm:text-xs font-black uppercase tracking-wider transition border cursor-pointer text-center whitespace-nowrap ${
+                        className={`flex-1 min-w-[70px] sm:min-w-0 py-1.5 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition border cursor-pointer text-center select-none active:scale-95 ${
                           isSelected
                             ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
@@ -1071,9 +1071,9 @@ const ItemModalContent = () => {
             </div>
 
             {/* BARIS 5: Jumlah (Qty), Satuan & Penginput */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 md:grid-cols-12 gap-2">
               {/* Jumlah */}
-              <div className={`border rounded-lg p-1.5 bg-white transition ${
+              <div className={`col-span-1 md:col-span-3 border rounded-xl p-2 bg-white transition ${
                 errors.jumlah ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
               }`}>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">
@@ -1087,17 +1087,17 @@ const ItemModalContent = () => {
                     setFormData(p => ({ ...p, jumlah: Number(e.target.value) || 0 }));
                     if (errors.jumlah) setErrors(prev => ({ ...prev, jumlah: null }));
                   }}
-                  className="w-full text-xs font-black font-mono focus:outline-none bg-transparent"
+                  className="w-full text-sm font-black font-mono focus:outline-none bg-transparent"
                 />
               </div>
 
               {/* Satuan (Terkunci ke PCE) */}
-              <div className="border border-slate-300 rounded-lg p-1.5 bg-slate-50/80 transition">
+              <div className="col-span-1 md:col-span-3 border border-slate-300 rounded-xl p-2 bg-slate-50/80 transition">
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Satuan <span className="text-rose-500">*</span>:
                   </label>
-                  <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
                     PCE
                   </span>
                 </div>
@@ -1106,19 +1106,19 @@ const ItemModalContent = () => {
                   value="PCE"
                   readOnly
                   disabled
-                  className="w-full text-xs font-black font-mono text-slate-800 bg-transparent cursor-not-allowed select-none focus:outline-none"
+                  className="w-full text-sm font-black font-mono text-slate-800 bg-transparent cursor-not-allowed select-none focus:outline-none"
                 />
               </div>
 
               {/* Penginput */}
-              <div className="border border-slate-300 rounded-lg p-1.5 bg-white transition focus-within:border-blue-500">
+              <div className="col-span-2 md:col-span-6 border border-slate-300 rounded-xl p-2 bg-white transition focus-within:border-blue-500">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">
                   Penginput:
                 </label>
                 <select
                   value={formData.inputtedBy || currentUser?.name || 'Royan'}
                   onChange={(e) => setFormData(p => ({ ...p, inputtedBy: e.target.value }))}
-                  className="w-full text-xs font-bold text-slate-900 bg-transparent focus:outline-none cursor-pointer"
+                  className="w-full text-xs font-bold text-slate-900 bg-transparent focus:outline-none cursor-pointer py-0.5"
                 >
                   <optgroup label="PPIC Utama">
                     <option value="Royan">Royan (PPIC #1)</option>
@@ -1143,15 +1143,15 @@ const ItemModalContent = () => {
         </form>
 
         {/* Modal Footer Actions (Apple Sheet Style) */}
-        <div className="no-print bg-[#fbfbfd] px-5 py-3 border-t border-black/[0.06] flex items-center justify-between gap-2 shrink-0">
+        <div className="no-print bg-[#fbfbfd] px-4 sm:px-5 py-3 pb-[max(env(safe-area-inset-bottom),12px)] border-t border-black/[0.08] flex items-center justify-between gap-2.5 shrink-0">
           <span className="text-xs text-[#86868b] font-normal hidden sm:inline">
             Tekan <kbd className="px-1.5 py-0.5 bg-black/[0.05] rounded-md border border-black/[0.08] font-mono text-[11px] text-[#1d1d1f] font-medium">Ctrl + Enter</kbd> untuk simpan cepat
           </span>
-          <div className="flex items-center space-x-2 ml-auto">
+          <div className="flex items-center space-x-2 w-full sm:w-auto ml-auto">
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.06] transition cursor-pointer"
+              className="w-1/3 sm:w-auto py-2.5 sm:py-2 px-4 rounded-xl text-xs font-semibold text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.08] transition cursor-pointer text-center active:scale-95"
             >
               Batal
             </button>
@@ -1159,7 +1159,7 @@ const ItemModalContent = () => {
               type="submit"
               form="direct-card-form"
               disabled={isSubmitting || !isOwner}
-              className={`px-5 py-2 rounded-xl text-xs font-medium shadow-xs transition flex items-center space-x-1.5 ${
+              className={`flex-1 sm:flex-initial py-2.5 sm:py-2 px-5 rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition flex items-center justify-center space-x-2 active:scale-98 ${
                 !isOwner
                   ? 'bg-black/20 text-[#86868b] cursor-not-allowed opacity-60'
                   : 'bg-[#0071e3] hover:bg-[#0077ed] text-white cursor-pointer disabled:opacity-50'
