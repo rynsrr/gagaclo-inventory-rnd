@@ -35,7 +35,7 @@ import { CardPrintModal } from './CardPrintModal';
 import { SampleListPrintModal } from './SampleListPrintModal';
 import { DispatchModal } from './DispatchModal';
 import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
-import { isHelper } from '../utils/authUtils';
+import { isHelper, resolveItemInputter } from '../utils/authUtils';
 
 export const BoxDetailModal = () => {
   const { selectedBoxNumber, getBoxDetails } = useInventory();
@@ -711,12 +711,13 @@ function BoxDetail({ box }) {
                           title="Pilih / Batal Pilih Semua"
                         />
                       </th>
-                      <th className="py-2.5 px-2.5 w-[18%]">Kode / Sample</th>
-                      <th className="py-2.5 px-2.5 w-[32%]">Style &amp; Deskripsi</th>
-                      <th className="py-2.5 px-2 w-[14%]">Size &amp; Warna</th>
-                      <th className="py-2.5 px-1.5 text-center w-[8%]">Jumlah</th>
-                      <th className="py-2.5 px-1 text-center w-[11%]">Status</th>
-                      <th className="py-2.5 px-2 text-right w-[17%]">Aksi</th>
+                      <th className="py-2.5 px-2.5 w-[17%]">Kode / Sample</th>
+                      <th className="py-2.5 px-2.5 w-[26%]">Style &amp; Deskripsi</th>
+                      <th className="py-2.5 px-2 w-[13%]">Size &amp; Warna</th>
+                      <th className="py-2.5 px-1.5 text-center w-[7%]">Jumlah</th>
+                      <th className="py-2.5 px-1.5 text-center w-[12%]">Penginput</th>
+                      <th className="py-2.5 px-1 text-center w-[10%]">Status</th>
+                      <th className="py-2.5 px-2 text-right w-[15%]">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -807,6 +808,30 @@ function BoxDetail({ box }) {
                             <span className="text-xs font-normal text-slate-500 uppercase">
                               {String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (item.satuan || item.unit || 'PCE')}
                             </span>
+                          </td>
+
+                          {/* Penginput */}
+                          <td className="py-2 px-1.5 text-center min-w-0">
+                            {(() => {
+                              const inputter = resolveItemInputter(item, box);
+                              const isOwnerInput = String(inputter.name).toLowerCase() === String(box.picName || '').toLowerCase();
+                              return (
+                                <div className="flex flex-col items-center justify-center min-w-0">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border truncate max-w-full shadow-2xs ${inputter.badgeClass}`}
+                                    title={`Diinput oleh: ${inputter.name} (${inputter.role})${!isOwnerInput ? ` • Bantuan untuk PPIC ${box.picName}` : ''}`}
+                                  >
+                                    <User className="w-3 h-3 shrink-0" />
+                                    <span className="truncate">{inputter.name}</span>
+                                  </span>
+                                  {!isOwnerInput && (
+                                    <span className="text-[10px] text-slate-400 font-semibold tracking-tight leading-none mt-0.5 truncate" title={`Bantuan input untuk ${box.picName}`}>
+                                      bantu {box.picName}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
 
                           {/* Status */}

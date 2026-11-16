@@ -1564,8 +1564,8 @@ export const InventoryProvider = ({ children }) => {
     const finalCode = resolved.finalCode;
 
     const nowIso = new Date().toISOString();
-    const createdBy = currentUser?.name || 'Royan';
-    const isByHelper = isHelper(currentUser);
+    const createdBy = itemData.inputtedBy || itemData.createdBy || currentUser?.name || 'Royan';
+    const isByHelper = isHelper({ name: createdBy }) || ['sheva', 'ade', 'tri'].includes(String(createdBy).toLowerCase()) || isHelper(currentUser);
 
     const trackingTags = [
       `inputted_by:${encodeURIComponent(createdBy)}`,
@@ -1589,7 +1589,10 @@ export const InventoryProvider = ({ children }) => {
       createdBy: createdBy,
       inputtedBy: createdBy,
       helperName: isByHelper ? createdBy : (itemData.helperName || null),
-      tags: [...(Array.isArray(itemData.tags) ? itemData.tags : []), ...trackingTags],
+      tags: [
+        ...(Array.isArray(itemData.tags) ? itemData.tags.filter(t => typeof t === 'string' && !t.startsWith('inputted_by:') && !t.startsWith('helper:')) : []),
+        ...trackingTags,
+      ],
     };
 
     if (resolved.wasAdjusted) {
@@ -1767,6 +1770,15 @@ export const InventoryProvider = ({ children }) => {
     const finalUnit = String(rawUnit).toUpperCase() === 'PCS' ? 'PCE' : rawUnit;
     const { item: upperUpdatedData } = normalizeItemTextUppercase(updatedData);
 
+    const finalInputtedBy = updatedData.inputtedBy || oldItem.inputtedBy || oldItem.createdBy || currentUser?.name || 'Royan';
+    const isSupportFinal = ['sheva', 'ade', 'tri'].includes(String(finalInputtedBy).toLowerCase());
+    const trackingTags = [
+      `inputted_by:${encodeURIComponent(finalInputtedBy)}`,
+      ...(isSupportFinal ? [`helper:${encodeURIComponent(finalInputtedBy)}`] : []),
+    ];
+    const cleanExistingTags = (Array.isArray(updatedData.tags || oldItem.tags) ? (updatedData.tags || oldItem.tags) : [])
+      .filter(t => typeof t === 'string' && !t.startsWith('inputted_by:') && !t.startsWith('helper:'));
+
     const finalItem = {
       ...oldItem,
       ...upperUpdatedData,
@@ -1777,6 +1789,10 @@ export const InventoryProvider = ({ children }) => {
       jumlah: finalQty,
       unit: finalUnit,
       satuan: finalUnit,
+      inputtedBy: finalInputtedBy,
+      createdBy: oldItem.createdBy || finalInputtedBy,
+      helperName: isSupportFinal ? finalInputtedBy : (updatedData.helperName || oldItem.helperName || null),
+      tags: [...cleanExistingTags, ...trackingTags],
     };
 
     // Update local state cleanly

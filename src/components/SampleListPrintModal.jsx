@@ -10,6 +10,7 @@ import {
   ArrowUpAZ,
   ArrowDownZA,
 } from 'lucide-react';
+import { resolveItemInputter } from '../utils/authUtils';
 
 export const SampleListPrintModal = ({ box, items = [], onClose }) => {
   const [selectedIds, setSelectedIds] = useState(() => new Set(items.map((i, idx) => i.id || `item-${idx}`)));
@@ -287,6 +288,7 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                       </th>
                       <th className="py-2 px-3 w-28 border-r border-slate-300 print:border-slate-400">Size & Warna</th>
                       <th className="py-2 px-2.5 w-16 text-center border-r border-slate-300 print:border-slate-400">Qty</th>
+                      <th className="py-2 px-2.5 w-24 text-center border-r border-slate-300 print:border-slate-400">Penginput</th>
                       <th className="py-2 px-2.5 w-24 text-center border-r border-slate-300 print:border-slate-400">Status</th>
                       <th className="py-2 px-2.5 w-14 text-center">Cek</th>
                     </tr>
@@ -325,6 +327,9 @@ export const SampleListPrintModal = ({ box, items = [], onClose }) => {
                         </td>
                         <td className="py-1.5 px-2.5 text-center font-bold text-slate-900 border-r border-slate-300 print:border-slate-300 whitespace-nowrap">
                           {item.qty || item.jumlah || 1} {String(item.satuan || item.unit || 'PCE').toUpperCase() === 'PCS' ? 'PCE' : (item.satuan || item.unit || 'PCE')}
+                        </td>
+                        <td className="py-1.5 px-2 text-center border-r border-slate-300 print:border-slate-300 text-xs font-semibold text-slate-700">
+                          {resolveItemInputter(item, box).name}
                         </td>
                         <td className="py-1.5 px-2.5 text-center border-r border-slate-300 print:border-slate-300 text-xs">
                           <span className={`inline-block px-1.5 py-0.5 rounded font-bold ${

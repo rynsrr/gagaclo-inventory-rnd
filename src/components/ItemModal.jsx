@@ -146,6 +146,7 @@ const ItemModalContent = () => {
         boxNumber: bNum,
         place: item.place || defaultBoxPlace,
         status: item.status || 'In Storage',
+        inputtedBy: item.inputtedBy || item.createdBy || currentUser?.name || 'Royan',
       });
     } else {
       const defaultBoxPlace = bObj 
@@ -168,6 +169,7 @@ const ItemModalContent = () => {
         boxNumber: bNum,
         place: defaultBoxPlace,
         status: 'In Storage',
+        inputtedBy: currentUser?.name || 'Royan',
       };
     }
   });
@@ -372,6 +374,13 @@ const ItemModalContent = () => {
     releaseCode(formData.kode, clientIdRef.current);
     releaseCode(finalKode, clientIdRef.current);
 
+    const inputterFinal = formData.inputtedBy || currentUser?.name || 'Royan';
+    const isSupportName = ['sheva', 'ade', 'tri'].includes(String(inputterFinal).toLowerCase());
+    const trackingTags = [
+      `inputted_by:${encodeURIComponent(inputterFinal)}`,
+      ...(isSupportName ? [`helper:${encodeURIComponent(inputterFinal)}`] : []),
+    ];
+
     const payload = {
       track: trackClean,
       tanggal: tanggalClean,
@@ -403,6 +412,15 @@ const ItemModalContent = () => {
       category: boxObj ? boxObj.category : 'SAMPLE',
       status: formData.status || 'In Storage',
       dateIn: tanggalClean,
+      inputtedBy: inputterFinal,
+      createdBy: isEditing ? (itemModalConfig.item?.createdBy || inputterFinal) : inputterFinal,
+      helperName: isSupportName ? inputterFinal : (itemModalConfig.item?.helperName || null),
+      tags: [
+        ...(Array.isArray(itemModalConfig.item?.tags)
+          ? itemModalConfig.item.tags.filter(t => typeof t === 'string' && !t.startsWith('inputted_by:') && !t.startsWith('helper:'))
+          : []),
+        ...trackingTags,
+      ],
     };
 
     try {
@@ -965,8 +983,8 @@ const ItemModalContent = () => {
               </div>
             </div>
 
-            {/* BARIS 5: Jumlah (Qty) & Satuan */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+            {/* BARIS 5: Jumlah (Qty), Satuan & Penginput */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
               {/* Jumlah */}
               <div className={`border rounded-lg p-1.5 bg-white transition ${
                 errors.jumlah ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
@@ -1003,6 +1021,34 @@ const ItemModalContent = () => {
                   disabled
                   className="w-full text-xs font-black font-mono text-slate-800 bg-transparent cursor-not-allowed select-none focus:outline-none"
                 />
+              </div>
+
+              {/* Penginput */}
+              <div className="border border-slate-300 rounded-lg p-1.5 bg-white transition focus-within:border-blue-500">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">
+                  Penginput:
+                </label>
+                <select
+                  value={formData.inputtedBy || currentUser?.name || 'Royan'}
+                  onChange={(e) => setFormData(p => ({ ...p, inputtedBy: e.target.value }))}
+                  className="w-full text-xs font-bold text-slate-900 bg-transparent focus:outline-none cursor-pointer"
+                >
+                  <optgroup label="PPIC Utama">
+                    <option value="Royan">Royan (PPIC #1)</option>
+                    <option value="Cynara">Cynara (PPIC #2)</option>
+                    <option value="Ami">Ami (PPIC #3)</option>
+                    <option value="Ryan">Ryan (PPIC #4)</option>
+                    <option value="Hanami">Hanami (PPIC #5)</option>
+                  </optgroup>
+                  <optgroup label="Tim Support">
+                    <option value="Sheva">Sheva (Support #1)</option>
+                    <option value="Ade">Ade (Support #2)</option>
+                    <option value="Tri">Tri (Support #3)</option>
+                  </optgroup>
+                  <optgroup label="Pimpinan">
+                    <option value="Jasmine">Jasmine (Leader)</option>
+                  </optgroup>
+                </select>
               </div>
             </div>
 
