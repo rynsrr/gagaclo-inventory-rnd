@@ -102,7 +102,7 @@ export const MobileLoginModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#09090b] animate-in fade-in duration-200 font-apple"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#05130f] animate-in fade-in duration-300 font-apple overflow-hidden"
       role="dialog"
       aria-modal="true"
       aria-labelledby="mobile-login-title"
@@ -110,7 +110,32 @@ export const MobileLoginModal = ({
         if (!isMandatory && e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-[380px] bg-white rounded-[32px] p-7 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-black/[0.06] text-[#111827] space-y-5 animate-in zoom-in-95 duration-200">
+      {/* Background Decorative Mesh Orbs & Geometric Ambient (Aesthetic & Dinamis) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Top-Left Emerald Glow Orb */}
+        <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-gradient-to-br from-emerald-500/35 via-teal-600/25 to-transparent blur-3xl animate-pulse" />
+        
+        {/* Bottom-Right Forest Jade Glow Orb */}
+        <div className="absolute -bottom-28 -right-24 w-96 h-96 rounded-full bg-gradient-to-tl from-emerald-600/30 via-emerald-800/20 to-transparent blur-3xl" />
+        
+        {/* Center Card Backlight Halo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[400px] bg-emerald-400/15 rounded-full blur-[90px]" />
+
+        {/* Geometric Angled Shapes (Sesuai Referensi Gambar) */}
+        <div className="absolute -top-10 -right-10 w-64 h-64 bg-emerald-800/35 rounded-[60px] rotate-12 blur-xl" />
+        <div className="absolute -bottom-16 -left-10 w-72 h-72 bg-teal-900/40 rounded-[80px] -rotate-12 blur-xl" />
+
+        {/* Subtle Modern Dot Matrix Pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.08]" 
+          style={{ 
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.8) 1.2px, transparent 1.2px)', 
+            backgroundSize: '24px 24px' 
+          }} 
+        />
+      </div>
+
+      <div className="relative z-10 w-full max-w-[380px] bg-white rounded-[32px] p-7 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.5),0_0_40px_rgba(16,185,129,0.15)] border border-white/20 text-[#111827] space-y-5 animate-in zoom-in-95 duration-200">
         
         {/* Tombol Tutup (Hanya jika bukan first-time gate wajib) */}
         {!isMandatory && (
