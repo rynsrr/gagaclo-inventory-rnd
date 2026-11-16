@@ -126,7 +126,9 @@ const AiTagScannerContent = ({
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const fileInputRef = useRef(null);
+  const nativeCameraInputRef = useRef(null);
   const containerRef = useRef(null);
+  const [cameraRetryCount, setCameraRetryCount] = useState(0);
 
   // Simpan sticky context ke localStorage saat berubah
   useEffect(() => {
@@ -225,7 +227,7 @@ const AiTagScannerContent = ({
     }
   };
 
-  // Mulai / Hentikan stream kamera
+  // Mulai / Hentikan stream kamera dengan progressive fallback
   useEffect(() => {
     let active = true;
 
@@ -238,36 +240,87 @@ const AiTagScannerContent = ({
       setCameraError(null);
       stopCamera();
 
-      try {
-        if (!navigator?.mediaDevices?.getUserMedia) {
-          throw new Error('Kamera tidak didukung pada browser ini.');
-        }
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        setCameraError('Browser ini belum mendukung akses kamera langsung. Silakan gunakan tombol "Buka Kamera HP Langsung" atau "Upload Foto".');
+        setIsCameraActive(false);
+        return;
+      }
 
-        const constraints = {
+      // Progressive 3-tier constraints fallback (mencegah OverconstrainedError pada berbagai webcam & HP)
+      const constraintTiers = [
+        // Tier 1: Ideal facingMode + resolusi 1280x720 (ringan, tajam, & kompatibel luas)
+        {
           video: {
             facingMode: { ideal: facingMode },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           },
           audio: false,
-        };
+        },
+        // Tier 2: Only facingMode
+        {
+          video: {
+            facingMode: facingMode === 'environment' ? { ideal: 'environment' } : 'user',
+          },
+          audio: false,
+        },
+        // Tier 3: Universal fallback (semua kamera yang ada tanpa batasan resolusi)
+        {
+          video: true,
+          audio: false,
+        },
+      ];
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        if (!active) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
+      let stream = null;
+      let lastErr = null;
 
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
+      for (const constraints of constraintTiers) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          if (stream) break;
+        } catch (err) {
+          lastErr = err;
+          // Jika pengguna menekan "Block" (NotAllowedError), hentikan loop agar tidak memicu prompt berulang
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            break;
+          }
         }
-        setIsCameraActive(true);
-      } catch (err) {
-        console.warn('Gagal mengakses kamera:', err);
-        setCameraError('Kamera tidak dapat diakses atau izin ditolak. Silakan gunakan tab Upload Gambar atau izinkan akses kamera.');
+      }
+
+      if (!active) {
+        if (stream) stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      if (!stream) {
+        console.warn('Gagal mengakses kamera:', lastErr);
+        let errorMsg = 'Kamera tidak dapat diakses atau izin ditolak.';
+        if (lastErr?.name === 'NotAllowedError' || lastErr?.name === 'PermissionDeniedError') {
+          errorMsg = 'Izin kamera diblokir oleh browser. Klik ikon gembok / kamera di sebelah alamat URL web untuk mengizinkan akses kamera, lalu tekan tombol "Coba Hubungkan Kamera Lagi".';
+        } else if (lastErr?.name === 'NotFoundError' || lastErr?.name === 'DevicesNotFoundError') {
+          errorMsg = 'Kamera fisik tidak terdeteksi pada perangkat ini. Silakan gunakan tombol "Buka Kamera HP Langsung" atau "Upload Foto".';
+        } else if (lastErr?.name === 'NotReadableError' || lastErr?.name === 'TrackStartError') {
+          errorMsg = 'Kamera sedang digunakan oleh aplikasi lain (seperti Zoom/Meet). Tutup aplikasi tersebut lalu tekan tombol "Coba Hubungkan Kamera Lagi".';
+        } else if (lastErr?.name === 'OverconstrainedError') {
+          errorMsg = 'Konfigurasi kamera tidak didukung perangkat. Silakan gunakan tombol "Buka Kamera HP Langsung" atau "Upload Foto".';
+        }
+        setCameraError(errorMsg);
         setIsCameraActive(false);
+        return;
+      }
+
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            if (active) setIsCameraActive(true);
+          }).catch(() => {
+            if (active) setIsCameraActive(true);
+          });
+        };
+      } else {
+        setIsCameraActive(true);
       }
     }
 
@@ -277,7 +330,17 @@ const AiTagScannerContent = ({
       active = false;
       stopCamera();
     };
-  }, [inputMode, facingMode, extractedData]);
+  }, [inputMode, facingMode, extractedData, cameraRetryCount]);
+
+  // Pastikan stream terhubung ke video element saat kamera aktif
+  useEffect(() => {
+    if (isCameraActive && streamRef.current && videoRef.current) {
+      if (videoRef.current.srcObject !== streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+        videoRef.current.play().catch(() => {});
+      }
+    }
+  }, [isCameraActive]);
 
   // Listener Clipboard Paste (Ctrl+V)
   useEffect(() => {
@@ -786,16 +849,20 @@ const AiTagScannerContent = ({
               {inputMode === 'camera' && (
                 <div className="relative rounded-2xl overflow-hidden bg-black aspect-4/3 sm:aspect-16/10 border border-white/10 flex items-center justify-center">
                   
-                  {isCameraActive ? (
-                    <>
-                      <video
-                        ref={videoRef}
-                        playsInline
-                        autoPlay
-                        muted
-                        className="w-full h-full object-cover"
-                      />
+                  {/* Video element SELALU terpasang di DOM agar videoRef tidak null */}
+                  <video
+                    ref={videoRef}
+                    playsInline
+                    autoPlay
+                    muted
+                    className={`w-full h-full object-cover transition-opacity duration-200 ${
+                      isCameraActive ? 'opacity-100 block' : 'opacity-0 hidden'
+                    }`}
+                  />
 
+                  {/* UI Saat Kamera Aktif */}
+                  {isCameraActive && (
+                    <>
                       {/* Laser / Grid Overlay Arah Scan */}
                       <div className="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between">
                         <div className="flex justify-between">
@@ -831,21 +898,60 @@ const AiTagScannerContent = ({
                         </button>
                       </div>
                     </>
-                  ) : (
-                    <div className="p-6 text-center space-y-3">
-                      <Camera className="w-10 h-10 text-white/30 mx-auto" />
-                      <p className="text-xs text-white/60 max-w-xs mx-auto leading-relaxed">
+                  )}
+
+                  {/* UI Fallback Saat Kamera Belum Aktif / Izin Ditolak / Gagal */}
+                  {!isCameraActive && (
+                    <div className="p-6 text-center space-y-3 z-10 max-w-sm mx-auto">
+                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto text-white/50">
+                        <Camera className="w-6 h-6" />
+                      </div>
+                      <p className="text-xs text-white/80 leading-relaxed font-medium">
                         {cameraError || 'Menghubungkan ke kamera... Harap izinkan akses kamera pada browser.'}
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => setInputMode('upload')}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
-                      >
-                        Gunakan Upload Foto
-                      </button>
+
+                      <div className="flex flex-col gap-2 pt-2">
+                        {/* Tombol Coba Hubungkan Kamera Lagi */}
+                        <button
+                          type="button"
+                          onClick={() => setCameraRetryCount((c) => c + 1)}
+                          className="w-full py-2 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Coba Hubungkan Kamera Lagi</span>
+                        </button>
+
+                        {/* Tombol Kamera Native HP (Khusus Smartphone Android/iPhone) */}
+                        <button
+                          type="button"
+                          onClick={() => nativeCameraInputRef.current?.click()}
+                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          <span>Buka Kamera HP Langsung (Tajam &amp; Auto-Focus)</span>
+                        </button>
+
+                        {/* Tombol Beralih ke Upload File */}
+                        <button
+                          type="button"
+                          onClick={() => setInputMode('upload')}
+                          className="w-full py-2 bg-white/10 hover:bg-white/15 text-white/70 hover:text-white text-xs font-medium rounded-xl transition cursor-pointer active:scale-98"
+                        >
+                          Gunakan Upload Foto / Galeri
+                        </button>
+                      </div>
                     </div>
                   )}
+
+                  {/* Hidden Input untuk Akses Kamera Bawaan HP */}
+                  <input
+                    ref={nativeCameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
 
                   {/* Scanning Animation Overlay saat Sedang Memproses */}
                   {isScanning && (
