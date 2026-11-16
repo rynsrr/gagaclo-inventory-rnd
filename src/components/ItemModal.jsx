@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { supabase } from '../lib/supabase';
 import { CardPrintModal } from './CardPrintModal';
-import { AiTagScannerModal } from './AiTagScannerModal';
 import { isSupport, isHelper, isSuperuser } from '../utils/authUtils';
 import { 
   resolveUniqueCode, 
@@ -20,39 +19,13 @@ import {
   AlertTriangle,
   Calendar,
   Info,
-  Sparkles,
   Edit3,
   CheckCircle2,
   Lock,
   Unlock,
   Printer,
   Check,
-  Camera,
-  Upload,
-  RotateCcw,
-  Image as ImageIcon,
 } from 'lucide-react';
-import { scanGarmentTag, compressImage } from '../utils/aiLabelScanner';
-
-const BUYER_OPTIONS = [
-  { code: 'AN05', label: 'AN05 - ERGODYNE' },
-  { code: 'AN01', label: 'AN01' },
-  { code: 'AN02', label: 'AN02' },
-  { code: 'AN03', label: 'AN03' },
-  { code: 'AN04', label: 'AN04' },
-  { code: 'NA', label: 'NA (Tanpa Buyer)' },
-];
-
-const JENIS_SAMPLE_OPTIONS = [
-  'PPS',
-  'DEV',
-  'ARCHIVE',
-  'PROTO',
-  'SMS',
-  'FIT',
-  'SEW',
-  'NA',
-];
 
 // Every row on the sample card is mandatory. "NA" is an accepted value when
 // the information genuinely does not exist; "-" and empty text are not.
@@ -135,7 +108,6 @@ const ItemModalContent = () => {
   const savedReminderRef = useRef(null);
   savedReminderRef.current = savedReminder;
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const [isAiScannerOpen, setIsAiScannerOpen] = useState(false);
 
   const isDuplicate = Boolean(itemModalConfig.isDuplicate);
   const isEditing = Boolean(itemModalConfig.item && !isDuplicate);
@@ -161,14 +133,6 @@ const ItemModalContent = () => {
     const saved = localStorage.getItem('gagaclo_lock_jenis_enabled');
     return saved !== null ? saved === 'true' : true;
   });
-
-  const [scannerMode, setScannerMode] = useState('camera'); // 'camera' | 'upload'
-  const [isAiScanning, setIsAiScanning] = useState(false);
-  const [scanErrorMsg, setScanErrorMsg] = useState(null);
-  const [scanSuccessMsg, setScanSuccessMsg] = useState(null);
-
-  const nativeCameraInputRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('gagaclo_lock_buyer_enabled', isBuyerLocked ? 'true' : 'false');
@@ -239,58 +203,6 @@ const ItemModalContent = () => {
       };
     }
   });
-
-  const handleProcessScanImage = async (file) => {
-    if (!file) return;
-    setIsAiScanning(true);
-    setScanErrorMsg(null);
-    setScanSuccessMsg(null);
-
-    try {
-      const compressedBase64 = await compressImage(file, 900, 0.75);
-      const contextSettings = {
-        lockedBuyer: isBuyerLocked ? stickyBuyer : '',
-        lockedJenisSample: isJenisLocked ? stickyJenis : '',
-        _boxNumber: String(formData.boxNumber || targetBoxNum || 1),
-      };
-
-      const result = await scanGarmentTag(compressedBase64, contextSettings);
-      const data = result?.data ? result.data : result;
-
-      if (!data || typeof data !== 'object') {
-        throw new Error('Hasil pemindaian tag kosong.');
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        style: data.style && data.style !== 'NA' ? data.style : prev.style,
-        sampleNo: data.sampleNo && data.sampleNo !== 'NA' ? data.sampleNo : prev.sampleNo,
-        size: data.size && data.size !== 'NA' ? data.size : prev.size,
-        color: data.color && data.color !== 'NA' ? data.color : prev.color,
-        track: data.track && data.track !== 'NA' ? data.track : prev.track,
-        tanggal: data.tanggal || prev.tanggal,
-        jumlah: data.jumlah !== undefined ? Number(data.jumlah) : prev.jumlah,
-        buyerNo: isBuyerLocked && stickyBuyer ? stickyBuyer : (data.buyerNo || prev.buyerNo),
-        jenisSample: isJenisLocked && stickyJenis ? stickyJenis : (data.jenisSample || prev.jenisSample),
-      }));
-
-      setScanSuccessMsg(`✓ Tag berhasil diekstrak (${data.style || 'Sample'})! Data terisi otomatis pada kolom di bawah.`);
-      showNotification?.('✨ Data dari tag sampel berhasil diisi ke formulir!', 'success', 3500);
-    } catch (err) {
-      console.error('Scan tag error:', err);
-      setScanErrorMsg(err?.message || 'Gagal membaca tag sampel. Pastikan foto tegak lurus dan teks terbaca jelas.');
-    } finally {
-      setIsAiScanning(false);
-    }
-  };
-
-  const handleFileInputChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleProcessScanImage(file);
-    }
-    e.target.value = '';
-  };
 
   // Release reservation on unmount
   useEffect(() => {
@@ -567,81 +479,6 @@ const ItemModalContent = () => {
     }
   };
 
-  const handleApplyAiData = (extracted) => {
-    setFormData((prev) => ({
-      ...prev,
-      style: extracted.style || prev.style,
-      sampleNo: extracted.sampleNo || prev.sampleNo,
-      size: extracted.size || prev.size,
-      color: extracted.color || prev.color,
-      buyerNo: extracted.buyerNo || prev.buyerNo,
-      jenisSample: extracted.jenisSample || prev.jenisSample,
-      tanggal: extracted.tanggal || prev.tanggal,
-      jumlah: extracted.jumlah !== undefined ? Number(extracted.jumlah) : prev.jumlah,
-      satuan: 'PCE',
-      track: extracted.track || prev.track,
-    }));
-    showNotification?.('✨ Data dari label berhasil diisi ke form!', 'success', 3000);
-    setIsAiScannerOpen(false);
-  };
-
-  const handleDirectSaveAiData = async (extracted) => {
-    const styleTrim = String(extracted.style || 'SAMPLE').trim().toUpperCase();
-    const sampleNoTrim = String(extracted.sampleNo || '').trim().toUpperCase();
-    const sizeTrim = String(extracted.size || 'ONESIZE').trim().toUpperCase();
-    const colorTrim = String(extracted.color || 'NA').trim().toUpperCase();
-    const buyerNoTrim = String(extracted.buyerNo || 'NA').trim().toUpperCase();
-    const trackClean = clean(extracted.track || 'NA');
-    const tanggalClean = extracted.tanggal || formatTodayDate();
-
-    const finalKode = await allocateNextSequentialCode(
-      supabase,
-      isMaterialBox ? 'MATERIAL' : 'SAMPLE',
-      items
-    );
-
-    const boxNum = Number(formData.boxNumber) || targetBoxNum;
-    const boxObj = boxes.find(b => Number(b.boxNumber) === boxNum);
-    const placeClean = boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`;
-    const fullDeskripsi = sampleNoTrim
-      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
-      : `${styleTrim} - Size: ${sizeTrim}`;
-
-    const payload = {
-      track: trackClean,
-      tanggal: tanggalClean,
-      kode: finalKode,
-      buyerNo: buyerNoTrim,
-      jenisSample: clean(extracted.jenisSample || 'PPS'),
-      style: styleTrim,
-      sampleNo: sampleNoTrim,
-      size: sizeTrim,
-      deskripsi: fullDeskripsi,
-      color: colorTrim,
-      jumlah: Number(extracted.jumlah) || 1,
-      satuan: 'PCE',
-      place: placeClean,
-      name: sampleNoTrim
-        ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`
-        : `${styleTrim} (Size: ${sizeTrim})`,
-      sku: finalKode,
-      buyerNumber: buyerNoTrim,
-      description: fullDeskripsi,
-      qty: Number(extracted.jumlah) || 1,
-      unit: 'PCE',
-      boxNumber: boxNum,
-      rackId: boxObj ? Number(boxObj.rackId) : 1,
-      rackName: boxObj ? boxObj.rackName : 'RACK 1',
-      picName: boxObj ? boxObj.picName : 'Royan',
-      category: boxObj ? boxObj.category : 'SAMPLE',
-      status: 'In Storage',
-      dateIn: tanggalClean,
-    };
-
-    await addItem(payload);
-    showNotification?.(`⚡ [${finalKode}] Berhasil disimpan langsung ke BOX #${boxNum}!`, 'success', 3500);
-  };
-
   const currentBoxObj = boxes.find(b => Number(b.boxNumber) === Number(formData.boxNumber));
   const isSuper = isSuperuser?.(currentUser);
   const isSupportUser = isSupport?.(currentUser) || isHelper?.(currentUser);
@@ -671,16 +508,6 @@ const ItemModalContent = () => {
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsAiScannerOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#0071e3] to-[#5ac8fa] hover:brightness-110 text-white text-xs font-bold shadow-xs transition cursor-pointer active:scale-95"
-              title="Pindai Kartu / Tag Sampel dengan Gemini AI"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Scan Tag AI</span>
-            </button>
-
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
@@ -768,226 +595,6 @@ const ItemModalContent = () => {
         {/* Form Body: Apple Inset Grouped layout */}
         <form onSubmit={handleSubmit} id="direct-card-form" className="p-2 sm:p-4 bg-[#f5f5f7] flex-1 overflow-y-auto overscroll-contain">
           <div className="bg-white border border-black/[0.08] rounded-2xl sm:rounded-[22px] p-3 sm:p-4 shadow-2xs space-y-2.5 text-xs">
-            
-            {/* ========================================================================= */}
-            {/* STASIUN SCAN TAG SAMPEL & STICKY LOCK INFO (EMBEDDED DI FORMULIR UTAMA) */}
-            {/* ========================================================================= */}
-            <div className="rounded-2xl bg-slate-900 text-white p-3.5 sm:p-4 border border-slate-800 shadow-sm space-y-3">
-              {/* Header Card & Sticky Lock Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center border border-blue-500/30 shrink-0">
-                    <Camera className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5">
-                      <span>Scan Tag Sampel Langsung</span>
-                      <span className="text-[10px] font-mono font-medium px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        Gemini AI
-                      </span>
-                    </div>
-                    <p className="text-[10.5px] text-slate-400">
-                      Pindai label fisik untuk auto-fill seluruh kolom formulir di bawah
-                    </p>
-                  </div>
-                </div>
-
-                {/* Sticky Context (Lock Info Stick) */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {/* Sticky Lock Buyer */}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
-                    isBuyerLocked ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-300'
-                  }`}>
-                    <button
-                      type="button"
-                      onClick={() => setIsBuyerLocked(p => !p)}
-                      title={isBuyerLocked ? 'Buyer Terkunci (klik untuk buka)' : 'Buyer Tidak Terkunci (klik untuk kunci)'}
-                      className="cursor-pointer hover:opacity-80 transition"
-                    >
-                      {isBuyerLocked ? <Lock className="w-3.5 h-3.5 text-emerald-400" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
-                    </button>
-                    <span className="text-[10px] text-slate-400">Buyer:</span>
-                    <select
-                      value={stickyBuyer}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setStickyBuyer(val);
-                        localStorage.setItem('gagaclo_sticky_buyer', val);
-                        setFormData(p => ({ ...p, buyerNo: val }));
-                      }}
-                      className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
-                    >
-                      {BUYER_OPTIONS.map(b => (
-                        <option key={b.code} value={b.code} className="bg-slate-900 text-white">
-                          {b.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Sticky Lock Jenis */}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
-                    isJenisLocked ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-300'
-                  }`}>
-                    <button
-                      type="button"
-                      onClick={() => setIsJenisLocked(p => !p)}
-                      title={isJenisLocked ? 'Jenis Terkunci (klik untuk buka)' : 'Jenis Tidak Terkunci (klik untuk kunci)'}
-                      className="cursor-pointer hover:opacity-80 transition"
-                    >
-                      {isJenisLocked ? <Lock className="w-3.5 h-3.5 text-emerald-400" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
-                    </button>
-                    <span className="text-[10px] text-slate-400">Jenis:</span>
-                    <select
-                      value={stickyJenis}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setStickyJenis(val);
-                        localStorage.setItem('gagaclo_sticky_jenis', val);
-                        setFormData(p => ({ ...p, jenisSample: val }));
-                      }}
-                      className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
-                    >
-                      {JENIS_SAMPLE_OPTIONS.map(j => (
-                        <option key={j} value={j} className="bg-slate-900 text-white">
-                          {j}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mode Toggle: Kamera vs Upload Foto */}
-              <div className="flex bg-slate-950/60 rounded-xl p-1 border border-slate-800 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setScannerMode('camera')}
-                  className={`flex-1 py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                    scannerMode === 'camera'
-                      ? 'bg-blue-600 text-white font-bold shadow-xs'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Kamera</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setScannerMode('upload')}
-                  className={`flex-1 py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                    scannerMode === 'upload'
-                      ? 'bg-blue-600 text-white font-bold shadow-xs'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Upload Foto</span>
-                </button>
-              </div>
-
-              {/* Scanner Viewport / Controls (Matches User Screenshot) */}
-              <div className="rounded-xl bg-slate-950 border border-slate-800 p-4 text-center min-h-[160px] flex flex-col items-center justify-center relative overflow-hidden">
-                {/* Hidden File Inputs */}
-                <input
-                  ref={nativeCameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                />
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                />
-
-                {isAiScanning ? (
-                  <div className="space-y-3 py-4">
-                    <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mx-auto" />
-                    <div>
-                      <div className="text-xs font-bold text-white">Mengekstrak Label Sampel...</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">Memproses tulisan tangan &amp; kode dengan Gemini Vision AI</div>
-                    </div>
-                  </div>
-                ) : scannerMode === 'camera' ? (
-                  <div className="space-y-3.5 max-w-sm mx-auto w-full py-2">
-                    <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto border border-slate-700">
-                      <Camera className="w-6 h-6 text-slate-300" />
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed px-2">
-                      Kamera fisik siap digunakan. Silakan gunakan tombol <strong>"Buka Kamera HP Langsung"</strong> atau <strong>"Upload Foto"</strong>.
-                    </p>
-
-                    {/* Tombol Utama Hijau Sesuai Screenshot Pengguna */}
-                    <button
-                      type="button"
-                      onClick={() => nativeCameraInputRef.current?.click()}
-                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4" />
-                      <span>Buka Kamera HP Langsung</span>
-                    </button>
-
-                    {/* Tombol Sekunder: Coba Lagi & Galeri Foto */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => nativeCameraInputRef.current?.click()}
-                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-700"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Coba Lagi</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-700"
-                      >
-                        <ImageIcon className="w-3.5 h-3.5" />
-                        <span>Galeri Foto</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3 py-3 max-w-sm mx-auto w-full">
-                    <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto border border-slate-700">
-                      <Upload className="w-6 h-6 text-slate-300" />
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      Pilih foto label/tag dari galeri perangkat untuk diekstrak otomatis.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span>Pilih Foto dari Galeri</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Scan Error Alert jika ada */}
-                {scanErrorMsg && (
-                  <div className="mt-2 text-[11px] text-rose-400 bg-rose-950/60 border border-rose-800/80 rounded-lg p-2 text-left w-full flex items-start gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-                    <span>{scanErrorMsg}</span>
-                  </div>
-                )}
-
-                {/* Scan Success Banner */}
-                {scanSuccessMsg && (
-                  <div className="mt-2 text-[11px] text-emerald-300 bg-emerald-950/60 border border-emerald-800/80 rounded-lg p-2 text-left w-full flex items-start gap-1.5 animate-in fade-in">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{scanSuccessMsg}</span>
-                  </div>
-                )}
-              </div>
-            </div>
             
             {/* BARIS 1: Track & Tanggal Sample */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
@@ -1104,37 +711,86 @@ const ItemModalContent = () => {
               </div>
             </div>
 
-            {/* BARIS 2: Buyer No dengan Fast Selection Rekomendasi */}
+            {/* BARIS 2: Buyer No dengan Fast Selection Rekomendasi & Sticky Lock Info */}
             <div className={`border rounded-lg p-2 bg-white transition flex flex-col justify-between ${
-              errors.buyerNo ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
+              errors.buyerNo
+                ? 'border-rose-500 bg-rose-50/50'
+                : isBuyerLocked
+                  ? 'border-emerald-400 bg-emerald-50/15 ring-1 ring-emerald-300/60'
+                  : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
             }`}>
               <div>
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Buyer No <span className="text-rose-500">*</span>:
-                  </label>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Buyer No <span className="text-rose-500">*</span>:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !isBuyerLocked;
+                        setIsBuyerLocked(next);
+                        if (next && formData.buyerNo) {
+                          setStickyBuyer(formData.buyerNo);
+                          localStorage.setItem('gagaclo_sticky_buyer', formData.buyerNo);
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer select-none ${
+                        isBuyerLocked
+                          ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 hover:text-slate-700'
+                      }`}
+                      title={isBuyerLocked ? 'Buyer Terkunci (klik untuk buka kunci)' : 'Klik untuk mengunci Buyer ini agar otomatis terisi pada item berikutnya'}
+                    >
+                      {isBuyerLocked ? (
+                        <>
+                          <Lock className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span>Terkunci {formData.buyerNo ? `(${formData.buyerNo})` : ''}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>Kunci Buyer</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       setFormData(p => ({ ...p, buyerNo: 'NA' }));
                       if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                      if (isBuyerLocked) {
+                        setStickyBuyer('NA');
+                        localStorage.setItem('gagaclo_sticky_buyer', 'NA');
+                      }
                     }}
                     className="text-xs font-black px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 transition cursor-pointer"
                   >
                     + NA
                   </button>
                 </div>
-                <input
-                  type="text"
-                  list="buyer-datalist"
-                  value={formData.buyerNo}
-                  onChange={(e) => {
-                    setFormData(p => ({ ...p, buyerNo: e.target.value.toUpperCase() }));
-                    if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
-                  }}
-                  placeholder="Contoh: AN05 / RSD-250015-2 / NA"
-                  className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    list="buyer-datalist"
+                    value={formData.buyerNo}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setFormData(p => ({ ...p, buyerNo: val }));
+                      if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                      if (isBuyerLocked) {
+                        setStickyBuyer(val);
+                        localStorage.setItem('gagaclo_sticky_buyer', val);
+                      }
+                    }}
+                    placeholder="Contoh: AN05 / RSD-250015-2 / NA"
+                    className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent pr-6"
+                  />
+                  {isBuyerLocked && (
+                    <Lock className="w-3.5 h-3.5 text-emerald-600 absolute right-1 pointer-events-none opacity-80" />
+                  )}
+                </div>
                 <datalist id="buyer-datalist">
                   {(suggestions.buyerNo || []).map((b, idx) => (
                     <option key={`by-${idx}`} value={b} />
@@ -1156,14 +812,19 @@ const ItemModalContent = () => {
                       onClick={() => {
                         setFormData(p => ({ ...p, buyerNo: b }));
                         if (errors.buyerNo) setErrors(prev => ({ ...prev, buyerNo: null }));
+                        if (isBuyerLocked) {
+                          setStickyBuyer(b);
+                          localStorage.setItem('gagaclo_sticky_buyer', b);
+                        }
                       }}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase transition cursor-pointer text-center whitespace-nowrap ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase transition cursor-pointer text-center whitespace-nowrap flex items-center gap-1 ${
                         isSelected
                           ? 'bg-[#0071e3] text-white shadow-xs'
                           : 'bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] border border-black/[0.06]'
                       }`}
                     >
-                      {b}
+                      {isSelected && isBuyerLocked && <Lock className="w-2.5 h-2.5 text-white/80" />}
+                      <span>{b}</span>
                     </button>
                   );
                 })}
@@ -1172,13 +833,50 @@ const ItemModalContent = () => {
 
             {/* BARIS 3: Jenis Sample (Chip Buttons) & Deskripsi / Style */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-              {/* Jenis Sample Pills */}
+              {/* Jenis Sample Pills & Sticky Lock Info */}
               <div className={`md:col-span-6 border rounded-xl p-2 bg-white transition ${
-                errors.jenisSample ? 'border-rose-500 bg-rose-50/50 ring-1 ring-rose-400' : 'border-slate-300'
+                errors.jenisSample
+                  ? 'border-rose-500 bg-rose-50/50 ring-1 ring-rose-400'
+                  : isJenisLocked
+                    ? 'border-emerald-400 bg-emerald-50/15 ring-1 ring-emerald-300/60'
+                    : 'border-slate-300'
               }`}>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Jenis Sample <span className="text-rose-500">*</span>:
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Jenis Sample <span className="text-rose-500">*</span>:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !isJenisLocked;
+                        setIsJenisLocked(next);
+                        if (next && formData.jenisSample) {
+                          setStickyJenis(formData.jenisSample);
+                          localStorage.setItem('gagaclo_sticky_jenis', formData.jenisSample);
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer select-none ${
+                        isJenisLocked
+                          ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 hover:text-slate-700'
+                      }`}
+                      title={isJenisLocked ? 'Jenis Sample Terkunci (klik untuk buka kunci)' : 'Klik untuk mengunci Jenis Sample ini agar otomatis terisi pada item berikutnya'}
+                    >
+                      {isJenisLocked ? (
+                        <>
+                          <Lock className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span>Terkunci {formData.jenisSample ? `(${formData.jenisSample})` : ''}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>Kunci Jenis</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   {['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARCHIVE'].map((type) => {
                     const isSelected = formData.jenisSample === type;
@@ -1189,15 +887,20 @@ const ItemModalContent = () => {
                         onClick={() => {
                           setFormData(p => ({ ...p, jenisSample: type }));
                           if (errors.jenisSample) setErrors(prev => ({ ...prev, jenisSample: null }));
+                          if (isJenisLocked) {
+                            setStickyJenis(type);
+                            localStorage.setItem('gagaclo_sticky_jenis', type);
+                          }
                         }}
-                        className={`flex-1 min-w-[70px] sm:min-w-0 py-1.5 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition border cursor-pointer text-center select-none active:scale-95 ${
+                        className={`flex-1 min-w-[70px] sm:min-w-0 py-1.5 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition border cursor-pointer text-center select-none active:scale-95 flex items-center justify-center gap-1 ${
                           isSelected
                             ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
                         }`}
                       >
                         {isSelected && <span className="text-amber-300 mr-0.5">✓</span>}
-                        {type}
+                        {isSelected && isJenisLocked && <Lock className="w-3 h-3 text-emerald-400" />}
+                        <span>{type}</span>
                       </button>
                     );
                   })}
@@ -1603,17 +1306,6 @@ const ItemModalContent = () => {
           }}
         />
       )}
-
-      {/* AI Tag Scanner Modal */}
-      <AiTagScannerModal
-        isOpen={isAiScannerOpen}
-        onClose={() => setIsAiScannerOpen(false)}
-        targetBoxNumber={Number(formData.boxNumber) || targetBoxNum}
-        defaultBuyer={formData.buyerNo}
-        defaultJenisSample={formData.jenisSample}
-        onApplyToForm={handleApplyAiData}
-        onDirectSave={handleDirectSaveAiData}
-      />
     </div>
   );
 };

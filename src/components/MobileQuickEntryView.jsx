@@ -527,26 +527,6 @@ export const MobileQuickEntryView = ({
 
           </div>
 
-          {/* Tombol Pintas ke Input Sampel & Rekap */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => setActiveTab('input')}
-              className="py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-blue-200/80 active:scale-98"
-            >
-              <span>Input Box #{activeBoxNumber}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenRekap?.()}
-              className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-200 active:scale-98"
-            >
-              <span>Rekap Tim R&amp;D</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
         </div>
       )}
 
@@ -719,23 +699,29 @@ export const MobileQuickEntryView = ({
             </div>
           </div>
 
-          {/* Kartu Tombol Utama: Pindai Tag Sampel (Kamera) */}
+          {/* Kartu Tombol Utama: Formulir Utama Input Sampel */}
           <div className="rounded-2xl bg-blue-600 text-white p-4 shadow-sm border border-blue-500">
             <button
               type="button"
-              onClick={() => onOpenAiScanner?.(activeBoxNumber)}
+              onClick={() => {
+                setItemModalConfig({
+                  isOpen: true,
+                  item: null,
+                  targetBoxNumber: activeBoxNumber,
+                });
+              }}
               className="w-full flex items-center justify-between text-left cursor-pointer active:scale-[0.99] transition"
             >
               <div className="flex items-center gap-3">
                 <div className="h-11 w-11 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0">
-                  <Camera className="w-5 h-5" />
+                  <Package className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="text-sm font-bold tracking-tight leading-tight">
-                    Pindai Tag Sampel (Kamera)
+                    Formulir Utama Input Sampel
                   </div>
                   <div className="text-[11px] text-blue-100 mt-0.5 font-normal">
-                    Ekstraksi tulisan tangan &amp; label otomatis
+                    Langsung buka formulir input untuk Box #{activeBoxNumber}
                   </div>
                 </div>
               </div>
