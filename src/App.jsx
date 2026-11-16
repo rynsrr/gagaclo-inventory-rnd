@@ -107,6 +107,7 @@ const AppContent = () => {
   const [isBoxManageOpen, setIsBoxManageOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [userProfileTarget, setUserProfileTarget] = useState(null);
+  const [isMobileUserGate, setIsMobileUserGate] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
@@ -282,6 +283,21 @@ const AppContent = () => {
       clearInterval(timer);
     };
   }, [connected]);
+
+  // KHUSUS MOBILE: Wajibkan login / pilih akun saat pertama kali membuka web di browser HP
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      try {
+        const hasLoggedInOnMobile = localStorage.getItem('gagaclo_mobile_user_selected');
+        if (!hasLoggedInOnMobile) {
+          setIsMobileUserGate(true);
+          setIsUserProfileOpen(true);
+        }
+      } catch {}
+    }
+  }, []);
 
   // Auto-open dynamic announcement popup on app load if active and not marked as seen
   // KHUSUS DESKTOP: Jangan munculkan popup pengumuman otomatis di mobile version (< 768px)
@@ -924,6 +940,10 @@ const AppContent = () => {
                       setIsAiScannerOpen(true);
                     }}
                     onOpen3dView={() => setMobileWarehouseView('3d')}
+                    onOpenUserProfile={() => {
+                      setIsMobileUserGate(false);
+                      setIsUserProfileOpen(true);
+                    }}
                   />
                 )}
               </div>
@@ -994,8 +1014,10 @@ const AppContent = () => {
             onClose={() => {
               setIsUserProfileOpen(false);
               setUserProfileTarget(null);
+              setIsMobileUserGate(false);
             }}
             initialSelectedUserName={userProfileTarget}
+            isMandatory={isMobileUserGate}
           />
         </Suspense>
       )}

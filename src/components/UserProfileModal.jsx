@@ -13,7 +13,7 @@ import {
 import { useInventory } from '../context/InventoryContext';
 import { isHelper, isManager } from '../utils/authUtils';
 
-export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) => {
+export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName, isMandatory = false }) => {
   const {
     users,
     currentUser,
@@ -61,12 +61,23 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
 
     const res = loginUser(selectedUserToLogin.name, loginPassword);
     if (res.success) {
+      try {
+        localStorage.setItem('gagaclo_mobile_user_selected', 'true');
+      } catch {}
       // Langsung tutup modal seketika tanpa notifikasi
       setLoginPassword('');
       onClose();
     } else {
       setLoginError(res.message || 'Password salah.');
     }
+  };
+
+  // Handle Konfirmasi Akun Aktif (Mode Gate Mobile)
+  const handleConfirmCurrent = () => {
+    try {
+      localStorage.setItem('gagaclo_mobile_user_selected', 'true');
+    } catch {}
+    onClose();
   };
 
   // Handle Logout
@@ -86,7 +97,7 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
       aria-modal="true"
       aria-labelledby="user-profile-modal-title"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (!isMandatory && e.target === e.currentTarget) onClose();
       }}
     >
       <div className="font-apple relative w-full max-w-[420px] max-h-[90vh] flex flex-col rounded-[22px] bg-white shadow-[0_24px_50px_rgba(0,0,0,0.16)] border border-black/[0.08] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -99,21 +110,23 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
             </div>
             <div>
               <h3 id="user-profile-modal-title" className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight leading-tight">
-                Ganti User / Login Akun
+                {isMandatory ? 'Pilih Akun Pengguna' : 'Ganti User / Login Akun'}
               </h3>
               <p className="text-[11px] font-normal text-[#86868b]">
-                Kelola akun dan otentikasi pengguna
+                {isMandatory ? 'Pilih akun Anda sebelum memulai pendataan di HP' : 'Kelola akun dan otentikasi pengguna'}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Tutup modal"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+          {!isMandatory && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Tutup modal"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#86868b] hover:text-[#1d1d1f] transition-colors cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         {/* Modal Body */}
@@ -234,20 +247,22 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                       <div className="flex items-center gap-2 pt-1">
                         <button
                           type="button"
-                          onClick={onClose}
+                          onClick={handleConfirmCurrent}
                           className="flex-1 py-2.5 px-4 rounded-xl text-[13px] font-semibold text-white bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.99] shadow-xs cursor-pointer transition text-center"
                         >
-                          Lanjut Bekerja
+                          {isMandatory ? `Gunakan Akun ${selectedUserToLogin.name} & Lanjut` : 'Lanjut Bekerja'}
                         </button>
-                        <button
-                          type="button"
-                          onClick={handleLogout}
-                          className="flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-xl text-[13px] font-medium text-[#ff3b30] bg-[#ff3b30]/6 hover:bg-[#ff3b30]/12 border border-[#ff3b30]/15 active:scale-[0.99] cursor-pointer transition"
-                          title="Keluar dari sesi akun ini"
-                        >
-                          <LogOut className="w-3.5 h-3.5" />
-                          <span>Keluar</span>
-                        </button>
+                        {!isMandatory && (
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-xl text-[13px] font-medium text-[#ff3b30] bg-[#ff3b30]/6 hover:bg-[#ff3b30]/12 border border-[#ff3b30]/15 active:scale-[0.99] cursor-pointer transition"
+                            title="Keluar dari sesi akun ini"
+                          >
+                            <LogOut className="w-3.5 h-3.5" />
+                            <span>Keluar</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -284,6 +299,9 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
                             {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
+                        <p className="text-[11px] text-[#86868b] mt-1.5">
+                          💡 Hint: Password default sama dengan nama pengguna (contoh: <strong className="text-[#1d1d1f]">{selectedUserToLogin.name}</strong>)
+                        </p>
                       </div>
 
                       <button
@@ -307,13 +325,15 @@ export const UserProfileModal = ({ isOpen, onClose, initialSelectedUserName }) =
             <Lock className="h-3 w-3 text-[#86868b] shrink-0" />
             <span>Akses terenkripsi per akun PIC</span>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] px-3.5 py-1 text-[12px] font-medium text-[#1d1d1f] transition-colors cursor-pointer"
-          >
-            Tutup
-          </button>
+          {!isMandatory && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] px-3.5 py-1 text-[12px] font-medium text-[#1d1d1f] transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          )}
         </div>
 
       </div>

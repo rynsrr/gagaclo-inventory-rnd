@@ -14,6 +14,7 @@ import {
   ChevronDown, 
   Boxes, 
   Zap, 
+  UserCheck,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
 import { CardPrintModal } from './CardPrintModal';
@@ -22,6 +23,7 @@ export const MobileQuickEntryView = ({
   onOpenAiScanner,
   onOpen3dView,
   onDirectScanImage,
+  onOpenUserProfile,
 }) => {
   const {
     items,
@@ -163,6 +165,17 @@ export const MobileQuickEntryView = ({
             </p>
           </div>
         </div>
+
+        {/* Tombol Ganti Akun Pengguna */}
+        <button
+          type="button"
+          onClick={onOpenUserProfile}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-[11px] font-bold text-white transition cursor-pointer shrink-0"
+          title="Ganti akun pengguna / login"
+        >
+          <UserCheck className="w-3.5 h-3.5 text-[#5ac8fa]" />
+          <span>Ganti Akun</span>
+        </button>
       </div>
 
       {/* 2. STATS CAPAIAN TARGET TEAM & HARI INI */}
