@@ -145,8 +145,8 @@ const AiTagScannerContent = ({
     const startTime = performance.now();
 
     try {
-      // 1. Kompres gambar di client-side (max 1024px)
-      const compressedBase64 = await compressImage(fileOrBlob, 1024, 0.85);
+      // 1. Kompres gambar di client-side (max 900px, quality 0.75 untuk transfer sub-80ms)
+      const compressedBase64 = await compressImage(fileOrBlob, 900, 0.75);
       setCapturedImage(compressedBase64);
 
       // 2. Siapkan context

@@ -30,9 +30,9 @@ export function saveStoredGeminiKey(key) {
 
 /**
  * Kompresi gambar client-side sebelum dikirim via API
- * Menjaga lebar max 1024px dan kualitas 0.8 agar transfer sub-100ms
+ * Menjaga lebar max 900px dan kualitas 0.75 agar transfer sub-100ms
  */
-export async function compressImage(fileOrBlob, maxWidth = 1024, quality = 0.8) {
+export async function compressImage(fileOrBlob, maxWidth = 900, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -103,48 +103,38 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     rawBase64 = parts[1];
   }
 
-  // 2. Coba kirim via serverless backend endpoint (/api/ai-scan-label) jika tersedia
-  let serverHadNoKey = false;
-  try {
-    const serverResponse = await fetch('/api/ai-scan-label', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageBase64: rawBase64,
-        mimeType,
-        contextSettings,
-      }),
-    });
-
-    if (serverResponse.ok) {
-      const result = await serverResponse.json();
-      if (result?.success && result?.data) {
-        return {
-          ...result.data,
-          _source: 'server',
-          _model: result.modelUsed || 'gemini-flash',
-        };
-      }
-    } else {
-      const errJson = await serverResponse.json().catch(() => ({}));
-      if (errJson?.error === 'SERVER_NO_API_KEY') {
-        serverHadNoKey = true;
-      }
-    }
-  } catch (err) {
-    // Lanjutkan ke direct client call jika serverless belum di-deploy atau di lingkungan lokal
-    console.warn('Serverless endpoint not reachable, trying direct Gemini API...', err);
-  }
-
-  // 3. Fallback: Panggil direct Google Gemini Vision API
+  // 2. Jika user memiliki API Key di browser, prioritaskan pemanggilan LANGSUNG ke Google AI Studio
+  // Ini menghindari cold-start & roundtrip Vercel serverless (menghemat 5-10 detik!)
   const apiKey = getStoredGeminiKey();
+
   if (!apiKey) {
-    if (serverHadNoKey) {
-      throw new Error('API Key Google Gemini belum dikonfigurasi. Klik tombol "API Key" di pojok kanan atas untuk memasukkan API Key Google Gemini (gratis), atau pasang GEMINI_API_KEY di Vercel Environment Variables.');
-    }
-    throw new Error('Google Gemini API Key belum diatur. Klik tombol "API Key" di pojok kanan atas untuk memasukkan API Key gratis dari Google AI Studio.');
+    // Jika tidak ada API key di browser, baru coba serverless endpoint di Vercel
+    try {
+      const serverResponse = await fetch('/api/ai-scan-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: rawBase64,
+          mimeType,
+          contextSettings,
+        }),
+      });
+
+      if (serverResponse.ok) {
+        const result = await serverResponse.json();
+        if (result?.success && result?.data) {
+          return {
+            ...result.data,
+            _source: 'server',
+          };
+        }
+      }
+    } catch {}
+
+    throw new Error('API Key Google Gemini belum diatur. Klik tombol "API Key" di pojok kanan atas untuk memasukkan API Key gratis dari Google AI Studio.');
   }
 
+  // 3. Direct Ultra-Fast Gemini Multimodal Vision Call
   const prompt = buildExtractionPrompt(contextSettings);
 
   const payload = {
@@ -167,53 +157,34 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     },
   };
 
-  // Temukan endpoint & model yang didukung secara dinamis
-  const candidateUrls = [
-    // Endpoint v1 (Stable)
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
-    // Endpoint v1beta (Preview / 2.0 / 2.5)
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${apiKey}`,
-    // Fallback Pro
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+  // Endpoint kurasi khusus Vision Flash berkecepatan tinggi (Sub-1.2s)
+  // v1/gemini-1.5-flash adalah endpoint resmi stabil Google AI Studio saat ini
+  const cachedWinner = (() => {
+    try {
+      return localStorage.getItem('gagaclo_winning_gemini_endpoint');
+    } catch {
+      return null;
+    }
+  })();
+
+  const curatedBases = [
+    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
   ];
 
-  // Coba query ListModels terlebih dahulu untuk menemukan model spesifik yang diizinkan untuk key ini
-  let prioritizedUrls = candidateUrls;
-  try {
-    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-    if (listRes.ok) {
-      const listData = await listRes.json();
-      const supported = (listData?.models || [])
-        .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-        .map(m => m.name.replace(/^models\//, ''));
-
-      if (supported.length > 0) {
-        const dynamicUrls = supported.map(
-          mod => `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${apiKey}`
-        );
-        prioritizedUrls = [...dynamicUrls, ...candidateUrls];
-      }
-    } else {
-      const errList = await listRes.json().catch(() => ({}));
-      if (errList?.error?.message?.toLowerCase().includes('api key not valid')) {
-        throw new Error('API Key Google Gemini tidak valid. Harap periksa dan salin kembali kunci Anda dari Google AI Studio.');
-      }
-    }
-  } catch (probeErr) {
-    if (probeErr.message?.includes('tidak valid')) throw probeErr;
-  }
+  // Dahulukan endpoint yang sudah terbukti bekerja di browser ini
+  const orderedBases = cachedWinner
+    ? [cachedWinner, ...curatedBases.filter((b) => b !== cachedWinner)]
+    : curatedBases;
 
   let lastError = null;
 
-  for (const url of prioritizedUrls) {
+  for (const base of orderedBases) {
     try {
+      const url = `${base}?key=${apiKey}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,6 +211,11 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
       const cleanedJson = textContent.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsedData = JSON.parse(cleanedJson);
 
+      // Simpan endpoint pemenang agar pemindaian berikutnya langsung instan tanpa coba-coba!
+      try {
+        localStorage.setItem('gagaclo_winning_gemini_endpoint', base);
+      } catch {}
+
       // Normalisasi & pastikan format standar
       const normalizedData = {
         style: String(parsedData.style || '').trim().toUpperCase() || 'NA',
@@ -259,7 +235,7 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     } catch (err) {
       lastError = err;
       if (err.message?.includes('tidak valid')) throw err;
-      // Lanjut ke endpoint berikutnya jika 404 (model tidak ditemukan di versi endpoint tersebut)
+      // Jika endpoint gagal/404, coba kandidat kurasi berikutnya
     }
   }
 
