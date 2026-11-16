@@ -53,7 +53,6 @@ const AnnouncementModal = lazy(() =>
 );
 import { AiTagScannerModal } from './components/AiTagScannerModal';
 import { MobileQuickEntryView } from './components/MobileQuickEntryView';
-import { MobileBottomNav } from './components/MobileBottomNav';
 import { allocateNextSequentialCode } from './utils/sequenceResolver';
 import {
   Boxes,
@@ -76,6 +75,7 @@ import {
   Megaphone,
   Calendar,
   Zap,
+  Download,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -289,6 +289,37 @@ const AppContent = () => {
     };
   }, [connected]);
 
+  // PWA Install Prompt untuk Android Chrome & Desktop
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    setIsAppInstalled(Boolean(isStandalone));
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) {
+      alert('Untuk menginstal di Android via Chrome:\n1. Buka menu Chrome (ikon titik tiga di kanan atas)\n2. Pilih "Tambahkan ke Layar Utama" / "Install Aplikasi"\n3. Aplikasi akan langsung terpasang di HP.');
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+      setIsAppInstalled(true);
+    }
+  };
+
   // KHUSUS MOBILE: Wajibkan login "Welcome back" saat pertama kali membuka web di browser HP
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -447,6 +478,19 @@ const AppContent = () => {
                     <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white">
                       {dispatchCart.length}
                     </span>
+                  </button>
+                )}
+
+                {/* Tombol Install App (PWA Android Chrome) */}
+                {!isAppInstalled && (
+                  <button
+                    type="button"
+                    onClick={handleInstallApp}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0071e3] text-xs font-bold border border-blue-200 transition cursor-pointer active:scale-95 shadow-2xs"
+                    title="Install Aplikasi Gagaclo di Android"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden xs:inline">Install</span>
                   </button>
                 )}
 
@@ -925,7 +969,7 @@ const AppContent = () => {
 
       {/* Left main navigation + page content */}
       <div className="inventory-body">
-        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 pb-24 md:pb-5">
+        <main className="inventory-main no-print flex-1 min-w-0 w-full max-w-[1560px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-5 pb-6 md:pb-5">
           {appMode === '3d-warehouse' && (
             <>
               {/* Tampilan Desktop (Layar Lebar >= 768px): Visualisasi 3D Warehouse Tetap Utama */}
@@ -1294,39 +1338,6 @@ const AppContent = () => {
           setIsAiScannerOpen(false);
         }}
         onDirectSave={handleAppDirectSaveAiData}
-      />
-
-      {/* Navigasi Dock Bottom Bar & Menu Drawer Khusus Mobile (< 768px) */}
-      <MobileBottomNav
-        appMode={appMode}
-        setAppMode={(mode) => {
-          setAppMode(mode);
-          if (mode === '3d-warehouse') {
-            window.dispatchEvent(new CustomEvent('gagaclo_reset_3d_home_view'));
-          }
-        }}
-        activeIssuesCount={activeIssuesCount}
-        cartCount={dispatchCart?.length || 0}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenBoxManage={() => setIsBoxManageOpen(true)}
-        onOpenBackup={() => {
-          setBackupPasswordInput('');
-          setBackupPasswordError(false);
-          setIsBackupPasswordOpen(true);
-        }}
-        onExportExcel={exportToExcel}
-        onImportExcel={() => setIsImportModalOpen(true)}
-        onOpenSupabase={() => setIsSupabaseModalOpen(true)}
-        onToggle3dView={() => setMobileWarehouseView((prev) => (prev === '3d' ? 'quick-entry' : '3d'))}
-        mobileWarehouseView={mobileWarehouseView}
-        currentUser={currentUser}
-        onOpenUserProfile={() => {
-          setIsMobileLoginMandatory(false);
-          setIsMobileLoginOpen(true);
-        }}
-        supabaseConnected={connected}
-        usageLabel={usageLabel}
       />
     </div>
   );

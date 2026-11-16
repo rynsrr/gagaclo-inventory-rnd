@@ -17,8 +17,30 @@ import {
   ScanLine,
   ArrowRight,
   TrendingUp,
-  UserCheck
+  UserCheck,
+  Lock,
+  Unlock
 } from 'lucide-react';
+
+const BUYER_OPTIONS = [
+  { code: 'AN05', label: 'AN05 - ERGODYNE' },
+  { code: 'AN01', label: 'AN01' },
+  { code: 'AN02', label: 'AN02' },
+  { code: 'AN03', label: 'AN03' },
+  { code: 'AN04', label: 'AN04' },
+  { code: 'NA', label: 'NA (Tanpa Buyer)' },
+];
+
+const JENIS_SAMPLE_OPTIONS = [
+  'PPS',
+  'DEV',
+  'ARCHIVE',
+  'PROTO',
+  'SMS',
+  'FIT',
+  'SEW',
+  'NA',
+];
 import { getItemRecordDate, getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
 import { CardPrintModal } from './CardPrintModal';
 import { TEAM_MEMBERS } from './TargetTeamBanner';
@@ -54,6 +76,20 @@ export const MobileQuickEntryView = ({
   const [copiedCode, setCopiedCode] = useState(null);
   const [isBoxPickerOpen, setIsBoxPickerOpen] = useState(false);
   const [boxRackFilter, setBoxRackFilter] = useState('ALL');
+
+  // Sticky Lock Context
+  const [stickyBuyer, setStickyBuyer] = useState(() => {
+    return localStorage.getItem('gagaclo_sticky_buyer') || 'AN05';
+  });
+  const [isBuyerLocked, setIsBuyerLocked] = useState(() => {
+    return localStorage.getItem('gagaclo_lock_buyer_enabled') !== 'false';
+  });
+  const [stickyJenis, setStickyJenis] = useState(() => {
+    return localStorage.getItem('gagaclo_sticky_jenis') || 'PPS';
+  });
+  const [isJenisLocked, setIsJenisLocked] = useState(() => {
+    return localStorage.getItem('gagaclo_lock_jenis_enabled') !== 'false';
+  });
 
   // Simpan activeBoxNumber ke localStorage saat berubah
   const handleSelectBox = (num) => {
@@ -611,6 +647,76 @@ export const MobileQuickEntryView = ({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Sticky Lock Info Bar (Buyer & Jenis) */}
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-900 text-white border border-slate-800 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lock Info:</span>
+            <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                isBuyerLocked ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !isBuyerLocked;
+                    setIsBuyerLocked(next);
+                    localStorage.setItem('gagaclo_lock_buyer_enabled', next ? 'true' : 'false');
+                  }}
+                  className="cursor-pointer"
+                  title={isBuyerLocked ? 'Buyer Terkunci' : 'Buyer Tidak Terkunci'}
+                >
+                  {isBuyerLocked ? <Lock className="w-3 h-3 text-emerald-400" /> : <Unlock className="w-3 h-3 text-slate-400" />}
+                </button>
+                <span className="text-[10px] text-slate-400">Buyer:</span>
+                <select
+                  value={stickyBuyer}
+                  onChange={(e) => {
+                    setStickyBuyer(e.target.value);
+                    localStorage.setItem('gagaclo_sticky_buyer', e.target.value);
+                  }}
+                  className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                >
+                  {BUYER_OPTIONS.map(b => (
+                    <option key={b.code} value={b.code} className="bg-slate-900 text-white">
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                isJenisLocked ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !isJenisLocked;
+                    setIsJenisLocked(next);
+                    localStorage.setItem('gagaclo_lock_jenis_enabled', next ? 'true' : 'false');
+                  }}
+                  className="cursor-pointer"
+                  title={isJenisLocked ? 'Jenis Terkunci' : 'Jenis Tidak Terkunci'}
+                >
+                  {isJenisLocked ? <Lock className="w-3 h-3 text-emerald-400" /> : <Unlock className="w-3 h-3 text-slate-400" />}
+                </button>
+                <span className="text-[10px] text-slate-400">Jenis:</span>
+                <select
+                  value={stickyJenis}
+                  onChange={(e) => {
+                    setStickyJenis(e.target.value);
+                    localStorage.setItem('gagaclo_sticky_jenis', e.target.value);
+                  }}
+                  className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                >
+                  {JENIS_SAMPLE_OPTIONS.map(j => (
+                    <option key={j} value={j} className="bg-slate-900 text-white">
+                      {j}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Kartu Tombol Utama: Pindai Tag Sampel (Kamera) */}

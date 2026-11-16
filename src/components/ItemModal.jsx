@@ -24,9 +24,35 @@ import {
   Edit3,
   CheckCircle2,
   Lock,
+  Unlock,
   Printer,
   Check,
+  Camera,
+  Upload,
+  RotateCcw,
+  Image as ImageIcon,
 } from 'lucide-react';
+import { scanGarmentTag, compressImage } from '../utils/aiLabelScanner';
+
+const BUYER_OPTIONS = [
+  { code: 'AN05', label: 'AN05 - ERGODYNE' },
+  { code: 'AN01', label: 'AN01' },
+  { code: 'AN02', label: 'AN02' },
+  { code: 'AN03', label: 'AN03' },
+  { code: 'AN04', label: 'AN04' },
+  { code: 'NA', label: 'NA (Tanpa Buyer)' },
+];
+
+const JENIS_SAMPLE_OPTIONS = [
+  'PPS',
+  'DEV',
+  'ARCHIVE',
+  'PROTO',
+  'SMS',
+  'FIT',
+  'SEW',
+  'NA',
+];
 
 // Every row on the sample card is mandatory. "NA" is an accepted value when
 // the information genuinely does not exist; "-" and empty text are not.
@@ -119,6 +145,39 @@ const ItemModalContent = () => {
 
   const clientIdRef = useRef('user_' + Math.random().toString(36).substr(2, 6));
 
+  // Sticky Context (Session-Lock) State
+  const [stickyBuyer, setStickyBuyer] = useState(() => {
+    return localStorage.getItem('gagaclo_sticky_buyer') || 'AN05';
+  });
+  const [isBuyerLocked, setIsBuyerLocked] = useState(() => {
+    const saved = localStorage.getItem('gagaclo_lock_buyer_enabled');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [stickyJenis, setStickyJenis] = useState(() => {
+    return localStorage.getItem('gagaclo_sticky_jenis') || 'PPS';
+  });
+  const [isJenisLocked, setIsJenisLocked] = useState(() => {
+    const saved = localStorage.getItem('gagaclo_lock_jenis_enabled');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [scannerMode, setScannerMode] = useState('camera'); // 'camera' | 'upload'
+  const [isAiScanning, setIsAiScanning] = useState(false);
+  const [scanErrorMsg, setScanErrorMsg] = useState(null);
+  const [scanSuccessMsg, setScanSuccessMsg] = useState(null);
+
+  const nativeCameraInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('gagaclo_lock_buyer_enabled', isBuyerLocked ? 'true' : 'false');
+  }, [isBuyerLocked]);
+
+  useEffect(() => {
+    localStorage.setItem('gagaclo_lock_jenis_enabled', isJenisLocked ? 'true' : 'false');
+  }, [isJenisLocked]);
+
   const [formData, setFormData] = useState(() => {
     const bNum = Number(itemModalConfig.item?.boxNumber) || targetBoxNum;
     const bObj = boxes.find(b => Number(b.boxNumber) === Number(bNum));
@@ -155,13 +214,18 @@ const ItemModalContent = () => {
         ? `BOX ${bObj.boxNumber} (${bObj.rackName || 'LANTAI'} - ${bObj.picName || 'Royan'})` 
         : `BOX ${bNum}`;
 
+      const defaultLockedBuyer = localStorage.getItem('gagaclo_sticky_buyer') || 'AN05';
+      const defaultLockedJenis = localStorage.getItem('gagaclo_sticky_jenis') || 'PPS';
+      const isLockBuyerActive = localStorage.getItem('gagaclo_lock_buyer_enabled') !== 'false';
+      const isLockJenisActive = localStorage.getItem('gagaclo_lock_jenis_enabled') !== 'false';
+
       // JIT Allocation: untuk item baru, kode kosong di awal dan baru dialokasikan secara atomik saat tombol Simpan diklik
       return {
         track: itemModalConfig.prefill?.track || '',
         tanggal: itemModalConfig.prefill?.tanggal || formatTodayDate(),
         kode: '',
-        buyerNo: itemModalConfig.prefill?.buyerNo || '',
-        jenisSample: (itemModalConfig.prefill?.jenisSample === 'ARSIP' ? 'ARCHIVE' : itemModalConfig.prefill?.jenisSample) || '',
+        buyerNo: itemModalConfig.prefill?.buyerNo || (isLockBuyerActive ? defaultLockedBuyer : ''),
+        jenisSample: (itemModalConfig.prefill?.jenisSample === 'ARSIP' ? 'ARCHIVE' : itemModalConfig.prefill?.jenisSample) || (isLockJenisActive ? defaultLockedJenis : ''),
         style: itemModalConfig.prefill?.style || '',
         sampleNo: itemModalConfig.prefill?.sampleNo || '',
         size: itemModalConfig.prefill?.size || '',
@@ -175,6 +239,58 @@ const ItemModalContent = () => {
       };
     }
   });
+
+  const handleProcessScanImage = async (file) => {
+    if (!file) return;
+    setIsAiScanning(true);
+    setScanErrorMsg(null);
+    setScanSuccessMsg(null);
+
+    try {
+      const compressedBase64 = await compressImage(file, 900, 0.75);
+      const contextSettings = {
+        lockedBuyer: isBuyerLocked ? stickyBuyer : '',
+        lockedJenisSample: isJenisLocked ? stickyJenis : '',
+        _boxNumber: String(formData.boxNumber || targetBoxNum || 1),
+      };
+
+      const result = await scanGarmentTag(compressedBase64, contextSettings);
+      const data = result?.data ? result.data : result;
+
+      if (!data || typeof data !== 'object') {
+        throw new Error('Hasil pemindaian tag kosong.');
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        style: data.style && data.style !== 'NA' ? data.style : prev.style,
+        sampleNo: data.sampleNo && data.sampleNo !== 'NA' ? data.sampleNo : prev.sampleNo,
+        size: data.size && data.size !== 'NA' ? data.size : prev.size,
+        color: data.color && data.color !== 'NA' ? data.color : prev.color,
+        track: data.track && data.track !== 'NA' ? data.track : prev.track,
+        tanggal: data.tanggal || prev.tanggal,
+        jumlah: data.jumlah !== undefined ? Number(data.jumlah) : prev.jumlah,
+        buyerNo: isBuyerLocked && stickyBuyer ? stickyBuyer : (data.buyerNo || prev.buyerNo),
+        jenisSample: isJenisLocked && stickyJenis ? stickyJenis : (data.jenisSample || prev.jenisSample),
+      }));
+
+      setScanSuccessMsg(`✓ Tag berhasil diekstrak (${data.style || 'Sample'})! Data terisi otomatis pada kolom di bawah.`);
+      showNotification?.('✨ Data dari tag sampel berhasil diisi ke formulir!', 'success', 3500);
+    } catch (err) {
+      console.error('Scan tag error:', err);
+      setScanErrorMsg(err?.message || 'Gagal membaca tag sampel. Pastikan foto tegak lurus dan teks terbaca jelas.');
+    } finally {
+      setIsAiScanning(false);
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleProcessScanImage(file);
+    }
+    e.target.value = '';
+  };
 
   // Release reservation on unmount
   useEffect(() => {
@@ -652,6 +768,226 @@ const ItemModalContent = () => {
         {/* Form Body: Apple Inset Grouped layout */}
         <form onSubmit={handleSubmit} id="direct-card-form" className="p-2 sm:p-4 bg-[#f5f5f7] flex-1 overflow-y-auto overscroll-contain">
           <div className="bg-white border border-black/[0.08] rounded-2xl sm:rounded-[22px] p-3 sm:p-4 shadow-2xs space-y-2.5 text-xs">
+            
+            {/* ========================================================================= */}
+            {/* STASIUN SCAN TAG SAMPEL & STICKY LOCK INFO (EMBEDDED DI FORMULIR UTAMA) */}
+            {/* ========================================================================= */}
+            <div className="rounded-2xl bg-slate-900 text-white p-3.5 sm:p-4 border border-slate-800 shadow-sm space-y-3">
+              {/* Header Card & Sticky Lock Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center border border-blue-500/30 shrink-0">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5">
+                      <span>Scan Tag Sampel Langsung</span>
+                      <span className="text-[10px] font-mono font-medium px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Gemini AI
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-slate-400">
+                      Pindai label fisik untuk auto-fill seluruh kolom formulir di bawah
+                    </p>
+                  </div>
+                </div>
+
+                {/* Sticky Context (Lock Info Stick) */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {/* Sticky Lock Buyer */}
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
+                    isBuyerLocked ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => setIsBuyerLocked(p => !p)}
+                      title={isBuyerLocked ? 'Buyer Terkunci (klik untuk buka)' : 'Buyer Tidak Terkunci (klik untuk kunci)'}
+                      className="cursor-pointer hover:opacity-80 transition"
+                    >
+                      {isBuyerLocked ? <Lock className="w-3.5 h-3.5 text-emerald-400" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
+                    </button>
+                    <span className="text-[10px] text-slate-400">Buyer:</span>
+                    <select
+                      value={stickyBuyer}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStickyBuyer(val);
+                        localStorage.setItem('gagaclo_sticky_buyer', val);
+                        setFormData(p => ({ ...p, buyerNo: val }));
+                      }}
+                      className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                    >
+                      {BUYER_OPTIONS.map(b => (
+                        <option key={b.code} value={b.code} className="bg-slate-900 text-white">
+                          {b.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sticky Lock Jenis */}
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
+                    isJenisLocked ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => setIsJenisLocked(p => !p)}
+                      title={isJenisLocked ? 'Jenis Terkunci (klik untuk buka)' : 'Jenis Tidak Terkunci (klik untuk kunci)'}
+                      className="cursor-pointer hover:opacity-80 transition"
+                    >
+                      {isJenisLocked ? <Lock className="w-3.5 h-3.5 text-emerald-400" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
+                    </button>
+                    <span className="text-[10px] text-slate-400">Jenis:</span>
+                    <select
+                      value={stickyJenis}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStickyJenis(val);
+                        localStorage.setItem('gagaclo_sticky_jenis', val);
+                        setFormData(p => ({ ...p, jenisSample: val }));
+                      }}
+                      className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                    >
+                      {JENIS_SAMPLE_OPTIONS.map(j => (
+                        <option key={j} value={j} className="bg-slate-900 text-white">
+                          {j}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mode Toggle: Kamera vs Upload Foto */}
+              <div className="flex bg-slate-950/60 rounded-xl p-1 border border-slate-800 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setScannerMode('camera')}
+                  className={`flex-1 py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    scannerMode === 'camera'
+                      ? 'bg-blue-600 text-white font-bold shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Kamera</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScannerMode('upload')}
+                  className={`flex-1 py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    scannerMode === 'upload'
+                      ? 'bg-blue-600 text-white font-bold shadow-xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload Foto</span>
+                </button>
+              </div>
+
+              {/* Scanner Viewport / Controls (Matches User Screenshot) */}
+              <div className="rounded-xl bg-slate-950 border border-slate-800 p-4 text-center min-h-[160px] flex flex-col items-center justify-center relative overflow-hidden">
+                {/* Hidden File Inputs */}
+                <input
+                  ref={nativeCameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+
+                {isAiScanning ? (
+                  <div className="space-y-3 py-4">
+                    <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mx-auto" />
+                    <div>
+                      <div className="text-xs font-bold text-white">Mengekstrak Label Sampel...</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">Memproses tulisan tangan &amp; kode dengan Gemini Vision AI</div>
+                    </div>
+                  </div>
+                ) : scannerMode === 'camera' ? (
+                  <div className="space-y-3.5 max-w-sm mx-auto w-full py-2">
+                    <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto border border-slate-700">
+                      <Camera className="w-6 h-6 text-slate-300" />
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed px-2">
+                      Kamera fisik siap digunakan. Silakan gunakan tombol <strong>"Buka Kamera HP Langsung"</strong> atau <strong>"Upload Foto"</strong>.
+                    </p>
+
+                    {/* Tombol Utama Hijau Sesuai Screenshot Pengguna */}
+                    <button
+                      type="button"
+                      onClick={() => nativeCameraInputRef.current?.click()}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>Buka Kamera HP Langsung</span>
+                    </button>
+
+                    {/* Tombol Sekunder: Coba Lagi & Galeri Foto */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => nativeCameraInputRef.current?.click()}
+                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-700"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Coba Lagi</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-700"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        <span>Galeri Foto</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 py-3 max-w-sm mx-auto w-full">
+                    <div className="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto border border-slate-700">
+                      <Upload className="w-6 h-6 text-slate-300" />
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Pilih foto label/tag dari galeri perangkat untuk diekstrak otomatis.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span>Pilih Foto dari Galeri</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Scan Error Alert jika ada */}
+                {scanErrorMsg && (
+                  <div className="mt-2 text-[11px] text-rose-400 bg-rose-950/60 border border-rose-800/80 rounded-lg p-2 text-left w-full flex items-start gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                    <span>{scanErrorMsg}</span>
+                  </div>
+                )}
+
+                {/* Scan Success Banner */}
+                {scanSuccessMsg && (
+                  <div className="mt-2 text-[11px] text-emerald-300 bg-emerald-950/60 border border-emerald-800/80 rounded-lg p-2 text-left w-full flex items-start gap-1.5 animate-in fade-in">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{scanSuccessMsg}</span>
+                  </div>
+                )}
+              </div>
+            </div>
             
             {/* BARIS 1: Track & Tanggal Sample */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
