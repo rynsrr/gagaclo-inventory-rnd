@@ -32,7 +32,7 @@ import {
 // the information genuinely does not exist; "-" and empty text are not.
 // Catatan: "kode" di-generate otomatis unik & berurutan di background agar tidak bentrok antar user.
 const REQUIRED_FIELDS = [
-  { key: 'track', label: 'Track' },
+  { key: 'track', label: 'Track/Note' },
   { key: 'tanggal', label: 'Tanggal Sample' },
   { key: 'buyerNo', label: 'Buyer No' },
   { key: 'jenisSample', label: 'Jenis Sample' },
@@ -655,13 +655,13 @@ const ItemModalContent = () => {
             
             {/* BARIS 1: Track & Tanggal Sample */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-              {/* Track */}
+              {/* Track/Note */}
               <div className={`border rounded-lg p-1.5 bg-white transition ${
                 errors.track ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-400'
               }`}>
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Track <span className="text-rose-500">*</span>:
+                    Track/Note <span className="text-rose-500">*</span>:
                   </label>
                   <button
                     type="button"
@@ -683,7 +683,7 @@ const ItemModalContent = () => {
                     setFormData(p => ({ ...p, track: e.target.value.toUpperCase() }));
                     if (errors.track) setErrors(prev => ({ ...prev, track: null }));
                   }}
-                  placeholder="Contoh: DHL : 5475890895 / NA"
+                  placeholder="Contoh: DHL : 5475890895 / 240GSM FLEECE / CATATAN KHUSUS / NA"
                   className="w-full text-xs font-semibold text-slate-900 focus:outline-none font-mono bg-transparent uppercase"
                 />
                 <datalist id="track-datalist">

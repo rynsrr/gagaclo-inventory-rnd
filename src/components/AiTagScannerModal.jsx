@@ -97,6 +97,12 @@ const AiTagScannerContent = ({
   });
   const [isJenisLocked, setIsJenisLocked] = useState(true);
 
+  // Selalu buka di Form Lengkap (default true sesuai permintaan pengguna)
+  const [alwaysOpenFullForm, setAlwaysOpenFullForm] = useState(() => {
+    const saved = localStorage.getItem('gagaclo_always_open_full_form');
+    return saved !== null ? saved === 'true' : true;
+  });
+
   // Hasil Ekstraksi
   const [extractedData, setExtractedData] = useState(null);
   const [sessionSuccessCount, setSessionSuccessCount] = useState(0);
@@ -190,6 +196,10 @@ const AiTagScannerContent = ({
       } else {
         setExtractedData(data);
         stopCamera();
+        if (alwaysOpenFullForm) {
+          onApplyToForm?.(data);
+          onClose();
+        }
       }
     } catch (err) {
       console.error('AI Scan Error:', err);
@@ -502,6 +512,22 @@ const AiTagScannerContent = ({
                 ))}
               </select>
             </div>
+
+            {/* Toggle Selalu Buka di Form Lengkap */}
+            <label className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-2.5 py-1 text-xs cursor-pointer select-none transition">
+              <input
+                type="checkbox"
+                checked={alwaysOpenFullForm}
+                onChange={(e) => {
+                  const val = e.target.checked;
+                  setAlwaysOpenFullForm(val);
+                  localStorage.setItem('gagaclo_always_open_full_form', val ? 'true' : 'false');
+                }}
+                className="w-3.5 h-3.5 rounded text-[#0071e3] focus:ring-0 focus:ring-offset-0 bg-black/40 border-white/20 cursor-pointer"
+              />
+              <FileText className="w-3 h-3 text-[#5ac8fa]" />
+              <span className="text-[11px] font-medium text-white/90">Selalu Buka Form Lengkap</span>
+            </label>
           </div>
 
           {sessionSuccessCount > 0 && (
@@ -652,40 +678,56 @@ const AiTagScannerContent = ({
                   </div>
                 </div>
 
-                {/* Track / Info Bahan */}
+                {/* Track / Note (Info Bahan) */}
                 <div className="sm:col-span-2 bg-white/5 border border-white/10 rounded-xl p-2.5 space-y-1">
                   <span className="text-[10px] uppercase font-semibold text-white/50 tracking-wider">
-                    Track / Info Bahan &amp; Catatan Khusus
+                    Track / Note (Info Bahan &amp; Catatan Khusus)
                   </span>
                   <textarea
                     rows="2"
                     value={extractedData.track || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, track: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: 240GSM 4-WAY STRETCH BLACK FLEECE, PP SAMPLE"
+                    placeholder="Contoh: 240GSM 4-WAY STRETCH BLACK FLEECE / DHL : 5475890895 / PP SAMPLE"
                   />
                 </div>
               </div>
 
-              {/* Action Buttons: Simpan Langsung vs Review di Form */}
-              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleApplyToForm}
-                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <FileText className="w-4 h-4 text-[#5ac8fa]" />
-                  <span>Buka di Form Lengkap</span>
-                </button>
+              {/* Action Buttons: Review di Form vs Simpan Langsung */}
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-xs text-white/70 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={alwaysOpenFullForm}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setAlwaysOpenFullForm(val);
+                      localStorage.setItem('gagaclo_always_open_full_form', val ? 'true' : 'false');
+                    }}
+                    className="w-3.5 h-3.5 rounded text-[#0071e3] bg-black/40 border-white/20 cursor-pointer"
+                  />
+                  <span>Selalu buka di Form Lengkap setelah scan</span>
+                </label>
 
-                <button
-                  type="button"
-                  onClick={handleDirectSave}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/30 transition cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>⚡ Simpan Langsung ke Box #{targetBoxNumber}</span>
-                </button>
+                <div className="flex items-center gap-2.5 justify-end">
+                  <button
+                    type="button"
+                    onClick={handleApplyToForm}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#0071e3] to-[#5ac8fa] hover:brightness-110 text-white text-xs font-bold shadow-lg shadow-blue-950/30 transition cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Buka di Form Lengkap</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDirectSave}
+                    className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 hover:text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Save className="w-4 h-4 text-emerald-400" />
+                    <span>⚡ Simpan Langsung ke Box #{targetBoxNumber}</span>
+                  </button>
+                </div>
               </div>
 
             </div>
