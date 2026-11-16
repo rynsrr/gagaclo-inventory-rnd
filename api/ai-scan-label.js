@@ -75,19 +75,26 @@ RULES:
       },
     };
 
-    const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+    const candidateUrls = [
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+    ];
+
     let lastError = null;
 
-    for (const model of models) {
+    for (const url of candidateUrls) {
       try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          }
-        );
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
         if (!response.ok) {
           const errBody = await response.json().catch(() => ({}));
@@ -115,7 +122,7 @@ RULES:
               tanggal: String(parsed.tanggal || '').trim().toUpperCase(),
               track: String(parsed.track || '').trim().toUpperCase() || 'SAMPEL FISIK',
             },
-            modelUsed: model,
+            endpointUsed: url.split('?')[0],
           });
         }
       } catch (err) {

@@ -167,13 +167,53 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
     },
   };
 
-  // Coba Gemini 2.0 Flash dulu, fallback ke Gemini 1.5 Flash jika belum tersedia di regional
-  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+  // Temukan endpoint & model yang didukung secara dinamis
+  const candidateUrls = [
+    // Endpoint v1 (Stable)
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+    // Endpoint v1beta (Preview / 2.0 / 2.5)
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${apiKey}`,
+    // Fallback Pro
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+  ];
+
+  // Coba query ListModels terlebih dahulu untuk menemukan model spesifik yang diizinkan untuk key ini
+  let prioritizedUrls = candidateUrls;
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const supported = (listData?.models || [])
+        .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''));
+
+      if (supported.length > 0) {
+        const dynamicUrls = supported.map(
+          mod => `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${apiKey}`
+        );
+        prioritizedUrls = [...dynamicUrls, ...candidateUrls];
+      }
+    } else {
+      const errList = await listRes.json().catch(() => ({}));
+      if (errList?.error?.message?.toLowerCase().includes('api key not valid')) {
+        throw new Error('API Key Google Gemini tidak valid. Harap periksa dan salin kembali kunci Anda dari Google AI Studio.');
+      }
+    }
+  } catch (probeErr) {
+    if (probeErr.message?.includes('tidak valid')) throw probeErr;
+  }
+
   let lastError = null;
 
-  for (const model of modelsToTry) {
+  for (const url of prioritizedUrls) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,7 +222,11 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData?.error?.message || `API Error HTTP ${response.status}`);
+        const errMsg = errorData?.error?.message || `HTTP ${response.status}`;
+        if (errMsg.toLowerCase().includes('api key not valid')) {
+          throw new Error('API Key Google Gemini tidak valid. Harap periksa dan salin kembali kunci Anda dari Google AI Studio.');
+        }
+        throw new Error(errMsg);
       }
 
       const json = await response.json();
@@ -209,13 +253,13 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
         tanggal: String(parsedData.tanggal || '').trim().toUpperCase(),
         track: String(parsedData.track || '').trim().toUpperCase() || 'SAMPEL FISIK',
         _source: 'direct',
-        _model: model,
       };
 
       return normalizedData;
     } catch (err) {
       lastError = err;
-      console.warn(`Model ${model} failed, trying next...`, err);
+      if (err.message?.includes('tidak valid')) throw err;
+      // Lanjut ke endpoint berikutnya jika 404 (model tidak ditemukan di versi endpoint tersebut)
     }
   }
 
