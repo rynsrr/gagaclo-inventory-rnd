@@ -15,9 +15,13 @@ import {
   Boxes, 
   Zap, 
   UserCheck,
+  Target,
+  Award,
+  Users,
 } from 'lucide-react';
 import { getItemRecordDate, getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
 import { CardPrintModal } from './CardPrintModal';
+import { TEAM_MEMBERS } from './TargetTeamBanner';
 
 export const MobileQuickEntryView = ({
   onOpenAiScanner,
@@ -142,42 +146,258 @@ export const MobileQuickEntryView = ({
     return boxes.filter((b) => String(b.rackName || '').toUpperCase() === boxRackFilter);
   }, [boxes, boxRackFilter]);
 
+  // Target personal harian untuk seluruh 8 personil tim (5 PIC + 3 Support)
+  const allMemberTargets = useMemo(() => {
+    const pcsMap = {};
+    (TEAM_MEMBERS || []).forEach((m) => {
+      pcsMap[m.name] = 0;
+    });
+
+    const boxRackMap = {};
+    boxes.forEach((b) => {
+      boxRackMap[Number(b.boxNumber)] = b;
+    });
+
+    items.forEach((item) => {
+      const box = boxRackMap[Number(item.boxNumber)];
+      const dateKey = item.recordDate || getItemRecordDate(item);
+      if (dateKey !== todayIso) return;
+
+      const pcs = Number(item.jumlah) || 0;
+      const boxPic = String(item.picName || (box ? box.picName : 'Lainnya')).trim();
+
+      const tags = Array.isArray(item.tags) ? item.tags : [];
+      const inputtedByTag = tags.find((t) => typeof t === 'string' && t.startsWith('inputted_by:'));
+      const supportTag = tags.find((t) => typeof t === 'string' && (t.startsWith('support:') || t.startsWith('helper:')));
+
+      const rawInputtedBy =
+        item.inputtedBy ||
+        item.createdBy ||
+        (inputtedByTag ? decodeURIComponent(inputtedByTag.slice(12)) : null) ||
+        item.supportName ||
+        item.helperName ||
+        (supportTag ? decodeURIComponent(supportTag.slice(supportTag.indexOf(':') + 1)) : null);
+
+      let contributor = null;
+      if (rawInputtedBy) {
+        const sStr = String(rawInputtedBy).trim().toLowerCase();
+        if (/helper\s*1/i.test(sStr)) contributor = 'Sheva';
+        else if (/helper\s*2/i.test(sStr)) contributor = 'Ade';
+        else if (/helper\s*3/i.test(sStr)) contributor = 'Tri';
+        else {
+          const match = (TEAM_MEMBERS || []).find((m) => m.name.toLowerCase() === sStr);
+          if (match) contributor = match.name;
+        }
+      }
+
+      if (!contributor) {
+        const matchPic = (TEAM_MEMBERS || []).find((m) => m.name.toLowerCase() === boxPic.toLowerCase());
+        contributor = matchPic ? matchPic.name : (boxPic || 'Royan');
+      }
+
+      if (contributor && pcsMap[contributor] !== undefined) {
+        pcsMap[contributor] += pcs;
+      }
+    });
+
+    const supportTargetCalc = Math.max(1, Math.round(targetPcs / 8.5));
+    const picTargetCalc = Math.max(1, Math.round((targetPcs / 8.5) * 1.1));
+
+    return (TEAM_MEMBERS || []).map((m) => {
+      const isPicAsli = m.isPicAsli ?? !m.role?.toLowerCase()?.includes('support');
+      const target = isPicAsli ? picTargetCalc : supportTargetCalc;
+      const currentPcs = pcsMap[m.name] || 0;
+      const isAchieved = currentPcs >= target;
+      return {
+        name: m.name,
+        role: m.role,
+        isPicAsli,
+        pcs: currentPcs,
+        target,
+        isAchieved,
+        surplus: isAchieved ? currentPcs - target : 0,
+        remaining: Math.max(0, target - currentPcs),
+        percent: Math.round((currentPcs / target) * 100),
+      };
+    });
+  }, [items, boxes, todayIso, targetPcs]);
+
+  // Target akun yang sedang aktif login
+  const myTarget = useMemo(() => {
+    if (!currentUserName) return allMemberTargets[0];
+    return allMemberTargets.find((m) => m.name.toLowerCase() === currentUserName) || allMemberTargets[0];
+  }, [allMemberTargets, currentUserName]);
+
+  // Peringkat 1 / Top Contributor hari ini
+  const topContributor = useMemo(() => {
+    const sorted = [...allMemberTargets].sort((a, b) => b.pcs - a.pcs);
+    return sorted[0]?.pcs > 0 ? sorted[0] : null;
+  }, [allMemberTargets]);
+
+  const memberAchievers = useMemo(() => {
+    return allMemberTargets.filter((m) => m.isAchieved);
+  }, [allMemberTargets]);
+
   return (
-    <div className="mobile-quick-entry font-apple space-y-3.5 pb-20 select-none">
+    <div className="mobile-quick-entry font-apple space-y-3 pb-20 select-none">
       
-      {/* 2. STATS CAPAIAN TARGET TEAM & HARI INI */}
-      <div className="bg-white rounded-2xl border border-black/[0.08] p-3 shadow-xs space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-[#0071e3]" />
-            <span className="font-semibold text-[#1d1d1f]">Capaian Input Hari Ini</span>
+      {/* 2. BENTO GRID: TARGET TEAM & PERSONAL DAILY */}
+      <div className="grid grid-cols-2 gap-2.5">
+        
+        {/* Bento 1: Target Team Harian (Col-Span-2 Hero) */}
+        <div className="col-span-2 rounded-2xl bg-[#161618] text-white p-3.5 border border-white/10 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-lg bg-[#0071e3]/20 flex items-center justify-center text-[#2997ff]">
+                <Target className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                Target Tim Harian
+              </span>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+              Jasmine • Leader
+            </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold tabular-nums text-[#1d1d1f]">
-              {todayTotalPcs.toLocaleString('id-ID')}
-            </span>
-            <span className="text-[10px] text-[#86868b] tabular-nums">
-              / {targetPcs.toLocaleString('id-ID')} PCE
-            </span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full tabular-nums ${
-              targetPercent >= 100 
-                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
-                : 'bg-black/[0.04] text-[#1d1d1f]'
+
+          <div className="flex items-baseline justify-between">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-black tabular-nums tracking-tight text-white">
+                {todayTotalPcs.toLocaleString('id-ID')}
+              </span>
+              <span className="text-xs text-slate-400 font-semibold">
+                / {targetPcs.toLocaleString('id-ID')} PCE
+              </span>
+            </div>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border tabular-nums ${
+              targetPercent >= 100
+                ? 'bg-[#34c759]/20 text-[#30d158] border-[#34c759]/40'
+                : 'bg-white/10 text-white/90 border-white/15'
             }`}>
               {targetPercent}%
             </span>
           </div>
+
+          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-2 p-0.5 border border-white/5">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                targetPercent >= 100 ? 'bg-[#34c759] shadow-[0_0_8px_#34c759]' : 'bg-[#0071e3]'
+              }`}
+              style={{ width: `${Math.min(100, targetPercent)}%` }}
+            />
+          </div>
         </div>
 
-        {/* Progress Bar Fitness Style */}
-        <div className="w-full bg-black/[0.06] rounded-full h-2 overflow-hidden p-0.5">
-          <div 
-            className={`h-full rounded-full transition-all duration-500 ${
-              targetPercent >= 100 ? 'bg-[#34c759]' : 'bg-[#0071e3]'
-            }`}
-            style={{ width: `${Math.min(100, targetPercent)}%` }}
-          />
+        {/* Bento 2: Target Akun Anda (Col-Span-1) */}
+        <div className="col-span-1 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">
+                Target Anda
+              </span>
+              <span className="text-[9px] font-bold text-[#0071e3] bg-[#0071e3]/10 px-1.5 py-0.2 rounded-full">
+                {myTarget?.role || 'PPIC'}
+              </span>
+            </div>
+            <div className="text-xs font-bold text-[#111827] truncate mt-1">
+              {myTarget?.name || currentUser?.name || 'Personal'}
+            </div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-lg font-black tabular-nums text-[#111827]">
+                {myTarget?.pcs || 0}
+              </span>
+              <span className="text-[10px] text-gray-400 font-semibold">
+                / {myTarget?.target || 52} PCE
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-2 pt-2 border-t border-black/[0.04]">
+            <div className="w-full bg-black/[0.06] rounded-full h-1.5 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  myTarget?.isAchieved ? 'bg-emerald-500' : 'bg-[#0071e3]'
+                }`}
+                style={{ width: `${Math.min(100, myTarget?.percent || 0)}%` }}
+              />
+            </div>
+            <span className="text-[9px] font-medium text-gray-500 mt-1 block truncate">
+              {myTarget?.isAchieved ? '✓ Target tercapai' : `Sisa ${myTarget?.remaining || 0} PCE`}
+            </span>
+          </div>
         </div>
+
+        {/* Bento 3: Top PIC Hari Ini (Col-Span-1) */}
+        <div className="col-span-1 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">
+                Top Input
+              </span>
+              <Award className="w-3.5 h-3.5 text-amber-500" />
+            </div>
+            <div className="text-xs font-bold text-[#111827] truncate mt-1 flex items-center gap-1">
+              <span>👑</span>
+              <span className="truncate">{topContributor ? topContributor.name : 'Belum Ada'}</span>
+            </div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-lg font-black tabular-nums text-[#111827]">
+                {topContributor ? topContributor.pcs : 0}
+              </span>
+              <span className="text-[10px] text-gray-400 font-semibold">PCE</span>
+            </div>
+          </div>
+
+          <div className="mt-2 pt-2 border-t border-black/[0.04] text-[9px] font-medium text-gray-500 truncate">
+            {topContributor && topContributor.pcs > 0 ? `${topContributor.percent}% capaian` : 'Siap jepret hari ini'}
+          </div>
+        </div>
+
+        {/* Bento 4: Grid Mini 5 PIC Utama & 3 Support (Col-Span-2) */}
+        <div className="col-span-2 rounded-2xl bg-white p-3 border border-black/[0.08] shadow-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500">
+                Target Personal PIC &amp; Support
+              </span>
+            </div>
+            <span className="text-[10px] text-gray-400 font-semibold">
+              {memberAchievers.length}/8 Tercapai
+            </span>
+          </div>
+
+          {/* 4 Kolom Tile PIC */}
+          <div className="grid grid-cols-4 gap-1.5">
+            {allMemberTargets.map((m) => {
+              const isCurrent = currentUser?.name?.toLowerCase() === m.name.toLowerCase();
+              return (
+                <div
+                  key={m.name}
+                  className={`p-1.5 rounded-xl border text-center transition ${
+                    isCurrent
+                      ? 'bg-[#0071e3]/10 border-[#0071e3]/40 text-[#0071e3]'
+                      : m.isAchieved
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-black/[0.02] border-black/[0.06] text-[#374151]'
+                  }`}
+                >
+                  <div className="text-[10px] font-bold truncate">{m.name}</div>
+                  <div className="text-[10px] tabular-nums font-extrabold mt-0.5">
+                    {m.pcs}<span className="text-[8px] font-normal text-gray-400">/{m.target}</span>
+                  </div>
+                  <div className="w-full bg-black/[0.08] rounded-full h-1 mt-1 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${m.isAchieved ? 'bg-emerald-500' : isCurrent ? 'bg-[#0071e3]' : 'bg-gray-400'}`}
+                      style={{ width: `${Math.min(100, m.percent)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
 
       {/* 3. TARGET BOX SELECTOR (Pilih Box yang Sedang Diisi) */}
@@ -280,14 +500,8 @@ export const MobileQuickEntryView = ({
         {/* Ambient glow accent */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#0071e3]/20 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-[#30d158] animate-pulse" />
-            <span className="text-[11px] font-mono font-semibold tracking-wide text-white/70">
-              GEMINI FLASH VISION AI
-            </span>
-          </div>
-          <span className="text-[10px] text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
+        <div className="flex items-center justify-end relative z-10">
+          <span className="text-[10px] text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
             Target: BOX #{activeBoxNumber}
           </span>
         </div>

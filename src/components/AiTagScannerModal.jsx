@@ -441,27 +441,28 @@ const AiTagScannerContent = ({
   return (
     <div 
       ref={containerRef}
-      className="font-apple fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in"
+      className="font-apple fixed inset-0 z-50 bg-black/80 sm:bg-black/60 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 overflow-y-auto animate-fade-in"
     >
-      <div className="bg-[#12141a] text-white rounded-[26px] shadow-[0_30px_90px_rgba(0,0,0,0.5)] border border-white/10 w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
+      <div className="bg-[#12141a] text-white rounded-none sm:rounded-[26px] shadow-[0_30px_90px_rgba(0,0,0,0.5)] border-0 sm:border sm:border-white/10 w-full max-w-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[95vh]">
         
         {/* Apple Dark Header */}
-        <div className="px-5 py-3.5 flex items-center justify-between border-b border-white/[0.08] bg-[#181a22] shrink-0">
+        <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between border-b border-white/[0.08] bg-[#181a22] shrink-0">
           <div className="flex items-center space-x-2.5 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0071e3] to-[#5ac8fa] text-white shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0071e3] to-[#5ac8fa] text-white shadow-sm shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold tracking-tight text-white">
-                  Snap &amp; Fill AI Tag Scanner
+                <h2 className="text-sm font-semibold tracking-tight text-white truncate">
+                  <span className="sm:hidden">Scan Tag Sampel</span>
+                  <span className="hidden sm:inline">Snap &amp; Fill AI Tag Scanner</span>
                 </h2>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="hidden sm:inline-block text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                   Gemini Flash Vision
                 </span>
               </div>
-              <p className="text-[11px] text-white/50 leading-tight">
-                Scan label / tag tulisan tangan &bull; Target: <strong>BOX #{targetBoxNumber}</strong>
+              <p className="text-[11px] text-white/50 leading-tight truncate">
+                Scan label / tag &bull; Target: <strong>BOX #{targetBoxNumber}</strong>
               </p>
             </div>
           </div>
@@ -470,7 +471,7 @@ const AiTagScannerContent = ({
             <button
               type="button"
               onClick={() => setShowApiKeySetting((p) => !p)}
-              className={`flex h-7 px-2.5 items-center space-x-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
+              className={`hidden sm:flex h-7 px-2.5 items-center space-x-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
                 showApiKeySetting
                   ? 'bg-white/20 text-white'
                   : apiKeyInput || cloudGeminiKey
@@ -490,10 +491,10 @@ const AiTagScannerContent = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
+              className="flex h-8 w-8 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white/80 hover:text-white transition cursor-pointer"
               aria-label="Tutup"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             </button>
           </div>
         </div>
@@ -540,19 +541,19 @@ const AiTagScannerContent = ({
         )}
 
         {/* Sticky Context Bar (Pengunci Buyer & Jenis Sample untuk Input Massal) */}
-        <div className="bg-[#181a24] border-b border-white/10 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-white/50 text-[11px] font-medium flex items-center gap-1">
+        <div className="bg-[#181a24] border-b border-white/10 px-3 sm:px-4 py-2 sm:py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+            <span className="hidden sm:inline-flex text-white/50 text-[11px] font-medium items-center gap-1">
               <Lock className="w-3 h-3 text-[#5ac8fa]" />
               <span>Sesi Kunci:</span>
             </span>
 
             {/* Sticky Buyer Picker */}
-            <div className="inline-flex items-center bg-white/5 border border-white/10 rounded-full px-2.5 py-1 text-xs">
+            <div className="inline-flex items-center bg-white/5 border border-white/10 rounded-full px-2 sm:px-2.5 py-1 text-xs">
               <button
                 type="button"
                 onClick={() => setIsBuyerLocked((p) => !p)}
-                className="mr-1.5 text-white/70 hover:text-white transition"
+                className="mr-1 text-white/70 hover:text-white transition"
                 title={isBuyerLocked ? 'Buyer Terkunci (klik untuk buka)' : 'Buyer Tidak Terkunci (klik untuk kunci)'}
               >
                 {isBuyerLocked ? <Lock className="w-3 h-3 text-emerald-400" /> : <Unlock className="w-3 h-3 text-white/40" />}
@@ -561,7 +562,7 @@ const AiTagScannerContent = ({
               <select
                 value={stickyBuyer}
                 onChange={(e) => setStickyBuyer(e.target.value)}
-                className="bg-transparent text-white text-xs font-semibold border-none focus:outline-hidden cursor-pointer"
+                className="bg-transparent text-white text-xs font-semibold border-none focus:outline-hidden cursor-pointer max-w-[130px] sm:max-w-none truncate"
               >
                 {BUYER_OPTIONS.map((b) => (
                   <option key={b.code} value={b.code} className="bg-[#181a24] text-white">
@@ -572,11 +573,11 @@ const AiTagScannerContent = ({
             </div>
 
             {/* Sticky Jenis Sample Picker */}
-            <div className="inline-flex items-center bg-white/5 border border-white/10 rounded-full px-2.5 py-1 text-xs">
+            <div className="inline-flex items-center bg-white/5 border border-white/10 rounded-full px-2 sm:px-2.5 py-1 text-xs">
               <button
                 type="button"
                 onClick={() => setIsJenisLocked((p) => !p)}
-                className="mr-1.5 text-white/70 hover:text-white transition"
+                className="mr-1 text-white/70 hover:text-white transition"
                 title={isJenisLocked ? 'Jenis Terkunci (klik untuk buka)' : 'Jenis Tidak Terkunci (klik untuk kunci)'}
               >
                 {isJenisLocked ? <Lock className="w-3 h-3 text-emerald-400" /> : <Unlock className="w-3 h-3 text-white/40" />}
@@ -596,7 +597,7 @@ const AiTagScannerContent = ({
             </div>
 
             {/* Toggle Selalu Buka di Form Lengkap */}
-            <label className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-2.5 py-1 text-xs cursor-pointer select-none transition">
+            <label className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-2 sm:px-2.5 py-1 text-xs cursor-pointer select-none transition">
               <input
                 type="checkbox"
                 checked={alwaysOpenFullForm}
@@ -608,13 +609,15 @@ const AiTagScannerContent = ({
                 className="w-3.5 h-3.5 rounded text-[#0071e3] focus:ring-0 focus:ring-offset-0 bg-black/40 border-white/20 cursor-pointer"
               />
               <FileText className="w-3 h-3 text-[#5ac8fa]" />
-              <span className="text-[11px] font-medium text-white/90">Selalu Buka Form Lengkap</span>
+              <span className="text-[11px] font-medium text-white/90">
+                <span className="hidden sm:inline">Selalu Buka </span>Form Lengkap
+              </span>
             </label>
           </div>
 
           {sessionSuccessCount > 0 && (
-            <div className="text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-medium">
-              ⚡ {sessionSuccessCount} item tersimpan sesi ini
+            <div className="text-[10px] sm:text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 sm:px-2.5 py-0.5 rounded-full font-medium">
+              ⚡ {sessionSuccessCount} item
             </div>
           )}
         </div>
@@ -822,26 +825,26 @@ const AiTagScannerContent = ({
                 <button
                   type="button"
                   onClick={() => setInputMode('camera')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                     inputMode === 'camera'
                       ? 'bg-[#0071e3] text-white shadow-xs'
                       : 'text-white/60 hover:text-white'
                   }`}
                 >
                   <Camera className="w-3.5 h-3.5" />
-                  <span>Kamera Langsung</span>
+                  <span>Kamera</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setInputMode('upload')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                     inputMode === 'upload'
                       ? 'bg-[#0071e3] text-white shadow-xs'
                       : 'text-white/60 hover:text-white'
                   }`}
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>Upload Foto / File</span>
+                  <span>Upload Foto</span>
                 </button>
               </div>
 
@@ -911,34 +914,36 @@ const AiTagScannerContent = ({
                       </p>
 
                       <div className="flex flex-col gap-2 pt-2">
-                        {/* Tombol Coba Hubungkan Kamera Lagi */}
-                        <button
-                          type="button"
-                          onClick={() => setCameraRetryCount((c) => c + 1)}
-                          className="w-full py-2 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                          <span>Coba Hubungkan Kamera Lagi</span>
-                        </button>
-
-                        {/* Tombol Kamera Native HP (Khusus Smartphone Android/iPhone) */}
+                        {/* Tombol Kamera Native HP (Utama untuk Smartphone) */}
                         <button
                           type="button"
                           onClick={() => nativeCameraInputRef.current?.click()}
-                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
+                          className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                         >
-                          <Camera className="w-3.5 h-3.5" />
-                          <span>Buka Kamera HP Langsung (Tajam &amp; Auto-Focus)</span>
+                          <Camera className="w-4 h-4" />
+                          <span>Buka Kamera HP Langsung</span>
                         </button>
 
-                        {/* Tombol Beralih ke Upload File */}
-                        <button
-                          type="button"
-                          onClick={() => setInputMode('upload')}
-                          className="w-full py-2 bg-white/10 hover:bg-white/15 text-white/70 hover:text-white text-xs font-medium rounded-xl transition cursor-pointer active:scale-98"
-                        >
-                          Gunakan Upload Foto / Galeri
-                        </button>
+                        <div className="flex gap-2">
+                          {/* Tombol Coba Hubungkan Kamera Lagi */}
+                          <button
+                            type="button"
+                            onClick={() => setCameraRetryCount((c) => c + 1)}
+                            className="flex-1 py-2 bg-white/10 hover:bg-white/15 active:scale-98 text-white/80 hover:text-white text-xs font-semibold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            <span>Coba Lagi</span>
+                          </button>
+
+                          {/* Tombol Beralih ke Upload File */}
+                          <button
+                            type="button"
+                            onClick={() => setInputMode('upload')}
+                            className="flex-1 py-2 bg-white/10 hover:bg-white/15 active:scale-98 text-white/80 hover:text-white text-xs font-medium rounded-xl transition cursor-pointer"
+                          >
+                            Galeri Foto
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1017,8 +1022,8 @@ const AiTagScannerContent = ({
                 </div>
               )}
 
-              {/* Petunjuk Efisiensi Input */}
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 flex items-center gap-2.5 text-[11px] text-white/50">
+              {/* Petunjuk Efisiensi Input (Disembunyikan di Mobile) */}
+              <div className="hidden sm:flex bg-white/[0.02] border border-white/5 rounded-xl p-3 items-center gap-2.5 text-[11px] text-white/50">
                 <Info className="w-4 h-4 text-[#5ac8fa] shrink-0" />
                 <span>
                   <strong>Tips 400 PCE/hari:</strong> Kunci Buyer (misal: <em>AN05</em>) dan Jenis (misal: <em>PPS</em>). Tekan shutter kamera atau paste gambar &rarr; klik <strong>Simpan Langsung</strong> untuk alokasi otomatis sub-2 detik!
