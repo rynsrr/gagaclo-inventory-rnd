@@ -23,6 +23,13 @@ export const MobileLoginModal = ({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => {
+    try {
+      return localStorage.getItem('gagaclo_mobile_remember_me') !== 'false';
+    } catch {
+      return true;
+    }
+  });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,11 +38,23 @@ export const MobileLoginModal = ({
       setError('');
       setPassword('');
       setShowPassword(false);
-      // Pre-select currentUser if exists, else empty so it displays "User / Akun" placeholder
-      if (currentUser?.id) {
-        setSelectedUserId(String(currentUser.id));
-      } else {
-        setSelectedUserId('');
+      try {
+        const savedRemember = localStorage.getItem('gagaclo_mobile_remember_me') !== 'false';
+        setRememberMe(savedRemember);
+        const savedUserId = localStorage.getItem('gagaclo_mobile_saved_user_id');
+        if (savedRemember && savedUserId && users.some(u => String(u.id) === String(savedUserId))) {
+          setSelectedUserId(String(savedUserId));
+        } else if (currentUser?.id) {
+          setSelectedUserId(String(currentUser.id));
+        } else {
+          setSelectedUserId('');
+        }
+      } catch {
+        if (currentUser?.id) {
+          setSelectedUserId(String(currentUser.id));
+        } else {
+          setSelectedUserId('');
+        }
       }
     }
   }, [isOpen, currentUser, users]);
@@ -58,7 +77,16 @@ export const MobileLoginModal = ({
       const res = loginUser(selectedUser.name, password);
       if (res.success) {
         try {
-          localStorage.setItem('gagaclo_mobile_user_selected', 'true');
+          if (rememberMe) {
+            localStorage.setItem('gagaclo_mobile_remember_me', 'true');
+            localStorage.setItem('gagaclo_mobile_user_selected', 'true');
+            localStorage.setItem('gagaclo_mobile_saved_user_id', String(selectedUser.id));
+          } else {
+            localStorage.setItem('gagaclo_mobile_remember_me', 'false');
+            localStorage.removeItem('gagaclo_mobile_user_selected');
+            localStorage.removeItem('gagaclo_mobile_saved_user_id');
+            sessionStorage.setItem('gagaclo_mobile_user_selected', 'true');
+          }
         } catch {}
         setPassword('');
         onClose();
@@ -74,7 +102,7 @@ export const MobileLoginModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 font-apple"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-[#064e3b] via-[#022c22] to-[#011a14] animate-in fade-in duration-200 font-apple"
       role="dialog"
       aria-modal="true"
       aria-labelledby="mobile-login-title"
@@ -198,6 +226,19 @@ export const MobileLoginModal = ({
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          {/* Remember me Checkbox (Align Center) */}
+          <div className="flex items-center justify-center pt-0.5">
+            <label className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-600 hover:text-black cursor-pointer select-none transition">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded-[4px] border-gray-300 text-black accent-black focus:ring-0 cursor-pointer"
+              />
+              <span>Remember me</span>
+            </label>
           </div>
 
           {/* 3. Tombol Login (Ref: Sleek Black Pill Button) */}

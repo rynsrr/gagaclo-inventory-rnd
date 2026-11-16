@@ -294,7 +294,7 @@ const AppContent = () => {
     const isMobile = window.innerWidth < 768;
     if (isMobile) {
       try {
-        const hasLoggedInOnMobile = localStorage.getItem('gagaclo_mobile_user_selected');
+        const hasLoggedInOnMobile = localStorage.getItem('gagaclo_mobile_user_selected') || sessionStorage.getItem('gagaclo_mobile_user_selected');
         if (!hasLoggedInOnMobile) {
           setIsMobileLoginMandatory(true);
           setIsMobileLoginOpen(true);
