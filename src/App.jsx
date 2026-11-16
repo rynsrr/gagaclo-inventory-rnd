@@ -435,8 +435,8 @@ const AppContent = () => {
               </div>
             </nav>
 
-            {/* Actions Toolbar Kanan (Apple macOS Style) */}
-            <div className="inventory-header-actions ml-auto flex shrink-0 items-center justify-end gap-2 font-apple">
+            {/* Actions Toolbar Kanan (Apple macOS Style) - Disembunyikan di Mobile */}
+            <div className="inventory-header-actions ml-auto hidden md:flex shrink-0 items-center justify-end gap-2 font-apple">
 
               {/* Supabase Status Pill (Apple Indicator Pill) */}
               <div

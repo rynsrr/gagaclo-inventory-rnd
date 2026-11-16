@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { 
   Camera, 
   Sparkles, 
   Plus, 
-  Upload, 
   Copy, 
   Check, 
   Pencil, 
@@ -45,9 +44,6 @@ export const MobileQuickEntryView = ({
   const [copiedCode, setCopiedCode] = useState(null);
   const [isBoxPickerOpen, setIsBoxPickerOpen] = useState(false);
   const [boxRackFilter, setBoxRackFilter] = useState('ALL');
-
-  const nativeCameraInputRef = useRef(null);
-  const galleryInputRef = useRef(null);
 
   // Simpan activeBoxNumber ke localStorage saat berubah
   const handleSelectBox = (num) => {
@@ -138,18 +134,6 @@ export const MobileQuickEntryView = ({
     }
   };
 
-  // Handler file input kamera native HP
-  const handleNativeCameraChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (onDirectScanImage) {
-        onDirectScanImage(file, activeBoxNumber);
-      } else if (onOpenAiScanner) {
-        onOpenAiScanner(activeBoxNumber);
-      }
-    }
-  };
-
   // Filter 72 box untuk picker
   const filteredBoxes = useMemo(() => {
     if (boxRackFilter === 'ALL') return boxes;
@@ -178,24 +162,6 @@ export const MobileQuickEntryView = ({
               Mode Kasir &bull; Siap jepret kartu sampel
             </p>
           </div>
-        </div>
-
-        {/* Switch Toggle: Kasir vs 3D */}
-        <div className="flex items-center p-0.5 bg-white/10 rounded-full border border-white/10 shrink-0">
-          <button
-            type="button"
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#0071e3] text-white shadow-xs cursor-default"
-          >
-            Kasir
-          </button>
-          <button
-            type="button"
-            onClick={onOpen3dView}
-            className="px-2.5 py-1 rounded-full text-[10px] font-medium text-white/60 hover:text-white transition cursor-pointer"
-            title="Buka Denah 3D Rak Gudang"
-          >
-            3D Rak
-          </button>
         </div>
       </div>
 
@@ -366,110 +332,68 @@ export const MobileQuickEntryView = ({
           </div>
         </button>
 
-        {/* SHORTCUTS ROW: Buka Kamera HP Langsung, Upload Galeri, Manual Form */}
-        <div className="grid grid-cols-3 gap-2 relative z-10 pt-1">
-          {/* 1. Buka Kamera HP Langsung (Native Camera Capture) */}
-          <button
-            type="button"
-            onClick={() => nativeCameraInputRef.current?.click()}
-            className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white flex flex-col items-center justify-center gap-1 text-center transition cursor-pointer active:scale-95"
-            title="Buka Kamera Bawaan HP Langsung"
-          >
-            <Camera className="w-4 h-4 text-emerald-400" />
-            <span className="text-[10px] font-bold leading-tight">Kamera HP</span>
-          </button>
-
-          {/* 2. Upload dari Galeri */}
-          <button
-            type="button"
-            onClick={() => galleryInputRef.current?.click()}
-            className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white flex flex-col items-center justify-center gap-1 text-center transition cursor-pointer active:scale-95"
-            title="Pilih foto dari Galeri atau File"
-          >
-            <Upload className="w-4 h-4 text-[#5ac8fa]" />
-            <span className="text-[10px] font-bold leading-tight">Galeri Foto</span>
-          </button>
-
-          {/* 3. Input Manual via Form */}
-          <button
-            type="button"
-            onClick={() => {
-              setItemModalConfig({
-                isOpen: true,
-                item: null,
-                targetBoxNumber: activeBoxNumber,
-              });
-            }}
-            className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white flex flex-col items-center justify-center gap-1 text-center transition cursor-pointer active:scale-95"
-            title="Input Manual dengan Ketik Formulir"
-          >
-            <Plus className="w-4 h-4 text-amber-300" />
-            <span className="text-[10px] font-bold leading-tight">Ketik Manual</span>
-          </button>
-        </div>
-
-        {/* Hidden File Inputs */}
-        <input
-          ref={nativeCameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleNativeCameraChange}
-          className="hidden"
-        />
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleNativeCameraChange}
-          className="hidden"
-        />
+        {/* Input Manual via Form */}
+        <button
+          type="button"
+          onClick={() => {
+            setItemModalConfig({
+              isOpen: true,
+              item: null,
+              targetBoxNumber: activeBoxNumber,
+            });
+          }}
+          className="w-full py-2.5 px-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white flex items-center justify-center gap-2 text-center transition cursor-pointer active:scale-95 text-xs font-bold relative z-10"
+          title="Input Manual dengan Ketik Formulir"
+        >
+          <Plus className="w-4 h-4 text-amber-300" />
+          <span>Ketik Manual (Form Lengkap)</span>
+        </button>
       </div>
 
-      {/* 5. FEED: DAFTAR SAMPEL BARU DIMASUKKAN HARI INI */}
-      <div className="space-y-2.5 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h3 className="text-xs sm:text-sm font-bold text-[#1d1d1f] flex items-center gap-1.5">
-              <span>Sampel Masuk Hari Ini</span>
-              <span className="text-[10px] font-bold bg-[#0071e3]/10 text-[#0071e3] px-2 py-0.2 rounded-full tabular-nums">
-                {displayedItems.length} Item &bull; {displayedPcs} PCE
-              </span>
-            </h3>
-            <p className="text-[10px] text-[#86868b] mt-0.5">
-              Riwayat pendataan real-time hari ini ({formatToDDMMYYYY(todayIso)})
-            </p>
+      {/* 5. FEED: DAFTAR SAMPEL BARU DIMASUKKAN HARI INI (Hanya Tampil Jika Ada Item Hari Ini) */}
+      {displayedItems.length > 0 && (
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between px-1">
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-[#1d1d1f] flex items-center gap-1.5">
+                <span>Sampel Masuk Hari Ini</span>
+                <span className="text-[10px] font-bold bg-[#0071e3]/10 text-[#0071e3] px-2 py-0.2 rounded-full tabular-nums">
+                  {displayedItems.length} Item &bull; {displayedPcs} PCE
+                </span>
+              </h3>
+              <p className="text-[10px] text-[#86868b] mt-0.5">
+                Riwayat pendataan real-time hari ini ({formatToDDMMYYYY(todayIso)})
+              </p>
+            </div>
+
+            {/* Filter Pill: Semua vs Saya */}
+            <div className="flex items-center p-0.5 bg-black/[0.04] rounded-full border border-black/[0.06] shrink-0">
+              <button
+                type="button"
+                onClick={() => setFilterMode('all')}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition cursor-pointer ${
+                  filterMode === 'all'
+                    ? 'bg-white text-[#1d1d1f] shadow-2xs font-bold'
+                    : 'text-[#86868b]'
+                }`}
+              >
+                Semua ({todayItems.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterMode('my')}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition cursor-pointer ${
+                  filterMode === 'my'
+                    ? 'bg-white text-[#1d1d1f] shadow-2xs font-bold'
+                    : 'text-[#86868b]'
+                }`}
+              >
+                Saya ({myTodayItems.length})
+              </button>
+            </div>
           </div>
 
-          {/* Filter Pill: Semua vs Saya */}
-          <div className="flex items-center p-0.5 bg-black/[0.04] rounded-full border border-black/[0.06] shrink-0">
-            <button
-              type="button"
-              onClick={() => setFilterMode('all')}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition cursor-pointer ${
-                filterMode === 'all'
-                  ? 'bg-white text-[#1d1d1f] shadow-2xs font-bold'
-                  : 'text-[#86868b]'
-              }`}
-            >
-              Semua ({todayItems.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterMode('my')}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition cursor-pointer ${
-                filterMode === 'my'
-                  ? 'bg-white text-[#1d1d1f] shadow-2xs font-bold'
-                  : 'text-[#86868b]'
-              }`}
-            >
-              Saya ({myTodayItems.length})
-            </button>
-          </div>
-        </div>
-
-        {/* List of Cards */}
-        {displayedItems.length > 0 ? (
+          {/* List of Cards */}
           <div className="space-y-2">
             {displayedItems.map((item) => {
               const qty = Number(item.jumlah || item.qty || item.pcs) || 1;
@@ -609,20 +533,8 @@ export const MobileQuickEntryView = ({
               );
             })}
           </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-dashed border-black/[0.12] p-8 text-center space-y-2.5 shadow-2xs">
-            <div className="w-12 h-12 rounded-2xl bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center mx-auto">
-              <Camera className="w-6 h-6 stroke-[2]" />
-            </div>
-            <h4 className="text-xs font-bold text-[#1d1d1f]">
-              Belum Ada Sampel Masuk Hari Ini
-            </h4>
-            <p className="text-[11px] text-[#86868b] max-w-xs mx-auto leading-relaxed">
-              Tekan tombol biru <strong>"Jepret Tag Sampel"</strong> di atas untuk memindai kartu sampel pertama hari ini ke dalam <strong>BOX #{activeBoxNumber}</strong>!
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal Cetak KTP Sampel (Jika Dipilih) */}
       {selectedPrintItem && (
