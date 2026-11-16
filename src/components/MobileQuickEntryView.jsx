@@ -624,20 +624,6 @@ export const MobileQuickEntryView = ({
         )}
       </div>
 
-      {/* 6. FLOATING ACTION BUTTON (FAB) SCAN AI (Melayang saat scroll) */}
-      <div className="fixed bottom-5 right-4 z-40 pb-[env(safe-area-inset-bottom,0px)]">
-        <button
-          type="button"
-          onClick={() => onOpenAiScanner?.(activeBoxNumber)}
-          className="flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-[#0071e3] via-[#0077ed] to-[#5ac8fa] text-white shadow-[0_8px_25px_rgba(0,113,227,0.4)] active:scale-95 transition-all cursor-pointer font-bold text-xs"
-          title="Jepret & Scan Tag Sampel Sekarang"
-        >
-          <Camera className="w-4 h-4 text-white shrink-0" />
-          <span>Jepret Sampel</span>
-          <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse shrink-0" />
-        </button>
-      </div>
-
       {/* Modal Cetak KTP Sampel (Jika Dipilih) */}
       {selectedPrintItem && (
         <CardPrintModal
