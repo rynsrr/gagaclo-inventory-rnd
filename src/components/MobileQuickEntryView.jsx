@@ -625,7 +625,7 @@ export const MobileQuickEntryView = ({
       </div>
 
       {/* 6. FLOATING ACTION BUTTON (FAB) SCAN AI (Melayang saat scroll) */}
-      <div className="fixed bottom-20 right-4 z-40">
+      <div className="fixed bottom-5 right-4 z-40 pb-[env(safe-area-inset-bottom,0px)]">
         <button
           type="button"
           onClick={() => onOpenAiScanner?.(activeBoxNumber)}
