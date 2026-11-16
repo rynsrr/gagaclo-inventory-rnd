@@ -48,6 +48,8 @@ const BackupModal = lazy(() =>
 const AnnouncementModal = lazy(() =>
   import('./components/AnnouncementModal').then((m) => ({ default: m.AnnouncementModal }))
 );
+import { AiTagScannerModal } from './components/AiTagScannerModal';
+import { allocateNextSequentialCode } from './utils/sequenceResolver';
 import {
   Boxes,
   Database,
@@ -93,6 +95,7 @@ const AppContent = () => {
     exportToExcel,
     setSelectedBoxNumber,
     setItemModalConfig,
+    addItem,
     announcement,
     updateAnnouncement,
   } = useInventory();
@@ -104,6 +107,7 @@ const AppContent = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
+  const [isAiScannerOpen, setIsAiScannerOpen] = useState(false);
   const [highlightPpic, setHighlightPpic] = useState('ALL');
   const [hoveredSearchBoxNumber, setHoveredSearchBoxNumber] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -117,6 +121,65 @@ const AppContent = () => {
   const [cartCheckoutItems, setCartCheckoutItems] = useState(null);
   const [celebrationAchiever, setCelebrationAchiever] = useState(null);
   const connected = supabaseStatus.isConnected;
+
+  const handleAppDirectSaveAiData = async (extracted) => {
+    const boxNum = 1;
+    const boxObj = boxes.find(b => Number(b.boxNumber) === Number(boxNum));
+    const isMat = boxObj?.category === 'MATERIAL';
+    const finalKode = await allocateNextSequentialCode(
+      supabase,
+      isMat ? 'MATERIAL' : 'SAMPLE',
+      items
+    );
+    const styleTrim = String(extracted.style || 'SAMPLE').trim().toUpperCase();
+    const sampleNoTrim = String(extracted.sampleNo || '').trim().toUpperCase();
+    const sizeTrim = String(extracted.size || 'ONESIZE').trim().toUpperCase();
+    const colorTrim = String(extracted.color || 'NA').trim().toUpperCase();
+    const buyerNoTrim = String(extracted.buyerNo || 'NA').trim().toUpperCase();
+    const trackClean = (extracted.track && String(extracted.track).trim()) ? String(extracted.track).trim().toUpperCase() : 'NA';
+    const tanggalClean = extracted.tanggal || 'NA';
+    const placeClean = boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`;
+    const fullDeskripsi = sampleNoTrim
+      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
+      : `${styleTrim} - Size: ${sizeTrim}`;
+
+    const payload = {
+      track: trackClean,
+      tanggal: tanggalClean,
+      kode: finalKode,
+      buyerNo: buyerNoTrim,
+      jenisSample: extracted.jenisSample || 'PPS',
+      style: styleTrim,
+      sampleNo: sampleNoTrim,
+      size: sizeTrim,
+      deskripsi: fullDeskripsi,
+      color: colorTrim,
+      jumlah: Number(extracted.jumlah) || 1,
+      satuan: 'PCE',
+      place: placeClean,
+      name: sampleNoTrim
+        ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`
+        : `${styleTrim} (Size: ${sizeTrim})`,
+      sku: finalKode,
+      buyerNumber: buyerNoTrim,
+      description: fullDeskripsi,
+      qty: Number(extracted.jumlah) || 1,
+      unit: 'PCE',
+      boxNumber: boxNum,
+      rackId: boxObj ? Number(boxObj.rackId) : 1,
+      rackName: boxObj ? boxObj.rackName : 'RACK 1',
+      picName: boxObj ? boxObj.picName : 'Royan',
+      category: boxObj ? boxObj.category : 'SAMPLE',
+      status: 'In Storage',
+      dateIn: tanggalClean,
+    };
+
+    await addItem(payload);
+    setSystemNotification({
+      type: 'target',
+      message: `⚡ [${finalKode}] Berhasil dicatat langsung ke BOX #${boxNum}!`,
+    });
+  };
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -670,6 +733,28 @@ const AppContent = () => {
                               </div>
                             </div>
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAiScannerOpen(true);
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#0071e3]/10 text-[#0071e3] group-hover:bg-[#0071e3] group-hover:text-white transition-colors shrink-0">
+                                <Sparkles className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
+                                  <span>Snap &amp; Fill AI Tag</span>
+                                  <span className="text-[10px] text-emerald-600 bg-emerald-50 font-bold px-1.5 py-0.5 rounded-full border border-emerald-200">Baru</span>
+                                </div>
+                                <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Scan label kartu &amp; auto-input data</div>
+                              </div>
+                            </div>
+                          </button>
                         </div>
                       </div>
 
@@ -1046,6 +1131,23 @@ const AppContent = () => {
           currentUser={currentUser}
         />
       </Suspense>
+
+      {/* Snap & Fill AI Tag Scanner Modal */}
+      <AiTagScannerModal
+        isOpen={isAiScannerOpen}
+        onClose={() => setIsAiScannerOpen(false)}
+        targetBoxNumber={1}
+        onApplyToForm={(extracted) => {
+          setItemModalConfig({
+            isOpen: true,
+            item: null,
+            targetBoxNumber: 1,
+            prefill: extracted,
+          });
+          setIsAiScannerOpen(false);
+        }}
+        onDirectSave={handleAppDirectSaveAiData}
+      />
 
     </div>
   );

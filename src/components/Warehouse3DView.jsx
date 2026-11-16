@@ -1122,7 +1122,7 @@ export const Warehouse3DView = ({
       if (!newWidth || !newHeight) return;
       camera.aspect = newWidth / newHeight;
       renderer.setSize(newWidth, newHeight, false);
-      fitFrontView(false, isHudExpanded);
+      fitFrontView(false, isHudExpandedRef.current);
     };
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);

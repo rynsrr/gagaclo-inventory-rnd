@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { supabase } from '../lib/supabase';
 import { CardPrintModal } from './CardPrintModal';
+import { AiTagScannerModal } from './AiTagScannerModal';
 import { isSupport, isHelper, isSuperuser } from '../utils/authUtils';
 import { 
   resolveUniqueCode, 
@@ -108,6 +109,7 @@ const ItemModalContent = () => {
   const savedReminderRef = useRef(null);
   savedReminderRef.current = savedReminder;
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isAiScannerOpen, setIsAiScannerOpen] = useState(false);
 
   const isDuplicate = Boolean(itemModalConfig.isDuplicate);
   const isEditing = Boolean(itemModalConfig.item && !isDuplicate);
@@ -156,15 +158,15 @@ const ItemModalContent = () => {
       // JIT Allocation: untuk item baru, kode kosong di awal dan baru dialokasikan secara atomik saat tombol Simpan diklik
       return {
         track: itemModalConfig.prefill?.track || '',
-        tanggal: formatTodayDate(),
+        tanggal: itemModalConfig.prefill?.tanggal || formatTodayDate(),
         kode: '',
         buyerNo: itemModalConfig.prefill?.buyerNo || '',
         jenisSample: (itemModalConfig.prefill?.jenisSample === 'ARSIP' ? 'ARCHIVE' : itemModalConfig.prefill?.jenisSample) || '',
         style: itemModalConfig.prefill?.style || '',
-        sampleNo: '',
-        size: '',
-        color: '',
-        jumlah: 1,
+        sampleNo: itemModalConfig.prefill?.sampleNo || '',
+        size: itemModalConfig.prefill?.size || '',
+        color: itemModalConfig.prefill?.color || '',
+        jumlah: itemModalConfig.prefill?.jumlah !== undefined ? Number(itemModalConfig.prefill.jumlah) : 1,
         satuan: 'PCE',
         boxNumber: bNum,
         place: defaultBoxPlace,
@@ -449,6 +451,81 @@ const ItemModalContent = () => {
     }
   };
 
+  const handleApplyAiData = (extracted) => {
+    setFormData((prev) => ({
+      ...prev,
+      style: extracted.style || prev.style,
+      sampleNo: extracted.sampleNo || prev.sampleNo,
+      size: extracted.size || prev.size,
+      color: extracted.color || prev.color,
+      buyerNo: extracted.buyerNo || prev.buyerNo,
+      jenisSample: extracted.jenisSample || prev.jenisSample,
+      tanggal: extracted.tanggal || prev.tanggal,
+      jumlah: extracted.jumlah !== undefined ? Number(extracted.jumlah) : prev.jumlah,
+      satuan: 'PCE',
+      track: extracted.track || prev.track,
+    }));
+    showNotification?.('✨ Data dari label berhasil diisi ke form!', 'success', 3000);
+    setIsAiScannerOpen(false);
+  };
+
+  const handleDirectSaveAiData = async (extracted) => {
+    const styleTrim = String(extracted.style || 'SAMPLE').trim().toUpperCase();
+    const sampleNoTrim = String(extracted.sampleNo || '').trim().toUpperCase();
+    const sizeTrim = String(extracted.size || 'ONESIZE').trim().toUpperCase();
+    const colorTrim = String(extracted.color || 'NA').trim().toUpperCase();
+    const buyerNoTrim = String(extracted.buyerNo || 'NA').trim().toUpperCase();
+    const trackClean = clean(extracted.track || 'NA');
+    const tanggalClean = extracted.tanggal || formatTodayDate();
+
+    const finalKode = await allocateNextSequentialCode(
+      supabase,
+      isMaterialBox ? 'MATERIAL' : 'SAMPLE',
+      items
+    );
+
+    const boxNum = Number(formData.boxNumber) || targetBoxNum;
+    const boxObj = boxes.find(b => Number(b.boxNumber) === boxNum);
+    const placeClean = boxObj ? `BOX ${boxNum} (${boxObj.rackName} - ${boxObj.picName})` : `BOX ${boxNum}`;
+    const fullDeskripsi = sampleNoTrim
+      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
+      : `${styleTrim} - Size: ${sizeTrim}`;
+
+    const payload = {
+      track: trackClean,
+      tanggal: tanggalClean,
+      kode: finalKode,
+      buyerNo: buyerNoTrim,
+      jenisSample: clean(extracted.jenisSample || 'PPS'),
+      style: styleTrim,
+      sampleNo: sampleNoTrim,
+      size: sizeTrim,
+      deskripsi: fullDeskripsi,
+      color: colorTrim,
+      jumlah: Number(extracted.jumlah) || 1,
+      satuan: 'PCE',
+      place: placeClean,
+      name: sampleNoTrim
+        ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`
+        : `${styleTrim} (Size: ${sizeTrim})`,
+      sku: finalKode,
+      buyerNumber: buyerNoTrim,
+      description: fullDeskripsi,
+      qty: Number(extracted.jumlah) || 1,
+      unit: 'PCE',
+      boxNumber: boxNum,
+      rackId: boxObj ? Number(boxObj.rackId) : 1,
+      rackName: boxObj ? boxObj.rackName : 'RACK 1',
+      picName: boxObj ? boxObj.picName : 'Royan',
+      category: boxObj ? boxObj.category : 'SAMPLE',
+      status: 'In Storage',
+      dateIn: tanggalClean,
+    };
+
+    await addItem(payload);
+    showNotification?.(`⚡ [${finalKode}] Berhasil disimpan langsung ke BOX #${boxNum}!`, 'success', 3500);
+  };
+
   const currentBoxObj = boxes.find(b => Number(b.boxNumber) === Number(formData.boxNumber));
   const isSuper = isSuperuser?.(currentUser);
   const isSupportUser = isSupport?.(currentUser) || isHelper?.(currentUser);
@@ -478,6 +555,16 @@ const ItemModalContent = () => {
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsAiScannerOpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#0071e3] to-[#5ac8fa] hover:brightness-110 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+              title="Pindai Kartu / Tag Sampel dengan Gemini AI"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Scan Tag AI</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
@@ -1180,6 +1267,17 @@ const ItemModalContent = () => {
           }}
         />
       )}
+
+      {/* AI Tag Scanner Modal */}
+      <AiTagScannerModal
+        isOpen={isAiScannerOpen}
+        onClose={() => setIsAiScannerOpen(false)}
+        targetBoxNumber={Number(formData.boxNumber) || targetBoxNum}
+        defaultBuyer={formData.buyerNo}
+        defaultJenisSample={formData.jenisSample}
+        onApplyToForm={handleApplyAiData}
+        onDirectSave={handleDirectSaveAiData}
+      />
     </div>
   );
 };

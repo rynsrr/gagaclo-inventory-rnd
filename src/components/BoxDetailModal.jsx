@@ -29,12 +29,15 @@ import {
   FileText,
   Send,
   ShoppingCart,
+  Sparkles,
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
 import { SampleListPrintModal } from './SampleListPrintModal';
 import { DispatchModal } from './DispatchModal';
-import { getNextSampleCode, getNextMaterialCode } from '../utils/sequenceResolver';
+import { AiTagScannerModal } from './AiTagScannerModal';
+import { getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode } from '../utils/sequenceResolver';
+import { supabase } from '../lib/supabase';
 import { isHelper, resolveItemInputter } from '../utils/authUtils';
 
 export const BoxDetailModal = () => {
@@ -47,6 +50,7 @@ function BoxDetail({ box }) {
   const {
     setSelectedBoxNumber,
     getItemsInBox,
+    addItem,
     deleteItem,
     deleteMultipleItems,
     setItemModalConfig,
@@ -156,6 +160,63 @@ function BoxDetail({ box }) {
   const [cardPrintItems, setCardPrintItems] = useState(null);
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAiScannerOpen, setIsAiScannerOpen] = useState(false);
+
+  const handleDirectSaveAiData = async (extracted) => {
+    const styleTrim = String(extracted.style || 'SAMPLE').trim().toUpperCase();
+    const sampleNoTrim = String(extracted.sampleNo || '').trim().toUpperCase();
+    const sizeTrim = String(extracted.size || 'ONESIZE').trim().toUpperCase();
+    const colorTrim = String(extracted.color || 'NA').trim().toUpperCase();
+    const buyerNoTrim = String(extracted.buyerNo || 'NA').trim().toUpperCase();
+    const trackClean = (extracted.track && String(extracted.track).trim()) ? String(extracted.track).trim().toUpperCase() : 'NA';
+    const tanggalClean = extracted.tanggal || 'NA';
+    const isMat = box.category === 'MATERIAL';
+
+    const finalKode = await allocateNextSequentialCode(
+      supabase,
+      isMat ? 'MATERIAL' : 'SAMPLE',
+      items
+    );
+
+    const placeClean = `BOX ${box.boxNumber} (${box.rackName || 'LANTAI'} - ${box.picName || 'Royan'})`;
+    const fullDeskripsi = sampleNoTrim
+      ? `${styleTrim} - Sample: ${sampleNoTrim} - Size: ${sizeTrim}`
+      : `${styleTrim} - Size: ${sizeTrim}`;
+
+    const payload = {
+      track: trackClean,
+      tanggal: tanggalClean,
+      kode: finalKode,
+      buyerNo: buyerNoTrim,
+      jenisSample: extracted.jenisSample || 'PPS',
+      style: styleTrim,
+      sampleNo: sampleNoTrim,
+      size: sizeTrim,
+      deskripsi: fullDeskripsi,
+      color: colorTrim,
+      jumlah: Number(extracted.jumlah) || 1,
+      satuan: 'PCE',
+      place: placeClean,
+      name: sampleNoTrim
+        ? `${styleTrim} (Sample: ${sampleNoTrim}, Size: ${sizeTrim})`
+        : `${styleTrim} (Size: ${sizeTrim})`,
+      sku: finalKode,
+      buyerNumber: buyerNoTrim,
+      description: fullDeskripsi,
+      qty: Number(extracted.jumlah) || 1,
+      unit: 'PCE',
+      boxNumber: box.boxNumber,
+      rackId: Number(box.rackId) || 1,
+      rackName: box.rackName || 'RACK 1',
+      picName: box.picName || 'Royan',
+      category: box.category || 'SAMPLE',
+      status: 'In Storage',
+      dateIn: tanggalClean,
+    };
+
+    await addItem(payload);
+    showNotification?.(`⚡ [${finalKode}] Berhasil dicatat langsung ke BOX #${box.boxNumber}!`, 'success', 3500);
+  };
 
   // Instant Move Box Dialog state
   const [movingItems, setMovingItems] = useState(null);
@@ -646,13 +707,25 @@ function BoxDetail({ box }) {
               )}
 
               {isOwner ? (
-                <button
-                  onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
-                  className="flex items-center space-x-1.5 px-4 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{isCrossPpic ? 'Bantu Input Item' : 'Tambah Item'}</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsAiScannerOpen(true)}
+                    className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-[#0071e3] to-[#5ac8fa] hover:brightness-110 text-white rounded-full text-xs font-semibold shadow-xs transition cursor-pointer"
+                    title="Pindai Kartu / Tag Sampel dengan Gemini AI"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Scan Tag AI</span>
+                  </button>
+
+                  <button
+                    onClick={() => setItemModalConfig({ isOpen: true, item: null, targetBoxNumber: box.boxNumber })}
+                    className="flex items-center space-x-1.5 px-4 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full text-xs font-medium shadow-xs transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{isCrossPpic ? 'Bantu Input Item' : 'Tambah Item'}</span>
+                  </button>
+                </>
               ) : (
                 <span
                   className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#f5f5f7] text-[#86868b] rounded-full text-xs font-medium border border-black/[0.06] cursor-not-allowed"
@@ -1202,6 +1275,22 @@ function BoxDetail({ box }) {
           preselectedItems={dispatchPreselectedItems}
         />
       )}
+
+      {/* AI Tag Scanner Modal */}
+      <AiTagScannerModal
+        isOpen={isAiScannerOpen}
+        onClose={() => setIsAiScannerOpen(false)}
+        targetBoxNumber={box.boxNumber}
+        onApplyToForm={(extracted) => {
+          setItemModalConfig({
+            isOpen: true,
+            item: null,
+            targetBoxNumber: box.boxNumber,
+            prefill: extracted,
+          });
+        }}
+        onDirectSave={handleDirectSaveAiData}
+      />
     </div>
   );
 };
