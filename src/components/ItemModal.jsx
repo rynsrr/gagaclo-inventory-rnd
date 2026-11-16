@@ -25,7 +25,11 @@ import {
   Unlock,
   Printer,
   Check,
+  Camera,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react';
+import { scanGarmentTag, compressImage } from '../utils/aiLabelScanner';
 
 // Every row on the sample card is mandatory. "NA" is an accepted value when
 // the information genuinely does not exist; "-" and empty text are not.
@@ -134,6 +138,11 @@ const ItemModalContent = () => {
     return saved !== null ? saved === 'true' : true;
   });
 
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
+  const [isScanningCamera, setIsScanningCamera] = useState(false);
+  const [scanBanner, setScanBanner] = useState(null);
+
   useEffect(() => {
     localStorage.setItem('gagaclo_lock_buyer_enabled', isBuyerLocked ? 'true' : 'false');
   }, [isBuyerLocked]);
@@ -214,6 +223,57 @@ const ItemModalContent = () => {
       }
     };
   }, []);
+
+  const handleCameraCapture = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsScanningCamera(true);
+    setScanBanner(null);
+
+    try {
+      const compressedBase64 = await compressImage(file, 900, 0.75);
+      const contextSettings = {
+        lockedBuyer: isBuyerLocked ? stickyBuyer : '',
+        lockedJenisSample: isJenisLocked ? stickyJenis : '',
+        _boxNumber: String(formData.boxNumber || targetBoxNum || 1),
+      };
+
+      const result = await scanGarmentTag(compressedBase64, contextSettings);
+      const data = result?.data ? result.data : result;
+
+      if (!data || typeof data !== 'object') {
+        throw new Error('Hasil pemindaian tag kosong.');
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        style: data.style && data.style !== 'NA' ? data.style : prev.style,
+        sampleNo: data.sampleNo && data.sampleNo !== 'NA' ? data.sampleNo : prev.sampleNo,
+        size: data.size && data.size !== 'NA' ? data.size : prev.size,
+        color: data.color && data.color !== 'NA' ? data.color : prev.color,
+        track: data.track && data.track !== 'NA' ? data.track : prev.track,
+        tanggal: data.tanggal || prev.tanggal,
+        jumlah: data.jumlah !== undefined ? Number(data.jumlah) : prev.jumlah,
+        buyerNo: isBuyerLocked && stickyBuyer ? stickyBuyer : (data.buyerNo || prev.buyerNo),
+        jenisSample: isJenisLocked && stickyJenis ? stickyJenis : (data.jenisSample || prev.jenisSample),
+      }));
+
+      setScanBanner({
+        type: 'success',
+        text: `✓ Tag berhasil diekstrak (${data.style || 'Sample'})! Data terisi otomatis pada formulir.`
+      });
+      showNotification?.('✨ Data dari tag sampel berhasil diisi ke formulir!', 'success', 3500);
+    } catch (err) {
+      console.error('Scan camera error:', err);
+      setScanBanner({
+        type: 'error',
+        text: err?.message || 'Gagal membaca tag sampel. Pastikan foto tegak lurus dan teks terbaca jelas.'
+      });
+    } finally {
+      setIsScanningCamera(false);
+    }
+    e.target.value = '';
+  };
 
   const [errors, setErrors] = useState({});
 
@@ -510,6 +570,26 @@ const ItemModalContent = () => {
           <div className="flex items-center space-x-2 shrink-0">
             <button
               type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={isScanningCamera}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+              title="Foto langsung dengan kamera HP untuk auto-fill formulir"
+            >
+              {isScanningCamera ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Memindai...</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Scan Kamera</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={() => setItemModalConfig({ isOpen: false, item: null, targetBoxNumber: null })}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer active:scale-95"
               aria-label="Tutup"
@@ -596,6 +676,80 @@ const ItemModalContent = () => {
         <form onSubmit={handleSubmit} id="direct-card-form" className="p-2 sm:p-4 bg-[#f5f5f7] flex-1 overflow-y-auto overscroll-contain">
           <div className="bg-white border border-black/[0.08] rounded-2xl sm:rounded-[22px] p-3 sm:p-4 shadow-2xs space-y-2.5 text-xs">
             
+            {/* Hidden Native File Inputs for Direct Camera & Gallery */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleCameraCapture}
+              className="hidden"
+            />
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleCameraCapture}
+              className="hidden"
+            />
+
+            {/* Quick Camera Bar (Scan Tag Otomatis) */}
+            <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-blue-50/80 border border-blue-200/80">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={isScanningCamera}
+                className="flex-1 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer active:scale-98 shadow-xs disabled:opacity-60"
+              >
+                {isScanningCamera ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Sedang Membaca Tag dengan AI...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4" />
+                    <span>Ambil Foto Tag (Kamera HP Langsung)</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                disabled={isScanningCamera}
+                className="py-2 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-300 flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-98 disabled:opacity-60"
+                title="Pilih foto dari galeri HP"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
+                <span>Galeri</span>
+              </button>
+            </div>
+
+            {/* Scan Feedback Banner */}
+            {scanBanner && (
+              <div className={`p-2.5 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 border animate-in fade-in ${
+                scanBanner.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-rose-50 text-rose-800 border-rose-300'
+              }`}>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {scanBanner.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  )}
+                  <span className="truncate">{scanBanner.text}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setScanBanner(null)}
+                  className="text-slate-400 hover:text-slate-700 text-xs px-1 cursor-pointer shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {/* BARIS 1: Track & Tanggal Sample */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
               {/* Track/Note */}

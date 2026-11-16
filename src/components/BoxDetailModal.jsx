@@ -408,65 +408,42 @@ function BoxDetail({ box }) {
     <div className="font-apple fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-1.5 sm:p-3 overflow-y-auto print:p-0 print:bg-transparent transition-opacity">
       <div className={`bg-white rounded-[26px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-black/[0.08] w-full max-w-[98vw] 2xl:max-w-[1780px] max-h-[96vh] flex flex-col overflow-hidden ${cardPrintItems || showBoxLabelModal || showSampleListPrintModal ? 'no-print' : ''}`}>
         
-        {/* Apple Dark Header */}
-        <div className="bg-[#161618] text-white p-5 flex items-start justify-between border-b border-white/[0.08] shrink-0">
-          <div className="flex items-start space-x-3.5 min-w-0 flex-1 mr-4">
-            <div className="w-full">
-              <div className="flex items-center space-x-2.5 flex-wrap gap-y-1">
-                <h2 className="text-[20px] font-semibold tracking-tight text-white">{box.code}</h2>
-                <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium tracking-wide uppercase ${
-                  box.category === 'SAMPLE' ? 'bg-[#ff9500]/20 text-[#ffb340] border border-[#ff9500]/30' : 'bg-[#34c759]/20 text-[#6ce38c] border border-[#34c759]/30'
-                }`}>
-                  {box.category}
-                </span>
-                <span className="text-[11px] text-white/70 font-medium px-2.5 py-0.5 rounded-full bg-white/10 border border-white/10">
-                  {box.rackName}
-                </span>
-              </div>
-
-              {/* Simple Description / Catatan Box Persis di Bawah Box */}
-              <div className="mt-2 flex items-center gap-2 max-w-xl">
-                {isBoxManager ? (
-                  <div className="flex items-center gap-1.5 w-full">
-                    <input
-                      type="text"
-                      value={boxNotes}
-                      onChange={(e) => setBoxNotes(e.target.value)}
-                      onBlur={handleSaveNotes}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleSaveNotes();
-                        }
-                      }}
-                      placeholder="Tambah deskripsi / catatan box..."
-                      className="w-full text-xs text-white placeholder:text-white/40 bg-white/10 border border-white/15 rounded-xl px-3 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/40 focus:bg-white/15 transition"
-                      title="Klik untuk ubah catatan (Tekan Enter untuk simpan)"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveNotes}
-                      className="text-xs font-medium text-white bg-white/15 hover:bg-white/25 border border-white/20 shrink-0 px-3 py-1.5 rounded-xl transition cursor-pointer"
-                      title="Simpan Catatan"
-                    >
-                      {isSavingNotes ? '✓ Tersimpan' : 'Simpan'}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-xs text-white/60 italic truncate" title={boxNotes || 'Tidak ada catatan'}>
-                    {boxNotes ? `Catatan: ${boxNotes}` : 'Tidak ada catatan khusus'}
-                  </p>
-                )}
-              </div>
+        {/* Apple Dark Header - Responsive & Rapi */}
+        <div className="bg-[#161618] text-white p-3.5 sm:p-5 border-b border-white/[0.08] shrink-0 space-y-3">
+          {/* Baris 1: Judul Box, Badges, & Tombol Close Pinned */}
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white whitespace-nowrap shrink-0">
+                {box.code}
+              </h2>
+              <span className={`text-[10.5px] px-2.5 py-0.5 rounded-full font-semibold tracking-wide uppercase shrink-0 ${
+                box.category === 'SAMPLE' ? 'bg-[#ff9500]/20 text-[#ffb340] border border-[#ff9500]/30' : 'bg-[#34c759]/20 text-[#6ce38c] border border-[#34c759]/30'
+              }`}>
+                {box.category}
+              </span>
+              <span className="text-[10.5px] text-white/80 font-medium px-2.5 py-0.5 rounded-full bg-white/10 border border-white/10 shrink-0">
+                {box.rackName}
+              </span>
             </div>
+
+            {/* Tombol Tutup Pinned di Pojok Kanan Atas */}
+            <button
+              type="button"
+              onClick={() => setSelectedBoxNumber(null)}
+              aria-label="Tutup detail box"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer shrink-0 active:scale-95"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
+          {/* Baris 2: Tombol Aksi Box */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={toggleFullStatus}
               disabled={savingFullStatus || !isBoxManager}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold text-white transition cursor-pointer ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold text-white transition cursor-pointer active:scale-95 ${
                 !isBoxManager
                   ? 'bg-white/10 text-white/40 opacity-60 cursor-not-allowed'
                   : box.isFull 
@@ -479,30 +456,61 @@ function BoxDetail({ box }) {
               {savingFullStatus ? 'Menyimpan…' : box.isFull ? 'Buka kembali box' : 'Tandai penuh'}
             </button>
             {fullStatusError && <span role="alert" className="text-xs text-[#ff453a]">{fullStatusError}</span>}
+
             <button
               type="button"
               onClick={() => setShowSampleListPrintModal(true)}
-              className="flex items-center space-x-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 text-white border border-white/15 px-3 py-1.5 rounded-full transition cursor-pointer"
+              className="flex items-center space-x-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 text-white border border-white/15 px-3 py-1.5 rounded-full transition cursor-pointer active:scale-95"
               title="Cetak Lembar Daftar Sample Box (Format A4)"
             >
               <FileText className="w-3.5 h-3.5 text-[#2997ff]" />
               <span>Print List Sample</span>
             </button>
+
             <button
+              type="button"
               onClick={() => setShowBoxLabelModal(true)}
-              className="flex items-center space-x-1.5 text-xs font-medium bg-[#ff9500]/20 hover:bg-[#ff9500]/30 text-[#ffb340] border border-[#ff9500]/40 px-3.5 py-1.5 rounded-full transition cursor-pointer"
+              className="flex items-center space-x-1.5 text-xs font-medium bg-[#ff9500]/20 hover:bg-[#ff9500]/30 text-[#ffb340] border border-[#ff9500]/40 px-3.5 py-1.5 rounded-full transition cursor-pointer active:scale-95"
               title="Cetak Label Stiker Box (Desain Resmi)"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Cetak Label Box</span>
             </button>
-            <button
-              onClick={() => setSelectedBoxNumber(null)}
-              aria-label="Tutup detail box"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer ml-1"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          </div>
+
+          {/* Baris 3: Catatan Box */}
+          <div className="w-full">
+            {isBoxManager ? (
+              <div className="flex items-center gap-1.5 w-full">
+                <input
+                  type="text"
+                  value={boxNotes}
+                  onChange={(e) => setBoxNotes(e.target.value)}
+                  onBlur={handleSaveNotes}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSaveNotes();
+                    }
+                  }}
+                  placeholder="Tambah deskripsi / catatan box..."
+                  className="w-full text-xs text-white placeholder:text-white/40 bg-white/10 border border-white/15 rounded-xl px-3 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/40 focus:bg-white/15 transition"
+                  title="Klik untuk ubah catatan (Tekan Enter untuk simpan)"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveNotes}
+                  className="text-xs font-medium text-white bg-white/15 hover:bg-white/25 border border-white/20 shrink-0 px-3 py-1.5 rounded-xl transition cursor-pointer active:scale-95"
+                  title="Simpan Catatan"
+                >
+                  {isSavingNotes ? '✓ Tersimpan' : 'Simpan'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-white/60 italic truncate" title={boxNotes || 'Tidak ada catatan'}>
+                {boxNotes ? `Catatan: ${boxNotes}` : 'Tidak ada catatan khusus'}
+              </p>
+            )}
           </div>
         </div>
 
