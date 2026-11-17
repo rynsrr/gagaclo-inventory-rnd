@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Camera, 
   Upload, 
@@ -26,23 +26,21 @@ import {
 } from '../utils/aiLabelScanner';
 import { useInventory } from '../context/InventoryContext';
 
-const BUYER_OPTIONS = [
+const DEFAULT_BUYER_OPTIONS = [
   { code: 'AN05', label: 'AN05 - ERGODYNE' },
-  { code: 'AN01', label: 'AN01' },
-  { code: 'AN02', label: 'AN02' },
-  { code: 'AN03', label: 'AN03' },
-  { code: 'AN04', label: 'AN04' },
+  { code: 'SGS', label: 'SGS' },
+  { code: 'RG02', label: 'RG02' },
+  { code: 'AN13', label: 'AN13' },
+  { code: 'AN15', label: 'AN15' },
   { code: 'NA', label: 'NA (Tanpa Buyer)' },
 ];
 
-const JENIS_SAMPLE_OPTIONS = [
+const DEFAULT_JENIS_OPTIONS = [
+  'DEVELOP',
   'PPS',
-  'DEV',
+  'ORI',
+  'BULK SAMPLE',
   'ARCHIVE',
-  'PROTO',
-  'SMS',
-  'FIT',
-  'SEW',
   'NA',
 ];
 
@@ -101,6 +99,103 @@ const AiTagScannerContent = ({
     return localStorage.getItem('gagaclo_sticky_jenis') || defaultJenisSample || 'PPS';
   });
   const [isJenisLocked, setIsJenisLocked] = useState(true);
+
+  // Manual Input States for Buyer & Jenis
+  const [customBuyers, setCustomBuyers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_custom_buyers');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isManualBuyer, setIsManualBuyer] = useState(false);
+  const [manualBuyerInput, setManualBuyerInput] = useState('');
+
+  const [customJenisList, setCustomJenisList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gagaclo_custom_jenis');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isManualJenis, setIsManualJenis] = useState(false);
+  const [manualJenisInput, setManualJenisInput] = useState('');
+
+  // Combine default presets with distinct buyers from items, user customs, and sticky
+  const items = inventoryContext?.items || [];
+  const allBuyerOptions = useMemo(() => {
+    const list = [...DEFAULT_BUYER_OPTIONS];
+    const existingCodes = new Set(list.map((b) => b.code));
+
+    items.forEach((it) => {
+      const b = String(it.buyerNo || it.buyerNumber || '').trim().toUpperCase();
+      if (b && b !== 'NA' && b !== '-' && !existingCodes.has(b)) {
+        list.push({ code: b, label: b });
+        existingCodes.add(b);
+      }
+    });
+
+    customBuyers.forEach((cb) => {
+      if (!existingCodes.has(cb)) {
+        list.push({ code: cb, label: cb });
+        existingCodes.add(cb);
+      }
+    });
+
+    if (stickyBuyer && !existingCodes.has(stickyBuyer)) {
+      list.push({ code: stickyBuyer, label: stickyBuyer });
+      existingCodes.add(stickyBuyer);
+    }
+
+    return list;
+  }, [items, customBuyers, stickyBuyer]);
+
+  const allJenisOptions = useMemo(() => {
+    const list = [...DEFAULT_JENIS_OPTIONS];
+    customJenisList.forEach((cj) => {
+      if (!list.includes(cj)) list.push(cj);
+    });
+    if (stickyJenis && !list.includes(stickyJenis)) {
+      list.push(stickyJenis);
+    }
+    return list;
+  }, [customJenisList, stickyJenis]);
+
+  const handleSaveManualBuyer = () => {
+    const val = manualBuyerInput.trim().toUpperCase();
+    if (val) {
+      if (!customBuyers.includes(val)) {
+        const next = [...customBuyers, val];
+        setCustomBuyers(next);
+        try {
+          localStorage.setItem('gagaclo_custom_buyers', JSON.stringify(next));
+        } catch {}
+      }
+      setStickyBuyer(val);
+      localStorage.setItem('gagaclo_sticky_buyer', val);
+    }
+    setIsManualBuyer(false);
+    setManualBuyerInput('');
+  };
+
+  const handleSaveManualJenis = () => {
+    const val = manualJenisInput.trim().toUpperCase();
+    if (val) {
+      if (!customJenisList.includes(val)) {
+        const next = [...customJenisList, val];
+        setCustomJenisList(next);
+        try {
+          localStorage.setItem('gagaclo_custom_jenis', JSON.stringify(next));
+        } catch {}
+      }
+      setStickyJenis(val);
+      localStorage.setItem('gagaclo_sticky_jenis', val);
+    }
+    setIsManualJenis(false);
+    setManualJenisInput('');
+  };
 
   // Selalu buka di Form Lengkap (default true sesuai permintaan pengguna)
   const [alwaysOpenFullForm, setAlwaysOpenFullForm] = useState(() => {
@@ -559,17 +654,71 @@ const AiTagScannerContent = ({
                 {isBuyerLocked ? <Lock className="w-3 h-3 text-emerald-400" /> : <Unlock className="w-3 h-3 text-white/40" />}
               </button>
               <span className="text-white/40 text-[10px] mr-1">Buyer:</span>
-              <select
-                value={stickyBuyer}
-                onChange={(e) => setStickyBuyer(e.target.value)}
-                className="bg-transparent text-white text-xs font-semibold border-none focus:outline-hidden cursor-pointer max-w-[130px] sm:max-w-none truncate"
-              >
-                {BUYER_OPTIONS.map((b) => (
-                  <option key={b.code} value={b.code} className="bg-[#181a24] text-white">
-                    {b.label}
-                  </option>
-                ))}
-              </select>
+
+              {isManualBuyer ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={manualBuyerInput}
+                    onChange={(e) => setManualBuyerInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveManualBuyer();
+                      if (e.key === 'Escape') setIsManualBuyer(false);
+                    }}
+                    placeholder="Ketik Buyer..."
+                    autoFocus
+                    className="w-24 sm:w-28 bg-black/60 border border-white/20 rounded px-1.5 py-0.5 text-xs text-white uppercase focus:outline-hidden focus:border-[#0071e3]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveManualBuyer}
+                    className="px-1.5 py-0.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded text-[11px] font-semibold cursor-pointer"
+                    title="Terapkan"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsManualBuyer(false)}
+                    className="px-1 text-white/50 hover:text-white text-xs cursor-pointer"
+                    title="Batal"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <select
+                    value={stickyBuyer}
+                    onChange={(e) => {
+                      if (e.target.value === '__MANUAL__') {
+                        setIsManualBuyer(true);
+                      } else {
+                        setStickyBuyer(e.target.value);
+                        localStorage.setItem('gagaclo_sticky_buyer', e.target.value);
+                      }
+                    }}
+                    className="bg-transparent text-white text-xs font-semibold border-none focus:outline-hidden cursor-pointer max-w-[130px] sm:max-w-none truncate"
+                  >
+                    {allBuyerOptions.map((b) => (
+                      <option key={b.code} value={b.code} className="bg-[#181a24] text-white">
+                        {b.label}
+                      </option>
+                    ))}
+                    <option value="__MANUAL__" className="bg-[#181a24] text-amber-300 font-bold">
+                      + Ketik Manual...
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setIsManualBuyer(true)}
+                    className="ml-1 text-white/40 hover:text-white text-[11px] font-bold px-1 py-0.5 rounded hover:bg-white/10"
+                    title="Tambah / Ketik Buyer Manual"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Sticky Jenis Sample Picker */}
@@ -583,17 +732,71 @@ const AiTagScannerContent = ({
                 {isJenisLocked ? <Lock className="w-3 h-3 text-emerald-400" /> : <Unlock className="w-3 h-3 text-white/40" />}
               </button>
               <span className="text-white/40 text-[10px] mr-1">Jenis:</span>
-              <select
-                value={stickyJenis}
-                onChange={(e) => setStickyJenis(e.target.value)}
-                className="bg-transparent text-white text-xs font-semibold border-none focus:outline-hidden cursor-pointer"
-              >
-                {JENIS_SAMPLE_OPTIONS.map((j) => (
-                  <option key={j} value={j} className="bg-[#181a24] text-white">
-                    {j}
-                  </option>
-                ))}
-              </select>
+
+              {isManualJenis ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={manualJenisInput}
+                    onChange={(e) => setManualJenisInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveManualJenis();
+                      if (e.key === 'Escape') setIsManualJenis(false);
+                    }}
+                    placeholder="Ketik Jenis..."
+                    autoFocus
+                    className="w-24 sm:w-28 bg-black/60 border border-white/20 rounded px-1.5 py-0.5 text-xs text-white uppercase focus:outline-hidden focus:border-[#0071e3]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveManualJenis}
+                    className="px-1.5 py-0.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded text-[11px] font-semibold cursor-pointer"
+                    title="Terapkan"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsManualJenis(false)}
+                    className="px-1 text-white/50 hover:text-white text-xs cursor-pointer"
+                    title="Batal"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <select
+                    value={stickyJenis}
+                    onChange={(e) => {
+                      if (e.target.value === '__MANUAL__') {
+                        setIsManualJenis(true);
+                      } else {
+                        setStickyJenis(e.target.value);
+                        localStorage.setItem('gagaclo_sticky_jenis', e.target.value);
+                      }
+                    }}
+                    className="bg-transparent text-white text-xs font-semibold border-none focus:outline-hidden cursor-pointer"
+                  >
+                    {allJenisOptions.map((j) => (
+                      <option key={j} value={j} className="bg-[#181a24] text-white">
+                        {j}
+                      </option>
+                    ))}
+                    <option value="__MANUAL__" className="bg-[#181a24] text-amber-300 font-bold">
+                      + Ketik Manual...
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setIsManualJenis(true)}
+                    className="ml-1 text-white/40 hover:text-white text-[11px] font-bold px-1 py-0.5 rounded hover:bg-white/10"
+                    title="Tambah / Ketik Jenis Manual"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Toggle Selalu Buka di Form Lengkap */}
