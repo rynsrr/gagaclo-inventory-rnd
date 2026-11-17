@@ -41,7 +41,7 @@ export const PpicDashboardView = () => {
               Alokasi & Manajemen Tim PPIC (5 PIC)
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              Setiap anggota tim PPIC bertanggung jawab atas sejumlah box sample & material di Rak 1 hingga Rak 5 sesuai pembagian resmi GAGACLO Storage Dokumen 20261102.
+              Setiap anggota tim PPIC bertanggung jawab atas sejumlah box sample di Rak 1 hingga Rak 5 (Total 72 Box dialokasikan penuh untuk Sample R&D).
             </p>
           </div>
 
@@ -99,14 +99,24 @@ export const PpicDashboardView = () => {
                   <div className="bg-amber-50/70 border border-amber-200/80 p-2.5 rounded-xl">
                     <span className="text-amber-800 font-medium text-xs block">Box Sample</span>
                     <strong className="text-base font-black text-amber-950">{sampleBoxes.length} Box</strong>
-                    <span className="text-xs text-amber-700 block mt-0.5">Rak 1 - 2</span>
+                    <span className="text-xs text-amber-700 block mt-0.5">
+                      {materialBoxes.length > 0 ? 'Rak 1 - 2' : 'Rak 1 - 5'}
+                    </span>
                   </div>
 
-                  <div className="bg-emerald-50/70 border border-emerald-200/80 p-2.5 rounded-xl">
-                    <span className="text-emerald-800 font-medium text-xs block">Box Material</span>
-                    <strong className="text-base font-black text-emerald-950">{materialBoxes.length} Box</strong>
-                    <span className="text-xs text-emerald-700 block mt-0.5">Rak 3 - 5</span>
-                  </div>
+                  {materialBoxes.length > 0 ? (
+                    <div className="bg-emerald-50/70 border border-emerald-200/80 p-2.5 rounded-xl">
+                      <span className="text-emerald-800 font-medium text-xs block">Box Material</span>
+                      <strong className="text-base font-black text-emerald-950">{materialBoxes.length} Box</strong>
+                      <span className="text-xs text-emerald-700 block mt-0.5">Rak 3 - 5</span>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50/70 border border-blue-200/80 p-2.5 rounded-xl">
+                      <span className="text-blue-800 font-medium text-xs block">Alokasi Rak</span>
+                      <strong className="text-base font-black text-blue-950">Rak 1 s/d 5</strong>
+                      <span className="text-xs text-blue-700 block mt-0.5">Full Sample R&D</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Utilization meter */}

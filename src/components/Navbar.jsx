@@ -126,12 +126,14 @@ export const Navbar = ({ onOpenBackupModal }) => {
           <div className="flex items-center space-x-5 whitespace-nowrap">
             <span className="flex items-center space-x-1.5">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <span>Sample: <strong className="text-white">36 Box (Rack 1-2)</strong></span>
+              <span>Sample: <strong className="text-white">{stats.sampleBoxesCount || 72} Box (Rack 1-5)</strong></span>
             </span>
-            <span className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Material: <strong className="text-white">36 Box (Rack 3-5)</strong></span>
-            </span>
+            {stats.materialBoxesCount > 0 && (
+              <span className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Material: <strong className="text-white">{stats.materialBoxesCount} Box</strong></span>
+              </span>
+            )}
             <span className="flex items-center space-x-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-500"></span>
               <span>Box Terisi: <strong className="text-white">{stats.occupiedBoxesCount} / 72</strong></span>

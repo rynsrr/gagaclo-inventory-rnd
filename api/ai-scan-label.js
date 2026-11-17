@@ -35,8 +35,8 @@ export default async function handler(req, res) {
 
     const { lockedBuyer = '', lockedJenisSample = '' } = contextSettings;
 
-    const prompt = `You are a Garment Quality Control & Inventory Data Extraction Assistant for Gagaclo R&D.
-Examine this image of a garment sample tag / washing label / handwritten card.
+    const prompt = `You are an expert Garment Quality Control & Inventory Multimodal AI Assistant for Gagaclo R&D.
+Examine this image of a garment sample tag / washing label / handwritten card AND the physical garment fabric in the photo.
 
 Extract the information into a strict JSON object with these EXACT keys:
 - "style": (String) Name or style code of the garment/model (e.g. "RDI#6823 BLACK 1.2" or "POLO SHIRT").
@@ -44,7 +44,11 @@ Extract the information into a strict JSON object with these EXACT keys:
 - "buyerNo": (String) Buyer/Brand code. If brand is "Ergodyne" or logo shows Ergodyne, output "AN05". If currently locked context is provided ("${lockedBuyer}"), prefer using "${lockedBuyer}".
 - "jenisSample": (String) Sample type (e.g. "PPS", "DEV", "ARCHIVE", "PROTO", "SMS", "FIT"). If "PP sample" is detected, use "PPS". If currently locked context is provided ("${lockedJenisSample}"), use "${lockedJenisSample}".
 - "size": (String) Garment size (e.g. "S", "M", "L", "XL", "XXL", "ONESIZE"). If "One size" or "One size, Black", output "ONESIZE".
-- "color": (String) Color of the item (e.g. "BLACK", "WHITE", "NAVY", "GREY").
+- "color": (String) Color of the item.
+  CRITICAL INSTRUCTION FOR COLOR DETECTION:
+  1. First check if a color is written or printed on the tag/card (e.g. "BLACK", "WHITE", "NAVY", "SAGE", "CHARCOAL", "GREY", "OLIVE"). If written, use that color.
+  2. IF THE COLOR IS NOT WRITTEN ON THE CARD (or written as "-", "NA", blank, or missing):
+     LOOK AT THE PHYSICAL FABRIC / GARMENT VISIBLE IN THE BACKGROUND BEHIND OR SURROUNDING THE SAMPLE CARD! The card is placed on top of or next to the fabric. Detect and output the dominant color of that background fabric/garment (e.g. "BLACK", "NAVY", "WHITE", "HEATHER GREY", "OLIVE", "MAROON", "BEIGE", "BROWN", "ROYAL BLUE", "KHAKI", etc.).
 - "jumlah": (Number) Quantity in pieces. Default to 1 if not explicitly written.
 - "satuan": (String) Must strictly be "PCE".
 - "tanggal": (String) Date from tag in DD-MM-YYYY format (e.g. "Jan/15/2021" -> "15-01-2021"). If missing, output current date format.
@@ -53,7 +57,8 @@ Extract the information into a strict JSON object with these EXACT keys:
 RULES:
 1. ALL text values MUST be UPPERCASE (except null or numbers).
 2. Satuan MUST be "PCE".
-3. Return STRICT JSON ONLY. Do not wrap in markdown or backticks. No commentary.`;
+3. Return STRICT JSON ONLY. Do not wrap in markdown or backticks. No commentary.
+4. If color is not explicitly written on the card, ALWAYS identify and return the dominant garment fabric color visible in the image background behind or around the card.`;
 
     const payload = {
       contents: [
@@ -107,6 +112,19 @@ RULES:
           const cleaned = textContent.replace(/```json/gi, '').replace(/```/g, '').trim();
           const parsed = JSON.parse(cleaned);
 
+          // Deteksi fallback warna dari teks style jika kolom color tidak terisi
+          let detectedColor = String(parsed.color || '').trim().toUpperCase();
+          if (!detectedColor || detectedColor === 'NA' || detectedColor === '-' || detectedColor === 'NONE') {
+            const styleText = String(parsed.style || '').toUpperCase();
+            const commonColors = [
+              'BLACK', 'NAVY', 'WHITE', 'HEATHER GREY', 'GREY', 'GRAY', 'CHARCOAL', 
+              'OLIVE', 'MAROON', 'RED', 'BLUE', 'ROYAL BLUE', 'GREEN', 'SAGE', 
+              'BEIGE', 'KHAKI', 'BROWN', 'YELLOW', 'ORANGE', 'PURPLE', 'PINK'
+            ];
+            const matched = commonColors.find(c => new RegExp(`\\b${c}\\b`, 'i').test(styleText));
+            if (matched) detectedColor = matched;
+          }
+
           return res.status(200).json({
             success: true,
             data: {
@@ -115,7 +133,7 @@ RULES:
               buyerNo: String(lockedBuyer || parsed.buyerNo || '').trim().toUpperCase() || 'AN05',
               jenisSample: String(lockedJenisSample || parsed.jenisSample || 'PPS').trim().toUpperCase(),
               size: String(parsed.size || 'ONESIZE').trim().toUpperCase(),
-              color: String(parsed.color || '').trim().toUpperCase() || 'NA',
+              color: detectedColor || 'NA',
               jumlah: Number(parsed.jumlah) > 0 ? Number(parsed.jumlah) : 1,
               satuan: 'PCE',
               tanggal: String(parsed.tanggal || '').trim().toUpperCase(),

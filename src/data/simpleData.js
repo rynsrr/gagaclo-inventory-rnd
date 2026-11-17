@@ -70,10 +70,10 @@ export const RACK_GROUPS = [
   },
   {
     id: 3,
-    name: 'RACK 3 (MATERIAL)',
+    name: 'RACK 3 (SAMPLE)',
     detail: 'White rack, new building',
     range: 'Box 37 s/d 48',
-    category: 'MATERIAL',
+    category: 'SAMPLE',
     boxes: [
       { boxNumber: 37, pic: 'Royan' },
       { boxNumber: 38, pic: 'Royan' },
@@ -90,17 +90,17 @@ export const RACK_GROUPS = [
     ].map(b => ({
       ...b,
       rack: 'RACK 3',
-      category: 'MATERIAL',
+      category: 'SAMPLE',
       value: `BOX ${b.boxNumber} (RACK 3 - ${b.pic})`,
       label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   },
   {
     id: 4,
-    name: 'RACK 4 (MATERIAL)',
+    name: 'RACK 4 (SAMPLE)',
     detail: 'White rack, new building',
     range: 'Box 49 s/d 60',
-    category: 'MATERIAL',
+    category: 'SAMPLE',
     boxes: [
       { boxNumber: 49, pic: 'Royan' },
       { boxNumber: 50, pic: 'Royan' },
@@ -117,17 +117,17 @@ export const RACK_GROUPS = [
     ].map(b => ({
       ...b,
       rack: 'RACK 4',
-      category: 'MATERIAL',
+      category: 'SAMPLE',
       value: `BOX ${b.boxNumber} (RACK 4 - ${b.pic})`,
       label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   },
   {
     id: 5,
-    name: 'RACK 5 (MATERIAL)',
+    name: 'RACK 5 (SAMPLE)',
     detail: 'White rack, new building',
     range: 'Box 61 s/d 72',
-    category: 'MATERIAL',
+    category: 'SAMPLE',
     boxes: [
       { boxNumber: 61, pic: 'Royan' },
       { boxNumber: 62, pic: 'Royan' },
@@ -144,7 +144,7 @@ export const RACK_GROUPS = [
     ].map(b => ({
       ...b,
       rack: 'RACK 5',
-      category: 'MATERIAL',
+      category: 'SAMPLE',
       value: `BOX ${b.boxNumber} (RACK 5 - ${b.pic})`,
       label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))

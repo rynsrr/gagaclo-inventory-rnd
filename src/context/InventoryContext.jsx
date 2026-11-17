@@ -233,7 +233,17 @@ export const InventoryProvider = ({ children }) => {
   const [racks, setRacks] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY + '_racks');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map(r => {
+            if ([3, 4, 5].includes(Number(r.id)) && r.category === 'MATERIAL') {
+              return { ...r, category: 'SAMPLE' };
+            }
+            return r;
+          });
+        }
+      }
     } catch (e) {
       console.error('Failed to load racks from localStorage', e);
     }
@@ -417,7 +427,13 @@ export const InventoryProvider = ({ children }) => {
             b.code !== 'DELETED' &&
             b.rackName !== 'DELETED' &&
             String(b.picName).trim().toLowerCase() !== 'anzo'
-          ));
+          )).map(b => {
+            // Auto-migration: Racks 1-5 (boxes 1-72) dialokasikan penuh untuk SAMPLE
+            if (Number(b.boxNumber) >= 1 && Number(b.boxNumber) <= 72 && b.category === 'MATERIAL') {
+              return { ...b, category: 'SAMPLE' };
+            }
+            return b;
+          });
         }
       }
     } catch (e) {
@@ -1242,14 +1258,36 @@ export const InventoryProvider = ({ children }) => {
 
           const updated = cleanedPrev.map(box => {
             const remoteBox = userDbBoxes.find(b => b.box_number === box.boxNumber);
-            return remoteBox ? dbBoxToLocal(remoteBox, [box]) : box;
+            const res = remoteBox ? dbBoxToLocal(remoteBox, [box]) : box;
+            if (Number(res.boxNumber) >= 1 && Number(res.boxNumber) <= 72 && res.category === 'MATERIAL') {
+              return { ...res, category: 'SAMPLE' };
+            }
+            return res;
           });
           // Include boxes that exist remotely but not locally (added on another device)
           const knownNumbers = new Set(updated.map(b => b.boxNumber));
           const extra = userDbBoxes
             .filter(b => !knownNumbers.has(Number(b.box_number)))
-            .map(b => dbBoxToLocal(b, []));
+            .map(b => {
+              const res = dbBoxToLocal(b, []);
+              if (Number(res.boxNumber) >= 1 && Number(res.boxNumber) <= 72 && res.category === 'MATERIAL') {
+                return { ...res, category: 'SAMPLE' };
+              }
+              return res;
+            });
           const next = [...updated, ...extra].sort((a, b) => a.boxNumber - b.boxNumber);
+
+          if (supabase) {
+            const materialBoxesToMigrate = userDbBoxes.filter(b => Number(b.box_number) >= 1 && Number(b.box_number) <= 72 && b.category === 'MATERIAL');
+            if (materialBoxesToMigrate.length > 0) {
+              supabase
+                .from('boxes')
+                .update({ category: 'SAMPLE' })
+                .in('box_number', materialBoxesToMigrate.map(b => Number(b.box_number)))
+                .then(() => {})
+                .catch(() => {});
+            }
+          }
 
           if (next.length !== prev.length) return next;
           const hasChange = next.some((b, idx) => {

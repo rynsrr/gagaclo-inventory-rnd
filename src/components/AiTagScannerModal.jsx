@@ -905,15 +905,20 @@ const AiTagScannerContent = ({
 
                 {/* Color */}
                 <div className="bg-white/5 border border-white/10 rounded-xl p-2.5 space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-white/50 tracking-wider">
-                    Warna / Color
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-semibold text-white/50 tracking-wider">
+                      Warna / Color
+                    </span>
+                    <span className="text-[9px] text-emerald-400 font-medium">
+                      ✨ Deteksi kartu &amp; background kain
+                    </span>
+                  </div>
                   <input
                     type="text"
                     value={extractedData.color || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, color: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-semibold focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: BLACK"
+                    placeholder="Contoh: BLACK (dari kartu / background)"
                   />
                 </div>
 

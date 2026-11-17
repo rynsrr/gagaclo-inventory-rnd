@@ -68,7 +68,7 @@ export const PrintableManifestView = () => {
     },
     {
       page: 3,
-      category: 'MATERIAL',
+      category: 'SAMPLE',
       rackName: 'RACK 3',
       description: 'White rack, new building',
       boxRange: 'BOX 37 - 48',
@@ -83,7 +83,7 @@ export const PrintableManifestView = () => {
     },
     {
       page: 4,
-      category: 'MATERIAL',
+      category: 'SAMPLE',
       rackName: 'RACK 4',
       description: 'White rack, new building',
       boxRange: 'BOX 49 - 60',
@@ -98,7 +98,7 @@ export const PrintableManifestView = () => {
     },
     {
       page: 5,
-      category: 'MATERIAL',
+      category: 'SAMPLE',
       rackName: 'RACK 5',
       description: 'White rack, new building',
       boxRange: 'BOX 61 - 72',

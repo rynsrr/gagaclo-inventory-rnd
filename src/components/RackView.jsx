@@ -150,8 +150,8 @@ export const RackView = () => {
                 className="bg-transparent font-semibold focus:outline-hidden cursor-pointer"
               >
                 <option value="ALL">Semua Kategori</option>
-                <option value="SAMPLE">SAMPLE (Rak 1-2)</option>
-                <option value="MATERIAL">MATERIAL (Rak 3-5)</option>
+                <option value="SAMPLE">SAMPLE (Rak 1-5)</option>
+                <option value="MATERIAL">MATERIAL</option>
               </select>
             </div>
 

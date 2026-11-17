@@ -33,7 +33,7 @@ export const RACKS_DATA = [
   {
     id: 3,
     name: 'RACK 3',
-    category: 'MATERIAL',
+    category: 'SAMPLE',
     rackType: 'White rack',
     location: 'New building',
     fullDescription: 'White rack, new building',
@@ -47,7 +47,7 @@ export const RACKS_DATA = [
   {
     id: 4,
     name: 'RACK 4',
-    category: 'MATERIAL',
+    category: 'SAMPLE',
     rackType: 'White rack',
     location: 'New building',
     fullDescription: 'White rack, new building',
@@ -61,7 +61,7 @@ export const RACKS_DATA = [
   {
     id: 5,
     name: 'RACK 5',
-    category: 'MATERIAL',
+    category: 'SAMPLE',
     rackType: 'White rack',
     location: 'New building',
     fullDescription: 'White rack, new building',
