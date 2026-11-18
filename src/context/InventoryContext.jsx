@@ -1104,14 +1104,24 @@ export const InventoryProvider = ({ children }) => {
     }
 
     try {
-      // 1. Fetch items (up to 10000 items)
-      const { data: dbItems, error: itemsErr } = await client
-        .from('items')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10000);
+      // 1. Fetch items. Supabase membatasi 1000 baris per request, jadi satu
+      // query limit(10000) diam-diam memotong item terlama dan box-nya tampak kosong.
+      const dbItems = [];
+      const ITEMS_PAGE_SIZE = 1000;
+      for (let from = 0; ; from += ITEMS_PAGE_SIZE) {
+        const { data: pageRows, error: pageErr } = await client
+          .from('items')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: true })
+          .range(from, from + ITEMS_PAGE_SIZE - 1);
 
-      if (itemsErr) throw itemsErr;
+        if (pageErr) throw pageErr;
+        if (!pageRows || pageRows.length === 0) break;
+
+        dbItems.push(...pageRows);
+        if (pageRows.length < ITEMS_PAGE_SIZE) break;
+      }
 
       // 2. Fetch boxes
       const { data: dbBoxes, error: boxesErr } = await client
