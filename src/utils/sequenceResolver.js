@@ -255,6 +255,39 @@ export function resolveUniqueCode(
 }
 
 /**
+ * Normalizes a sequential code to the canonical 5-digit form for Material and Sample.
+ * Example: "SAMPLE-2" becomes "SAMPLE-00002", "mat-15" becomes "MAT-00015".
+ * Codes that do not follow the sequential pattern are returned trimmed and uppercased.
+ */
+export function normalizeSequentialCode(code) {
+  const trimmed = String(code || '').trim().toUpperCase();
+  const match = trimmed.match(/^(MAT|MATERIAL)[-_ ]?(\d+)$/);
+  if (match) return `MAT-${match[2].padStart(5, '0')}`;
+  const sampleMatch = trimmed.match(/^(SAMPLE|SMP)[-_ ]?(\d+)$/);
+  if (sampleMatch) return `SAMPLE-${sampleMatch[2].padStart(5, '0')}`;
+  return trimmed;
+}
+
+/**
+ * Allocates a contiguous batch of sequential codes for bulk operations such as Excel import.
+ * Only the first code hits the network/RPC; the rest are derived locally to keep imports fast.
+ */
+export async function allocateSequentialCodeBatch(supabaseClient, category = 'SAMPLE', count = 0, localItems = []) {
+  if (!count || count < 1) return [];
+  const isMaterial = String(category || '').trim().toUpperCase() === 'MATERIAL';
+  const seed = normalizeSequentialCode(
+    await allocateNextSequentialCode(supabaseClient, isMaterial ? 'MATERIAL' : 'SAMPLE', localItems)
+  );
+  const match = seed.match(/^([A-Z]+-)(\d+)$/);
+  if (!match) return [seed];
+
+  const [, prefix, digits] = match;
+  return Array.from({ length: count }, (_, index) => {
+    return `${prefix}${String(parseInt(digits, 10) + index).padStart(digits.length, '0')}`;
+  });
+}
+
+/**
  * Asynchronously allocates the next guaranteed unique sequential code for a category ('SAMPLE' or 'MATERIAL').
  * Multi-layer ERP sequence allocation for cross-device concurrency:
  * 1. Checks Supabase RPC get_next_sequence_code (Atomic Postgres Transaction with Row Lock)

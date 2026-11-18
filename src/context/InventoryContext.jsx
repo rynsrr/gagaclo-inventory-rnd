@@ -24,7 +24,7 @@ import {
   dbIssueToLocal,
 } from '../lib/supabase';
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
-import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, releaseCode } from '../utils/sequenceResolver';
+import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, allocateSequentialCodeBatch, normalizeSequentialCode, releaseCode } from '../utils/sequenceResolver';
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
 import { getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
@@ -1798,7 +1798,34 @@ export const InventoryProvider = ({ children }) => {
     }
 
     const now = new Date().toISOString();
-    const newItems = records.map(record => ({
+    const takenItems = [...items];
+    const codedRecords = [];
+    const allocationQueue = {};
+
+    const nextAllocatedCode = async (record) => {
+      const isMaterial = String(record.category || '').trim().toUpperCase() === 'MATERIAL';
+      const category = isMaterial ? 'MATERIAL' : 'SAMPLE';
+      if (!allocationQueue[category]) {
+        const remaining = records.filter(r => {
+          const curCategory = String(r.category || '').trim().toUpperCase() === 'MATERIAL' ? 'MATERIAL' : 'SAMPLE';
+          return curCategory === category && !String(r.kode || r.sku || '').trim();
+        }).length;
+        allocationQueue[category] = await allocateSequentialCodeBatch(client, category, remaining, takenItems);
+      }
+      return allocationQueue[category].shift();
+    };
+
+    for (const record of records) {
+      const requested = normalizeSequentialCode(record.kode || record.sku || '');
+      const allocated = requested || await nextAllocatedCode(record);
+      const { finalCode } = resolveUniqueCode(allocated, takenItems, null);
+      const { item: upperRecord } = normalizeItemTextUppercase(record);
+      const coded = { ...upperRecord, kode: finalCode, sku: finalCode };
+      codedRecords.push(coded);
+      takenItems.push(coded);
+    }
+
+    const newItems = codedRecords.map(record => ({
       ...record,
       id: `item-${crypto.randomUUID()}`,
       dateIn: record.dateIn || now.slice(0, 10),
@@ -1829,17 +1856,18 @@ export const InventoryProvider = ({ children }) => {
       picName: item.picName,
       notes: 'Impor Excel',
     }));
+    let warning = null;
     if (client) {
       try {
         const { error } = await client.from('transactions').insert(entries.map(localTrxToDb));
         if (error) throw error;
       } catch {
-        return 'Item sudah tersimpan, tetapi riwayat transaksi impor gagal dicatat.';
+        warning = 'Item sudah tersimpan, tetapi riwayat transaksi impor gagal dicatat.';
       }
     }
     setTransactions(prev => [...entries, ...prev]);
     broadcastChange('DATA_IMPORTED', { count: newItems.length });
-    return null;
+    return { items: newItems, warning };
   };
 
   const updateItem = async (itemId, updatedData) => {
