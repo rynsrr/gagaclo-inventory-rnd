@@ -1974,6 +1974,13 @@ export const InventoryProvider = ({ children }) => {
     }
 
     const now = new Date().toISOString();
+    const createdBy = currentUser?.name || 'Royan';
+    const isByHelper = isHelper({ name: createdBy }) || ['sheva', 'ade', 'tri'].includes(String(createdBy).toLowerCase());
+    const trackingTags = [
+      `inputted_by:${encodeURIComponent(createdBy)}`,
+      ...(isByHelper ? [`helper:${encodeURIComponent(createdBy)}`] : []),
+    ];
+
     const takenItems = [...items];
     const codedRecords = [];
     const allocationQueue = {};
@@ -2013,6 +2020,13 @@ export const InventoryProvider = ({ children }) => {
       createdAt: now,
       updatedAt: now,
       status: 'In Storage',
+      createdBy,
+      inputtedBy: createdBy,
+      helperName: isByHelper ? createdBy : null,
+      tags: [
+        ...(Array.isArray(record.tags) ? record.tags.filter(t => typeof t === 'string' && !t.startsWith('inputted_by:') && !t.startsWith('helper:')) : []),
+        ...trackingTags,
+      ],
     }));
     if (client) {
       const { error } = await client.from('items').insert(newItems.map(localItemToDb));
@@ -2035,6 +2049,8 @@ export const InventoryProvider = ({ children }) => {
       qty: item.qty,
       unit: item.unit,
       picName: item.picName,
+      actor: createdBy,
+      recipientOrSource: `Impor Excel oleh ${createdBy}`,
       notes: 'Impor Excel',
     }));
     let warning = null;
@@ -2058,7 +2074,7 @@ export const InventoryProvider = ({ children }) => {
           itemName: record.description || record.name,
           boxNumber: record.boxNumber,
           source: 'IMPOR EXCEL',
-          actor: currentUser?.name || 'Royan',
+          actor: createdBy,
         });
       });
     }
