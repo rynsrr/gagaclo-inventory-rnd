@@ -27,6 +27,9 @@ const DispatchOutgoingView = lazy(() =>
 const TeamStructureView = lazy(() =>
   import('./components/TeamStructureView').then((m) => ({ default: m.TeamStructureView }))
 );
+const CodeRevisionLogView = lazy(() =>
+  import('./components/CodeRevisionLogView').then((m) => ({ default: m.CodeRevisionLogView }))
+);
 const SupabaseModal = lazy(() =>
   import('./components/SupabaseModal').then((m) => ({ default: m.SupabaseModal }))
 );
@@ -76,6 +79,7 @@ import {
   Calendar,
   Zap,
   Download,
+  History,
 } from 'lucide-react';
 import { DispatchCartModal } from './components/DispatchCartModal';
 import { DispatchCartFloatingBar } from './components/DispatchCartFloatingBar';
@@ -95,6 +99,7 @@ const AppContent = () => {
     boxes,
     items,
     issues = [],
+    codeRevisions = [],
     systemNotification,
     setSystemNotification,
     currentUser,
@@ -406,6 +411,13 @@ const AppContent = () => {
       label: 'STRUKTUR TIM',
       subtitle: 'Organisasi & RACI',
       count: 9,
+      primary: false,
+    },
+    {
+      id: 'code-revisions',
+      label: 'REVISI KODE',
+      subtitle: 'Riwayat kode lama ke kode baru',
+      count: codeRevisions.length > 0 ? codeRevisions.length : null,
       primary: false,
     },
   ];
@@ -791,6 +803,28 @@ const AppContent = () => {
                               </div>
                             </div>
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAppMode('code-revisions');
+                              setIsSettingsOpen(false);
+                            }}
+                            className="w-full text-left p-2.5 rounded-[14px] hover:bg-black/[0.04] active:bg-black/[0.06] transition-all group cursor-pointer block"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#0071e3]/10 text-[#0071e3] group-hover:bg-[#0071e3] group-hover:text-white transition-colors shrink-0">
+                                <History className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
+                                  <span>Riwayat Revisi Kode</span>
+                                  <span className="text-[11px] text-[#86868b] group-hover:text-[#0071e3] group-hover:translate-x-0.5 transition-all">›</span>
+                                </div>
+                                <div className="text-[11px] text-[#86868b] mt-0.5 leading-snug">Cek kode lama berubah jadi kode baru</div>
+                              </div>
+                            </div>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1070,6 +1104,11 @@ const AppContent = () => {
           {appMode === 'team-structure' && (
             <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Struktur Organisasi...</div>}>
               <TeamStructureView />
+            </Suspense>
+          )}
+          {appMode === 'code-revisions' && (
+            <Suspense fallback={<div className="py-12 text-center text-sm font-semibold text-slate-400">Memuat Riwayat Revisi Kode...</div>}>
+              <CodeRevisionLogView />
             </Suspense>
           )}
         </main>

@@ -24,6 +24,7 @@ import {
   dbIssueToLocal,
 } from '../lib/supabase';
 import { getMergedSuggestions, recordInputtedData, removeSuggestionItem } from '../utils/suggestionStore';
+import { collectHistoricalCodeRevisions, filterUnrecordedRevisions, revisionKey } from '../utils/codeRevisionHistory';
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, allocateSequentialCodeBatch, normalizeSequentialCode, releaseCode } from '../utils/sequenceResolver';
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
@@ -112,6 +113,10 @@ export const normalizeAnnouncement = (raw) => {
 };
 
 const STORAGE_KEY = 'gagaclo_inventory_data_v1';
+const CODE_REVISIONS_KEY = STORAGE_KEY + '_code_revisions';
+const CODE_REVISIONS_TOMBSTONES_KEY = STORAGE_KEY + '_code_revisions_deleted';
+const CODE_REVISIONS_BOX_NUMBER = 999997;
+const CODE_REVISIONS_LIMIT = 500;
 const DELETED_IDS_KEY = 'gagaclo_deleted_item_ids_v1';
 
 const getDeletedItemIds = () => {
@@ -913,6 +918,148 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
+  // Code Revisions (audit trail: kode lama -> kode baru)
+  const [codeRevisions, setCodeRevisions] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CODE_REVISIONS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load code revisions from localStorage', e);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CODE_REVISIONS_KEY, JSON.stringify(codeRevisions));
+    } catch (e) {
+      console.error('Failed to save code revisions', e);
+    }
+  }, [codeRevisions]);
+
+  const syncCodeRevisionsToRemote = async (revisions) => {
+    if (!supabase) return;
+    try {
+      await supabase.from('boxes').upsert({
+        box_number: CODE_REVISIONS_BOX_NUMBER,
+        code: 'SYSTEM_CODE_REVISIONS',
+        rack_id: -1,
+        rack_name: 'SYSTEM',
+        category: 'CONFIG',
+        pic_name: 'SYSTEM',
+        notes: JSON.stringify(revisions),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'box_number' });
+      broadcastChange('CODE_REVISIONS_UPDATED');
+    } catch (err) {
+      console.error('Failed to sync code revisions:', err);
+    }
+  };
+
+  const recordCodeRevision = (entry) => {
+    const oldCode = normalizeSequentialCode(entry?.oldCode || '');
+    const newCode = normalizeSequentialCode(entry?.newCode || '');
+    if (!oldCode || !newCode || oldCode === newCode) return null;
+
+    const revision = {
+      id: 'rev-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      oldCode,
+      newCode,
+      itemId: entry.itemId ? String(entry.itemId) : null,
+      itemName: entry.itemName || '',
+      boxNumber: entry.boxNumber !== undefined ? Number(entry.boxNumber) : null,
+      source: entry.source || 'EDIT',
+      reason: entry.reason || '',
+      actor: entry.actor || currentUser?.name || 'Royan',
+      createdAt: new Date().toISOString(),
+    };
+
+    setCodeRevisions(prev => {
+      const next = [revision, ...prev].slice(0, CODE_REVISIONS_LIMIT);
+      syncCodeRevisionsToRemote(next);
+      return next;
+    });
+
+    return revision;
+  };
+
+  const [codeRevisionTombstones, setCodeRevisionTombstones] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CODE_REVISIONS_TOMBSTONES_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed.map(String);
+      }
+    } catch (e) {
+      console.error('Failed to load code revision tombstones', e);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CODE_REVISIONS_TOMBSTONES_KEY, JSON.stringify(codeRevisionTombstones));
+    } catch (e) {
+      console.error('Failed to save code revision tombstones', e);
+    }
+  }, [codeRevisionTombstones]);
+
+  const deleteCodeRevision = async (revisionId) => {
+    if (!revisionId) return;
+    const idStr = String(revisionId);
+    setCodeRevisions(prev => {
+      const target = prev.find(rev => String(rev.id) === idStr);
+      if (target) {
+        setCodeRevisionTombstones(tombstones => (
+          tombstones.includes(revisionKey(target)) ? tombstones : [...tombstones, revisionKey(target)]
+        ));
+      }
+      const next = prev.filter(rev => String(rev.id) !== idStr);
+      syncCodeRevisionsToRemote(next);
+      return next;
+    });
+  };
+
+  const importHistoricalCodeRevisions = useCallback((itemList, trxList) => {
+    if (!Array.isArray(itemList) || itemList.length === 0) return 0;
+
+    const candidates = collectHistoricalCodeRevisions(itemList, trxList);
+    if (candidates.length === 0) return 0;
+
+    const now = Date.now();
+    let importedCount = 0;
+
+    setCodeRevisions(prev => {
+      const missing = filterUnrecordedRevisions(candidates, prev, codeRevisionTombstones);
+      if (missing.length === 0) return prev;
+
+      importedCount = missing.length;
+      const imported = missing.map((candidate, index) => ({
+        id: `rev-hist-${now}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+        ...candidate,
+        importedAt: new Date().toISOString(),
+      }));
+
+      const next = [...prev, ...imported]
+        .sort((a, b) => String(b.createdAt || b.importedAt || '').localeCompare(String(a.createdAt || a.importedAt || '')))
+        .slice(0, CODE_REVISIONS_LIMIT);
+
+      syncCodeRevisionsToRemote(next);
+      return next;
+    });
+
+    return importedCount;
+  }, [codeRevisionTombstones]);
+
+  // Auto-import rekam historis: perubahan kode yang sudah terjadi sebelum fitur ini ada
+  useEffect(() => {
+    if (!Array.isArray(items) || items.length === 0) return;
+    importHistoricalCodeRevisions(items, transactions);
+  }, [items, transactions, importHistoricalCodeRevisions]);
+
   // Persist to localStorage on change as safety cache (Debounced to prevent thread blocking)
   useEffect(() => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -1117,6 +1264,19 @@ export const InventoryProvider = ({ children }) => {
             }
           } catch {}
         }
+
+        const revisionsBox = dbBoxes.find(b => Number(b.box_number) === CODE_REVISIONS_BOX_NUMBER || b.code === 'SYSTEM_CODE_REVISIONS');
+        if (revisionsBox?.notes) {
+          try {
+            const parsed = JSON.parse(revisionsBox.notes);
+            if (Array.isArray(parsed)) {
+              setCodeRevisions(parsed);
+              try {
+                localStorage.setItem(CODE_REVISIONS_KEY, JSON.stringify(parsed));
+              } catch {}
+            }
+          } catch {}
+        }
       }
 
       // Try fetching from dedicated issues table if available
@@ -1231,7 +1391,8 @@ export const InventoryProvider = ({ children }) => {
               b.rack_name === 'DELETED' ||
               b.pic_name === 'DELETED' ||
               String(b.pic_name || '').trim().toLowerCase() === 'anzo' ||
-              Number(b.box_number) === 73
+              Number(b.box_number) === 73 ||
+              Number(b.box_number) === CODE_REVISIONS_BOX_NUMBER
             ))
             .map(b => Number(b.box_number))
         );
@@ -1239,6 +1400,7 @@ export const InventoryProvider = ({ children }) => {
         const userDbBoxes = dbBoxes.filter(b => (
           Number(b.box_number) !== 999999 &&
           Number(b.box_number) !== 999998 &&
+          Number(b.box_number) !== CODE_REVISIONS_BOX_NUMBER &&
           Number(b.box_number) > 0 &&
           Number(b.box_number) < 900000 &&
           b.code !== 'DELETED' &&
@@ -1593,6 +1755,20 @@ export const InventoryProvider = ({ children }) => {
               } catch {}
               return;
             }
+
+            // Realtime Sync for Code Revisions
+            if (Number(payload.new?.box_number) === CODE_REVISIONS_BOX_NUMBER || payload.new?.code === 'SYSTEM_CODE_REVISIONS') {
+              try {
+                const parsed = JSON.parse(payload.new.notes);
+                if (Array.isArray(parsed)) {
+                  setCodeRevisions(parsed);
+                  try {
+                    localStorage.setItem(CODE_REVISIONS_KEY, JSON.stringify(parsed));
+                  } catch {}
+                }
+              } catch {}
+              return;
+            }
             if (Number(payload.new?.box_number) >= 900000) return;
 
             syncFromSupabase(supabase, true);
@@ -1815,12 +1991,17 @@ export const InventoryProvider = ({ children }) => {
       return allocationQueue[category].shift();
     };
 
+    const revisionsFromImport = [];
     for (const record of records) {
+      const original = String(record.kode || record.sku || '').trim().toUpperCase();
       const requested = normalizeSequentialCode(record.kode || record.sku || '');
       const allocated = requested || await nextAllocatedCode(record);
       const { finalCode } = resolveUniqueCode(allocated, takenItems, null);
       const { item: upperRecord } = normalizeItemTextUppercase(record);
       const coded = { ...upperRecord, kode: finalCode, sku: finalCode };
+      if (original && original !== String(finalCode).trim().toUpperCase()) {
+        revisionsFromImport.push({ record: coded, oldCode: original, newCode: finalCode });
+      }
       codedRecords.push(coded);
       takenItems.push(coded);
     }
@@ -1866,6 +2047,22 @@ export const InventoryProvider = ({ children }) => {
       }
     }
     setTransactions(prev => [...entries, ...prev]);
+
+    if (revisionsFromImport.length > 0) {
+      const idByKey = new Map(newItems.map(item => [`${item.boxNumber}|${item.deskripsi}|${item.color}`, item.id]));
+      revisionsFromImport.forEach(({ record, oldCode, newCode }) => {
+        recordCodeRevision({
+          oldCode,
+          newCode,
+          itemId: idByKey.get(`${record.boxNumber}|${record.deskripsi}|${record.color}`),
+          itemName: record.description || record.name,
+          boxNumber: record.boxNumber,
+          source: 'IMPOR EXCEL',
+          actor: currentUser?.name || 'Royan',
+        });
+      });
+    }
+
     broadcastChange('DATA_IMPORTED', { count: newItems.length });
     return { items: newItems, warning };
   };
@@ -1904,6 +2101,7 @@ export const InventoryProvider = ({ children }) => {
 
     // Concurrency protection on update
     let finalCode = updatedData.kode !== undefined ? updatedData.kode : (updatedData.sku !== undefined ? updatedData.sku : oldItem.kode);
+    const requestedCode = String(finalCode || '').trim().toUpperCase();
     const resolved = resolveUniqueCode(finalCode, items, itemId);
     if (resolved.wasAdjusted) {
       finalCode = resolved.finalCode;
@@ -1912,6 +2110,19 @@ export const InventoryProvider = ({ children }) => {
         'info',
         5000
       );
+    }
+
+    const previousCode = String(oldItem.kode || oldItem.sku || '').trim().toUpperCase();
+    if (previousCode && String(finalCode || '').trim().toUpperCase() !== previousCode) {
+      recordCodeRevision({
+        oldCode: previousCode,
+        newCode: finalCode,
+        itemId: oldItem.id,
+        itemName: updatedData.name || updatedData.description || oldItem.name || oldItem.description,
+        boxNumber: oldItem.boxNumber,
+        source: String(requestedCode) !== previousCode && resolved.wasAdjusted ? 'EDIT (bentrok disesuaikan)' : 'EDIT',
+        actor: currentUser?.name || 'Royan',
+      });
     }
 
     const oldBox = Number(oldItem.boxNumber);
@@ -3332,6 +3543,10 @@ export const InventoryProvider = ({ children }) => {
     // Operations
     addItem,
     importInventoryItems,
+    codeRevisions,
+    recordCodeRevision,
+    deleteCodeRevision,
+    importHistoricalCodeRevisions,
     updateItem,
     deleteItem,
     deleteMultipleItems,
