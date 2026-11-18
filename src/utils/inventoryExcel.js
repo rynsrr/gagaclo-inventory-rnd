@@ -7,6 +7,23 @@ const REQUIRED_HEADERS = ['Kode', 'Deskripsi', 'Warna', 'Jumlah', 'Nomor Box'];
 
 const normalizeHeader = (value) => String(value ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
 
+export const DATE_NOT_AVAILABLE = 'NA';
+
+export function normalizeImportDate(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (normalizeHeader(raw) === DATE_NOT_AVAILABLE || raw === '-') return DATE_NOT_AVAILABLE;
+  return raw;
+}
+
+export function isValidImportDate(value) {
+  if (!value || value === DATE_NOT_AVAILABLE) return true;
+  const date = new Date(value);
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+    && Number.isFinite(date.getTime())
+    && date.toISOString().slice(0, 10) === value;
+}
+
 export function resolveDataSheet(workbook) {
   const names = workbook?.SheetNames || [];
   const sheetName = names.find(name => normalizeHeader(name) === 'DATA') || names[0];
@@ -48,7 +65,8 @@ export function parseInventoryRows(rows, boxes) {
     if (values.every(value => !value)) return;
 
     const [kode, description, color, quantity, boxNumber, unit, jenisSample,
-      sampleNo, size, buyerNo, track, dateIn] = values;
+      sampleNo, size, buyerNo, track, rawDateIn] = values;
+    const dateIn = normalizeImportDate(rawDateIn);
     const box = boxesByNumber.get(Number(boxNumber));
     const qty = Number(quantity);
     const sourceRow = headerRowIndex + index + 2;
@@ -58,11 +76,8 @@ export function parseInventoryRows(rows, boxes) {
     if (!Number.isSafeInteger(qty) || qty < 1 || qty > 2147483647) invalid('Jumlah harus bilangan bulat positif.');
     if (!box) invalid('Nomor Box tidak terdaftar.');
     if (box.isFull) invalid(`Box ${box.boxNumber} ditandai penuh.`);
-    if (dateIn) {
-      const date = new Date(dateIn);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIn) || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== dateIn) {
-        invalid('Tanggal harus valid dengan format YYYY-MM-DD.');
-      }
+    if (!isValidImportDate(dateIn)) {
+      invalid('Tanggal harus YYYY-MM-DD atau NA bila tidak tersedia.');
     }
 
     items.push({

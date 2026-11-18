@@ -102,6 +102,9 @@ export function InventoryImport({ isOpen, onClose }) {
           <p className="text-slate-600 leading-relaxed">
             Kosongkan kolom <strong>Kode</strong> bila belum punya. Sistem akan membuat kode berurutan untuk setiap baris, menyimpan ke inventory, lalu mengunduh file Excel yang sudah berisi kode.
           </p>
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            Kolom <strong>Tanggal</strong> boleh diisi <span className="font-mono font-semibold">NA</span> bila belum tersedia, atau format YYYY-MM-DD bila ada.
+          </p>
 
           <a
             href="/template-impor-inventory.xlsx"
