@@ -182,6 +182,7 @@ export function localBoxToDb(box) {
     category: box.category || 'SAMPLE',
     pic_name: box.picName || box.pic_name || 'Royan',
     notes: box.notes ?? '',
+    is_full: box.isFull === true || box.is_full === true,
     updated_at: new Date().toISOString(),
   };
 }

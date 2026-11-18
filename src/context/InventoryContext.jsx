@@ -2467,10 +2467,11 @@ export const InventoryProvider = ({ children }) => {
     }
 
     if (supabase) {
-      const { error } = await supabase.from('boxes').upsert({
-        box_number: boxNumber,
-        is_full: isFull,
-      }, { onConflict: 'box_number' });
+      // Kirim baris lengkap: upsert parsial pernah membuat baris box baru dengan
+      // rack/PIC NULL sehingga box hilang dari raknya.
+      const { error } = await supabase
+        .from('boxes')
+        .upsert([localBoxToDb({ ...box, isFull })], { onConflict: 'box_number' });
       if (error) throw error;
     }
 
