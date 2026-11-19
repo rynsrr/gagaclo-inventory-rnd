@@ -1130,12 +1130,12 @@ export const InventoryProvider = ({ children }) => {
 
       if (boxesErr) throw boxesErr;
 
-      // 3. Fetch transactions
+      // 3. Fetch transactions (hemat bandwidth & egress: ambil 50 transaksi terbaru)
       const { data: dbTrx, error: trxErr } = await client
         .from('transactions')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(50);
 
       if (trxErr) throw trxErr;
 
@@ -1648,9 +1648,51 @@ export const InventoryProvider = ({ children }) => {
             try {
               localStorage.setItem('gagaclo_active_announcement_v2', JSON.stringify(norm));
             } catch {}
+            return;
           }
-          // Trigger silent full sync to pull authoritative data from Supabase
-          syncFromSupabase(supabase, true);
+          if (data?.action === 'BOX_REASSIGNED' && data.boxNumber && data.newPic) {
+            const ppicObj = ppicMembers.find(p => p.name.toLowerCase() === data.newPic.toLowerCase());
+            setBoxes(prev => prev.map(b => Number(b.boxNumber) === Number(data.boxNumber) ? {
+              ...b,
+              picName: data.newPic,
+              ppicId: ppicObj?.id || b.ppicId,
+              ppicNumber: ppicObj?.ppicNumber ?? b.ppicNumber,
+            } : b));
+            setItems(prev => prev.map(i => Number(i.boxNumber) === Number(data.boxNumber) ? {
+              ...i,
+              picName: data.newPic,
+              place: `BOX ${data.boxNumber} (${i.rackName || 'RACK'} - ${data.newPic})`,
+            } : i));
+            return;
+          }
+          if (data?.action === 'BOXES_BATCH_REASSIGNED' && Array.isArray(data.boxNumbers) && data.newPic) {
+            const setNums = new Set(data.boxNumbers.map(Number));
+            const ppicObj = ppicMembers.find(p => p.name.toLowerCase() === data.newPic.toLowerCase());
+            setBoxes(prev => prev.map(b => setNums.has(Number(b.boxNumber)) ? {
+              ...b,
+              picName: data.newPic,
+              ppicId: ppicObj?.id || b.ppicId,
+              ppicNumber: ppicObj?.ppicNumber ?? b.ppicNumber,
+            } : b));
+            setItems(prev => prev.map(i => setNums.has(Number(i.boxNumber)) ? {
+              ...i,
+              picName: data.newPic,
+              place: `BOX ${i.boxNumber} (${i.rackName || 'RACK'} - ${data.newPic})`,
+            } : i));
+            return;
+          }
+          if (data?.action === 'ISSUES_UPDATED') {
+            supabase.from('issues').select('*').then(({ data: iData }) => {
+              if (iData) setIssues(iData.map(dbIssueToLocal));
+            });
+            return;
+          }
+          if (data?.action === 'DATA_IMPORTED') {
+            syncFromSupabase(supabase, true);
+            return;
+          }
+          // Catatan: ITEM_ADDED, ITEM_UPDATED, ITEM_DELETED, BOX_UPDATED sudah
+          // di-handle seketika secara efisien oleh postgres_changes (0 bytes REST egress).
         })
         .on(
           'postgres_changes',
@@ -1720,8 +1762,27 @@ export const InventoryProvider = ({ children }) => {
             }
             if (payload.old?.id === 'SYSTEM_CONFIG_GEMINI_KEY' || payload.new?.id === 'SYSTEM_CONFIG_GEMINI_KEY') return;
 
-            // Trigger silent full sync for item changes
-            syncFromSupabase(supabase, true);
+            // Efisien & Hemat Egress: Perbarui state item langsung dari payload WebSocket tanpa HTTP GET request
+            const eventType = payload.eventType;
+            if (eventType === 'DELETE') {
+              const targetId = String(payload.old?.id || '');
+              if (targetId) {
+                setItems(prev => prev.filter(it => String(it.id) !== targetId));
+              }
+            } else if (payload.new && payload.new.id) {
+              const localItem = dbItemToLocal(payload.new);
+              if (localItem.status === 'DELETED' || Number(localItem.boxNumber) < 0) {
+                setItems(prev => prev.filter(it => String(it.id) !== String(localItem.id)));
+              } else {
+                setItems(prev => {
+                  const exists = prev.some(it => String(it.id) === String(localItem.id));
+                  if (exists) {
+                    return prev.map(it => String(it.id) === String(localItem.id) ? localItem : it);
+                  }
+                  return [localItem, ...prev];
+                });
+              }
+            }
           }
         )
         .on(
@@ -1781,14 +1842,28 @@ export const InventoryProvider = ({ children }) => {
             }
             if (Number(payload.new?.box_number) >= 900000) return;
 
-            syncFromSupabase(supabase, true);
+            // Efisien & Hemat Egress: Perbarui data box langsung dari payload WebSocket tanpa HTTP GET request
+            if (payload.new && payload.new.box_number) {
+              const localBox = dbBoxToLocal(payload.new);
+              setBoxes(prev => prev.map(b => Number(b.boxNumber) === Number(localBox.boxNumber) ? localBox : b));
+            }
           }
         )
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'issues' },
-          () => {
-            syncFromSupabase(supabase, true);
+          (payload) => {
+            if (payload.eventType === 'DELETE' && payload.old?.id) {
+              setIssues(prev => prev.filter(i => String(i.id) !== String(payload.old.id)));
+            } else if (payload.new && payload.new.id) {
+              const localIssue = dbIssueToLocal(payload.new);
+              setIssues(prev => {
+                const exists = prev.some(i => String(i.id) === String(localIssue.id));
+                return exists
+                  ? prev.map(i => String(i.id) === String(localIssue.id) ? localIssue : i)
+                  : [localIssue, ...prev];
+              });
+            }
           }
         )
         .subscribe((status, err) => {
@@ -1809,48 +1884,22 @@ export const InventoryProvider = ({ children }) => {
     }
   }, [supabaseConfigState.isConfigured, syncFromSupabase]);
 
-  // Background Auto-Polling: hemat memori & CPU saat idle, pause jika tab ditinggal di background
+  // Jaringan Kembali Online (Re-connect Resync): hemat bandwidth & egress maksimal
   useEffect(() => {
     if (!supabaseConfigState.isConfigured || !supabase) return;
 
-    // Polling tiap 20 detik saat tab aktif sebagai cadangan jika ada event websocket dropped.
-    // Jika tab ditinggal / background (document.hidden), interval sama sekali TIDAK berjalan.
-    const intervalId = window.setInterval(() => {
-      if (typeof document !== 'undefined' && document.hidden) return;
-      syncFromSupabase(supabase, true);
-    }, 20000);
-
-    return () => window.clearInterval(intervalId);
-  }, [supabaseConfigState.isConfigured, syncFromSupabase]);
-
-  // Window Focus & Tab Visibility Re-sync: langsung ambil data terbaru saat user kembali ke tab ini
-  useEffect(() => {
-    if (!supabaseConfigState.isConfigured || !supabase) return;
-
-    let lastFocusSync = Date.now();
-    const handleFocusSync = () => {
+    let lastOnlineSync = Date.now();
+    const handleOnline = () => {
       const now = Date.now();
-      // Throttling 4 detik agar tidak spam request berulang saat window focus & visibilitychange bersamaan
-      if (now - lastFocusSync > 4000) {
-        lastFocusSync = now;
+      // Hanya resync jika koneksi sempat offline minimal 60 detik
+      if (now - lastOnlineSync > 60000) {
+        lastOnlineSync = now;
         syncFromSupabase(supabase, true);
       }
     };
 
-    window.addEventListener('focus', handleFocusSync);
-    window.addEventListener('online', handleFocusSync);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        handleFocusSync();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      window.removeEventListener('focus', handleFocusSync);
-      window.removeEventListener('online', handleFocusSync);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, [supabaseConfigState.isConfigured, syncFromSupabase]);
 
   // Actions
