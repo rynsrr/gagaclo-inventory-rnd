@@ -21,6 +21,8 @@ function cleanCardBoilerplate(text) {
     /\b(FAX)\s*[:.]?\s*[0-9\s\-+()/\\]+/gi,
     /\b(TEL|TELEPHONE|TELPHONE|TELP)\b/gi,
     /\bFAX\b/gi,
+    /\bITEM\s+INFO\s*[:.]?/gi,
+    /\bITEM\s+INFORMATION\s*[:.]?/gi,
     /\bITEM\s+NO\s*[:.]?/gi,
     /\bITEM\s+NUMBER\s*[:.]?/gi,
     /\bSAMPLE\s+CARD\b/gi,
@@ -37,6 +39,23 @@ function cleanCardBoilerplate(text) {
     .replace(/^[\s\-_:,;#/|\\]+|[\s\-_:,;#/|\\]+$/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
+}
+
+/**
+ * Gabungkan Item Info, Remark, dan Note ke dalam field style
+ * Sesuai instruksi: isi keterangan Item Info, Remark, dan Note semuanya ditaruh di Style
+ */
+function mergeStyleRemarkNote(style, remark = '', note = '') {
+  let merged = cleanCardBoilerplate(style);
+  const rawRemark = cleanCardBoilerplate(remark);
+  if (rawRemark && rawRemark !== 'NA' && !merged.toUpperCase().includes(rawRemark.toUpperCase())) {
+    merged = merged && merged !== 'NA' ? `${merged} - REMARK: ${rawRemark}` : rawRemark;
+  }
+  const rawNote = cleanCardBoilerplate(note);
+  if (rawNote && rawNote !== 'NA' && !merged.toUpperCase().includes(rawNote.toUpperCase())) {
+    merged = merged && merged !== 'NA' ? `${merged} - NOTE: ${rawNote}` : rawNote;
+  }
+  return cleanCardBoilerplate(merged).toUpperCase() || 'NA';
 }
 
 /**
@@ -150,10 +169,19 @@ THESE ARE PART OF THE PRINTED FORM TEMPLATE, NOT THE ACTUAL GARMENT DATA!
 DO NOT EXTRACT "RED DRAGON INDONESIA", "PT GAGACLO", "TELEPHONE", "FAX", "ITEM NO", OR "SAMPLE OF NO COMMERCIAL VALUE" INTO STYLE, SAMPLE NUMBER, BUYER, OR TRACK!
 
 Extract the information into a strict JSON object with these EXACT keys:
-- "style": (String) Name, style code, AND any additional notes or descriptions written on the card (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE - STYLE ON HOLD", "BLACK 1.2", "POCKET TEE OVERSIZED", "CORAL BLOOM 35-299661 - ALINA").
-  CRITICAL INSTRUCTION FOR STYLE & KETERANGAN TAMBAHAN:
-  1. If the card contains additional notes, remarks, descriptions, or variant details (keterangan tambahan), PUT THEM TOGETHER in this "style" field (e.g. "POLO SHIRT STYLE ON HOLD", "8210ZBK (REVISI SAKU)", "CORAL BLOOM 35-299661 - ALINA").
-  2. Do NOT put RDI or RSD sample numbers here (those strictly belong in "sampleNo"). For example, if a tag writes "RDI056 POLO SHIRT STYLE ON HOLD", "sampleNo" is "RDI056" and "style" is "POLO SHIRT STYLE ON HOLD".
+- "style": (String) Combined Style & Description from ITEM INFO, REMARK, and NOTE written on the card.
+  MANDATORY INSTRUCTION FOR STYLE (ITEM INFO + REMARK + NOTE):
+  1. ITEM INFO: Extract the garment item info, model name, or style code (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE").
+  2. REMARK: Extract any handwritten or typed remark on the card (excluding static disclaimer "SAMPLE OF NO COMMERCIAL VALUE").
+  3. NOTE: Extract any written notes, instructions, or comments on the card.
+  COMBINE Item Info, Remark, and Note together into this single "style" field!
+  Examples:
+  - "8210ZBK - REMARK: SAKU DEPAN - NOTE: FIT TEST"
+  - "POLO SHIRT - REMARK: COLLAR 1.5CM"
+  - "CORAL BLOOM 35-299661 - ALINA"
+  Do NOT put RDI or RSD sample numbers here (those strictly belong in "sampleNo").
+- "remark": (String, Optional) Any written remark from the card (excluding static "SAMPLE OF NO COMMERCIAL VALUE").
+- "note": (String, Optional) Any written notes from the card.
 - "sampleNo": (String) Sample number, article number, or reference code.
   CRITICAL INSTRUCTION FOR SAMPLE NUMBER FORMAT (GAGACLO R&D STANDARDS):
   In Gagaclo R&D, Sample Numbers typically follow these two rules:
@@ -186,7 +214,7 @@ RULES:
    - "RDI" numbers are written without dash/hash: e.g. "RDI056", "RDI1069".
    - "RSD" numbers are written with a hyphen: e.g. "RSD-260022-1", "RSD-250015-2".
    Any reference code starting with "RDI" or "RSD" MUST be extracted into "sampleNo", NEVER into "style".
-6. KETERANGAN TAMBAHAN BELONGS IN "style": Any additional remarks, garment descriptions, variant notes, or comments written on the card must be placed inside the "style" field.
+6. ITEM INFO, REMARK, DAN NOTE MASUK KE "style": Seluruh keterangan Item Info (model/deskripsi), Remark (di luar disclaimer no commercial value), dan Note yang tertulis di kartu WAJIB digabungkan ke field "style".
 7. IGNORE STATIC PRE-PRINTED FORM TEMPLATE / LETTERHEAD / WATERMARKS:
    The following are pre-printed form elements on the sample card and must NEVER be extracted into style, sampleNo, buyerNo, or track:
    - "RED DRAGON INDONESIA" or "PT GAGACLO" (company letterhead)
@@ -265,6 +293,9 @@ RULES:
             parsed.sampleNo
           );
 
+          // Pastikan Item Info, Remark, dan Note semuanya digabung ke Style
+          const finalMergedStyle = mergeStyleRemarkNote(finalStyle, parsed.remark, parsed.note);
+
           // Bersihkan teks cetak formulir (Red Dragon Indonesia, PT Gagaclo, Tel/Fax, Sample of no commercial value)
           const cleanedTrack = cleanCardBoilerplate(String(parsed.track || '')).toUpperCase() || 'SAMPEL FISIK';
           let buyerClean = String(lockedBuyer || parsed.buyerNo || '').trim().toUpperCase();
@@ -275,7 +306,7 @@ RULES:
           return res.status(200).json({
             success: true,
             data: {
-              style: finalStyle,
+              style: finalMergedStyle,
               sampleNo: finalSampleNo,
               buyerNo: buyerClean,
               jenisSample: String(lockedJenisSample || parsed.jenisSample || 'PPS').trim().toUpperCase(),
