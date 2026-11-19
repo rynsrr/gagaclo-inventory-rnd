@@ -37,6 +37,8 @@ import {
   LayoutList,
   LayoutGrid,
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { isItemDispatched, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper } from '../utils/authUtils';
@@ -127,10 +129,22 @@ export function TotalItemsSummaryView() {
   const [query, setQuery] = useState('');
   const [subLayout, setSubLayout] = useState('table'); // 'table' | 'cards'
   const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'SAMPLE' | 'MATERIAL' | 'BORROWED' | 'DISPATCHED'
-  const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc' | 'age-desc' | 'kode-asc' | 'box-asc' | 'style-asc'
+  const [sortField, setSortField] = useState('date'); // 'date' | 'age' | 'kode' | 'track' | 'buyer' | 'jenis' | 'style' | 'sampleNo' | 'size' | 'color' | 'jumlah' | 'box'
+  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' | 'desc'
   const [pageSize, setPageSize] = useState(50); // 50 | 100 | 250 | 0 (0 = Semua)
   const [currentPage, setCurrentPage] = useState(1);
   const [copiedCodeId, setCopiedCodeId] = useState(null);
+
+  const handleHeaderSort = (field) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      const defaultDescFields = ['date', 'age', 'jumlah'];
+      setSortDirection(defaultDescFields.includes(field) ? 'desc' : 'asc');
+    }
+    setCurrentPage(1);
+  };
 
   const handleCopyCode = (e, code, id) => {
     e?.stopPropagation();
@@ -243,25 +257,79 @@ export function TotalItemsSummaryView() {
       list = list.filter((i) => isItemDispatched(i));
     }
 
+    const mult = sortDirection === 'asc' ? 1 : -1;
+
     return [...list].sort((a, b) => {
-      if (sortBy === 'date-desc') {
-        return (b.dateIn || '').localeCompare(a.dateIn || '') || b.age.days - a.age.days;
+      let cmp = 0;
+      switch (sortField) {
+        case 'date': {
+          const da = a.recordDate || a.dateIn || '';
+          const db = b.recordDate || b.dateIn || '';
+          if (da && db) {
+            cmp = da.localeCompare(db);
+          }
+          if (cmp === 0) {
+            cmp = (b.age?.days || 0) - (a.age?.days || 0);
+          }
+          break;
+        }
+        case 'age': {
+          cmp = (a.age?.days || 0) - (b.age?.days || 0);
+          break;
+        }
+        case 'kode': {
+          cmp = (a.kode || '').localeCompare(b.kode || '', undefined, { numeric: true, sensitivity: 'base' });
+          break;
+        }
+        case 'track': {
+          cmp = (a.track || '').localeCompare(b.track || '', undefined, { numeric: true });
+          break;
+        }
+        case 'buyer': {
+          cmp = (a.buyerNo || '').localeCompare(b.buyerNo || '', undefined, { numeric: true });
+          break;
+        }
+        case 'jenis': {
+          cmp = (a.jenisSample || '').localeCompare(b.jenisSample || '');
+          break;
+        }
+        case 'style': {
+          cmp = (a.style || '').localeCompare(b.style || '', undefined, { numeric: true });
+          break;
+        }
+        case 'sampleNo': {
+          cmp = (a.sampleNo || '').localeCompare(b.sampleNo || '', undefined, { numeric: true });
+          break;
+        }
+        case 'size': {
+          cmp = (a.size || '').localeCompare(b.size || '', undefined, { numeric: true });
+          break;
+        }
+        case 'color': {
+          cmp = (a.color || '').localeCompare(b.color || '');
+          break;
+        }
+        case 'jumlah': {
+          cmp = (Number(a.jumlah) || 0) - (Number(b.jumlah) || 0);
+          break;
+        }
+        case 'box': {
+          cmp = (Number(a.boxNumber) || 0) - (Number(b.boxNumber) || 0);
+          if (cmp === 0) {
+            cmp = (a.picName || '').localeCompare(b.picName || '');
+          }
+          break;
+        }
+        default:
+          cmp = 0;
       }
-      if (sortBy === 'age-desc') {
-        return b.age.days - a.age.days || Number(b.boxNumber) - Number(a.boxNumber);
+
+      if (cmp !== 0) {
+        return cmp * mult;
       }
-      if (sortBy === 'kode-asc') {
-        return (a.kode || '').localeCompare(b.kode || '', undefined, { numeric: true });
-      }
-      if (sortBy === 'box-asc') {
-        return Number(a.boxNumber) - Number(b.boxNumber) || (a.kode || '').localeCompare(b.kode || '');
-      }
-      if (sortBy === 'style-asc') {
-        return (a.style || '').localeCompare(b.style || '');
-      }
-      return 0;
+      return (a.kode || '').localeCompare(b.kode || '', undefined, { numeric: true });
     });
-  }, [filteredItems, categoryFilter, sortBy]);
+  }, [filteredItems, categoryFilter, sortField, sortDirection]);
 
   const totalTableItems = tableItems.length;
   const totalPages = pageSize > 0 ? Math.ceil(totalTableItems / pageSize) : 1;
@@ -412,6 +480,50 @@ export function TotalItemsSummaryView() {
   };
 
   const SAMPLE_TYPES = ['DEVELOP', 'PPS', 'ORI', 'BULK SAMPLE', 'ARCHIVE'];
+
+  const renderSortableHeader = (field, label, align = 'left', extraClass = '') => {
+    const isActive = sortField === field;
+    return (
+      <th
+        key={field}
+        onClick={() => handleHeaderSort(field)}
+        className={`px-3.5 py-3 cursor-pointer select-none group transition-all duration-150 whitespace-nowrap ${
+          align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
+        } ${
+          isActive
+            ? 'text-[#0071e3] bg-[#0071e3]/[0.08] font-bold shadow-2xs'
+            : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.04]'
+        } ${extraClass}`}
+        title={`Klik untuk mengurutkan berdasarkan ${label} (${
+          isActive
+            ? sortDirection === 'asc'
+              ? 'Sedang urut A ke Z / Terkecil. Klik untuk membalik urutan (Z ke A / Terbesar)'
+              : 'Sedang urut Z ke A / Terbesar. Klik untuk membalik urutan (A ke Z / Terkecil)'
+            : 'Klik untuk mengurutkan'
+        })`}
+        aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+      >
+        <div
+          className={`inline-flex items-center gap-1.5 ${
+            align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start'
+          }`}
+        >
+          <span>{label}</span>
+          <span className="inline-flex items-center shrink-0">
+            {isActive ? (
+              sortDirection === 'asc' ? (
+                <ArrowUp className="w-3.5 h-3.5 text-[#0071e3]" />
+              ) : (
+                <ArrowDown className="w-3.5 h-3.5 text-[#0071e3]" />
+              )
+            ) : (
+              <ArrowUpDown className="w-3 h-3 text-[#86868b]/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </span>
+        </div>
+      </th>
+    );
+  };
 
   return (
     <div className="space-y-5 font-apple">
@@ -870,21 +982,66 @@ export function TotalItemsSummaryView() {
 
               {/* Sorting & Layout Switcher */}
               <div className="flex items-center gap-2.5 flex-wrap">
-                {/* Sorting Dropdown */}
-                <div className="flex items-center gap-1.5 bg-[#f5f5f7] px-3 py-1 rounded-full border border-black/[0.06]">
-                  <ArrowUpDown className="w-3.5 h-3.5 text-[#86868b]" />
-                  <span className="text-[#86868b] text-[11px] font-semibold">Urutkan:</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-transparent text-xs font-semibold text-[#1d1d1f] focus:outline-hidden cursor-pointer"
-                  >
-                    <option value="date-desc">Tanggal Masuk (Terbaru)</option>
-                    <option value="age-desc">Umur Simpan (Terlama)</option>
-                    <option value="kode-asc">Kode Sample (A-Z)</option>
-                    <option value="box-asc">Nomor Box (1-72)</option>
-                    <option value="style-asc">Nama Style (A-Z)</option>
-                  </select>
+                {/* Sorting Dropdown & Reset */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="flex items-center gap-1.5 bg-[#f5f5f7] px-3 py-1 rounded-full border border-black/[0.06]">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-[#86868b]" />
+                    <span className="text-[#86868b] text-[11px] font-semibold">Urutkan:</span>
+                    <select
+                      value={`${sortField}-${sortDirection}`}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const parts = val.split('-');
+                        const dir = parts.pop();
+                        const field = parts.join('-');
+                        setSortField(field);
+                        setSortDirection(dir === 'asc' ? 'asc' : 'desc');
+                        setCurrentPage(1);
+                      }}
+                      className="bg-transparent text-xs font-semibold text-[#1d1d1f] focus:outline-hidden cursor-pointer"
+                    >
+                      <option value="date-desc">Tanggal Masuk (Terbaru)</option>
+                      <option value="date-asc">Tanggal Masuk (Terlama)</option>
+                      <option value="age-desc">Umur Simpan (Terlama)</option>
+                      <option value="age-asc">Umur Simpan (Terbaru)</option>
+                      <option value="kode-asc">Kode (A-Z)</option>
+                      <option value="kode-desc">Kode (Z-A)</option>
+                      <option value="style-asc">Style (A-Z)</option>
+                      <option value="style-desc">Style (Z-A)</option>
+                      <option value="jumlah-desc">Jumlah (Terbanyak)</option>
+                      <option value="jumlah-asc">Jumlah (Tersedikit)</option>
+                      <option value="box-asc">Nomor Box (1-72)</option>
+                      <option value="box-desc">Nomor Box (72-1)</option>
+                      <option value="buyer-asc">Buyer (A-Z)</option>
+                      <option value="buyer-desc">Buyer (Z-A)</option>
+                      <option value="track-asc">Track (A-Z)</option>
+                      <option value="jenis-asc">Jenis (A-Z)</option>
+                      <option value="sampleNo-asc">Sample No (A-Z)</option>
+                      <option value="size-asc">Size (A-Z)</option>
+                      <option value="color-asc">Color (A-Z)</option>
+                      {!['date-desc','date-asc','age-desc','age-asc','kode-asc','kode-desc','style-asc','style-desc','jumlah-desc','jumlah-asc','box-asc','box-desc','buyer-asc','buyer-desc','track-asc','jenis-asc','sampleNo-asc','size-asc','color-asc'].includes(`${sortField}-${sortDirection}`) && (
+                        <option value={`${sortField}-${sortDirection}`}>
+                          {sortField.toUpperCase()} ({sortDirection === 'asc' ? 'A-Z' : 'Z-A'})
+                        </option>
+                      )}
+                    </select>
+                  </div>
+
+                  {(sortField !== 'date' || sortDirection !== 'desc') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSortField('date');
+                        setSortDirection('desc');
+                        setCurrentPage(1);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#0071e3] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 transition cursor-pointer border border-[#0071e3]/20"
+                      title="Kembalikan urutan standar (Tanggal Terbaru)"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Reset</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Tampilan Toggle: Tabel vs Kartu */}
@@ -1316,21 +1473,36 @@ export function TotalItemsSummaryView() {
                 <div className="overflow-x-auto rounded-[18px] border border-black/[0.06] bg-white shadow-2xs">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
-                        <th className="px-3.5 py-3">No</th>
-                        <th className="px-3.5 py-3">Tanggal</th>
-                        <th className="px-3.5 py-3">Umur Simpan</th>
-                        <th className="px-3.5 py-3">Kode</th>
-                        <th className="px-3.5 py-3">Track</th>
-                        <th className="px-3.5 py-3">Buyer</th>
-                        <th className="px-3.5 py-3">Jenis</th>
-                        <th className="px-3.5 py-3">Style &amp; Deskripsi</th>
-                        <th className="px-3.5 py-3">Sample No</th>
-                        <th className="px-3.5 py-3">Size</th>
-                        <th className="px-3.5 py-3">Color</th>
-                        <th className="px-3.5 py-3 text-right">Jumlah</th>
-                        <th className="px-3.5 py-3">Box &amp; PPIC</th>
-                        <th className="px-3.5 py-3 text-center">Aksi</th>
+                      <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider select-none">
+                        <th
+                          onClick={() => {
+                            setSortField('date');
+                            setSortDirection('desc');
+                            setCurrentPage(1);
+                          }}
+                          className="px-3.5 py-3 cursor-pointer hover:text-[#1d1d1f] hover:bg-black/[0.04] transition-colors whitespace-nowrap"
+                          title="Klik untuk reset urutan ke default (Tanggal Masuk Terbaru)"
+                        >
+                          <div className="inline-flex items-center gap-1">
+                            <span>No</span>
+                            {sortField === 'date' && sortDirection === 'desc' && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#0071e3]" title="Urutan Default" />
+                            )}
+                          </div>
+                        </th>
+                        {renderSortableHeader('date', 'Tanggal')}
+                        {renderSortableHeader('age', 'Umur Simpan')}
+                        {renderSortableHeader('kode', 'Kode')}
+                        {renderSortableHeader('track', 'Track')}
+                        {renderSortableHeader('buyer', 'Buyer')}
+                        {renderSortableHeader('jenis', 'Jenis')}
+                        {renderSortableHeader('style', 'Style & Deskripsi')}
+                        {renderSortableHeader('sampleNo', 'Sample No')}
+                        {renderSortableHeader('size', 'Size')}
+                        {renderSortableHeader('color', 'Color')}
+                        {renderSortableHeader('jumlah', 'Jumlah', 'right')}
+                        {renderSortableHeader('box', 'Box & PPIC')}
+                        <th className="px-3.5 py-3 text-center whitespace-nowrap">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black/[0.04]">
