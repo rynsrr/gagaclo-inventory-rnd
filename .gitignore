@@ -27,3 +27,4 @@ dist-ssr
 .playwright-cli/
 
 .env*
+.workbuddy-ai/

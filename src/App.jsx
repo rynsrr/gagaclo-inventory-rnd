@@ -54,6 +54,9 @@ const BackupModal = lazy(() =>
 const AnnouncementModal = lazy(() =>
   import('./components/AnnouncementModal').then((m) => ({ default: m.AnnouncementModal }))
 );
+const BoxOwnershipModal = lazy(() =>
+  import('./components/BoxOwnershipModal').then((m) => ({ default: m.BoxOwnershipModal }))
+);
 import { AiTagScannerModal } from './components/AiTagScannerModal';
 import { MobileQuickEntryView } from './components/MobileQuickEntryView';
 import { allocateNextSequentialCode } from './utils/sequenceResolver';
@@ -110,6 +113,8 @@ const AppContent = () => {
     addItem,
     announcement,
     updateAnnouncement,
+    isBoxOwnershipModalOpen,
+    setIsBoxOwnershipModalOpen,
   } = useInventory();
 
   const [databaseBytes, setDatabaseBytes] = useState(null);
@@ -1361,6 +1366,16 @@ const AppContent = () => {
           currentUser={currentUser}
         />
       </Suspense>
+
+      {/* Modal Kelola Kepemilikan Box (PIC Transfer) */}
+      {isBoxOwnershipModalOpen && (
+        <Suspense fallback={null}>
+          <BoxOwnershipModal
+            isOpen={isBoxOwnershipModalOpen}
+            onClose={() => setIsBoxOwnershipModalOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Snap & Fill AI Tag Scanner Modal */}
       <AiTagScannerModal

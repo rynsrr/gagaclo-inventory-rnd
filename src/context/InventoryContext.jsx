@@ -2660,6 +2660,197 @@ export const InventoryProvider = ({ children }) => {
     return updatedBox;
   };
 
+  // === FITUR EDIT KEPEMILIKAN BOX (PENGALIHAN PIC BOX) ===
+  const [isBoxOwnershipModalOpen, setIsBoxOwnershipModalOpen] = useState(false);
+
+  const reassignBoxOwnership = async (boxNumber, newPicName, options = { syncItems: true }) => {
+    const num = Number(boxNumber);
+    const box = boxes.find(b => Number(b.boxNumber) === num);
+    if (!box) throw new Error(`Box #${boxNumber} tidak ditemukan.`);
+
+    const cleanNewPic = String(newPicName || '').trim();
+    if (!cleanNewPic) throw new Error('Nama PIC baru wajib dipilih.');
+
+    const oldPic = box.picName || 'Tidak Diketahui';
+    if (cleanNewPic.toLowerCase() === oldPic.toLowerCase()) {
+      return { success: false, message: `Box #${boxNumber} sudah dimiliki oleh ${cleanNewPic}.`, box };
+    }
+
+    const ppicObj = ppicMembers.find(p => p.name.toLowerCase() === cleanNewPic.toLowerCase()) || {
+      id: cleanNewPic.toLowerCase().replace(/\s+/g, '-'),
+      name: cleanNewPic,
+      ppicNumber: 0,
+    };
+
+    const updatedBox = {
+      ...box,
+      picName: ppicObj.name,
+      ppicId: ppicObj.id,
+      ppicNumber: ppicObj.ppicNumber,
+    };
+
+    // 1. Update Box State
+    setBoxes(prev => prev.map(b => Number(b.boxNumber) === num ? updatedBox : b));
+
+    // 2. Update Contained Items if requested
+    let affectedCount = 0;
+    if (options.syncItems !== false) {
+      const affectedItems = items.filter(i => Number(i.boxNumber) === num);
+      affectedCount = affectedItems.length;
+
+      if (affectedCount > 0) {
+        const refreshedItems = affectedItems.map(i => ({
+          ...i,
+          picName: updatedBox.picName,
+          place: `BOX ${updatedBox.boxNumber} (${updatedBox.rackName} - ${updatedBox.picName})`,
+        }));
+
+        setItems(prev => prev.map(i => (
+          Number(i.boxNumber) === num
+            ? {
+                ...i,
+                picName: updatedBox.picName,
+                place: `BOX ${updatedBox.boxNumber} (${updatedBox.rackName} - ${updatedBox.picName})`,
+              }
+            : i
+        )));
+
+        if (supabase && refreshedItems.some(i => i.id)) {
+          try {
+            await supabase.from('items').upsert(
+              refreshedItems.filter(i => i.id).map(localItemToDb),
+              { onConflict: 'id' }
+            );
+          } catch (err) {
+            console.error('Supabase sync items after box reassign error:', err);
+          }
+        }
+      }
+    }
+
+    // 3. Sync Box to Supabase Cloud
+    if (supabase) {
+      try {
+        await supabase.from('boxes').upsert([localBoxToDb(updatedBox)], { onConflict: 'box_number' });
+      } catch (err) {
+        console.error('Supabase update box ownership error:', err);
+      }
+    }
+
+    // 4. Catat riwayat audit transaksi
+    try {
+      const now = new Date();
+      const formattedDate = `${now.toISOString().split('T')[0]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const trxLog = {
+        id: 'trx-reassign-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+        date: formattedDate,
+        type: 'RELOCATE',
+        boxNumber: num,
+        rackName: updatedBox.rackName,
+        picName: updatedBox.picName,
+        recipientOrSource: `Alih Kepemilikan: Dari ${oldPic} ke ${updatedBox.picName}`,
+        notes: `Pengalihan kepemilikan Box #${num} (${affectedCount} item disinkronkan ke PIC baru)`,
+        qty: affectedCount,
+        unit: 'ITEMS',
+      };
+      setTransactions(prev => [trxLog, ...prev]);
+      if (supabase) {
+        supabase.from('transactions').insert([localTrxToDb(trxLog)]).then(() => {}).catch(() => {});
+      }
+    } catch {}
+
+    broadcastChange('BOX_REASSIGNED', { boxNumber: num, oldPic, newPic: updatedBox.picName });
+
+    const msg = `Kepemilikan Box #${num} berhasil dialihkan dari ${oldPic} ke ${updatedBox.picName} (${affectedCount} item diperbarui).`;
+    if (showNotification) {
+      showNotification(msg, 'success', 5000);
+    }
+
+    return { success: true, message: msg, box: updatedBox, affectedItemsCount: affectedCount };
+  };
+
+  const reassignMultipleBoxesOwnership = async (boxNumbers = [], newPicName, options = { syncItems: true }) => {
+    if (!Array.isArray(boxNumbers) || boxNumbers.length === 0) {
+      throw new Error('Pilih minimal satu box untuk dialihkan kepemilikannya.');
+    }
+    const cleanNewPic = String(newPicName || '').trim();
+    if (!cleanNewPic) throw new Error('Nama PIC baru wajib dipilih.');
+
+    const ppicObj = ppicMembers.find(p => p.name.toLowerCase() === cleanNewPic.toLowerCase()) || {
+      id: cleanNewPic.toLowerCase().replace(/\s+/g, '-'),
+      name: cleanNewPic,
+      ppicNumber: 0,
+    };
+
+    const targetNums = new Set(boxNumbers.map(Number));
+    const updatedBoxes = [];
+
+    setBoxes(prev => prev.map(b => {
+      if (targetNums.has(Number(b.boxNumber))) {
+        const up = {
+          ...b,
+          picName: ppicObj.name,
+          ppicId: ppicObj.id,
+          ppicNumber: ppicObj.ppicNumber,
+        };
+        updatedBoxes.push(up);
+        return up;
+      }
+      return b;
+    }));
+
+    let totalAffectedItems = 0;
+    if (options.syncItems !== false) {
+      const affected = items.filter(i => targetNums.has(Number(i.boxNumber)));
+      totalAffectedItems = affected.length;
+
+      if (totalAffectedItems > 0) {
+        setItems(prev => prev.map(i => {
+          if (targetNums.has(Number(i.boxNumber))) {
+            const b = updatedBoxes.find(ub => Number(ub.boxNumber) === Number(i.boxNumber));
+            const rackName = b?.rackName || i.rackName || 'RACK';
+            return {
+              ...i,
+              picName: ppicObj.name,
+              place: `BOX ${i.boxNumber} (${rackName} - ${ppicObj.name})`,
+            };
+          }
+          return i;
+        }));
+
+        if (supabase) {
+          const payloadItems = affected.map(i => {
+            const b = updatedBoxes.find(ub => Number(ub.boxNumber) === Number(i.boxNumber));
+            const rackName = b?.rackName || i.rackName || 'RACK';
+            return localItemToDb({
+              ...i,
+              picName: ppicObj.name,
+              place: `BOX ${i.boxNumber} (${rackName} - ${ppicObj.name})`,
+            });
+          });
+          supabase.from('items').upsert(payloadItems, { onConflict: 'id' }).then(() => {}).catch(err => {
+            console.error('Batch sync items after box reassign error:', err);
+          });
+        }
+      }
+    }
+
+    if (supabase && updatedBoxes.length > 0) {
+      supabase.from('boxes').upsert(updatedBoxes.map(localBoxToDb), { onConflict: 'box_number' }).then(() => {}).catch(err => {
+        console.error('Batch update boxes error:', err);
+      });
+    }
+
+    broadcastChange('BOXES_BATCH_REASSIGNED', { boxNumbers: Array.from(targetNums), newPic: ppicObj.name });
+
+    const msg = `Berhasil mengalihkan kepemilikan ${updatedBoxes.length} box ke ${ppicObj.name} (${totalAffectedItems} item disinkronkan).`;
+    if (showNotification) {
+      showNotification(msg, 'success', 5000);
+    }
+
+    return { success: true, message: msg, updatedCount: updatedBoxes.length, totalAffectedItems };
+  };
+
   const deleteBox = async (boxNumber, options = { moveItemsToFloor: true }) => {
     const boxNum = Number(boxNumber);
     const boxToDelete = boxes.find(b => Number(b.boxNumber) === boxNum);
@@ -3597,6 +3788,11 @@ export const InventoryProvider = ({ children }) => {
     addBox,
     updateBox,
     deleteBox,
+    // Box Ownership Reassignment (Fitur Edit Kepemilikan Box)
+    reassignBoxOwnership,
+    reassignMultipleBoxesOwnership,
+    isBoxOwnershipModalOpen,
+    setIsBoxOwnershipModalOpen,
     // Rack Management
     addRack,
     deleteRack,

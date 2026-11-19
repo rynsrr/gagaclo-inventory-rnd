@@ -30,6 +30,7 @@ import {
   Send,
   ShoppingCart,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
@@ -68,6 +69,8 @@ function BoxDetail({ box }) {
     addToDispatchCart,
     addMultipleToDispatchCart,
     isItemInDispatchCart,
+    reassignBoxOwnership,
+    ppicMembers,
   } = useInventory();
   const selectedBoxNumber = box.boxNumber;
   const itemsInBox = getItemsInBox(selectedBoxNumber);
@@ -161,6 +164,10 @@ function BoxDetail({ box }) {
   const [selectedItemIds, setSelectedItemIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [isAiScannerOpen, setIsAiScannerOpen] = useState(false);
+  const [isEditPicModalOpen, setIsEditPicModalOpen] = useState(false);
+  const [selectedNewPic, setSelectedNewPic] = useState('');
+  const [isReassigningPic, setIsReassigningPic] = useState(false);
+  const [reassignError, setReassignError] = useState(null);
 
   const handleDirectSaveAiData = async (extracted) => {
     const styleTrim = String(extracted.style || 'SAMPLE').trim().toUpperCase();
@@ -516,12 +523,26 @@ function BoxDetail({ box }) {
 
         {/* Apple Style PPIC & Quick Stats Bar */}
         <div className="bg-[#f5f5f7] px-5 py-3 border-b border-black/[0.06] flex flex-wrap items-center justify-between gap-3 text-xs text-[#1d1d1f] shrink-0">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-wrap gap-y-2">
             <span className="text-[#86868b] font-medium">PPIC</span>
             <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full border border-black/[0.06] shadow-2xs font-semibold text-[#1d1d1f]">
               <span className="w-2 h-2 rounded-full bg-[#0071e3]"></span>
               <span>#{box.ppicNumber} {box.picName}</span>
             </div>
+            {/* Tombol Edit Kepemilikan Box */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedNewPic('');
+                setReassignError(null);
+                setIsEditPicModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white hover:bg-black/[0.05] active:bg-black/[0.08] text-[#0071e3] border border-[#0071e3]/30 font-semibold text-xs transition-all shadow-2xs cursor-pointer"
+              title="Ubah kepemilikan PIC untuk Box ini"
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Edit Kepemilikan</span>
+            </button>
             {isSuper && String(currentUser?.name).trim().toLowerCase() !== String(box.picName).trim().toLowerCase() && (
               <span className="text-[11px] font-semibold text-[#b25000] bg-[#ff9500]/15 border border-[#ff9500]/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 ⚡ Mode Superuser (Akses Penuh)
@@ -1498,6 +1519,119 @@ function BoxDetail({ box }) {
         }}
         onDirectSave={handleDirectSaveAiData}
       />
+
+      {/* Modal Edit Kepemilikan Box (PIC Transfer) */}
+      {isEditPicModalOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-black/[0.08] relative">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditPicModalOpen(false);
+                setReassignError(null);
+              }}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-black/[0.05] text-[#86868b] hover:text-[#1d1d1f] transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center shrink-0">
+                <UserCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-[#1d1d1f]">Edit Kepemilikan Box #{box.boxNumber}</h3>
+                <p className="text-xs text-[#86868b]">Alihkan box dan seluruh isinya ke anggota PPIC lain</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#f5f5f7] border border-black/[0.06] mb-4 text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-[#86868b]">PIC Saat Ini:</span>
+                <span className="font-semibold text-[#1d1d1f]">#{box.ppicNumber} {box.picName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#86868b]">Lokasi Rak:</span>
+                <span className="font-semibold text-[#1d1d1f]">{box.rackName || `Rak ${box.rackId}`}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#86868b]">Jumlah Item:</span>
+                <span className="font-semibold text-[#0071e3]">{itemsInBox.length} sample/material</span>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-[#1d1d1f] mb-1.5">
+                Pilih PIC Baru:
+              </label>
+              <select
+                value={selectedNewPic}
+                onChange={(e) => setSelectedNewPic(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-white border border-black/[0.12] focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 text-xs font-medium text-[#1d1d1f] outline-hidden cursor-pointer"
+              >
+                <option value="">- Pilih Anggota PPIC -</option>
+                {ppicMembers
+                  ?.filter((p) => p.name.toLowerCase() !== String(box.picName || '').toLowerCase())
+                  .map((p) => (
+                    <option key={p.id} value={p.name}>
+                      PPIC #{p.ppicNumber} - {p.name}
+                    </option>
+                  ))}
+              </select>
+              <p className="text-[11px] text-[#86868b] mt-1.5 leading-relaxed">
+                Seluruh {itemsInBox.length} item di dalam Box #{box.boxNumber} akan otomatis diperbarui kepemilikannya ke PIC baru dan disinkronkan ke Cloud Supabase.
+              </p>
+            </div>
+
+            {reassignError && (
+              <div className="mb-4 p-2.5 rounded-xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#ff3b30] text-xs font-medium">
+                {reassignError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-black/[0.06]">
+              <button
+                type="button"
+                disabled={isReassigningPic}
+                onClick={() => {
+                  setIsEditPicModalOpen(false);
+                  setReassignError(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] text-xs font-semibold transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={!selectedNewPic || isReassigningPic}
+                onClick={async () => {
+                  if (!selectedNewPic) return;
+                  setIsReassigningPic(true);
+                  setReassignError(null);
+                  try {
+                    await reassignBoxOwnership(box.boxNumber, selectedNewPic, { syncItems: true });
+                    setIsEditPicModalOpen(false);
+                  } catch (err) {
+                    setReassignError(err?.message || 'Gagal mengalihkan kepemilikan box.');
+                  } finally {
+                    setIsReassigningPic(false);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition cursor-pointer flex items-center gap-1.5"
+              >
+                {isReassigningPic ? (
+                  <span>Menyimpan...</span>
+                ) : (
+                  <>
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>Konfirmasi Alihkan</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

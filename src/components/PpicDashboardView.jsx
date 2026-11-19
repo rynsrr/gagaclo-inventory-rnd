@@ -21,7 +21,8 @@ export const PpicDashboardView = () => {
     setSelectedBoxNumber, 
     setSelectedPpicFilter, 
     setActiveTab,
-    setItemModalConfig 
+    setItemModalConfig,
+    setIsBoxOwnershipModalOpen,
   } = useInventory();
 
   return (
@@ -45,15 +46,27 @@ export const PpicDashboardView = () => {
             </p>
           </div>
 
-          <div className="flex items-center space-x-3 text-center">
-            <div className="bg-white/10 backdrop-blur-xs px-4 py-3 rounded-xl border border-white/10">
-              <div className="text-2xl font-black text-amber-300">5</div>
-              <div className="text-xs text-slate-300 uppercase tracking-wider font-semibold">Anggota PPIC</div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center space-x-3 text-center">
+              <div className="bg-white/10 backdrop-blur-xs px-4 py-3 rounded-xl border border-white/10">
+                <div className="text-2xl font-black text-amber-300">5</div>
+                <div className="text-xs text-slate-300 uppercase tracking-wider font-semibold">Anggota PPIC</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-xs px-4 py-3 rounded-xl border border-white/10">
+                <div className="text-2xl font-black text-emerald-300">72</div>
+                <div className="text-xs text-slate-300 uppercase tracking-wider font-semibold">Total Box</div>
+              </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-xs px-4 py-3 rounded-xl border border-white/10">
-              <div className="text-2xl font-black text-emerald-300">72</div>
-              <div className="text-xs text-slate-300 uppercase tracking-wider font-semibold">Total Box</div>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsBoxOwnershipModalOpen(true)}
+              className="flex items-center gap-2 bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white px-4 py-3 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer shrink-0"
+              title="Kelola & alihkan kepemilikan box antar anggota PPIC"
+            >
+              <Users className="w-4 h-4" />
+              <span>Edit Kepemilikan Box</span>
+            </button>
           </div>
         </div>
       </div>
@@ -172,7 +185,7 @@ export const PpicDashboardView = () => {
               </div>
 
               {/* Footer Actions */}
-              <div className="p-3 border-t border-slate-100 bg-white flex items-center justify-between text-xs">
+              <div className="p-3 border-t border-slate-100 bg-white flex items-center justify-between gap-1 text-xs flex-wrap">
                 <button
                   onClick={() => {
                     setSelectedPpicFilter(pic.name);
@@ -180,8 +193,18 @@ export const PpicDashboardView = () => {
                   }}
                   className="font-bold text-blue-600 hover:text-blue-800 flex items-center space-x-1 px-2 py-1 rounded hover:bg-blue-50 transition"
                 >
-                  <span>Lihat di Denah Rak</span>
+                  <span>Lihat di Denah</span>
                   <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsBoxOwnershipModalOpen(true)}
+                  className="font-semibold text-slate-600 hover:text-blue-600 flex items-center space-x-1 px-2 py-1 rounded hover:bg-slate-100 transition"
+                  title={`Alihkan box milik ${pic.name}`}
+                >
+                  <Users className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Alihkan</span>
                 </button>
 
                 <button
@@ -192,7 +215,7 @@ export const PpicDashboardView = () => {
                   className="font-semibold text-slate-600 hover:text-slate-900 flex items-center space-x-1 px-2 py-1 rounded hover:bg-slate-100 transition"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah Item</span>
+                  <span>Tambah</span>
                 </button>
               </div>
 
