@@ -34,6 +34,9 @@ import {
   RefreshCw,
   Building2,
   ShoppingCart,
+  LayoutList,
+  LayoutGrid,
+  ArrowUpDown,
 } from 'lucide-react';
 import { isItemDispatched, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper } from '../utils/authUtils';
@@ -122,6 +125,25 @@ export function TotalItemsSummaryView() {
   const [fixingItemId, setFixingItemId] = useState(null);
 
   const [query, setQuery] = useState('');
+  const [subLayout, setSubLayout] = useState('table'); // 'table' | 'cards'
+  const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'SAMPLE' | 'MATERIAL' | 'BORROWED' | 'DISPATCHED'
+  const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc' | 'age-desc' | 'kode-asc' | 'box-asc' | 'style-asc'
+  const [pageSize, setPageSize] = useState(50); // 50 | 100 | 250 | 0 (0 = Semua)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [copiedCodeId, setCopiedCodeId] = useState(null);
+
+  const handleCopyCode = (e, code, id) => {
+    e?.stopPropagation();
+    if (!code || code === '-') return;
+    try {
+      navigator.clipboard.writeText(code);
+      setCopiedCodeId(id);
+      showNotification?.('📋 Kode berhasil disalin!', 'info', 2000);
+      setTimeout(() => setCopiedCodeId(null), 2000);
+    } catch {
+      showNotification?.('📋 Kode disalin', 'info', 2000);
+    }
+  };
   const boxRackMap = useMemo(() => {
     const map = {};
     boxes.forEach((b) => {
@@ -207,6 +229,49 @@ export function TotalItemsSummaryView() {
         .some((field) => String(field).toLowerCase().includes(q));
     });
   }, [allItems, query, ageFilter]);
+
+  // List seluruh item untuk view mode table / flat cards (dengan kategori & sorting)
+  const tableItems = useMemo(() => {
+    let list = filteredItems;
+    if (categoryFilter === 'SAMPLE') {
+      list = list.filter((i) => i.category === 'SAMPLE');
+    } else if (categoryFilter === 'MATERIAL') {
+      list = list.filter((i) => i.category === 'MATERIAL');
+    } else if (categoryFilter === 'BORROWED') {
+      list = list.filter((i) => i.status === 'Borrowed');
+    } else if (categoryFilter === 'DISPATCHED') {
+      list = list.filter((i) => isItemDispatched(i));
+    }
+
+    return [...list].sort((a, b) => {
+      if (sortBy === 'date-desc') {
+        return (b.dateIn || '').localeCompare(a.dateIn || '') || b.age.days - a.age.days;
+      }
+      if (sortBy === 'age-desc') {
+        return b.age.days - a.age.days || Number(b.boxNumber) - Number(a.boxNumber);
+      }
+      if (sortBy === 'kode-asc') {
+        return (a.kode || '').localeCompare(b.kode || '', undefined, { numeric: true });
+      }
+      if (sortBy === 'box-asc') {
+        return Number(a.boxNumber) - Number(b.boxNumber) || (a.kode || '').localeCompare(b.kode || '');
+      }
+      if (sortBy === 'style-asc') {
+        return (a.style || '').localeCompare(b.style || '');
+      }
+      return 0;
+    });
+  }, [filteredItems, categoryFilter, sortBy]);
+
+  const totalTableItems = tableItems.length;
+  const totalPages = pageSize > 0 ? Math.ceil(totalTableItems / pageSize) : 1;
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages || 1);
+
+  const paginatedItems = useMemo(() => {
+    if (pageSize <= 0) return tableItems;
+    const start = (safeCurrentPage - 1) * pageSize;
+    return tableItems.slice(start, start + pageSize);
+  }, [tableItems, safeCurrentPage, pageSize]);
 
   // Group items by style
   const styleGroups = useMemo(() => {
@@ -407,13 +472,14 @@ export function TotalItemsSummaryView() {
                   ? 'bg-white text-[#1d1d1f] shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04]'
                   : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
               }`}
+              title="Tampilkan seluruh item satu per satu tanpa pengelompokan style"
             >
               <List className="w-3.5 h-3.5" />
-              <span>Daftar Tabel &amp; Umur</span>
+              <span>Semua Item (Tanpa Kelompok)</span>
               <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-medium tabular-nums ${
                 viewMode === 'table' ? 'bg-[#0071e3]/10 text-[#0071e3]' : 'bg-black/[0.05] text-[#86868b]'
               }`}>
-                {filteredItems.length}
+                {totalTableItems}
               </span>
             </button>
 
@@ -771,6 +837,89 @@ export function TotalItemsSummaryView() {
             </div>
           </div>
 
+          {/* Sub-Toolbar Khusus Mode "Semua Item (Tanpa Kelompok)" */}
+          {viewMode === 'table' && (
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-black/[0.06] text-xs">
+              {/* Filter Kategori & Status */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider mr-1">Filter:</span>
+                {[
+                  { key: 'ALL', label: `Semua (${filteredItems.length})` },
+                  { key: 'SAMPLE', label: `Sample (${filteredItems.filter((i) => i.category === 'SAMPLE').length})` },
+                  { key: 'MATERIAL', label: `Material (${filteredItems.filter((i) => i.category === 'MATERIAL').length})` },
+                  { key: 'BORROWED', label: `Dipinjam (${filteredItems.filter((i) => i.status === 'Borrowed').length})` },
+                  { key: 'DISPATCHED', label: `Dikirim (${filteredItems.filter((i) => isItemDispatched(i)).length})` },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => {
+                      setCategoryFilter(f.key);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer border ${
+                      categoryFilter === f.key
+                        ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-xs'
+                        : 'bg-white text-[#1d1d1f] border-black/[0.08] hover:bg-black/[0.03]'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sorting & Layout Switcher */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* Sorting Dropdown */}
+                <div className="flex items-center gap-1.5 bg-[#f5f5f7] px-3 py-1 rounded-full border border-black/[0.06]">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#86868b]" />
+                  <span className="text-[#86868b] text-[11px] font-semibold">Urutkan:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="bg-transparent text-xs font-semibold text-[#1d1d1f] focus:outline-hidden cursor-pointer"
+                  >
+                    <option value="date-desc">Tanggal Masuk (Terbaru)</option>
+                    <option value="age-desc">Umur Simpan (Terlama)</option>
+                    <option value="kode-asc">Kode Sample (A-Z)</option>
+                    <option value="box-asc">Nomor Box (1-72)</option>
+                    <option value="style-asc">Nama Style (A-Z)</option>
+                  </select>
+                </div>
+
+                {/* Tampilan Toggle: Tabel vs Kartu */}
+                <div className="inline-flex items-center p-0.5 bg-[#f5f5f7] rounded-full border border-black/[0.06]">
+                  <button
+                    type="button"
+                    onClick={() => setSubLayout('table')}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
+                      subLayout === 'table'
+                        ? 'bg-white text-[#0071e3] shadow-xs'
+                        : 'text-[#86868b] hover:text-[#1d1d1f]'
+                    }`}
+                    title="Tampilan Tabel Spreadsheet Lengkap"
+                  >
+                    <LayoutList className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Tabel</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubLayout('cards')}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
+                      subLayout === 'cards'
+                        ? 'bg-white text-[#0071e3] shadow-xs'
+                        : 'text-[#86868b] hover:text-[#1d1d1f]'
+                    }`}
+                    title="Tampilan Kartu List Satuan"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Kartu</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Mode 1: Pengelompokan Style Matrix */}
           {viewMode === 'styles' && (
             <div className="space-y-3 pt-1">
@@ -984,127 +1133,115 @@ export function TotalItemsSummaryView() {
             </div>
           )}
 
-          {/* Mode 2: Tabel Lengkap Standar & Umur */}
+          {/* Mode 2: Tampilan Seluruh Item (Tanpa Kelompok) */}
           {viewMode === 'table' && (
-            <div className="overflow-x-auto rounded-[18px] border border-black/[0.06] bg-white shadow-2xs">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
-                    <th className="px-3.5 py-3">No</th>
-                    <th className="px-3.5 py-3">Tanggal</th>
-                    <th className="px-3.5 py-3">Umur Simpan</th>
-                    <th className="px-3.5 py-3">Kode</th>
-                    <th className="px-3.5 py-3">Track</th>
-                    <th className="px-3.5 py-3">Buyer</th>
-                    <th className="px-3.5 py-3">Jenis</th>
-                    <th className="px-3.5 py-3">Style</th>
-                    <th className="px-3.5 py-3">Sample No</th>
-                    <th className="px-3.5 py-3">Size</th>
-                    <th className="px-3.5 py-3">Color</th>
-                    <th className="px-3.5 py-3 text-right">Jumlah</th>
-                    <th className="px-3.5 py-3">Box &amp; PPIC</th>
-                    <th className="px-3.5 py-3 text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-black/[0.04]">
-                  {filteredItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={14} className="px-4 py-12 text-center text-[#86868b]">
-                        Tidak ada item yang cocok dengan pencarian atau filter umur.
-                      </td>
-                    </tr>
+            <div className="space-y-4">
+              {/* Layout 1: Tampilan Kartu List Satuan */}
+              {subLayout === 'cards' && (
+                <div>
+                  {totalTableItems === 0 ? (
+                    <div className="p-12 text-center text-[#86868b] bg-black/[0.02] rounded-[18px] border border-dashed border-black/[0.08]">
+                      Tidak ada item yang cocok dengan pencarian atau filter yang dipilih.
+                    </div>
                   ) : (
-                    filteredItems.map((item, i) => (
-                      <tr key={item.id} className="hover:bg-black/[0.02] transition-colors">
-                        <td className="px-3.5 py-3 font-semibold text-[#86868b] tabular-nums">{i + 1}</td>
-                        <td className="px-3.5 py-3 text-[#1d1d1f] whitespace-nowrap">
-                          <div className="flex items-center gap-1.5 font-mono text-xs text-[#86868b]">
-                            <Calendar className="h-3.5 w-3.5 text-[#86868b]" />
-                            <span className="text-[#1d1d1f]">{item.tanggal}</span>
-                          </div>
-                        </td>
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold inline-block border tabular-nums ${
-                              item.age.tier === 'critical'
-                                ? 'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/25'
-                                : item.age.tier === 'aged'
-                                ? 'bg-[#ff9500]/10 text-[#c96700] border-[#ff9500]/25'
-                                : item.age.tier === 'medium'
-                                ? 'bg-[#0071e3]/10 text-[#0071e3] border-[#0071e3]/25'
-                                : 'bg-[#34c759]/10 text-[#30d158] border-[#34c759]/25'
-                            }`}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {paginatedItems.map((item, i) => {
+                        const rowNumber = (pageSize > 0 ? (safeCurrentPage - 1) * pageSize : 0) + i + 1;
+                        const isHelperUser = isHelper(currentUser);
+                        const isPicOwner = !item.picName || String(currentUser?.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
+                        const isInputter = currentUser && (
+                          (item.inputtedBy && String(currentUser.name).trim().toLowerCase() === String(item.inputtedBy).trim().toLowerCase()) ||
+                          (item.createdBy && String(currentUser.name).trim().toLowerCase() === String(item.createdBy).trim().toLowerCase())
+                        );
+                        const canEdit = !currentUser || isSuperuser(currentUser) || isHelperUser || isPicOwner || isInputter;
+                        const canDelete = !currentUser || (!isHelperUser && (isSuperuser(currentUser) || isPicOwner || isInputter));
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="p-4 rounded-[20px] bg-white border border-black/[0.07] shadow-2xs hover:border-black/[0.14] hover:shadow-xs transition-all flex flex-col justify-between"
                           >
-                            {item.age.label}
-                          </span>
-                        </td>
-                        <td className="px-3.5 py-3 font-mono font-bold text-[#0071e3]">{item.kode}</td>
-                        <td className="px-3.5 py-3 font-mono text-[#86868b]">{item.track}</td>
-                        <td className="px-3.5 py-3 font-mono text-[#1d1d1f]">{item.buyerNo}</td>
-                        <td className="px-3.5 py-3 font-medium text-[#1d1d1f]">{item.jenisSample}</td>
-                        <td className="px-3.5 py-3 font-semibold text-[#1d1d1f] max-w-xs truncate">{item.style}</td>
-                        <td className="px-3.5 py-3 font-mono text-[#86868b]">{item.sampleNo}</td>
-                        <td className="px-3.5 py-3 text-[#86868b]">{item.size}</td>
-                        <td className="px-3.5 py-3 text-[#86868b]">{item.color}</td>
-                        <td className="px-3.5 py-3 text-right font-bold text-[#1d1d1f] tabular-nums whitespace-nowrap">
-                          {item.jumlah.toLocaleString('id-ID')}{' '}
-                          <span className="text-[11px] font-normal text-[#86868b]">{item.satuan}</span>
-                        </td>
-                        <td className="px-3.5 py-3">
-                          {isItemDispatched(item) ? (
-                            <div className="space-y-0.5">
-                              <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#ff9500]/10 text-[#c96700] border border-[#ff9500]/25 font-semibold text-xs">
-                                🚀 Dikirim ke {decodeDispatchData(item)?.destinationLabel || 'Luar'}
-                              </span>
-                              <div className="text-[11px] text-[#86868b]">Asal: {item.boxLabel} • {item.picName}</div>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="text-xs font-semibold text-[#0071e3]">{item.boxLabel}</div>
-                              <div className="mt-0.5 text-[11px] text-[#86868b]">
-                                {item.rackName}
-                                {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
+                            <div>
+                              {/* Header Baris 1: No, Kode (copyable), Jenis Sample, Buyer, Umur Simpan Badge */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-xs text-[#86868b] tabular-nums">#{rowNumber}</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleCopyCode(e, item.kode, item.id)}
+                                    className="font-mono font-bold text-xs text-[#0071e3] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 px-2 py-0.5 rounded-lg border border-[#0071e3]/20 flex items-center gap-1 transition cursor-pointer"
+                                    title="Klik untuk salin kode"
+                                  >
+                                    <span>{item.kode}</span>
+                                    {copiedCodeId === item.id ? (
+                                      <Check className="w-3 h-3 text-emerald-600" />
+                                    ) : (
+                                      <Copy className="w-3 h-3 text-[#0071e3]/60" />
+                                    )}
+                                  </button>
+                                  <span className="text-[10px] font-black uppercase px-1.5 py-0.5 bg-amber-400 text-slate-950 rounded">
+                                    {item.jenisSample}
+                                  </span>
+                                  {item.buyerNo && item.buyerNo !== '-' && item.buyerNo !== 'NA' && (
+                                    <span className="text-xs text-[#86868b] font-mono">({item.buyerNo})</span>
+                                  )}
+                                </div>
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold inline-block border tabular-nums shrink-0 ${
+                                    item.age.tier === 'critical'
+                                      ? 'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/25'
+                                      : item.age.tier === 'aged'
+                                      ? 'bg-[#ff9500]/10 text-[#c96700] border-[#ff9500]/25'
+                                      : item.age.tier === 'medium'
+                                      ? 'bg-[#0071e3]/10 text-[#0071e3] border-[#0071e3]/25'
+                                      : 'bg-[#34c759]/10 text-[#30d158] border-[#34c759]/25'
+                                  }`}
+                                >
+                                  {item.age.label}
+                                </span>
                               </div>
-                              {item.helperName && (
-                                <div className="mt-1">
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] border border-[#0071e3]/20 text-[10px] font-bold">
-                                    📝 Input: {item.helperName}
+
+                              {/* Style Name & Detail Row */}
+                              <div className="mt-2.5">
+                                <h4 className="font-bold text-sm text-[#1d1d1f] leading-snug break-words">
+                                  {item.style}
+                                </h4>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#86868b]">
+                                  {item.sampleNo && item.sampleNo !== 'NA' && (
+                                    <span>Sample No: <strong className="text-[#1d1d1f] font-mono">{item.sampleNo}</strong></span>
+                                  )}
+                                  <span>Size: <strong className="text-[#1d1d1f] font-mono">{item.size}</strong></span>
+                                  <span>Warna: <strong className="text-[#1d1d1f]">{item.color}</strong></span>
+                                  <span className="font-bold text-[#1d1d1f] bg-black/[0.04] px-2 py-0.5 rounded-md">
+                                    {item.jumlah} {item.satuan}
                                   </span>
                                 </div>
-                              )}
-                            </>
-                          )}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          {(() => {
-                            const isHelperUser = isHelper(currentUser);
-                            const isPicOwner = !item.picName || String(currentUser?.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
-                            const isInputter = currentUser && (
-                              (item.inputtedBy && String(currentUser.name).trim().toLowerCase() === String(item.inputtedBy).trim().toLowerCase()) ||
-                              (item.createdBy && String(currentUser.name).trim().toLowerCase() === String(item.createdBy).trim().toLowerCase())
-                            );
-                            const canEdit = !currentUser || isSuperuser(currentUser) || isHelperUser || isPicOwner || isInputter;
-                            const canDelete = !currentUser || (!isHelperUser && (isSuperuser(currentUser) || isPicOwner || isInputter));
+                              </div>
+                            </div>
 
-                            if (!canEdit && !canDelete) {
-                              return (
-                                <div className="text-center text-xs text-slate-300 font-bold">
-                                  Hanya Baca
-                                </div>
-                              );
-                            }
+                            {/* Footer: Lokasi Box & PPIC, Status, Action buttons */}
+                            <div className="mt-3 pt-2.5 border-t border-black/[0.05] flex items-center justify-between gap-2 text-xs">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-2 h-2 rounded-full bg-[#0071e3] shrink-0" />
+                                <span className="font-semibold text-[#1d1d1f] truncate">{item.boxLabel}</span>
+                                <span className="text-[#86868b] truncate">• {item.rackName} • {item.picName}</span>
+                                {item.helperName && (
+                                  <span className="text-[10px] font-bold text-[#0071e3] bg-[#0071e3]/10 px-1.5 py-0.2 rounded-full shrink-0">
+                                    Input: {item.helperName}
+                                  </span>
+                                )}
+                              </div>
 
-                            return (
-                              <div className="flex items-center justify-center gap-1.5">
+                              <div className="flex items-center gap-1 shrink-0">
                                 <button
                                   type="button"
                                   onClick={() => addToDispatchCart(item, 1)}
                                   className={`p-1.5 rounded-lg transition cursor-pointer ${
                                     isItemInDispatchCart(item.id)
                                       ? 'bg-rose-100 text-rose-700 font-bold'
-                                      : 'bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600'
+                                      : 'bg-black/[0.04] hover:bg-rose-50 text-slate-600 hover:text-rose-600'
                                   }`}
-                                  title={isItemInDispatchCart(item.id) ? "Sudah ada di keranjang kirim (+1)" : "Tambah ke Keranjang Pengiriman"}
+                                  title="Tambah ke Keranjang Pengiriman"
                                   aria-label={`Tambah ${item.style || item.kode} ke Keranjang`}
                                 >
                                   <ShoppingCart className="h-3.5 w-3.5" />
@@ -1121,7 +1258,6 @@ export function TotalItemsSummaryView() {
                                     }
                                     className="p-1.5 rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
                                     title="Edit item ini"
-                                    aria-label={`Edit ${item.style || item.kode}`}
                                   >
                                     <Pencil className="h-3.5 w-3.5" />
                                   </button>
@@ -1160,21 +1296,283 @@ export function TotalItemsSummaryView() {
                                       onClick={() => setConfirmDeleteId(item.id)}
                                       className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
                                       title="Hapus item ini"
-                                      aria-label={`Hapus ${item.style || item.kode}`}
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </button>
                                   )
                                 )}
                               </div>
-                            );
-                          })()}
-                        </td>
-                      </tr>
-                    ))
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
-                </tbody>
-              </table>
+                </div>
+              )}
+
+              {/* Layout 2: Tampilan Tabel Spreadsheet Lengkap */}
+              {subLayout === 'table' && (
+                <div className="overflow-x-auto rounded-[18px] border border-black/[0.06] bg-white shadow-2xs">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-black/[0.06] bg-black/[0.02] text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
+                        <th className="px-3.5 py-3">No</th>
+                        <th className="px-3.5 py-3">Tanggal</th>
+                        <th className="px-3.5 py-3">Umur Simpan</th>
+                        <th className="px-3.5 py-3">Kode</th>
+                        <th className="px-3.5 py-3">Track</th>
+                        <th className="px-3.5 py-3">Buyer</th>
+                        <th className="px-3.5 py-3">Jenis</th>
+                        <th className="px-3.5 py-3">Style &amp; Deskripsi</th>
+                        <th className="px-3.5 py-3">Sample No</th>
+                        <th className="px-3.5 py-3">Size</th>
+                        <th className="px-3.5 py-3">Color</th>
+                        <th className="px-3.5 py-3 text-right">Jumlah</th>
+                        <th className="px-3.5 py-3">Box &amp; PPIC</th>
+                        <th className="px-3.5 py-3 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/[0.04]">
+                      {totalTableItems === 0 ? (
+                        <tr>
+                          <td colSpan={14} className="px-4 py-12 text-center text-[#86868b]">
+                            Tidak ada item yang cocok dengan pencarian atau filter yang dipilih.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedItems.map((item, i) => {
+                          const rowNumber = (pageSize > 0 ? (safeCurrentPage - 1) * pageSize : 0) + i + 1;
+                          const isHelperUser = isHelper(currentUser);
+                          const isPicOwner = !item.picName || String(currentUser?.name).trim().toLowerCase() === String(item.picName).trim().toLowerCase();
+                          const isInputter = currentUser && (
+                            (item.inputtedBy && String(currentUser.name).trim().toLowerCase() === String(item.inputtedBy).trim().toLowerCase()) ||
+                            (item.createdBy && String(currentUser.name).trim().toLowerCase() === String(item.createdBy).trim().toLowerCase())
+                          );
+                          const canEdit = !currentUser || isSuperuser(currentUser) || isHelperUser || isPicOwner || isInputter;
+                          const canDelete = !currentUser || (!isHelperUser && (isSuperuser(currentUser) || isPicOwner || isInputter));
+
+                          return (
+                            <tr key={item.id} className="hover:bg-black/[0.02] transition-colors">
+                              <td className="px-3.5 py-3 font-semibold text-[#86868b] tabular-nums">{rowNumber}</td>
+                              <td className="px-3.5 py-3 text-[#1d1d1f] whitespace-nowrap">
+                                <div className="flex items-center gap-1.5 font-mono text-xs text-[#86868b]">
+                                  <Calendar className="h-3.5 w-3.5 text-[#86868b]" />
+                                  <span className="text-[#1d1d1f]">{item.tanggal}</span>
+                                </div>
+                              </td>
+                              <td className="px-3.5 py-3 whitespace-nowrap">
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold inline-block border tabular-nums ${
+                                    item.age.tier === 'critical'
+                                      ? 'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/25'
+                                      : item.age.tier === 'aged'
+                                      ? 'bg-[#ff9500]/10 text-[#c96700] border-[#ff9500]/25'
+                                      : item.age.tier === 'medium'
+                                      ? 'bg-[#0071e3]/10 text-[#0071e3] border-[#0071e3]/25'
+                                      : 'bg-[#34c759]/10 text-[#30d158] border-[#34c759]/25'
+                                  }`}
+                                >
+                                  {item.age.label}
+                                </span>
+                              </td>
+                              <td className="px-3.5 py-3 whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopyCode(e, item.kode, item.id)}
+                                  className="font-mono font-bold text-xs text-[#0071e3] hover:text-[#0077ed] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 px-2 py-0.5 rounded-md flex items-center gap-1 transition cursor-pointer"
+                                  title="Klik untuk salin kode"
+                                >
+                                  <span>{item.kode}</span>
+                                  {copiedCodeId === item.id ? (
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="w-3 h-3 text-[#0071e3]/50" />
+                                  )}
+                                </button>
+                              </td>
+                              <td className="px-3.5 py-3 font-mono text-[#86868b]">{item.track}</td>
+                              <td className="px-3.5 py-3 font-mono text-[#1d1d1f]">{item.buyerNo}</td>
+                              <td className="px-3.5 py-3 font-medium text-[#1d1d1f]">{item.jenisSample}</td>
+                              <td className="px-3.5 py-3 font-semibold text-[#1d1d1f] max-w-xs truncate" title={item.style}>
+                                {item.style}
+                              </td>
+                              <td className="px-3.5 py-3 font-mono text-[#86868b]">{item.sampleNo}</td>
+                              <td className="px-3.5 py-3 text-[#86868b]">{item.size}</td>
+                              <td className="px-3.5 py-3 text-[#86868b]">{item.color}</td>
+                              <td className="px-3.5 py-3 text-right font-bold text-[#1d1d1f] tabular-nums whitespace-nowrap">
+                                {item.jumlah.toLocaleString('id-ID')}{' '}
+                                <span className="text-[11px] font-normal text-[#86868b]">{item.satuan}</span>
+                              </td>
+                              <td className="px-3.5 py-3">
+                                {isItemDispatched(item) ? (
+                                  <div className="space-y-0.5">
+                                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#ff9500]/10 text-[#c96700] border border-[#ff9500]/25 font-semibold text-xs">
+                                      🚀 Dikirim ke {decodeDispatchData(item)?.destinationLabel || 'Luar'}
+                                    </span>
+                                    <div className="text-[11px] text-[#86868b]">Asal: {item.boxLabel} • {item.picName}</div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="text-xs font-semibold text-[#0071e3]">{item.boxLabel}</div>
+                                    <div className="mt-0.5 text-[11px] text-[#86868b]">
+                                      {item.rackName}
+                                      {item.picName && item.picName !== 'NA' && ` • ${item.picName}`}
+                                    </div>
+                                    {item.helperName && (
+                                      <div className="mt-1">
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] border border-[#0071e3]/20 text-[10px] font-bold">
+                                          📝 Input: {item.helperName}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                {(() => {
+                                  if (!canEdit && !canDelete) {
+                                    return (
+                                      <div className="text-center text-xs text-slate-300 font-bold">
+                                        Hanya Baca
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => addToDispatchCart(item, 1)}
+                                        className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                          isItemInDispatchCart(item.id)
+                                            ? 'bg-rose-100 text-rose-700 font-bold'
+                                            : 'bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600'
+                                        }`}
+                                        title={isItemInDispatchCart(item.id) ? "Sudah ada di keranjang kirim (+1)" : "Tambah ke Keranjang Pengiriman"}
+                                        aria-label={`Tambah ${item.style || item.kode} ke Keranjang`}
+                                      >
+                                        <ShoppingCart className="h-3.5 w-3.5" />
+                                      </button>
+                                      {canEdit && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setItemModalConfig({
+                                              isOpen: true,
+                                              item,
+                                              targetBoxNumber: Number(item.boxNumber),
+                                            })
+                                          }
+                                          className="p-1.5 rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
+                                          title="Edit item ini"
+                                          aria-label={`Edit ${item.style || item.kode}`}
+                                        >
+                                          <Pencil className="h-3.5 w-3.5" />
+                                        </button>
+                                      )}
+                                      {canDelete && (
+                                        String(confirmDeleteId) === String(item.id) ? (
+                                          <div className="flex items-center gap-1">
+                                            <button
+                                              type="button"
+                                              onClick={async () => {
+                                                try {
+                                                  await deleteItem(item.id);
+                                                } catch (e) {
+                                                  console.error('Delete item error:', e);
+                                                } finally {
+                                                  setConfirmDeleteId(null);
+                                                }
+                                              }}
+                                              className="px-2 py-1 rounded-lg bg-red-600 text-white text-xs font-bold transition hover:bg-red-700 cursor-pointer"
+                                              title="Konfirmasi hapus permanen"
+                                            >
+                                              Hapus?
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setConfirmDeleteId(null)}
+                                              className="px-1.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold transition hover:bg-slate-200 cursor-pointer"
+                                              title="Batal"
+                                            >
+                                              Batal
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() => setConfirmDeleteId(item.id)}
+                                            className="p-1.5 rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
+                                            title="Hapus item ini"
+                                            aria-label={`Hapus ${item.style || item.kode}`}
+                                          >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </button>
+                                        )
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Pagination Controls untuk viewMode === 'table' */}
+              {totalPages > 1 && (
+                <div className="p-3.5 bg-[#f5f5f7] rounded-[18px] border border-black/[0.06] flex flex-wrap items-center justify-between gap-3 text-xs text-[#86868b]">
+                  <div>
+                    Menampilkan <strong className="text-[#1d1d1f] font-semibold">{pageSize > 0 ? (safeCurrentPage - 1) * pageSize + 1 : 1}</strong> - <strong className="text-[#1d1d1f] font-semibold">{pageSize > 0 ? Math.min(safeCurrentPage * pageSize, totalTableItems) : totalTableItems}</strong> dari <strong className="text-[#1d1d1f] font-semibold">{totalTableItems}</strong> item
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span>Per hal:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="bg-white border border-black/[0.08] rounded-lg px-2 py-1 text-xs font-semibold text-[#1d1d1f] focus:outline-hidden cursor-pointer"
+                      >
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                        <option value="0">Semua</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={safeCurrentPage <= 1}
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        className="px-3 py-1 rounded-lg bg-white hover:bg-black/[0.04] border border-black/[0.08] font-semibold text-[#1d1d1f] disabled:opacity-40 transition cursor-pointer"
+                      >
+                        Sebelumnya
+                      </button>
+                      <span className="px-2 font-semibold text-[#1d1d1f] tabular-nums">
+                        {safeCurrentPage} / {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={safeCurrentPage >= totalPages}
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        className="px-3 py-1 rounded-lg bg-white hover:bg-black/[0.04] border border-black/[0.08] font-semibold text-[#1d1d1f] disabled:opacity-40 transition cursor-pointer"
+                      >
+                        Selanjutnya
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>
