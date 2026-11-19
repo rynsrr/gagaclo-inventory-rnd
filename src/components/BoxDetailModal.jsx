@@ -31,6 +31,10 @@ import {
   ShoppingCart,
   Sparkles,
   UserCheck,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  RotateCcw,
 } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { CardPrintModal } from './CardPrintModal';
@@ -91,6 +95,61 @@ function BoxDetail({ box }) {
   const [copiedId, setCopiedId] = useState(null);
   const [dispatchModalItem, setDispatchModalItem] = useState(null);
   const [dispatchPreselectedItems, setDispatchPreselectedItems] = useState([]);
+  const [sortField, setSortField] = useState('style'); // 'code' | 'style' | 'size' | 'qty' | 'inputter' | 'status'
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' | 'desc'
+
+  const handleHeaderSort = (field) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection(field === 'qty' ? 'desc' : 'asc');
+    }
+  };
+
+  const renderSortableHeader = (field, label, align = 'left', widthClass = '') => {
+    const isActive = sortField === field;
+    return (
+      <th
+        key={field}
+        onClick={() => handleHeaderSort(field)}
+        className={`py-2.5 px-2.5 cursor-pointer select-none group transition-all duration-150 ${widthClass} ${
+          align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
+        } ${
+          isActive
+            ? 'text-blue-700 bg-blue-100/70 font-black'
+            : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
+        }`}
+        title={`Klik untuk mengurutkan berdasarkan ${label} (${
+          isActive
+            ? sortDirection === 'asc'
+              ? 'Sedang urut A-Z / Terkecil. Klik untuk membalik urutan (Z-A / Terbesar)'
+              : 'Sedang urut Z-A / Terbesar. Klik untuk membalik urutan (A-Z / Terkecil)'
+            : 'Klik untuk mengurutkan'
+        })`}
+        aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+      >
+        <div
+          className={`inline-flex items-center gap-1 max-w-full ${
+            align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start'
+          }`}
+        >
+          <span className="truncate">{label}</span>
+          <span className="inline-flex items-center shrink-0">
+            {isActive ? (
+              sortDirection === 'asc' ? (
+                <ArrowUp className="w-3.5 h-3.5 text-blue-600 transition-transform" />
+              ) : (
+                <ArrowDown className="w-3.5 h-3.5 text-blue-600 transition-transform" />
+              )
+            ) : (
+              <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </span>
+        </div>
+      </th>
+    );
+  };
 
   const handleCopyCode = (e, code, id) => {
     e?.stopPropagation();
@@ -360,24 +419,76 @@ function BoxDetail({ box }) {
     );
   });
 
-  // Natural alphanumeric sort: Mengurutkan Style & Deskripsi secara teratur berdasarkan angka & alfabet (A-Z)
+  // Natural alphanumeric sort: Mengurutkan item secara interaktif berdasarkan kolom terpilih
   const sortedItems = useMemo(() => {
+    const mult = sortDirection === 'asc' ? 1 : -1;
+
     return [...filteredItems].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'code': {
+          const codeA = String(a.kode || a.sku || '').trim();
+          const codeB = String(b.kode || b.sku || '').trim();
+          cmp = codeA.localeCompare(codeB, undefined, { numeric: true, sensitivity: 'base' });
+          break;
+        }
+        case 'style': {
+          const styleA = String(a.style || a.deskripsi || a.name || '').trim();
+          const styleB = String(b.style || b.deskripsi || b.name || '').trim();
+          cmp = styleA.localeCompare(styleB, undefined, { numeric: true, sensitivity: 'base' });
+          if (cmp === 0) {
+            const sizeA = String(a.size || '').trim();
+            const sizeB = String(b.size || '').trim();
+            cmp = sizeA.localeCompare(sizeB, undefined, { numeric: true, sensitivity: 'base' });
+          }
+          break;
+        }
+        case 'size': {
+          const sizeA = String(a.size || '').trim();
+          const sizeB = String(b.size || '').trim();
+          cmp = sizeA.localeCompare(sizeB, undefined, { numeric: true, sensitivity: 'base' });
+          if (cmp === 0) {
+            const colorA = String(a.color || '').trim();
+            const colorB = String(b.color || '').trim();
+            cmp = colorA.localeCompare(colorB);
+          }
+          break;
+        }
+        case 'qty': {
+          const qtyA = Number(a.jumlah !== undefined && a.jumlah !== null ? a.jumlah : a.qty) || 0;
+          const qtyB = Number(b.jumlah !== undefined && b.jumlah !== null ? b.jumlah : b.qty) || 0;
+          cmp = qtyA - qtyB;
+          break;
+        }
+        case 'inputter': {
+          const inputterA = resolveItemInputter(a, box).name || '';
+          const inputterB = resolveItemInputter(b, box).name || '';
+          cmp = inputterA.localeCompare(inputterB, undefined, { numeric: true, sensitivity: 'base' });
+          break;
+        }
+        case 'status': {
+          const statusA = String(a.status || '').trim();
+          const statusB = String(b.status || '').trim();
+          cmp = statusA.localeCompare(statusB);
+          break;
+        }
+        default:
+          cmp = 0;
+      }
+
+      if (cmp !== 0) return cmp * mult;
+
+      // Secondary fallback stabil: Style lalu Kode
       const styleA = String(a.style || a.deskripsi || a.name || '').trim();
       const styleB = String(b.style || b.deskripsi || b.name || '').trim();
-      const cmp = styleA.localeCompare(styleB, undefined, { numeric: true, sensitivity: 'base' });
-      if (cmp !== 0) return cmp;
+      const styleCmp = styleA.localeCompare(styleB, undefined, { numeric: true, sensitivity: 'base' });
+      if (styleCmp !== 0) return styleCmp;
 
-      const sizeA = String(a.size || '').trim();
-      const sizeB = String(b.size || '').trim();
-      const sizeCmp = sizeA.localeCompare(sizeB, undefined, { numeric: true, sensitivity: 'base' });
-      if (sizeCmp !== 0) return sizeCmp;
-
-      const codeA = String(a.kode || a.sku || '').trim();
-      const codeB = String(b.kode || b.sku || '').trim();
-      return codeA.localeCompare(codeB, undefined, { numeric: true });
+      const fallbackA = String(a.kode || a.sku || a.id || '').trim();
+      const fallbackB = String(b.kode || b.sku || b.id || '').trim();
+      return fallbackA.localeCompare(fallbackB, undefined, { numeric: true });
     });
-  }, [filteredItems]);
+  }, [filteredItems, sortField, sortDirection, box]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -614,6 +725,22 @@ function BoxDetail({ box }) {
                     className="pl-8 pr-3 py-1.5 bg-[#f5f5f7] border border-black/[0.08] rounded-full text-xs text-[#1d1d1f] placeholder:text-[#86868b] w-48 focus:outline-hidden focus:ring-2 focus:ring-[#0071e3]/20 focus:bg-white transition"
                   />
                 </div>
+              )}
+
+              {/* Reset Urutan jika sedang bukan default */}
+              {(sortField !== 'style' || sortDirection !== 'asc') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSortField('style');
+                    setSortDirection('asc');
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#0071e3] bg-[#0071e3]/10 hover:bg-[#0071e3]/15 transition cursor-pointer border border-[#0071e3]/20"
+                  title="Kembalikan urutan standar (Style A-Z)"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Urutan</span>
+                </button>
               )}
             </div>
 
@@ -1000,7 +1127,7 @@ function BoxDetail({ box }) {
               <div className="hidden sm:block border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white w-full">
                 <div className="overflow-x-auto overflow-y-auto max-h-[66vh] scrollbar-thin w-full">
                   <table className="w-full min-w-[700px] table-fixed text-left border-collapse text-xs">
-                    <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-xs tracking-wider sticky top-0 z-10 border-b border-slate-200">
+                    <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-xs tracking-wider sticky top-0 z-10 border-b border-slate-200 select-none">
                       <tr>
                         <th className="py-2.5 px-2 w-9 text-center">
                           <input
@@ -1011,12 +1138,12 @@ function BoxDetail({ box }) {
                             title="Pilih / Batal Pilih Semua"
                           />
                         </th>
-                        <th className="py-2.5 px-2.5 w-[17%]">Kode / Sample</th>
-                        <th className="py-2.5 px-2.5 w-[26%]">Style &amp; Deskripsi</th>
-                        <th className="py-2.5 px-2 w-[13%]">Size &amp; Warna</th>
-                        <th className="py-2.5 px-1.5 text-center w-[7%]">Jumlah</th>
-                        <th className="py-2.5 px-1.5 text-center w-[12%]">Penginput</th>
-                        <th className="py-2.5 px-1 text-center w-[10%]">Status</th>
+                        {renderSortableHeader('code', 'Kode / Sample', 'left', 'w-[17%]')}
+                        {renderSortableHeader('style', 'Style & Deskripsi', 'left', 'w-[26%]')}
+                        {renderSortableHeader('size', 'Size & Warna', 'left', 'w-[13%]')}
+                        {renderSortableHeader('qty', 'Jumlah', 'center', 'w-[7%]')}
+                        {renderSortableHeader('inputter', 'Penginput', 'center', 'w-[12%]')}
+                        {renderSortableHeader('status', 'Status', 'center', 'w-[10%]')}
                         <th className="py-2.5 px-2 text-right w-[15%]">Aksi</th>
                       </tr>
                     </thead>
