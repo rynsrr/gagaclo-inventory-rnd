@@ -871,21 +871,21 @@ const AiTagScannerContent = ({
                     value={extractedData.style || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, style: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-semibold focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: 8210ZBK / POLO SHIRT (STYLE ON HOLD)"
+                    placeholder="Contoh: 6821 / RSD-260022-1 / POLO SHIRT"
                   />
                 </div>
 
                 {/* Sample No / Art */}
                 <div className="bg-white/5 border border-white/10 rounded-xl p-2.5 space-y-1">
                   <span className="text-[10px] uppercase font-semibold text-white/50 tracking-wider">
-                    Sample No (Artikel)
+                    Sample No (Artikel / Nomer Dokumen)
                   </span>
                   <input
                     type="text"
                     value={extractedData.sampleNo || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, sampleNo: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-semibold focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: RDI056 / RSD-260022-1"
+                    placeholder="Contoh: RDI045 / NA"
                   />
                 </div>
 

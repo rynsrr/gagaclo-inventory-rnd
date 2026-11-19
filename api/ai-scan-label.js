@@ -59,64 +59,149 @@ function mergeStyleRemarkNote(style, remark = '', note = '') {
 }
 
 /**
- * Normalisasi dan ekstraksi pintar untuk sampleNo dan style
- * Memprioritaskan pengenalan pola RDI & RSD sebagai sampleNo standar R&D Gagaclo:
- * - RDI: misal RDI056, RDI1069 (langsung diikuti angka tanpa tanda strip/pagar)
- * - RSD: misal RSD-260022-1, RSD-250015-2 (diawali RSD- dengan tanda strip)
+ * Normalisasi dan ekstraksi pintar untuk sampleNo dan style sesuai standar R&D Gagaclo:
+ * 1. Style Number ('style'):
+ *    - Umumnya berupa 4 angka (misal: 6821, 6823, 6665, 7176, 8250) atau kode alfanumerik (misal: 8210ZBK, WL920FR).
+ *    - Kode yang diawali "RSD" juga merupakan NO STYLE (misal: RSD-260022-1, RSD-250015-2, RSD-01).
+ *    - Angka 4 digit (misal 6821) maupun kode RSD WAJIB masuk ke 'style', TIDAK BOLEH ke 'sampleNo'.
+ *    - Disertai nama model / Item Info, Remark, dan Note yang digabung ke 'style'.
+ * 2. Sample Number ('sampleNo'):
+ *    - Merupakan NOMOR DOKUMEN (bukan nomor style seperti 6821 ataupun RSD).
+ *    - Format standar berupa RDI yang langsung diikuti angka tanpa spasi/tanda hubung (misal: RDI045, RDI056, RDI1069).
  */
 function normalizeSampleNoAndStyle(rawStyle, rawSampleNo) {
   let style = cleanCardBoilerplate(String(rawStyle || '').trim());
   let sampleNo = cleanCardBoilerplate(String(rawSampleNo || '').trim());
 
-  // Pola kode RDI atau RSD
-  const rdiRsdRegex = /\b(RDI|RSD)\s*([#\-_]?)\s*([0-9A-Z]+(?:[\-_][0-9A-Z]+)*)\b/i;
+  // Pola kode Dokumen RDI: RDI diikuti angka secara langsung (misal: RDI045, RDI056, RDI1069)
+  const rdiRegex = /\bRDI\s*([#\-_]?)\s*(\d+[0-9A-Z]*)\b/i;
 
-  const formatRdiRsd = (prefixRaw, sepRaw, codeRaw) => {
-    const prefix = prefixRaw.toUpperCase();
-    const code = codeRaw.toUpperCase();
-    if (prefix === 'RDI') {
-      // Standar RDI: RDI diikuti angka langsung tanpa pemisah (misal: RDI056, RDI1069)
-      return `RDI${code}`;
-    }
-    // Standar RSD: RSD- diikuti kode sampel dengan tanda strip (misal: RSD-260022-1, RSD-250015-2)
-    return `RSD-${code}`;
-  };
+  // Pola kode Style RSD: diawali RSD (misal: RSD-260022-1, RSD-250015-2)
+  const rsdRegex = /\bRSD\s*([#\-_]?)\s*([0-9A-Z]+(?:[\-_][0-9A-Z]+)*)\b/i;
 
-  // 1. Jika sampleNo sudah mengandung pola RDI atau RSD, rapikan formatnya
-  const sampleMatch = sampleNo.match(rdiRsdRegex);
-  if (sampleMatch) {
-    sampleNo = formatRdiRsd(sampleMatch[1], sampleMatch[2], sampleMatch[3]);
+  // Pola nomor Style 4 angka (misal: 6821, 6823, 7176, 8250)
+  const fourDigitRegex = /\b(\d{4})\b/;
+
+  let detectedRdi = null;
+  let detectedRsd = null;
+  let detectedFourDigitStyle = null;
+
+  // 1. Ekstraksi RDI (Nomor Dokumen Sample)
+  // Cek di sampleNo terlebih dahulu
+  const sampleRdiMatch = sampleNo.match(rdiRegex);
+  if (sampleRdiMatch) {
+    detectedRdi = `RDI${sampleRdiMatch[2].toUpperCase()}`;
+    sampleNo = sampleNo.replace(sampleRdiMatch[0], '').trim();
   }
 
-  // 2. Jika style mengandung pola RDI atau RSD
-  const styleMatch = style.match(rdiRsdRegex);
-  if (styleMatch) {
-    const formattedCode = formatRdiRsd(styleMatch[1], styleMatch[2], styleMatch[3]);
-
-    const sampleNoIsDefault = !sampleNo || sampleNo === 'NA' || sampleNo === '-' || sampleNo === 'NONE';
-    const sampleNoHasRdiRsd = /^(RDI|RSD)/i.test(sampleNo);
-
-    // Jika sampleNo masih default/kosong atau belum berawalan RDI/RSD, jadikan kode ini sebagai sampleNo
-    if (sampleNoIsDefault || !sampleNoHasRdiRsd) {
-      sampleNo = formattedCode;
+  // Cek juga di style apakah ada RDI yang terselip
+  const styleRdiMatch = style.match(rdiRegex);
+  if (styleRdiMatch) {
+    if (!detectedRdi) {
+      detectedRdi = `RDI${styleRdiMatch[2].toUpperCase()}`;
     }
-
-    // Bersihkan kode RDI/RSD dari style agar field style hanya menyisakan nama/model barang
-    const cleanedStyle = style
-      .replace(styleMatch[0], '')
-      .replace(/^[\s\-_:/#]+|[\s\-_:/#]+$/g, '')
-      .trim();
-
-    // Jika setelah dibersihkan ada teks nama model garmen, gunakan teks tersebut; jika kosong fallback 'NA'
-    style = cleanedStyle || 'NA';
+    style = style.replace(styleRdiMatch[0], '').trim();
   }
 
-  style = cleanCardBoilerplate(style);
-  sampleNo = cleanCardBoilerplate(sampleNo);
+  // 2. Ekstraksi RSD (RSD adalah No Style, bukan sampleNo)
+  // Cek apakah di sampleNo ada kode RSD yang salah masuk
+  const sampleRsdMatch = sampleNo.match(rsdRegex);
+  if (sampleRsdMatch) {
+    detectedRsd = `RSD-${sampleRsdMatch[2].toUpperCase()}`;
+    sampleNo = sampleNo.replace(sampleRsdMatch[0], '').trim();
+  }
+
+  // Cek apakah di style ada kode RSD
+  const styleRsdMatch = style.match(rsdRegex);
+  if (styleRsdMatch) {
+    detectedRsd = `RSD-${styleRsdMatch[2].toUpperCase()}`;
+    style = style.replace(styleRsdMatch[0], '').trim();
+  }
+
+  // 3. Ekstraksi Nomor Style 4 Angka (misal: 6821)
+  // Cek apakah di sampleNo ada 4 digit angka (misal AI salah menaruh 6821 di sampleNo)
+  const sampleFourDigitMatch = sampleNo.match(fourDigitRegex);
+  if (sampleFourDigitMatch) {
+    detectedFourDigitStyle = sampleFourDigitMatch[1];
+    sampleNo = sampleNo.replace(sampleFourDigitMatch[0], '').trim();
+  }
+
+  // Cek apakah di style ada 4 digit angka
+  const styleFourDigitMatch = style.match(fourDigitRegex);
+  if (styleFourDigitMatch && !detectedFourDigitStyle) {
+    detectedFourDigitStyle = styleFourDigitMatch[1];
+  }
+
+  // 4. Susun Style Akhir:
+  // Prioritas urutan di style: [4 Digit Style / RSD] [Sisa Style / Deskripsi Barang / Remark / Note]
+  let combinedStyleParts = [];
+
+  if (detectedFourDigitStyle) {
+    combinedStyleParts.push(detectedFourDigitStyle);
+  }
+  if (detectedRsd) {
+    combinedStyleParts.push(detectedRsd);
+  }
+
+  // Bersihkan sisa style dari tanda baca awal/akhir
+  let remainingStyle = style
+    .replace(/^[\s\-_:,;#/|\\]+|[\s\-_:,;#/|\\]+$/g, '')
+    .trim();
+
+  // Jika remainingStyle mengandung 4 digit style yang sudah dimasukkan di depan, rapikan
+  if (detectedFourDigitStyle && remainingStyle) {
+    if (remainingStyle === detectedFourDigitStyle) {
+      remainingStyle = '';
+    } else {
+      remainingStyle = remainingStyle
+        .replace(new RegExp(`^\\b${detectedFourDigitStyle}\\b[\\s\\-_:]*`, 'i'), '')
+        .trim();
+    }
+  }
+
+  // Jika remainingStyle mengandung RSD yang sudah dimasukkan di depan, hindari duplikasi
+  if (detectedRsd && remainingStyle) {
+    if (remainingStyle.toUpperCase() === detectedRsd.toUpperCase()) {
+      remainingStyle = '';
+    } else {
+      remainingStyle = remainingStyle
+        .replace(new RegExp(`^\\b${detectedRsd.replace('-', '[-#\\s]?')}\\b[\\s\\-_:]*`, 'i'), '')
+        .trim();
+    }
+  }
+
+  if (remainingStyle && remainingStyle !== 'NA') {
+    if (combinedStyleParts.length > 0 && /^(REMARK|NOTE):/i.test(remainingStyle)) {
+      combinedStyleParts.push('-');
+    }
+    combinedStyleParts.push(remainingStyle);
+  }
+
+  let finalStyle = combinedStyleParts.join(' ').replace(/\s+-\s+/g, ' - ').trim();
+  finalStyle = cleanCardBoilerplate(finalStyle);
+
+  // 5. Susun SampleNo Akhir:
+  // SampleNo strictly adalah NOMOR DOKUMEN (format standar: RDI diikuti angka misal: RDI045).
+  // Bukan nomer style seperti 6821 atau RSD.
+  let finalSampleNo = detectedRdi || '';
+  if (!finalSampleNo) {
+    const cleanRemainingSample = cleanCardBoilerplate(sampleNo);
+    if (
+      cleanRemainingSample &&
+      cleanRemainingSample !== 'NA' &&
+      cleanRemainingSample !== '-' &&
+      !/^\d{4}$/.test(cleanRemainingSample) &&
+      !/^RSD/i.test(cleanRemainingSample)
+    ) {
+      finalSampleNo = cleanRemainingSample;
+    } else {
+      finalSampleNo = 'NA';
+    }
+  }
 
   return {
-    style: style.toUpperCase() || 'NA',
-    sampleNo: sampleNo.toUpperCase() || 'NA',
+    style: finalStyle.toUpperCase() || 'NA',
+    sampleNo: finalSampleNo.toUpperCase() || 'NA',
   };
 }
 
@@ -169,25 +254,32 @@ THESE ARE PART OF THE PRINTED FORM TEMPLATE, NOT THE ACTUAL GARMENT DATA!
 DO NOT EXTRACT "RED DRAGON INDONESIA", "PT GAGACLO", "TELEPHONE", "FAX", "ITEM NO", OR "SAMPLE OF NO COMMERCIAL VALUE" INTO STYLE, SAMPLE NUMBER, BUYER, OR TRACK!
 
 Extract the information into a strict JSON object with these EXACT keys:
-- "style": (String) Combined Style & Description from ITEM INFO, REMARK, and NOTE written on the card.
-  MANDATORY INSTRUCTION FOR STYLE (ITEM INFO + REMARK + NOTE):
-  1. ITEM INFO: Extract the garment item info, model name, or style code (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE").
-  2. REMARK: Extract any handwritten or typed remark on the card (excluding static disclaimer "SAMPLE OF NO COMMERCIAL VALUE").
-  3. NOTE: Extract any written notes, instructions, or comments on the card.
-  COMBINE Item Info, Remark, and Note together into this single "style" field!
+- "style": (String) Garment Style Number, Model Name, and Descriptions from ITEM INFO, REMARK, and NOTE written on the card.
+  MANDATORY INSTRUCTION FOR STYLE (4-DIGIT NUMBERS, RSD CODES, ITEM INFO + REMARK + NOTE):
+  1. STYLE NUMBER (4 DIGITS OR RSD):
+     - Style numbers are typically 4-digit numbers (e.g. "6821", "6823", "6665", "7176", "8250") or alphanumeric codes (e.g. "8210ZBK", "WL920FR").
+     - Codes starting with "RSD" ARE ALSO STYLE NUMBERS (e.g. "RSD-260022-1", "RSD-250015-2", "RSD-01").
+     - IF A 4-DIGIT NUMBER (e.g. 6821) OR AN "RSD" CODE APPEARS, IT MUST GO INTO "style", NEVER INTO "sampleNo"!
+  2. ITEM INFO & MODEL NAME: Extract garment model name or description (e.g. "POLO SHIRT", "FLEECE HOODIE").
+  3. REMARK & NOTE: Extract any handwritten or typed remark or note (excluding static disclaimer "SAMPLE OF NO COMMERCIAL VALUE").
+  COMBINE Style Number, Item Info, Remark, and Note together into this single "style" field!
   Examples:
-  - "8210ZBK - REMARK: SAKU DEPAN - NOTE: FIT TEST"
-  - "POLO SHIRT - REMARK: COLLAR 1.5CM"
+  - "6821 POLO SHIRT - REMARK: SAKU DEPAN - NOTE: FIT TEST"
+  - "RSD-260022-1 - REMARK: SAKU DEPAN"
+  - "6821"
+  - "8210ZBK - REMARK: COLLAR 1.5CM"
   - "CORAL BLOOM 35-299661 - ALINA"
-  Do NOT put RDI or RSD sample numbers here (those strictly belong in "sampleNo").
+  Do NOT put RDI document numbers here (those strictly belong in "sampleNo").
 - "remark": (String, Optional) Any written remark from the card (excluding static "SAMPLE OF NO COMMERCIAL VALUE").
 - "note": (String, Optional) Any written notes from the card.
-- "sampleNo": (String) Sample number, article number, or reference code.
-  CRITICAL INSTRUCTION FOR SAMPLE NUMBER FORMAT (GAGACLO R&D STANDARDS):
-  In Gagaclo R&D, Sample Numbers typically follow these two rules:
-  1. Codes starting with "RDI": directly followed by digits without hash or dash (e.g. "RDI056", "RDI1069", "RDI089", "RDI002").
-  2. Codes starting with "RSD": formatted with a hyphen "RSD-" followed by numbers (e.g. "RSD-260022-1", "RSD-250015-2", "RSD-01").
-  If ANY code starting with "RDI" or "RSD" appears anywhere on the tag/card, you MUST extract it as "sampleNo".
+- "sampleNo": (String) Document / Tracking Number (Nomer Dokumen).
+  CRITICAL INSTRUCTION FOR SAMPLE NUMBER (DOCUMENT NUMBER FORMAT RDI...):
+  - In Gagaclo R&D, "sampleNo" is strictly the DOCUMENT TRACKING NUMBER (nomer dokumen).
+  - Its standard format is "RDI" directly followed by digits (e.g. "RDI045", "RDI056", "RDI1069", "RDI002").
+  - "sampleNo" is NOT a style number! A 4-digit number like "6821" is a Style number and must NEVER be placed in "sampleNo".
+  - "RSD" is also a Style number, NEVER a "sampleNo".
+  - If an RDI code appears anywhere on the tag/card (e.g. "RDI045"), extract it as "sampleNo".
+  - If no RDI document number is found on the card, output "NA".
 - "buyerNo": (String) Buyer/Brand code. If brand is "Ergodyne" or logo shows Ergodyne, output "AN05". If currently locked context is provided ("${lockedBuyer}"), prefer using "${lockedBuyer}".
   CRITICAL: "RED DRAGON INDONESIA", "RDI", or "PT GAGACLO" is the company/factory letterhead on the card template, NOT the buyer! Never output them as buyer. If no external buyer is found, output "${lockedBuyer || 'AN05'}".
 - "jenisSample": (String) Sample type (e.g. "PPS", "DEV", "ARCHIVE", "PROTO", "SMS", "FIT"). If "PP sample" is detected, use "PPS". If currently locked context is provided ("${lockedJenisSample}"), use "${lockedJenisSample}".
@@ -210,10 +302,10 @@ RULES:
 2. Satuan MUST be "PCE".
 3. Return STRICT JSON ONLY. Do not wrap in markdown or backticks. No commentary.
 4. AUTOMATIC FABRIC COLOR FROM BEHIND/AROUND SAMPLE CARD: Whenever color is not explicitly written on the card (or blank / '-'), YOU MUST inspect the physical garment fabric visible behind, beneath, or surrounding the sample card in the photo, and output that exact fabric color.
-5. CODES STARTING WITH "RDI" OR "RSD" ARE ALWAYS "sampleNo":
-   - "RDI" numbers are written without dash/hash: e.g. "RDI056", "RDI1069".
-   - "RSD" numbers are written with a hyphen: e.g. "RSD-260022-1", "RSD-250015-2".
-   Any reference code starting with "RDI" or "RSD" MUST be extracted into "sampleNo", NEVER into "style".
+5. STYLE VS SAMPLE NO SEPARATION (GAGACLO R&D STANDARD):
+   - "style" captures: 4-digit style numbers (e.g. 6821, 6823, 8250), RSD codes (e.g. RSD-260022-1), alphanumeric models (e.g. 8210ZBK), plus Item Info, Remarks, and Notes.
+   - "sampleNo" captures strictly the DOCUMENT NUMBER: format "RDI" followed directly by digits (e.g. "RDI045", "RDI056", "RDI1069").
+   - 4-digit numbers (like 6821) and "RSD" codes are STYLE numbers, NEVER "sampleNo"!
 6. ITEM INFO, REMARK, DAN NOTE MASUK KE "style": Seluruh keterangan Item Info (model/deskripsi), Remark (di luar disclaimer no commercial value), dan Note yang tertulis di kartu WAJIB digabungkan ke field "style".
 7. IGNORE STATIC PRE-PRINTED FORM TEMPLATE / LETTERHEAD / WATERMARKS:
    The following are pre-printed form elements on the sample card and must NEVER be extracted into style, sampleNo, buyerNo, or track:

@@ -798,7 +798,7 @@ const ItemModalContent = () => {
                         localStorage.setItem('gagaclo_sticky_buyer', val);
                       }
                     }}
-                    placeholder="Contoh: AN05 / RSD-250015-2 / NA"
+                    placeholder="Contoh: AN05 / NA"
                     className="w-full text-xs font-bold font-mono uppercase focus:outline-none bg-transparent pr-6"
                   />
                   {isBuyerLocked && (
@@ -936,7 +936,7 @@ const ItemModalContent = () => {
                     setFormData(p => ({ ...p, style: e.target.value.toUpperCase() }));
                     if (errors.style) setErrors(prev => ({ ...prev, style: null }));
                   }}
-                  placeholder="Contoh: WL920FR / 6435 / POLO SHIRT (STYLE ON HOLD) / NA"
+                  placeholder="Contoh: 6821 / RSD-260022-1 / WL920FR / POLO SHIRT"
                   className="w-full text-xs font-bold text-slate-900 focus:outline-none bg-transparent uppercase"
                 />
                 <datalist id="style-datalist">
@@ -978,7 +978,7 @@ const ItemModalContent = () => {
                       setFormData(p => ({ ...p, sampleNo: e.target.value.toUpperCase() }));
                       if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
                     }}
-                    placeholder="Contoh: RDI056 / RSD-260022-1 / NA"
+                    placeholder="Contoh: RDI045 / RDI056 / NA"
                     className="w-full text-xs font-mono font-semibold uppercase focus:outline-hidden bg-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
                   />
                   <datalist id="sampleno-datalist">
