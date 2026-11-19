@@ -139,14 +139,55 @@ export async function compressImage(fileOrBlob, maxWidth = 900, quality = 0.75) 
 }
 
 /**
+ * Bersihkan teks cetak template/kop/disclaimer formulir kartu sampel
+ * (misal: "RED DRAGON INDONESIA", "PT GAGACLO", "TELEPHONE", "FAX", "ITEM NO", "SAMPLE OF NO COMMERCIAL VALUE")
+ * yang merupakan format kartu cetak statis, BUKAN isi data sampel garmen.
+ */
+export function cleanCardBoilerplate(text) {
+  if (!text || typeof text !== 'string') return '';
+  let cleaned = text;
+
+  const boilerplatePatterns = [
+    /\bREMARK\s*[:.]?\s*SAMPLE\s+OF\s+NO\s+COMMERCIAL\s+VALUE\b/gi,
+    /\bREMARK\s*[:.]?\s*NO\s+COMMERCIAL\s+VALUE\b/gi,
+    /\bREMARK\s*[:.]?\s*SAMPLE\s+ONLY\b/gi,
+    /\bSAMPLE\s+OF\s+NO\s+COMMERCIAL\s+VALUE\b/gi,
+    /\bNO\s+COMMERCIAL\s+VALUE\b/gi,
+    /\bSAMPLE\s+OF\s+NO\s+COMMERCIAL\b/gi,
+    /\bRED\s+DRAGON\s+INDONESIA\b/gi,
+    /\bRED\s+DRAGON\b/gi,
+    /\bPT\.?\s*GAGACLO\b/gi,
+    /\b(TEL|TELEPHONE|TELPHONE|TELP)\s*[:.]?\s*[0-9\s\-+()/\\]+/gi,
+    /\b(FAX)\s*[:.]?\s*[0-9\s\-+()/\\]+/gi,
+    /\b(TEL|TELEPHONE|TELPHONE|TELP)\b/gi,
+    /\bFAX\b/gi,
+    /\bITEM\s+NO\s*[:.]?/gi,
+    /\bITEM\s+NUMBER\s*[:.]?/gi,
+    /\bSAMPLE\s+CARD\b/gi,
+    /\bSAMPLE\s+TAG\b/gi,
+    /\bREMARKS?\s*[:.]?$/gi,
+    /^\s*REMARKS?\s*[:.]?/gi,
+  ];
+
+  for (const pattern of boilerplatePatterns) {
+    cleaned = cleaned.replace(pattern, ' ');
+  }
+
+  return cleaned
+    .replace(/^[\s\-_:,;#/|\\]+|[\s\-_:,;#/|\\]+$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/**
  * Normalisasi dan ekstraksi pintar untuk sampleNo dan style
  * Memprioritaskan pengenalan pola RDI & RSD sebagai sampleNo standar R&D Gagaclo:
  * - RDI: misal RDI056, RDI1069 (langsung diikuti angka tanpa tanda strip/pagar)
  * - RSD: misal RSD-260022-1, RSD-250015-2 (diawali RSD- dengan tanda strip)
  */
 export function normalizeSampleNoAndStyle(rawStyle, rawSampleNo) {
-  let style = String(rawStyle || '').trim();
-  let sampleNo = String(rawSampleNo || '').trim();
+  let style = cleanCardBoilerplate(String(rawStyle || '').trim());
+  let sampleNo = cleanCardBoilerplate(String(rawSampleNo || '').trim());
 
   // Pola kode RDI atau RSD
   const rdiRsdRegex = /\b(RDI|RSD)\s*([#\-_]?)\s*([0-9A-Z]+(?:[\-_][0-9A-Z]+)*)\b/i;
@@ -191,6 +232,9 @@ export function normalizeSampleNoAndStyle(rawStyle, rawSampleNo) {
     style = cleanedStyle || 'NA';
   }
 
+  style = cleanCardBoilerplate(style);
+  sampleNo = cleanCardBoilerplate(sampleNo);
+
   return {
     style: style.toUpperCase() || 'NA',
     sampleNo: sampleNo.toUpperCase() || 'NA',
@@ -206,6 +250,14 @@ function buildExtractionPrompt(contextSettings = {}) {
   return `You are an expert Garment Quality Control & Inventory Multimodal AI Assistant for Gagaclo R&D.
 Examine this image of a garment sample tag / washing label / handwritten card AND the physical garment fabric in the photo.
 
+CRITICAL CONTEXT ON SAMPLE CARD TEMPLATE:
+The physical sample card contains pre-printed static form elements:
+- Company Letterhead / Header: "RED DRAGON INDONESIA", "PT GAGACLO", "TELEPHONE", "FAX", and phone/fax numbers.
+- Pre-printed form labels: "ITEM NO:", "STYLE:", "SAMPLE NO:", "REMARK:", etc.
+- Standard legal watermark/disclaimer: "SAMPLE OF NO COMMERCIAL VALUE" or "REMARK: SAMPLE OF NO COMMERCIAL VALUE".
+THESE ARE PART OF THE PRINTED FORM TEMPLATE, NOT THE ACTUAL GARMENT DATA!
+DO NOT EXTRACT "RED DRAGON INDONESIA", "PT GAGACLO", "TELEPHONE", "FAX", "ITEM NO", OR "SAMPLE OF NO COMMERCIAL VALUE" INTO STYLE, SAMPLE NUMBER, BUYER, OR TRACK!
+
 Extract the information into a strict JSON object with these EXACT keys:
 - "style": (String) Name, style code, AND any additional notes or descriptions written on the card (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE - STYLE ON HOLD", "BLACK 1.2", "POCKET TEE OVERSIZED", "CORAL BLOOM 35-299661 - ALINA").
   CRITICAL INSTRUCTION FOR STYLE & KETERANGAN TAMBAHAN:
@@ -218,6 +270,7 @@ Extract the information into a strict JSON object with these EXACT keys:
   2. Codes starting with "RSD": formatted with a hyphen "RSD-" followed by numbers (e.g. "RSD-260022-1", "RSD-250015-2", "RSD-01").
   If ANY code starting with "RDI" or "RSD" appears anywhere on the tag/card, you MUST extract it as "sampleNo".
 - "buyerNo": (String) Buyer/Brand code. If brand is "Ergodyne" or logo shows Ergodyne, output "AN05". If currently locked context is provided ("${lockedBuyer}"), prefer using "${lockedBuyer}".
+  CRITICAL: "RED DRAGON INDONESIA", "RDI", or "PT GAGACLO" is the company/factory letterhead on the card template, NOT the buyer! Never output them as buyer. If no external buyer is found, output "${lockedBuyer || 'AN05'}".
 - "jenisSample": (String) Sample type (e.g. "PPS", "DEV", "ARCHIVE", "PROTO", "SMS", "FIT"). If "PP sample" is detected, use "PPS". If currently locked context is provided ("${lockedJenisSample}"), use "${lockedJenisSample}".
 - "size": (String) Garment size (e.g. "S", "M", "L", "XL", "XXL", "ONESIZE"). If "One size" or "One size, Black", output "ONESIZE".
 - "color": (String) Color of the item.
@@ -242,7 +295,13 @@ RULES:
    - "RDI" numbers are written without dash/hash: e.g. "RDI056", "RDI1069".
    - "RSD" numbers are written with a hyphen: e.g. "RSD-260022-1", "RSD-250015-2".
    Any reference code starting with "RDI" or "RSD" MUST be extracted into "sampleNo", NEVER into "style".
-6. KETERANGAN TAMBAHAN BELONGS IN "style": Any additional remarks, garment descriptions, variant notes, or comments written on the card must be placed inside the "style" field.`;
+6. KETERANGAN TAMBAHAN BELONGS IN "style": Any additional remarks, garment descriptions, variant notes, or comments written on the card must be placed inside the "style" field.
+7. IGNORE STATIC PRE-PRINTED FORM TEMPLATE / LETTERHEAD / WATERMARKS:
+   The following are pre-printed form elements on the sample card and must NEVER be extracted into style, sampleNo, buyerNo, or track:
+   - "RED DRAGON INDONESIA" or "PT GAGACLO" (company letterhead)
+   - "TELEPHONE", "FAX", and phone/fax numbers
+   - "ITEM NO", "ITEM NO.", "SAMPLE CARD" (form field labels)
+   - "SAMPLE OF NO COMMERCIAL VALUE" or "REMARK: SAMPLE OF NO COMMERCIAL VALUE" (disclaimer watermark)`;
 }
 
 /**
@@ -282,10 +341,17 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
             result.data.style,
             result.data.sampleNo
           );
+          const cleanedTrack = cleanCardBoilerplate(String(result.data.track || '')).toUpperCase() || 'SAMPEL FISIK';
+          let buyerClean = String(result.data.buyerNo || '').trim().toUpperCase();
+          if (!buyerClean || /RED\s*DRAGON|GAGACLO|NO\s*COMMERCIAL/i.test(buyerClean)) {
+            buyerClean = contextSettings.lockedBuyer || 'AN05';
+          }
           return {
             ...result.data,
             style: finalStyle,
             sampleNo: finalSampleNo,
+            buyerNo: buyerClean,
+            track: cleanedTrack,
             _source: 'server',
           };
         }
@@ -459,18 +525,25 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
         parsedData.sampleNo
       );
 
+      // Bersihkan teks cetak formulir (Red Dragon Indonesia, PT Gagaclo, Tel/Fax, Sample of no commercial value)
+      const cleanedTrack = cleanCardBoilerplate(String(parsedData.track || '')).toUpperCase() || 'SAMPEL FISIK';
+      let buyerClean = String(contextSettings.lockedBuyer || parsedData.buyerNo || '').trim().toUpperCase();
+      if (!buyerClean || /RED\s*DRAGON|GAGACLO|NO\s*COMMERCIAL/i.test(buyerClean)) {
+        buyerClean = contextSettings.lockedBuyer || 'AN05';
+      }
+
       // Normalisasi & pastikan format standar
       const normalizedData = {
         style: finalStyle,
         sampleNo: finalSampleNo,
-        buyerNo: String(contextSettings.lockedBuyer || parsedData.buyerNo || '').trim().toUpperCase() || 'AN05',
+        buyerNo: buyerClean,
         jenisSample: String(contextSettings.lockedJenisSample || parsedData.jenisSample || 'PPS').trim().toUpperCase(),
         size: String(parsedData.size || 'ONESIZE').trim().toUpperCase(),
         color: detectedColor || 'NA',
         jumlah: Number(parsedData.jumlah) > 0 ? Number(parsedData.jumlah) : 1,
         satuan: 'PCE',
         tanggal: String(parsedData.tanggal || '').trim().toUpperCase(),
-        track: String(parsedData.track || '').trim().toUpperCase() || 'SAMPEL FISIK',
+        track: cleanedTrack,
         _source: 'direct',
       };
 
