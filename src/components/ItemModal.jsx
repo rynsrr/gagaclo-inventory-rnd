@@ -978,7 +978,7 @@ const ItemModalContent = () => {
                       setFormData(p => ({ ...p, sampleNo: e.target.value.toUpperCase() }));
                       if (errors.sampleNo) setErrors(prev => ({ ...prev, sampleNo: null }));
                     }}
-                    placeholder="Contoh: RSD-250015-2 / NA"
+                    placeholder="Contoh: RDI#6823 / RSD-260022-1 / NA"
                     className="w-full text-xs font-mono font-semibold uppercase focus:outline-hidden bg-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
                   />
                   <datalist id="sampleno-datalist">

@@ -139,6 +139,60 @@ export async function compressImage(fileOrBlob, maxWidth = 900, quality = 0.75) 
 }
 
 /**
+ * Normalisasi dan ekstraksi pintar untuk sampleNo dan style
+ * Memprioritaskan pengenalan pola RDI & RSD sebagai sampleNo standar R&D Gagaclo
+ */
+export function normalizeSampleNoAndStyle(rawStyle, rawSampleNo) {
+  let style = String(rawStyle || '').trim();
+  let sampleNo = String(rawSampleNo || '').trim();
+
+  // Pola kode RDI atau RSD (misal: RDI#6823, RDI-1069, RSD-260022-1, RSD 250015-2, RDI 6823, dsb.)
+  const rdiRsdRegex = /\b(RDI|RSD)\s*([#\-_]?)\s*([0-9A-Z]+(?:[\-_][0-9A-Z]+)*)\b/i;
+
+  // 1. Jika sampleNo sudah mengandung pola RDI atau RSD, rapikan formatnya
+  const sampleMatch = sampleNo.match(rdiRsdRegex);
+  if (sampleMatch) {
+    const prefix = sampleMatch[1].toUpperCase();
+    const sep = sampleMatch[2] || (prefix === 'RDI' ? '#' : '-');
+    const code = sampleMatch[3].toUpperCase();
+    sampleNo = `${prefix}${sep}${code}`;
+  }
+
+  // 2. Jika style mengandung pola RDI atau RSD
+  const styleMatch = style.match(rdiRsdRegex);
+  if (styleMatch) {
+    const prefix = styleMatch[1].toUpperCase();
+    const sep = styleMatch[2] || (prefix === 'RDI' ? '#' : '-');
+    const code = styleMatch[3].toUpperCase();
+    const formattedCode = `${prefix}${sep}${code}`;
+
+    const sampleNoIsDefault = !sampleNo || sampleNo === 'NA' || sampleNo === '-' || sampleNo === 'NONE';
+    const sampleNoHasRdiRsd = /^(RDI|RSD)/i.test(sampleNo);
+
+    // Jika sampleNo masih default/kosong atau belum berawalan RDI/RSD, jadikan kode ini sebagai sampleNo
+    if (sampleNoIsDefault || !sampleNoHasRdiRsd) {
+      sampleNo = formattedCode;
+    }
+
+    // Bersihkan kode RDI/RSD dari style agar field style hanya menyisakan nama/model barang
+    const cleanedStyle = style
+      .replace(styleMatch[0], '')
+      .replace(/^[\s\-_:/#]+|[\s\-_:/#]+$/g, '')
+      .trim();
+
+    // Jika setelah dibersihkan masih ada teks (misal: "BLACK 1.2" atau "POLO SHIRT"), gunakan teks tersebut.
+    if (cleanedStyle) {
+      style = cleanedStyle;
+    }
+  }
+
+  return {
+    style: style.toUpperCase() || 'NA',
+    sampleNo: sampleNo.toUpperCase() || 'NA',
+  };
+}
+
+/**
  * System prompt khusus pengenalan label/tag garmen & tulisan tangan R&D Gagaclo
  */
 function buildExtractionPrompt(contextSettings = {}) {
@@ -148,8 +202,12 @@ function buildExtractionPrompt(contextSettings = {}) {
 Examine this image of a garment sample tag / washing label / handwritten card AND the physical garment fabric in the photo.
 
 Extract the information into a strict JSON object with these EXACT keys:
-- "style": (String) Name or style code of the garment/model (e.g. "RDI#6823 BLACK 1.2" or "POLO SHIRT").
-- "sampleNo": (String) Sample number, article number, or reference number (e.g. "RD1069").
+- "style": (String) Name or style code of the garment/model (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE", "BLACK 1.2", "POCKET TEE").
+  CRITICAL: Do NOT put RDI or RSD sample numbers here. If a tag writes "RDI#6823 BLACK 1.2", "sampleNo" is "RDI#6823" and "style" is "BLACK 1.2".
+- "sampleNo": (String) Sample number, article number, or reference code.
+  CRITICAL INSTRUCTION FOR SAMPLE NUMBER:
+  In Gagaclo R&D, Sample Numbers typically begin with "RDI" or "RSD" (e.g. "RDI#6823", "RSD-260022-1", "RSD-250015-2", "RDI-1069").
+  If ANY code starting with "RDI" or "RSD" appears anywhere on the tag/card, you MUST extract it as "sampleNo".
 - "buyerNo": (String) Buyer/Brand code. If brand is "Ergodyne" or logo shows Ergodyne, output "AN05". If currently locked context is provided ("${lockedBuyer}"), prefer using "${lockedBuyer}".
 - "jenisSample": (String) Sample type (e.g. "PPS", "DEV", "ARCHIVE", "PROTO", "SMS", "FIT"). If "PP sample" is detected, use "PPS". If currently locked context is provided ("${lockedJenisSample}"), use "${lockedJenisSample}".
 - "size": (String) Garment size (e.g. "S", "M", "L", "XL", "XXL", "ONESIZE"). If "One size" or "One size, Black", output "ONESIZE".
@@ -167,7 +225,8 @@ RULES:
 1. ALL text values MUST be UPPERCASE (except null or numbers).
 2. Satuan MUST be "PCE".
 3. Return STRICT JSON ONLY. Do not wrap in markdown or backticks. No commentary.
-4. If color is not explicitly written on the card, ALWAYS identify and return the dominant garment fabric color visible in the image background behind or around the card.`;
+4. If color is not explicitly written on the card, ALWAYS identify and return the dominant garment fabric color visible in the image background behind or around the card.
+5. CODES STARTING WITH "RDI" OR "RSD" ARE ALWAYS "sampleNo": Any reference code starting with "RDI" or "RSD" (e.g. RDI#6823, RSD-260022-1, RSD-250015-2) MUST be extracted into "sampleNo", NEVER into "style".`;
 }
 
 /**
@@ -203,8 +262,14 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
       if (serverResponse.ok) {
         const result = await serverResponse.json();
         if (result?.success && result?.data) {
+          const { style: finalStyle, sampleNo: finalSampleNo } = normalizeSampleNoAndStyle(
+            result.data.style,
+            result.data.sampleNo
+          );
           return {
             ...result.data,
+            style: finalStyle,
+            sampleNo: finalSampleNo,
             _source: 'server',
           };
         }
@@ -372,10 +437,16 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
         if (matched) detectedColor = matched;
       }
 
+      // Normalisasi sampleNo & style cerdas dengan prioritas RDI & RSD
+      const { style: finalStyle, sampleNo: finalSampleNo } = normalizeSampleNoAndStyle(
+        parsedData.style,
+        parsedData.sampleNo
+      );
+
       // Normalisasi & pastikan format standar
       const normalizedData = {
-        style: String(parsedData.style || '').trim().toUpperCase() || 'NA',
-        sampleNo: String(parsedData.sampleNo || '').trim().toUpperCase() || 'NA',
+        style: finalStyle,
+        sampleNo: finalSampleNo,
         buyerNo: String(contextSettings.lockedBuyer || parsedData.buyerNo || '').trim().toUpperCase() || 'AN05',
         jenisSample: String(contextSettings.lockedJenisSample || parsedData.jenisSample || 'PPS').trim().toUpperCase(),
         size: String(parsedData.size || 'ONESIZE').trim().toUpperCase(),

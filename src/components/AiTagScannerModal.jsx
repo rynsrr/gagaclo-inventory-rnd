@@ -871,7 +871,7 @@ const AiTagScannerContent = ({
                     value={extractedData.style || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, style: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-semibold focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: RDI#6823 BLACK 1.2"
+                    placeholder="Contoh: 8210ZBK / POLO SHIRT"
                   />
                 </div>
 
@@ -885,7 +885,7 @@ const AiTagScannerContent = ({
                     value={extractedData.sampleNo || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, sampleNo: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-semibold focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: RD1069"
+                    placeholder="Contoh: RDI#6823 / RSD-260022-1"
                   />
                 </div>
 
