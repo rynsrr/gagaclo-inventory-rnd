@@ -885,7 +885,7 @@ const AiTagScannerContent = ({
                     value={extractedData.sampleNo || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, sampleNo: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-semibold focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: RDI#6823 / RSD-260022-1"
+                    placeholder="Contoh: RDI056 / RSD-260022-1"
                   />
                 </div>
 

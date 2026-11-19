@@ -1,30 +1,37 @@
 /**
  * Normalisasi dan ekstraksi pintar untuk sampleNo dan style
- * Memprioritaskan pengenalan pola RDI & RSD sebagai sampleNo standar R&D Gagaclo
+ * Memprioritaskan pengenalan pola RDI & RSD sebagai sampleNo standar R&D Gagaclo:
+ * - RDI: misal RDI056, RDI1069 (langsung diikuti angka tanpa tanda strip/pagar)
+ * - RSD: misal RSD-260022-1, RSD-250015-2 (diawali RSD- dengan tanda strip)
  */
 function normalizeSampleNoAndStyle(rawStyle, rawSampleNo) {
   let style = String(rawStyle || '').trim();
   let sampleNo = String(rawSampleNo || '').trim();
 
-  // Pola kode RDI atau RSD (misal: RDI#6823, RDI-1069, RSD-260022-1, RSD 250015-2, RDI 6823, dsb.)
+  // Pola kode RDI atau RSD
   const rdiRsdRegex = /\b(RDI|RSD)\s*([#\-_]?)\s*([0-9A-Z]+(?:[\-_][0-9A-Z]+)*)\b/i;
+
+  const formatRdiRsd = (prefixRaw, sepRaw, codeRaw) => {
+    const prefix = prefixRaw.toUpperCase();
+    const code = codeRaw.toUpperCase();
+    if (prefix === 'RDI') {
+      // Standar RDI: RDI diikuti angka langsung tanpa pemisah (misal: RDI056, RDI1069)
+      return `RDI${code}`;
+    }
+    // Standar RSD: RSD- diikuti kode sampel dengan tanda strip (misal: RSD-260022-1, RSD-250015-2)
+    return `RSD-${code}`;
+  };
 
   // 1. Jika sampleNo sudah mengandung pola RDI atau RSD, rapikan formatnya
   const sampleMatch = sampleNo.match(rdiRsdRegex);
   if (sampleMatch) {
-    const prefix = sampleMatch[1].toUpperCase();
-    const sep = sampleMatch[2] || (prefix === 'RDI' ? '#' : '-');
-    const code = sampleMatch[3].toUpperCase();
-    sampleNo = `${prefix}${sep}${code}`;
+    sampleNo = formatRdiRsd(sampleMatch[1], sampleMatch[2], sampleMatch[3]);
   }
 
   // 2. Jika style mengandung pola RDI atau RSD
   const styleMatch = style.match(rdiRsdRegex);
   if (styleMatch) {
-    const prefix = styleMatch[1].toUpperCase();
-    const sep = styleMatch[2] || (prefix === 'RDI' ? '#' : '-');
-    const code = styleMatch[3].toUpperCase();
-    const formattedCode = `${prefix}${sep}${code}`;
+    const formattedCode = formatRdiRsd(styleMatch[1], styleMatch[2], styleMatch[3]);
 
     const sampleNoIsDefault = !sampleNo || sampleNo === 'NA' || sampleNo === '-' || sampleNo === 'NONE';
     const sampleNoHasRdiRsd = /^(RDI|RSD)/i.test(sampleNo);
@@ -40,10 +47,8 @@ function normalizeSampleNoAndStyle(rawStyle, rawSampleNo) {
       .replace(/^[\s\-_:/#]+|[\s\-_:/#]+$/g, '')
       .trim();
 
-    // Jika setelah dibersihkan masih ada teks (misal: "BLACK 1.2" atau "POLO SHIRT"), gunakan teks tersebut.
-    if (cleanedStyle) {
-      style = cleanedStyle;
-    }
+    // Jika setelah dibersihkan ada teks nama model garmen, gunakan teks tersebut; jika kosong fallback 'NA'
+    style = cleanedStyle || 'NA';
   }
 
   return {
@@ -94,10 +99,12 @@ Examine this image of a garment sample tag / washing label / handwritten card AN
 
 Extract the information into a strict JSON object with these EXACT keys:
 - "style": (String) Name or style code of the garment/model (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE", "BLACK 1.2", "POCKET TEE").
-  CRITICAL: Do NOT put RDI or RSD sample numbers here. If a tag writes "RDI#6823 BLACK 1.2", "sampleNo" is "RDI#6823" and "style" is "BLACK 1.2".
+  CRITICAL: Do NOT put RDI or RSD sample numbers here. If a tag writes "RDI056 BLACK 1.2", "sampleNo" is "RDI056" and "style" is "BLACK 1.2". If a tag writes "RSD-260022-1 POLO", "sampleNo" is "RSD-260022-1" and "style" is "POLO".
 - "sampleNo": (String) Sample number, article number, or reference code.
-  CRITICAL INSTRUCTION FOR SAMPLE NUMBER:
-  In Gagaclo R&D, Sample Numbers typically begin with "RDI" or "RSD" (e.g. "RDI#6823", "RSD-260022-1", "RSD-250015-2", "RDI-1069").
+  CRITICAL INSTRUCTION FOR SAMPLE NUMBER FORMAT (GAGACLO R&D STANDARDS):
+  In Gagaclo R&D, Sample Numbers typically follow these two rules:
+  1. Codes starting with "RDI": directly followed by digits without hash or dash (e.g. "RDI056", "RDI1069", "RDI089", "RDI002").
+  2. Codes starting with "RSD": formatted with a hyphen "RSD-" followed by numbers (e.g. "RSD-260022-1", "RSD-250015-2", "RSD-01").
   If ANY code starting with "RDI" or "RSD" appears anywhere on the tag/card, you MUST extract it as "sampleNo".
 - "buyerNo": (String) Buyer/Brand code. If brand is "Ergodyne" or logo shows Ergodyne, output "AN05". If currently locked context is provided ("${lockedBuyer}"), prefer using "${lockedBuyer}".
 - "jenisSample": (String) Sample type (e.g. "PPS", "DEV", "ARCHIVE", "PROTO", "SMS", "FIT"). If "PP sample" is detected, use "PPS". If currently locked context is provided ("${lockedJenisSample}"), use "${lockedJenisSample}".
@@ -117,7 +124,10 @@ RULES:
 2. Satuan MUST be "PCE".
 3. Return STRICT JSON ONLY. Do not wrap in markdown or backticks. No commentary.
 4. If color is not explicitly written on the card, ALWAYS identify and return the dominant garment fabric color visible in the image background behind or around the card.
-5. CODES STARTING WITH "RDI" OR "RSD" ARE ALWAYS "sampleNo": Any reference code starting with "RDI" or "RSD" (e.g. RDI#6823, RSD-260022-1, RSD-250015-2) MUST be extracted into "sampleNo", NEVER into "style".`;
+5. CODES STARTING WITH "RDI" OR "RSD" ARE ALWAYS "sampleNo":
+   - "RDI" numbers are written without dash/hash: e.g. "RDI056", "RDI1069".
+   - "RSD" numbers are written with a hyphen: e.g. "RSD-260022-1", "RSD-250015-2".
+   Any reference code starting with "RDI" or "RSD" MUST be extracted into "sampleNo", NEVER into "style".`;
 
     const payload = {
       contents: [
