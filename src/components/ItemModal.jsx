@@ -37,7 +37,7 @@ const REQUIRED_FIELDS = [
   { key: 'tanggal', label: 'Tanggal Sample' },
   { key: 'buyerNo', label: 'Buyer No' },
   { key: 'jenisSample', label: 'Jenis Sample' },
-  { key: 'style', label: 'Nama / No. Style' },
+  { key: 'style', label: 'Nama / No. Style & Keterangan' },
   { key: 'sampleNo', label: 'Sample No' },
   { key: 'size', label: 'Size' },
   { key: 'color', label: 'Color / Warna' },
@@ -921,12 +921,12 @@ const ItemModalContent = () => {
                 </div>
               </div>
 
-              {/* Nama / No. Style */}
+              {/* Nama / No. Style & Keterangan */}
               <div className={`md:col-span-6 border rounded-lg p-1.5 bg-white transition ${
                 errors.style ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus-within:border-blue-500'
               }`}>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0.5">
-                  Nama / No. Style <span className="text-rose-500">*</span>:
+                  Nama / No. Style &amp; Keterangan <span className="text-rose-500">*</span>:
                 </label>
                 <input
                   type="text"
@@ -936,7 +936,7 @@ const ItemModalContent = () => {
                     setFormData(p => ({ ...p, style: e.target.value.toUpperCase() }));
                     if (errors.style) setErrors(prev => ({ ...prev, style: null }));
                   }}
-                  placeholder="Contoh: WL920FR / 6435 / NA"
+                  placeholder="Contoh: WL920FR / 6435 / POLO SHIRT (STYLE ON HOLD) / NA"
                   className="w-full text-xs font-bold text-slate-900 focus:outline-none bg-transparent uppercase"
                 />
                 <datalist id="style-datalist">

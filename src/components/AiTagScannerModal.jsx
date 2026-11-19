@@ -861,17 +861,17 @@ const AiTagScannerContent = ({
               {/* Grid Preview Nilai Ekstraksi yang Dapat Diedit Cepat */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 
-                {/* Style / Model */}
+                {/* Style / Model & Keterangan */}
                 <div className="bg-white/5 border border-white/10 rounded-xl p-2.5 space-y-1">
                   <span className="text-[10px] uppercase font-semibold text-white/50 tracking-wider">
-                    Nama / No. Style
+                    Nama / No. Style &amp; Keterangan
                   </span>
                   <input
                     type="text"
                     value={extractedData.style || ''}
                     onChange={(e) => setExtractedData((p) => ({ ...p, style: e.target.value.toUpperCase() }))}
                     className="w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-semibold focus:outline-hidden focus:border-[#0071e3]"
-                    placeholder="Contoh: 8210ZBK / POLO SHIRT"
+                    placeholder="Contoh: 8210ZBK / POLO SHIRT (STYLE ON HOLD)"
                   />
                 </div>
 

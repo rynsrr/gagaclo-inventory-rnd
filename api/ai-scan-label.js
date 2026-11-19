@@ -98,8 +98,10 @@ export default async function handler(req, res) {
 Examine this image of a garment sample tag / washing label / handwritten card AND the physical garment fabric in the photo.
 
 Extract the information into a strict JSON object with these EXACT keys:
-- "style": (String) Name or style code of the garment/model (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE", "BLACK 1.2", "POCKET TEE").
-  CRITICAL: Do NOT put RDI or RSD sample numbers here. If a tag writes "RDI056 BLACK 1.2", "sampleNo" is "RDI056" and "style" is "BLACK 1.2". If a tag writes "RSD-260022-1 POLO", "sampleNo" is "RSD-260022-1" and "style" is "POLO".
+- "style": (String) Name, style code, AND any additional notes or descriptions written on the card (e.g. "8210ZBK", "POLO SHIRT", "FLEECE HOODIE - STYLE ON HOLD", "BLACK 1.2", "POCKET TEE OVERSIZED", "CORAL BLOOM 35-299661 - ALINA").
+  CRITICAL INSTRUCTION FOR STYLE & KETERANGAN TAMBAHAN:
+  1. If the card contains additional notes, remarks, descriptions, or variant details (keterangan tambahan), PUT THEM TOGETHER in this "style" field (e.g. "POLO SHIRT STYLE ON HOLD", "8210ZBK (REVISI SAKU)", "CORAL BLOOM 35-299661 - ALINA").
+  2. Do NOT put RDI or RSD sample numbers here (those strictly belong in "sampleNo"). For example, if a tag writes "RDI056 POLO SHIRT STYLE ON HOLD", "sampleNo" is "RDI056" and "style" is "POLO SHIRT STYLE ON HOLD".
 - "sampleNo": (String) Sample number, article number, or reference code.
   CRITICAL INSTRUCTION FOR SAMPLE NUMBER FORMAT (GAGACLO R&D STANDARDS):
   In Gagaclo R&D, Sample Numbers typically follow these two rules:
@@ -130,7 +132,8 @@ RULES:
 5. CODES STARTING WITH "RDI" OR "RSD" ARE ALWAYS "sampleNo":
    - "RDI" numbers are written without dash/hash: e.g. "RDI056", "RDI1069".
    - "RSD" numbers are written with a hyphen: e.g. "RSD-260022-1", "RSD-250015-2".
-   Any reference code starting with "RDI" or "RSD" MUST be extracted into "sampleNo", NEVER into "style".`;
+   Any reference code starting with "RDI" or "RSD" MUST be extracted into "sampleNo", NEVER into "style".
+6. KETERANGAN TAMBAHAN BELONGS IN "style": Any additional remarks, garment descriptions, variant notes, or comments written on the card must be placed inside the "style" field.`;
 
     const payload = {
       contents: [
