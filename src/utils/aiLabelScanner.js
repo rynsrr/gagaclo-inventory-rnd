@@ -219,10 +219,13 @@ Extract the information into a strict JSON object with these EXACT keys:
 - "jenisSample": (String) Sample type (e.g. "PPS", "DEV", "ARCHIVE", "PROTO", "SMS", "FIT"). If "PP sample" is detected, use "PPS". If currently locked context is provided ("${lockedJenisSample}"), use "${lockedJenisSample}".
 - "size": (String) Garment size (e.g. "S", "M", "L", "XL", "XXL", "ONESIZE"). If "One size" or "One size, Black", output "ONESIZE".
 - "color": (String) Color of the item.
-  CRITICAL INSTRUCTION FOR COLOR DETECTION:
-  1. First check if a color is written or printed on the tag/card (e.g. "BLACK", "WHITE", "NAVY", "SAGE", "CHARCOAL", "GREY", "OLIVE"). If written, use that color.
-  2. IF THE COLOR IS NOT WRITTEN ON THE CARD (or written as "-", "NA", blank, or missing):
-     LOOK AT THE PHYSICAL FABRIC / GARMENT VISIBLE IN THE BACKGROUND BEHIND OR SURROUNDING THE SAMPLE CARD! The card is placed on top of or next to the fabric. Detect and output the dominant color of that background fabric/garment (e.g. "BLACK", "NAVY", "WHITE", "HEATHER GREY", "OLIVE", "MAROON", "BEIGE", "BROWN", "ROYAL BLUE", "KHAKI", etc.).
+  CRITICAL INSTRUCTION FOR COLOR DETECTION (ALWAYS EXTRACT FROM FABRIC BEHIND/UNDER CARD IF TEXT IS MISSING):
+  1. Primary check: If a color name is explicitly written or printed on the tag/card (e.g. "BLACK", "WHITE", "NAVY", "SAGE", "CHARCOAL", "GREY", "OLIVE"), use that written color.
+  2. Mandatory fallback (AUTO-DETECT FROM FABRIC): IF THE COLOR IS NOT WRITTEN ON THE CARD (or written as "-", "NA", blank, or missing):
+     LOOK AT THE PHYSICAL FABRIC / GARMENT VISIBLE DIRECTLY BEHIND, UNDERNEATH, ATTACHED TO, OR SURROUNDING THE SAMPLE CARD!
+     In Gagaclo R&D, sample cards are placed or pinned on top of the actual garment/fabric swatch.
+     Detect and output the visual dominant color of that background fabric/garment (e.g. "BLACK", "NAVY", "WHITE", "HEATHER GREY", "OLIVE", "MAROON", "BEIGE", "BROWN", "ROYAL BLUE", "KHAKI", "CHARCOAL", "SAGE", "RED", "YELLOW", "ORANGE", "PURPLE", "PINK", etc.).
+     NEVER return "NA" or "-" if the garment fabric behind or around the card is visible in the photo!
 - "jumlah": (Number) Quantity in pieces. Default to 1 if not explicitly written.
 - "satuan": (String) Must strictly be "PCE".
 - "tanggal": (String) Date from tag in DD-MM-YYYY format (e.g. "Jan/15/2021" -> "15-01-2021"). If missing, output current date format.
@@ -232,7 +235,7 @@ RULES:
 1. ALL text values MUST be UPPERCASE (except null or numbers).
 2. Satuan MUST be "PCE".
 3. Return STRICT JSON ONLY. Do not wrap in markdown or backticks. No commentary.
-4. If color is not explicitly written on the card, ALWAYS identify and return the dominant garment fabric color visible in the image background behind or around the card.
+4. AUTOMATIC FABRIC COLOR FROM BEHIND/AROUND SAMPLE CARD: Whenever color is not explicitly written on the card (or blank / '-'), YOU MUST inspect the physical garment fabric visible behind, beneath, or surrounding the sample card in the photo, and output that exact fabric color.
 5. CODES STARTING WITH "RDI" OR "RSD" ARE ALWAYS "sampleNo":
    - "RDI" numbers are written without dash/hash: e.g. "RDI056", "RDI1069".
    - "RSD" numbers are written with a hyphen: e.g. "RSD-260022-1", "RSD-250015-2".
@@ -434,16 +437,16 @@ export async function scanGarmentTag(imageBase64, contextSettings = {}) {
         localStorage.setItem('gagaclo_winning_gemini_endpoint', base);
       } catch {}
 
-      // Deteksi fallback warna dari teks style jika kolom color tidak terisi
+      // Deteksi fallback warna dari teks style & track jika kolom color tidak terisi
       let detectedColor = String(parsedData.color || '').trim().toUpperCase();
       if (!detectedColor || detectedColor === 'NA' || detectedColor === '-' || detectedColor === 'NONE') {
-        const styleText = String(parsedData.style || '').toUpperCase();
+        const combinedText = `${String(parsedData.style || '')} ${String(parsedData.track || '')}`.toUpperCase();
         const commonColors = [
           'BLACK', 'NAVY', 'WHITE', 'HEATHER GREY', 'GREY', 'GRAY', 'CHARCOAL', 
           'OLIVE', 'MAROON', 'RED', 'BLUE', 'ROYAL BLUE', 'GREEN', 'SAGE', 
           'BEIGE', 'KHAKI', 'BROWN', 'YELLOW', 'ORANGE', 'PURPLE', 'PINK'
         ];
-        const matched = commonColors.find(c => new RegExp(`\\b${c}\\b`, 'i').test(styleText));
+        const matched = commonColors.find(c => new RegExp(`\\b${c}\\b`, 'i').test(combinedText));
         if (matched) detectedColor = matched;
       }
 

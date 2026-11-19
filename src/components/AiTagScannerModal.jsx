@@ -1175,7 +1175,7 @@ const AiTagScannerContent = ({
                       </div>
                       <div className="text-center">
                         <p className="text-xs font-semibold text-white">Gemini Flash AI sedang membaca label...</p>
-                        <p className="text-[11px] text-white/50 mt-0.5">Mengekstrak style, sample no, ukuran, dan tanggal</p>
+                        <p className="text-[11px] text-white/50 mt-0.5">Mengekstrak style, sample no, warna kain, dan ukuran</p>
                       </div>
                     </div>
                   )}
@@ -1234,7 +1234,7 @@ const AiTagScannerContent = ({
               <div className="hidden sm:flex bg-white/[0.02] border border-white/5 rounded-xl p-3 items-center gap-2.5 text-[11px] text-white/50">
                 <Info className="w-4 h-4 text-[#5ac8fa] shrink-0" />
                 <span>
-                  <strong>Tips 400 PCE/hari:</strong> Kunci Buyer (misal: <em>AN05</em>) dan Jenis (misal: <em>PPS</em>). Tekan shutter kamera atau paste gambar &rarr; klik <strong>Simpan Langsung</strong> untuk alokasi otomatis sub-2 detik!
+                  <strong>Tips Auto-Warna:</strong> Jika kartu tidak mencantumkan tulisan warna, pastikan kain garmen di belakang/sekeliling kartu ikut terfoto. Gemini AI otomatis mendeteksi warna kain fisik tersebut.
                 </span>
               </div>
 
