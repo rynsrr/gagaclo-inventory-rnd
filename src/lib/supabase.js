@@ -174,13 +174,16 @@ export function dbItemToLocal(db) {
 
 export function localBoxToDb(box) {
   const bNum = Number(box.boxNumber ?? box.box_number ?? 1);
+  const rId = Number(box.rackId ?? box.rack_id ?? 0);
+  const isLemari = rId === 6 || (bNum >= 73 && bNum <= 82);
+  const resolvedPic = box.picName !== undefined ? box.picName : (box.pic_name !== undefined ? box.pic_name : (isLemari ? '' : 'Royan'));
   return {
     box_number: bNum,
     code: box.code || `BOX-${String(bNum).padStart(2, '0')}`,
-    rack_id: Number(box.rackId ?? box.rack_id ?? 0),
-    rack_name: box.rackName || box.rack_name || (Number(box.rackId ?? box.rack_id) === 0 ? 'LANTAI' : 'RACK 1'),
+    rack_id: rId,
+    rack_name: box.rackName || box.rack_name || (rId === 0 ? 'LANTAI' : 'RACK 1'),
     category: box.category || 'SAMPLE',
-    pic_name: box.picName || box.pic_name || 'Royan',
+    pic_name: resolvedPic ?? '',
     notes: box.notes ?? '',
     is_full: box.isFull === true || box.is_full === true,
     updated_at: new Date().toISOString(),
@@ -215,7 +218,7 @@ export function dbBoxToLocal(db, defaultBoxes = []) {
     location: defaultBox.location || (resolvedRackName === 'LANTAI' ? 'Lantai (tanpa rak)' : (isCarton ? 'Sample warehouse (Lemari Carton)' : '')),
     category: db.category || defaultBox.category || 'SAMPLE',
     boxType: isCarton ? 'CARTON' : (defaultBox.boxType || 'CONTAINER'),
-    picName: db.pic_name || defaultBox.picName || 'Royan',
+    picName: isCarton ? '' : (db.pic_name !== undefined && db.pic_name !== null ? db.pic_name : (defaultBox.picName ?? 'Royan')),
     // Leave ppicId empty when unknown: guessing 'royan' here would make a
     // rename of that person incorrectly reassign unrelated remote boxes.
     ppicId: defaultBox.ppicId || '',

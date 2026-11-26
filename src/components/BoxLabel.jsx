@@ -63,7 +63,7 @@ export const BoxLabel = ({ box, isPrintMode = false }) => {
           style={{ backgroundColor: '#c8d0ff' }}
         >
           <span className="text-2xl sm:text-3xl font-black text-black tracking-tight block">
-            {box.picName}
+            {box.picName || '\u00A0'}
           </span>
         </div>
 

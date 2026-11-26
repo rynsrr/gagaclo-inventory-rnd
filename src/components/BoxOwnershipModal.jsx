@@ -392,8 +392,8 @@ export function BoxOwnershipModal({ isOpen, onClose }) {
                       <div className="mt-3 pt-2.5 border-t border-black/[0.04] flex items-center justify-between text-xs">
                         <span className="text-[11px] text-[#86868b] font-medium">Pemilik Saat Ini:</span>
                         <div className="flex items-center gap-1.5 font-bold text-[#1d1d1f]">
-                          <span className="w-2 h-2 rounded-full bg-[#0071e3]" />
-                          <span>#{box.ppicNumber || (ppic ? ppic.ppicNumber : 0)} {box.picName}</span>
+                          <span className={`w-2 h-2 rounded-full ${box.picName ? 'bg-[#0071e3]' : 'bg-amber-500'}`} />
+                          <span>{box.picName ? `#${box.ppicNumber || (ppic ? ppic.ppicNumber : 0)} ${box.picName}` : 'Campur (Kosong)'}</span>
                         </div>
                       </div>
                     </div>

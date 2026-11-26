@@ -82,7 +82,7 @@ function BoxDetail({ box }) {
   const isSuper = isSuperuser?.(currentUser);
   const isHelperUser = isHelper(currentUser);
   const isRealOwner = currentUser && box.picName && String(currentUser.name).trim().toLowerCase() === String(box.picName).trim().toLowerCase();
-  const isCrossPpic = currentUser && !isRealOwner && !isHelperUser && !isSuper;
+  const isCrossPpic = currentUser && Boolean(box.picName) && !isRealOwner && !isHelperUser && !isSuper;
   const isBoxManager = !currentUser || isSuper || isHelperUser || !box.picName || isRealOwner;
   const isOwner = isBoxManager || isCrossPpic;
 
@@ -638,8 +638,8 @@ function BoxDetail({ box }) {
           <div className="flex items-center space-x-3 flex-wrap gap-y-2">
             <span className="text-[#86868b] font-medium">PPIC</span>
             <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full border border-black/[0.06] shadow-2xs font-semibold text-[#1d1d1f]">
-              <span className="w-2 h-2 rounded-full bg-[#0071e3]"></span>
-              <span>#{box.ppicNumber} {box.picName}</span>
+              <span className={`w-2 h-2 rounded-full ${box.picName ? 'bg-[#0071e3]' : 'bg-amber-500'}`}></span>
+              <span>{box.picName ? `#${box.ppicNumber} ${box.picName}` : 'Campur (Tanpa PIC)'}</span>
             </div>
             {/* Tombol Edit Kepemilikan Box */}
             <button

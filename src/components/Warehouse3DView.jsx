@@ -309,10 +309,10 @@ export const Warehouse3DView = ({
     ctx.fillStyle = '#c8d0ff';
     ctx.fillRect(14, 234, 484, 60);
 
-    // PIC Name text
+    // PIC Name text (kosongkan jika box campur tanpa PIC)
     ctx.fillStyle = '#000000';
     ctx.font = '900 42px system-ui, sans-serif';
-    ctx.fillText(picName, 256, 278);
+    ctx.fillText(picName || '', 256, 278);
 
     // 7. Rack & Location Subtitle
     ctx.fillStyle = '#000000';
@@ -1979,7 +1979,7 @@ export const Warehouse3DView = ({
 
             <div className="mt-2.5 space-y-1 text-white/80">
               <p>📍 <strong>{hoveredBox.rackName}</strong> • {hoveredBox.rackDescription}</p>
-              <p>👤 PIC PPIC: <strong className="text-white font-semibold">{hoveredBox.picName}</strong></p>
+              <p>👤 PIC PPIC: <strong className="text-white font-semibold">{hoveredBox.picName || '- (Campur)'}</strong></p>
               <p>📦 Tersimpan: <strong className="text-[#30d158] font-semibold">{getItemsInBox(hoveredBox.boxNumber).length} item</strong></p>
             </div>
 

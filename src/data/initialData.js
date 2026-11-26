@@ -273,13 +273,7 @@ export const generateInitialBoxes = () => {
   [67, 68].forEach(b => { ppicByBoxNumber[b] = 'Ryan'; });
   [69, 70, 71].forEach(b => { ppicByBoxNumber[b] = 'Hanami'; });
 
-  // Lemari 1 (10 Box Carton Coklat: Box 73 - 82)
-  [73, 74].forEach(b => { ppicByBoxNumber[b] = 'Royan'; });
-  [75, 76].forEach(b => { ppicByBoxNumber[b] = 'Cynara'; });
-  [77, 78].forEach(b => { ppicByBoxNumber[b] = 'Ami'; });
-  [79, 80].forEach(b => { ppicByBoxNumber[b] = 'Ryan'; });
-  [81, 82].forEach(b => { ppicByBoxNumber[b] = 'Hanami'; });
-
+  // Lemari 1 (10 Box Carton Coklat: Box 1A - 1J, internal 73 - 82): PIC dikosongkan karena campur
   const boxes = [];
   for (let boxNum = 1; boxNum <= 82; boxNum++) {
     let rackId = 1;
@@ -291,9 +285,9 @@ export const generateInitialBoxes = () => {
     else if (boxNum >= 73 && boxNum <= 82) rackId = 6;
 
     const rack = RACKS_DATA.find(r => r.id === rackId);
-    const picName = ppicByBoxNumber[boxNum] || 'Royan';
-    const ppicObj = PPIC_MEMBERS.find(p => p.name === picName);
     const isCartonBox = rackId === 6;
+    const picName = isCartonBox ? '' : (ppicByBoxNumber[boxNum] || 'Royan');
+    const ppicObj = isCartonBox ? null : PPIC_MEMBERS.find(p => p.name === picName);
     const displayNumber = isCartonBox ? `1${String.fromCharCode(64 + (boxNum - 72))}` : String(boxNum);
 
     boxes.push({
@@ -307,10 +301,10 @@ export const generateInitialBoxes = () => {
       location: rack.location,
       rackDescription: rack.fullDescription,
       picName: picName,
-      ppicId: ppicObj ? ppicObj.id : 'royan',
-      ppicNumber: ppicObj ? ppicObj.ppicNumber : 1,
+      ppicId: isCartonBox ? '' : (ppicObj ? ppicObj.id : 'royan'),
+      ppicNumber: isCartonBox ? 0 : (ppicObj ? ppicObj.ppicNumber : 1),
       capacityLimit: 20, // default nominal max items
-      notes: isCartonBox ? 'Box Carton Coklat (Lemari 1)' : '',
+      notes: isCartonBox ? 'Box Carton Coklat - Campur (Lemari 1)' : '',
     });
   }
   return boxes;

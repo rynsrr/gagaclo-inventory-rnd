@@ -453,6 +453,9 @@ export const InventoryProvider = ({ children }) => {
                 boxType: 'CARTON',
                 displayNumber: disp,
                 code: (bNum >= 73 && bNum <= 82) ? `BOX-${disp}` : b.code,
+                picName: '',
+                ppicId: '',
+                ppicNumber: 0,
               };
             }
             return b;
@@ -1455,6 +1458,19 @@ export const InventoryProvider = ({ children }) => {
             .upsert(missingRemoteLemari.map(localBoxToDb), { onConflict: 'box_number' })
             .then(() => {})
             .catch(() => {});
+        }
+
+        // Auto-clear PIC pada box Lemari 1 (73-82) di Supabase jika sebelumnya terisi PIC default
+        if (supabase) {
+          const lemariWithPic = userDbBoxes.filter(b => Number(b.box_number) >= 73 && Number(b.box_number) <= 82 && b.pic_name);
+          if (lemariWithPic.length > 0) {
+            supabase
+              .from('boxes')
+              .update({ pic_name: '' })
+              .in('box_number', lemariWithPic.map(b => Number(b.box_number)))
+              .then(() => {})
+              .catch(() => {});
+          }
         }
 
         setBoxes(prev => {
