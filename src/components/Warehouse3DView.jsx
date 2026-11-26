@@ -21,6 +21,8 @@ import {
   ChevronDown,
   X,
   Crosshair,
+  Move,
+  RotateCw,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose: the original five PPIC colors,
@@ -80,6 +82,56 @@ export const Warehouse3DView = ({
   const [cursorFloorCoord, setCursorFloorCoord] = useState(null);
   const [pinnedFloorCoord, setPinnedFloorCoord] = useState(null);
   const lastCursorCoordRef = useRef({ x: null, z: null });
+
+  const LEMARI_POS_KEY = 'gagaclo_lemari1_pos_v1';
+  const [lemariPos, setLemariPos] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LEMARI_POS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Number.isFinite(parsed?.x) && Number.isFinite(parsed?.z)) {
+          return {
+            x: Number(parsed.x),
+            z: Number(parsed.z),
+            rotationY: Number.isFinite(parsed.rotationY) ? Number(parsed.rotationY) : -Math.PI / 2,
+          };
+        }
+      }
+    } catch {}
+    return { x: 13.5, z: -33.5, rotationY: -Math.PI / 2 };
+  });
+  const lemariPosRef = useRef(lemariPos);
+  const [isMovingLemari, setIsMovingLemari] = useState(false);
+  const isMovingLemariRef = useRef(false);
+  const lemariGroupRef = useRef(null);
+  const lemariSpriteRef = useRef(null);
+  const lemariConfRef = useRef(null);
+
+  const applyLemariTransform = (nextPos) => {
+    lemariPosRef.current = nextPos;
+    setLemariPos(nextPos);
+    try {
+      localStorage.setItem(LEMARI_POS_KEY, JSON.stringify(nextPos));
+    } catch {}
+    if (lemariGroupRef.current) {
+      lemariGroupRef.current.position.set(nextPos.x, 0, nextPos.z);
+      lemariGroupRef.current.rotation.y = nextPos.rotationY;
+    }
+    if (lemariSpriteRef.current) {
+      lemariSpriteRef.current.position.x = nextPos.x;
+      lemariSpriteRef.current.position.z = nextPos.z;
+    }
+    if (lemariConfRef.current) {
+      lemariConfRef.current.x = nextPos.x;
+      lemariConfRef.current.z = nextPos.z;
+      lemariConfRef.current.rotationY = nextPos.rotationY;
+    }
+  };
+
+  useEffect(() => {
+    isMovingLemariRef.current = isMovingLemari;
+  }, [isMovingLemari]);
+
   useEffect(() => {
     showFloorCoordsRef.current = showFloorCoords;
     if (floorCoordsGroupRef.current) {
@@ -418,7 +470,16 @@ export const Warehouse3DView = ({
       3: { x: -22.5, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
       4: { x: -14.0, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
       5: { x: -5.5,  z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
-      6: { x: 13.5, z: -33.5, rotationY: -Math.PI / 2, cols: 2, rows: 5, beamColor: 0x6b4f3b, isCabinet: true, shelfHeight: 1.32 },
+      6: {
+        x: lemariPosRef.current.x,
+        z: lemariPosRef.current.z,
+        rotationY: lemariPosRef.current.rotationY,
+        cols: 2,
+        rows: 5,
+        beamColor: 0x6b4f3b,
+        isCabinet: true,
+        shelfHeight: 1.32,
+      },
     };
     let nextExtraX = 22;
     const rackPositions = racks
@@ -589,6 +650,10 @@ export const Warehouse3DView = ({
       rackGroup.position.set(rx, 0, rz);
       rackGroup.rotation.y = rotationY;
       scene.add(rackGroup);
+      if (Number(rackConf.rackId) === 6) {
+        lemariGroupRef.current = rackGroup;
+        lemariConfRef.current = rackConf;
+      }
 
       const halfW = rackWidth / 2;
       const halfD = rackDepth / 2;
@@ -835,6 +900,9 @@ export const Warehouse3DView = ({
       rackSprite.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
       scene.add(rackSprite);
       interactiveRackMeshes.push(rackSprite);
+      if (Number(rackConf.rackId) === 6) {
+        lemariSpriteRef.current = rackSprite;
+      }
 
       // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
       const sortedRackBoxes = [...rackBoxes].sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
@@ -1151,6 +1219,18 @@ export const Warehouse3DView = ({
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
+
+      // Mode Pindah Lemari: klik titik mana saja di lantai langsung memindahkan Lemari 1 ke titik kursor!
+      if (isMovingLemariRef.current && raycaster.ray.intersectPlane(floorHitPlane, floorHitPoint)) {
+        if (isPointInsideFloor(floorHitPoint.x, floorHitPoint.z)) {
+          const nx = Math.round(floorHitPoint.x * 2) / 2;
+          const nz = Math.round(floorHitPoint.z * 2) / 2;
+          applyLemariTransform({ ...lemariPosRef.current, x: nx, z: nz });
+          setPinnedFloorCoord({ x: nx, z: nz });
+          return;
+        }
+      }
+
       const allClickable = [...boxMeshesRef.current, ...interactiveRackMeshesRef.current];
       const intersects = raycaster.intersectObjects(allClickable);
 
@@ -1717,8 +1797,41 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls (Top Right): Koordinat Lantai + Fit View Default (Apple Floating Pills) */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2 font-apple">
+        {/* Controls (Top Right): Pindah Lemari + Koordinat Lantai + Fit View Default (Apple Floating Pills) */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex flex-wrap items-center justify-end gap-2 font-apple">
+          <button
+            type="button"
+            onClick={() => {
+              setIsMovingLemari((prev) => {
+                const next = !prev;
+                if (next) setShowFloorCoords(true);
+                return next;
+              });
+            }}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md backdrop-blur-2xl border cursor-pointer active:scale-95 ${
+              isMovingLemari
+                ? 'bg-[#0071e3] text-white border-[#0071e3] ring-2 ring-[#0071e3]/30'
+                : 'bg-white/85 text-[#1d1d1f] hover:bg-white border-black/[0.08]'
+            }`}
+            title="Aktifkan mode pindah lemari lalu klik titik lantai tujuan"
+          >
+            <Move className={`h-3.5 w-3.5 ${isMovingLemari ? 'text-white' : 'text-[#0071e3]'}`} />
+            <span>{isMovingLemari ? 'Selesai Pindah' : 'Pindah Lemari'}</span>
+          </button>
+          {isMovingLemari && (
+            <button
+              type="button"
+              onClick={() => {
+                const nextRot = (lemariPosRef.current.rotationY + Math.PI / 2) % (Math.PI * 2);
+                applyLemariTransform({ ...lemariPosRef.current, rotationY: nextRot });
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md backdrop-blur-2xl border border-amber-400/50 bg-amber-500 text-white hover:bg-amber-600 cursor-pointer active:scale-95"
+              title="Putar arah hadap Lemari 1 sebesar 90 derajat"
+            >
+              <RotateCw className="h-3.5 w-3.5" />
+              <span>Putar 90°</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowFloorCoords((prev) => !prev)}
@@ -1749,6 +1862,12 @@ export const Warehouse3DView = ({
         {/* Live Floor Coordinate Readout Pill (Bottom Left) */}
         {showFloorCoords && (
           <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-10 bg-white/92 backdrop-blur-2xl px-3.5 py-2 rounded-[16px] border border-black/[0.08] shadow-lg font-apple text-[11px] text-[#1d1d1f] flex flex-col gap-1 max-w-[90vw]">
+            {isMovingLemari && (
+              <div className="text-[11px] font-bold text-[#0071e3] flex items-center gap-1.5 pb-1 border-b border-black/[0.06]">
+                <Move className="w-3.5 h-3.5 animate-pulse" />
+                <span>Klik titik mana saja di lantai untuk memindahkan Lemari 1 ke kursor</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1 font-bold text-[#0071e3]">
                 <Crosshair className="w-3.5 h-3.5" />
@@ -1756,7 +1875,7 @@ export const Warehouse3DView = ({
               </span>
               <span className="text-black/20">•</span>
               <span className="font-mono font-semibold text-[#92400e] bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300/70">
-                Lemari 1: X 13.5, Z -33.5
+                Lemari 1: X {lemariPos.x}, Z {lemariPos.z}
               </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap text-[#1d1d1f]">
@@ -1771,6 +1890,15 @@ export const Warehouse3DView = ({
                   <span className="font-mono font-bold text-[#0071e3] bg-[#0071e3]/10 px-2 py-0.5 rounded-md border border-[#0071e3]/25">
                     Titik Klik: X {pinnedFloorCoord.x}, Z {pinnedFloorCoord.z}
                   </span>
+                  {!isMovingLemari && (
+                    <button
+                      type="button"
+                      onClick={() => applyLemariTransform({ ...lemariPosRef.current, x: pinnedFloorCoord.x, z: pinnedFloorCoord.z })}
+                      className="px-2 py-0.5 rounded-md bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-[10px] transition cursor-pointer active:scale-95"
+                    >
+                      Pindah Lemari ke Sini
+                    </button>
+                  )}
                 </>
               )}
             </div>
