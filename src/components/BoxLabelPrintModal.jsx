@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { X, Printer, CheckSquare, Square, Search, Trash2, Check } from 'lucide-react';
 import { BoxLabel } from './BoxLabel';
 import { useInventory } from '../context/InventoryContext';
-import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
+import { getBoxDisplayNumber, formatPicToPpicLabel } from '../utils/boxDisplayUtils';
 
 export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null }) => {
   const { boxes, racks, ppicMembers } = useInventory();
@@ -107,7 +107,8 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
       const headerTitle = box.category === 'MATERIAL' ? 'MATERIAL BOX' : 'SAMPLE BOX';
       const displayNum = getBoxDisplayNumber(box);
       const isLongNum = displayNum.length >= 3;
-      const picText = box.picName ? escapeHtml(box.picName) : '&nbsp;';
+      const picLabel = formatPicToPpicLabel(box);
+      const picText = picLabel ? escapeHtml(picLabel) : '&nbsp;';
       const locText = escapeHtml(`${box.rackName || ''}  |  ${box.rackDescription || box.location || ''}`);
       return `
         <div class="a5-slot">

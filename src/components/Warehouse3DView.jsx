@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildLowPolyForestScene } from './lowPolyForestScene';
 import { useInventory } from '../context/InventoryContext';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
-import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
+import { getBoxDisplayNumber, formatPicToPpicLabel } from '../utils/boxDisplayUtils';
 import { 
   RotateCcw, 
   ZoomIn, 
@@ -364,11 +364,11 @@ export const Warehouse3DView = ({
     ctx.fillStyle = '#ccd7ff';
     ctx.fillRect(insetX, barY, insetW, barH);
 
-    // PIC Name text (clean regular Arial matching PDF; blank for Lemari mixed boxes)
+    // PIC Name text (format PPIC 1 - PPIC 5; kosongkan jika box campur tanpa PIC)
     ctx.fillStyle = '#000000';
     ctx.font = '40px Arial, Helvetica, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(picName || '', 256, barY + 40);
+    ctx.fillText(formatPicToPpicLabel(picName), 256, barY + 40);
 
     // 5. Rack / Lemari & Location Subtitle (regular Arial)
     ctx.fillStyle = '#000000';

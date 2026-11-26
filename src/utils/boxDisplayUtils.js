@@ -15,6 +15,36 @@ export const BOXES_PER_LEMARI = 10;
 export const LEMARI_BOX_START = 73;
 export const LEMARI_BOX_END = LEMARI_BOX_START + LEMARI_COUNT * BOXES_PER_LEMARI - 1; // 192
 
+const PPIC_NAME_TO_LABEL = {
+  royan: 'PPIC 1',
+  cynara: 'PPIC 2',
+  ami: 'PPIC 3',
+  ryan: 'PPIC 4',
+  hanami: 'PPIC 5',
+};
+
+/**
+ * Mengonversi nama personal PIC (Royan, Cynara, Ami, Ryan, Hanami)
+ * menjadi label standar PPIC 1 - PPIC 5 untuk ditampilkan pada label box & kartu sampel.
+ * Jika kosong (seperti box campur pada Lemari 1 - 12), mengembalikan string kosong.
+ */
+export function formatPicToPpicLabel(picNameOrBox) {
+  let rawName = '';
+  let ppicNum = 0;
+  if (picNameOrBox && typeof picNameOrBox === 'object') {
+    rawName = String(picNameOrBox.picName ?? picNameOrBox.pic_name ?? '').trim();
+    ppicNum = Number(picNameOrBox.ppicNumber ?? 0);
+  } else {
+    rawName = String(picNameOrBox ?? '').trim();
+  }
+  if (!rawName || rawName === '-' || rawName.toUpperCase() === 'NA') return '';
+  const mapped = PPIC_NAME_TO_LABEL[rawName.toLowerCase()];
+  if (mapped) return mapped;
+  if (/^PPIC\s*\d+$/i.test(rawName)) return rawName.toUpperCase();
+  if (ppicNum >= 1 && ppicNum <= 5) return `PPIC ${ppicNum}`;
+  return rawName;
+}
+
 export function isLemariBoxNumber(num) {
   const n = Number(num);
   return Number.isFinite(n) && n >= LEMARI_BOX_START && n <= LEMARI_BOX_END;

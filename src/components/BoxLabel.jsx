@@ -1,5 +1,5 @@
 import React from 'react';
-import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
+import { getBoxDisplayNumber, formatPicToPpicLabel } from '../utils/boxDisplayUtils';
 
 /**
  * Exact replica of the official GAGACLO Box Label (A5 landscape):
@@ -73,7 +73,7 @@ export const BoxLabel = ({ box, isPrintMode = false, fitA4Sheet = false }) => {
             style={{ backgroundColor: '#ccd7ff' }}
           >
             <span className="text-xl sm:text-[30px] print:text-[38pt] font-normal text-black leading-tight block">
-              {box.picName || '\u00A0'}
+              {formatPicToPpicLabel(box) || '\u00A0'}
             </span>
           </div>
 

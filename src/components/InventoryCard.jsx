@@ -1,5 +1,5 @@
 import React from 'react';
-import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
+import { getBoxDisplayNumber, formatPicToPpicLabel } from '../utils/boxDisplayUtils';
 
 /**
  * Standard KTP Size (ID-1 / ISO 7810: 85.6mm × 54mm)
@@ -29,20 +29,26 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
     ? (isPrintMode ? 'NA' : '-')
     : jumlahRaw;
   const satuan = naOr(item.satuan || item.unit);
-  const formatPlaceWithoutPic = () => {
+  const formatPlaceWithPpic = () => {
     const rawPlace = String(item.place || '').trim();
+    const ppicLabel = formatPicToPpicLabel(item.picName);
     if (rawPlace && rawPlace !== '-') {
-      // Hapus nama PIC di dalam kurung, misal: "BOX 56 (RACK 4 - AMI)" -> "BOX 56 (RACK 4)"
-      return rawPlace.replace(/\s*-\s*[^)]+\)/g, ')').trim();
+      // Ganti nama orang di dalam kurung menjadi PPIC 1 - PPIC 5 (misal: "BOX 56 (RACK 4 - AMI)" -> "BOX 56 (RACK 4 - PPIC 3)")
+      return rawPlace.replace(/\s*-\s*([^)]+)\)/g, (_match, rawName) => {
+        const mapped = formatPicToPpicLabel(rawName);
+        return mapped ? ` - ${mapped})` : ')';
+      }).trim();
     }
     if (item.boxNumber) {
       const boxDisp = getBoxDisplayNumber(item.boxNumber);
       const rName = String(item.rackName || '').trim();
-      return rName ? `BOX ${boxDisp} (${rName})` : `BOX ${boxDisp}`;
+      if (rName && ppicLabel) return `BOX ${boxDisp} (${rName} - ${ppicLabel})`;
+      if (rName) return `BOX ${boxDisp} (${rName})`;
+      return `BOX ${boxDisp}`;
     }
     return isPrintMode ? 'NA' : '-';
   };
-  const place = formatPlaceWithoutPic();
+  const place = formatPlaceWithPpic();
   const styleDisplay = naOr(item.style);
   const sampleNoDisplay = naOr(item.sampleNo);
   const sizeDisplay = naOr(item.size);
