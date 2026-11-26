@@ -31,7 +31,7 @@ export const QuickScannerModal = () => {
     if (resolvedNum !== null) {
       handleSelectBox(resolvedNum);
     } else {
-      alert('Masukkan nomor box valid (contoh: 1 - 72 atau 1A - 1J untuk Lemari 1).');
+      alert('Masukkan nomor box valid (contoh: 1 - 72 atau 1A - 12J untuk Lemari 1 - 12).');
     }
   };
 
@@ -59,7 +59,7 @@ export const QuickScannerModal = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0071e3]/10 text-[#0071e3]">
               <QrCode className="w-4 h-4" />
             </div>
-            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Lompat Cepat ke Box (1 - 72 &amp; 1A - 1J)</h3>
+            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Lompat Cepat ke Box (1 - 72 &amp; 1A - 12J)</h3>
           </div>
           <button
             onClick={() => setQuickScannerOpen(false)}

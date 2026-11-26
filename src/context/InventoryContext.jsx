@@ -245,15 +245,17 @@ export const InventoryProvider = ({ children }) => {
             if ([3, 4, 5].includes(Number(r.id)) && r.category === 'MATERIAL') {
               return { ...r, category: 'SAMPLE' };
             }
-            if (Number(r.id) === 6) {
-              return { ...r, boxRange: 'BOX 1A - 1J' };
+            if (Number(r.id) >= 6 && Number(r.id) <= 17) {
+              const lemariNum = Number(r.id) - 5;
+              return { ...r, boxRange: `BOX ${lemariNum}A - ${lemariNum}J` };
             }
             return r;
           });
-          // Auto-migration: pastikan LEMARI 1 (id: 6) selalu tersedia di daftar penyimpanan
-          const lemariDefault = RACKS_DATA.find(r => Number(r.id) === 6);
-          if (lemariDefault && !migrated.some(r => Number(r.id) === 6)) {
-            migrated.push(lemariDefault);
+          // Auto-migration: pastikan LEMARI 1 - 12 (id: 6 - 17) selalu tersedia di daftar penyimpanan
+          const existingRackIds = new Set(migrated.map(r => Number(r.id)));
+          const missingLemaris = RACKS_DATA.filter(r => Number(r.id) >= 6 && Number(r.id) <= 17 && !existingRackIds.has(Number(r.id)));
+          if (missingLemaris.length > 0) {
+            migrated.push(...missingLemaris);
           }
           return migrated;
         }
@@ -445,14 +447,16 @@ export const InventoryProvider = ({ children }) => {
             if (Number(b.boxNumber) >= 1 && Number(b.boxNumber) <= 72 && b.category === 'MATERIAL') {
               return { ...b, category: 'SAMPLE' };
             }
-            if (Number(b.rackId) === 6 || String(b.rackName || '').toUpperCase().includes('LEMARI')) {
+            if ((Number(b.rackId) >= 6 && Number(b.rackId) <= 17) || (Number(b.boxNumber) >= 73 && Number(b.boxNumber) <= 192) || String(b.rackName || '').toUpperCase().includes('LEMARI')) {
               const bNum = Number(b.boxNumber);
-              const disp = (bNum >= 73 && bNum <= 82) ? `1${String.fromCharCode(64 + (bNum - 72))}` : (b.displayNumber || String(bNum));
+              const isLemariNum = bNum >= 73 && bNum <= 192;
+              const lemariNum = isLemariNum ? Math.floor((bNum - 73) / 10) + 1 : 1;
+              const disp = isLemariNum ? `${lemariNum}${String.fromCharCode(65 + ((bNum - 73) % 10))}` : (b.displayNumber || String(bNum));
               return {
                 ...b,
                 boxType: 'CARTON',
                 displayNumber: disp,
-                code: (bNum >= 73 && bNum <= 82) ? `BOX-${disp}` : b.code,
+                code: isLemariNum ? `BOX-${disp}` : b.code,
                 picName: '',
                 ppicId: '',
                 ppicNumber: 0,
@@ -460,8 +464,8 @@ export const InventoryProvider = ({ children }) => {
             }
             return b;
           });
-          // Auto-migration: pastikan 10 box carton coklat di LEMARI 1 (Box 73 - 82) otomatis ditambahkan jika belum ada
-          const defaultLemariBoxes = generateInitialBoxes().filter(b => Number(b.rackId) === 6);
+          // Auto-migration: pastikan 120 box carton coklat di LEMARI 1 - 12 (Box 73 - 192 / 1A - 12J) otomatis ditambahkan jika belum ada
+          const defaultLemariBoxes = generateInitialBoxes().filter(b => Number(b.rackId) >= 6 && Number(b.rackId) <= 17);
           const existingNums = new Set(cleaned.map(b => Number(b.boxNumber)));
           const missingLemari = defaultLemariBoxes.filter(b => !existingNums.has(Number(b.boxNumber)));
           if (missingLemari.length > 0) {
@@ -1447,7 +1451,7 @@ export const InventoryProvider = ({ children }) => {
           String(b.pic_name || '').trim().toLowerCase() !== 'anzo'
         ));
 
-        const defaultLemariBoxes = generateInitialBoxes().filter(b => Number(b.rackId) === 6);
+        const defaultLemariBoxes = generateInitialBoxes().filter(b => Number(b.rackId) >= 6 && Number(b.rackId) <= 17);
         const lemariBoxNums = new Set(defaultLemariBoxes.map(b => Number(b.boxNumber)));
         const validRemoteBoxNums = new Set(userDbBoxes.map(b => Number(b.box_number)));
         const missingRemoteLemari = defaultLemariBoxes.filter(b => !validRemoteBoxNums.has(Number(b.boxNumber)));
@@ -1460,9 +1464,9 @@ export const InventoryProvider = ({ children }) => {
             .catch(() => {});
         }
 
-        // Auto-clear PIC pada box Lemari 1 (73-82) di Supabase jika sebelumnya terisi PIC default
+        // Auto-clear PIC pada box Lemari 1 - 12 (73-192) di Supabase jika sebelumnya terisi PIC default
         if (supabase) {
-          const lemariWithPic = userDbBoxes.filter(b => Number(b.box_number) >= 73 && Number(b.box_number) <= 82 && b.pic_name);
+          const lemariWithPic = userDbBoxes.filter(b => Number(b.box_number) >= 73 && Number(b.box_number) <= 192 && b.pic_name);
           if (lemariWithPic.length > 0) {
             supabase
               .from('boxes')

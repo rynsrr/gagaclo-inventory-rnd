@@ -1,17 +1,30 @@
 /**
  * Utility untuk penomoran tampilan box penyimpanan.
  * - Rak 1 - 5: boxNumber 1 s/d 72 ditampilkan sebagai "1" s/d "72".
- * - Lemari 1: boxNumber internal 73 s/d 82 ditampilkan sebagai "1A", "1B", ..., "1J" (10 box carton coklat).
- * - Lemari 2 (jika ditambahkan): "2A", "2B", dst.
+ * - Lemari 1 - 12 (rackId 6 s/d 17): boxNumber internal 73 s/d 192 ditampilkan sebagai:
+ *   Lemari 1  -> "1A" s/d "1J"   (73 - 82)
+ *   Lemari 2  -> "2A" s/d "2J"   (83 - 92)
+ *   ...
+ *   Lemari 12 -> "12A" s/d "12J" (183 - 192)
  *
  * Secara internal boxNumber tetap integer agar 100% kompatibel dengan skema
  * kolom integer box_number pada tabel Supabase (boxes & items).
  */
+export const LEMARI_COUNT = 12;
+export const BOXES_PER_LEMARI = 10;
+export const LEMARI_BOX_START = 73;
+export const LEMARI_BOX_END = LEMARI_BOX_START + LEMARI_COUNT * BOXES_PER_LEMARI - 1; // 192
+
+export function isLemariBoxNumber(num) {
+  const n = Number(num);
+  return Number.isFinite(n) && n >= LEMARI_BOX_START && n <= LEMARI_BOX_END;
+}
+
 export function getBoxDisplayNumber(boxOrNumber) {
   if (boxOrNumber && typeof boxOrNumber === 'object') {
     const num = Number(boxOrNumber.boxNumber ?? boxOrNumber.box_number);
-    if (num >= 73 && num <= 82) {
-      return `1${String.fromCharCode(64 + (num - 72))}`;
+    if (isLemariBoxNumber(num)) {
+      return formatNumericBoxNumber(num);
     }
     if (boxOrNumber.displayNumber) {
       return String(boxOrNumber.displayNumber).toUpperCase();
@@ -23,15 +36,18 @@ export function getBoxDisplayNumber(boxOrNumber) {
 
 function formatNumericBoxNumber(num) {
   if (!Number.isFinite(num) || num <= 0) return String(num || '');
-  // Lemari 1: 10 box carton coklat (internal 73..82 -> 1A..1J)
-  if (num >= 73 && num <= 82) {
-    return `1${String.fromCharCode(64 + (num - 72))}`;
+  // Lemari 1 - 12: 120 box carton coklat (internal 73..192 -> 1A..12J)
+  if (num >= LEMARI_BOX_START && num <= LEMARI_BOX_END) {
+    const offset = num - LEMARI_BOX_START;
+    const lemariIndex = Math.floor(offset / BOXES_PER_LEMARI) + 1; // 1..12
+    const boxInLemari = offset % BOXES_PER_LEMARI; // 0..9 -> A..J
+    return `${lemariIndex}${String.fromCharCode(65 + boxInLemari)}`;
   }
   return String(num);
 }
 
 /**
- * Mengubah input user (seperti "1A", "1b", "BOX 1J", "16") menjadi internal boxNumber (integer).
+ * Mengubah input user (seperti "1A", "2b", "12J", "BOX 5C", "16") menjadi internal boxNumber (integer).
  * Mengembalikan null jika tidak ditemukan.
  */
 export function parseBoxInputToNumber(rawInput, boxes = []) {
@@ -48,11 +64,14 @@ export function parseBoxInputToNumber(rawInput, boxes = []) {
     if (matched) return Number(matched.boxNumber);
   }
 
-  // 2. Pola Lemari 1 langsung (1A - 1J)
-  const lemari1Match = clean.match(/^1([A-J])$/i);
-  if (lemari1Match) {
-    const letterIdx = lemari1Match[1].toUpperCase().charCodeAt(0) - 64; // A=1..J=10
-    if (letterIdx >= 1 && letterIdx <= 10) return 72 + letterIdx;
+  // 2. Pola Lemari 1 - 12 langsung (1A - 12J)
+  const lemariMatch = clean.match(/^(\d+)([A-J])$/i);
+  if (lemariMatch) {
+    const lemariIdx = parseInt(lemariMatch[1], 10);
+    const letterIdx = lemariMatch[2].toUpperCase().charCodeAt(0) - 65; // A=0..J=9
+    if (lemariIdx >= 1 && lemariIdx <= LEMARI_COUNT && letterIdx >= 0 && letterIdx < BOXES_PER_LEMARI) {
+      return LEMARI_BOX_START + (lemariIdx - 1) * BOXES_PER_LEMARI + letterIdx;
+    }
   }
 
   // 3. Angka biasa

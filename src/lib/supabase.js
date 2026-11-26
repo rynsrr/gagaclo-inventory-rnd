@@ -175,7 +175,7 @@ export function dbItemToLocal(db) {
 export function localBoxToDb(box) {
   const bNum = Number(box.boxNumber ?? box.box_number ?? 1);
   const rId = Number(box.rackId ?? box.rack_id ?? 0);
-  const isLemari = rId === 6 || (bNum >= 73 && bNum <= 82);
+  const isLemari = (rId >= 6 && rId <= 17) || (bNum >= 73 && bNum <= 192);
   const resolvedPic = box.picName !== undefined ? box.picName : (box.pic_name !== undefined ? box.pic_name : (isLemari ? '' : 'Royan'));
   return {
     box_number: bNum,
@@ -193,17 +193,20 @@ export function localBoxToDb(box) {
 export function dbBoxToLocal(db, defaultBoxes = []) {
   const bNum = Number(db.box_number);
   const defaultBox = defaultBoxes.find(b => Number(b.boxNumber) === bNum) || {};
-  const resolvedRackId = Number(db.rack_id ?? defaultBox.rackId ?? (db.rack_name === 'LANTAI' ? 0 : 1));
-  const resolvedRackName = db.rack_name || defaultBox.rackName || 'LANTAI';
+  const isLemariNum = bNum >= 73 && bNum <= 192;
+  const lemariNum = isLemariNum ? Math.floor((bNum - 73) / 10) + 1 : 0;
+  const resolvedRackId = Number(db.rack_id ?? defaultBox.rackId ?? (isLemariNum ? 5 + lemariNum : (db.rack_name === 'LANTAI' ? 0 : 1)));
+  const resolvedRackName = db.rack_name || defaultBox.rackName || (isLemariNum ? `LEMARI ${lemariNum}` : 'LANTAI');
   const isCarton =
     defaultBox.boxType === 'CARTON' ||
-    resolvedRackId === 6 ||
+    isLemariNum ||
+    (resolvedRackId >= 6 && resolvedRackId <= 17) ||
     String(resolvedRackName).toUpperCase().includes('LEMARI') ||
     String(db.code || '').toUpperCase().startsWith('CARTON');
-  const displayNumber = (bNum >= 73 && bNum <= 82)
-    ? `1${String.fromCharCode(64 + (bNum - 72))}`
+  const displayNumber = isLemariNum
+    ? `${lemariNum}${String.fromCharCode(65 + ((bNum - 73) % 10))}`
     : (defaultBox.displayNumber || String(bNum));
-  const normalizedCode = (bNum >= 73 && bNum <= 82)
+  const normalizedCode = isLemariNum
     ? `BOX-${displayNumber}`
     : (db.code || defaultBox.code);
   return {
@@ -214,15 +217,15 @@ export function dbBoxToLocal(db, defaultBoxes = []) {
     // Use ?? so rackId 0 (LANTAI / floor) is preserved instead of falling back to 1
     rackId: resolvedRackId,
     rackName: resolvedRackName,
-    rackDescription: defaultBox.rackDescription || (resolvedRackName === 'LANTAI' ? 'Lantai (tanpa rak)' : (isCarton ? 'Lemari penyimpanan, 10 box carton coklat' : '')),
+    rackDescription: defaultBox.rackDescription || (resolvedRackName === 'LANTAI' ? 'Lantai (tanpa rak)' : (isCarton ? `Lemari ${lemariNum || 1}, 10 box carton coklat` : '')),
     location: defaultBox.location || (resolvedRackName === 'LANTAI' ? 'Lantai (tanpa rak)' : (isCarton ? 'Sample warehouse (Lemari Carton)' : '')),
     category: db.category || defaultBox.category || 'SAMPLE',
     boxType: isCarton ? 'CARTON' : (defaultBox.boxType || 'CONTAINER'),
     picName: isCarton ? '' : (db.pic_name !== undefined && db.pic_name !== null ? db.pic_name : (defaultBox.picName ?? 'Royan')),
     // Leave ppicId empty when unknown: guessing 'royan' here would make a
     // rename of that person incorrectly reassign unrelated remote boxes.
-    ppicId: defaultBox.ppicId || '',
-    ppicNumber: defaultBox.ppicNumber ?? 0,
+    ppicId: isCarton ? '' : (defaultBox.ppicId || ''),
+    ppicNumber: isCarton ? 0 : (defaultBox.ppicNumber ?? 0),
     capacityLimit: defaultBox.capacityLimit ?? 20,
     notes: db.notes ?? defaultBox.notes ?? '',
     isFull: db.is_full === true,

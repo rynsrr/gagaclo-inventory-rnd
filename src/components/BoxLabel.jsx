@@ -22,7 +22,7 @@ import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 export const BoxLabel = ({ box, isPrintMode = false }) => {
   if (!box) return null;
 
-  const isCarton = box.boxType === 'CARTON' || Number(box.rackId) === 6 || String(box.rackName || '').toUpperCase().includes('LEMARI');
+  const isCarton = box.boxType === 'CARTON' || Number(box.rackId) >= 6 || String(box.rackName || '').toUpperCase().includes('LEMARI');
   const headerTitle = isCarton ? 'CARTON BOX' : (box.category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX');
   const displayNum = getBoxDisplayNumber(box);
 

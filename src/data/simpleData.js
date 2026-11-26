@@ -149,31 +149,29 @@ export const RACK_GROUPS = [
       label: `BOX ${b.boxNumber} - PIC: ${b.pic}`
     }))
   },
-  {
-    id: 6,
-    name: 'LEMARI 1 (CARTON COKLAT)',
-    detail: 'Lemari penyimpanan, 10 box carton coklat',
-    range: 'Box 1A s/d 1J',
-    category: 'SAMPLE',
-    boxes: [
-      { boxNumber: 73, displayNumber: '1A', pic: '' },
-      { boxNumber: 74, displayNumber: '1B', pic: '' },
-      { boxNumber: 75, displayNumber: '1C', pic: '' },
-      { boxNumber: 76, displayNumber: '1D', pic: '' },
-      { boxNumber: 77, displayNumber: '1E', pic: '' },
-      { boxNumber: 78, displayNumber: '1F', pic: '' },
-      { boxNumber: 79, displayNumber: '1G', pic: '' },
-      { boxNumber: 80, displayNumber: '1H', pic: '' },
-      { boxNumber: 81, displayNumber: '1I', pic: '' },
-      { boxNumber: 82, displayNumber: '1J', pic: '' },
-    ].map(b => ({
-      ...b,
-      rack: 'LEMARI 1',
+  ...Array.from({ length: 12 }, (_, lIdx) => {
+    const lemariNum = lIdx + 1;
+    const startBox = 73 + lIdx * 10;
+    return {
+      id: 5 + lemariNum,
+      name: `LEMARI ${lemariNum} (CARTON COKLAT)`,
+      detail: `Lemari ${lemariNum}, 10 box carton coklat`,
+      range: `Box ${lemariNum}A s/d ${lemariNum}J`,
       category: 'SAMPLE',
-      value: `BOX ${b.displayNumber} (LEMARI 1)`,
-      label: `BOX ${b.displayNumber} (Carton Coklat - Campur)`
-    }))
-  }
+      boxes: Array.from({ length: 10 }, (_, bIdx) => {
+        const displayNumber = `${lemariNum}${String.fromCharCode(65 + bIdx)}`;
+        return {
+          boxNumber: startBox + bIdx,
+          displayNumber,
+          pic: '',
+          rack: `LEMARI ${lemariNum}`,
+          category: 'SAMPLE',
+          value: `BOX ${displayNumber} (LEMARI ${lemariNum})`,
+          label: `BOX ${displayNumber} (Carton Coklat - Campur)`,
+        };
+      }),
+    };
+  }),
 ];
 
 // Flat array of all 72 box values

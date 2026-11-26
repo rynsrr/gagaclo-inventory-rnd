@@ -72,20 +72,25 @@ export const RACKS_DATA = [
     badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300',
     accentColor: 'indigo',
   },
-  {
-    id: 6,
-    name: 'LEMARI 1',
-    category: 'SAMPLE',
-    rackType: 'Lemari',
-    location: 'Sample warehouse (Lemari Carton)',
-    fullDescription: 'Lemari penyimpanan, 10 box carton coklat',
-    boxRange: 'BOX 1A - 1J',
-    boxStart: 73,
-    boxEnd: 82,
-    totalBoxes: 10,
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
-    accentColor: 'amber',
-  },
+  ...Array.from({ length: 12 }, (_, idx) => {
+    const lemariNum = idx + 1;
+    const boxStart = 73 + idx * 10;
+    const boxEnd = boxStart + 9;
+    return {
+      id: 5 + lemariNum, // 6..17
+      name: `LEMARI ${lemariNum}`,
+      category: 'SAMPLE',
+      rackType: 'Lemari',
+      location: 'Sample warehouse (Lemari Carton)',
+      fullDescription: `Lemari ${lemariNum}, 10 box carton coklat`,
+      boxRange: `BOX ${lemariNum}A - ${lemariNum}J`,
+      boxStart,
+      boxEnd,
+      totalBoxes: 10,
+      badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+      accentColor: 'amber',
+    };
+  }),
 ];
 
 export const PPIC_MEMBERS = [
@@ -273,22 +278,26 @@ export const generateInitialBoxes = () => {
   [67, 68].forEach(b => { ppicByBoxNumber[b] = 'Ryan'; });
   [69, 70, 71].forEach(b => { ppicByBoxNumber[b] = 'Hanami'; });
 
-  // Lemari 1 (10 Box Carton Coklat: Box 1A - 1J, internal 73 - 82): PIC dikosongkan karena campur
+  // Lemari 1 - 12 (120 Box Carton Coklat: Box 1A - 12J, internal 73 - 192): PIC dikosongkan karena campur
   const boxes = [];
-  for (let boxNum = 1; boxNum <= 82; boxNum++) {
+  for (let boxNum = 1; boxNum <= 192; boxNum++) {
     let rackId = 1;
     if (boxNum >= 1 && boxNum <= 16) rackId = 1;
     else if (boxNum >= 17 && boxNum <= 36) rackId = 2;
     else if (boxNum >= 37 && boxNum <= 48) rackId = 3;
     else if (boxNum >= 49 && boxNum <= 60) rackId = 4;
     else if (boxNum >= 61 && boxNum <= 72) rackId = 5;
-    else if (boxNum >= 73 && boxNum <= 82) rackId = 6;
+    else if (boxNum >= 73 && boxNum <= 192) {
+      rackId = 6 + Math.floor((boxNum - 73) / 10); // 6..17 (Lemari 1..12)
+    }
 
     const rack = RACKS_DATA.find(r => r.id === rackId);
-    const isCartonBox = rackId === 6;
+    const isCartonBox = rackId >= 6;
+    const lemariNum = isCartonBox ? rackId - 5 : 0;
+    const letterIdx = isCartonBox ? (boxNum - 73) % 10 : 0;
     const picName = isCartonBox ? '' : (ppicByBoxNumber[boxNum] || 'Royan');
     const ppicObj = isCartonBox ? null : PPIC_MEMBERS.find(p => p.name === picName);
-    const displayNumber = isCartonBox ? `1${String.fromCharCode(64 + (boxNum - 72))}` : String(boxNum);
+    const displayNumber = isCartonBox ? `${lemariNum}${String.fromCharCode(65 + letterIdx)}` : String(boxNum);
 
     boxes.push({
       boxNumber: boxNum,
@@ -304,7 +313,7 @@ export const generateInitialBoxes = () => {
       ppicId: isCartonBox ? '' : (ppicObj ? ppicObj.id : 'royan'),
       ppicNumber: isCartonBox ? 0 : (ppicObj ? ppicObj.ppicNumber : 1),
       capacityLimit: 20, // default nominal max items
-      notes: isCartonBox ? 'Box Carton Coklat - Campur (Lemari 1)' : '',
+      notes: isCartonBox ? `Box Carton Coklat - Campur (Lemari ${lemariNum})` : '',
     });
   }
   return boxes;
