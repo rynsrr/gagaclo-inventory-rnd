@@ -20,6 +20,7 @@ import {
   Boxes,
   ChevronDown,
   X,
+  Crosshair,
 } from 'lucide-react';
 
 // Indigo, purple, emerald, amber, rose: the original five PPIC colors,
@@ -72,6 +73,23 @@ export const Warehouse3DView = ({
   const highlightPpic = propHighlightPpic !== undefined ? propHighlightPpic : internalHighlightPpic;
   const setHighlightPpic = propOnSelectPic !== undefined ? propOnSelectPic : setInternalHighlightPpic;
   const [hoveredBox, setHoveredBox] = useState(null);
+  const [showFloorCoords, setShowFloorCoords] = useState(true);
+  const showFloorCoordsRef = useRef(true);
+  const floorCoordsGroupRef = useRef(null);
+  const cursorMarkerRef = useRef(null);
+  const [cursorFloorCoord, setCursorFloorCoord] = useState(null);
+  const [pinnedFloorCoord, setPinnedFloorCoord] = useState(null);
+  const lastCursorCoordRef = useRef({ x: null, z: null });
+  useEffect(() => {
+    showFloorCoordsRef.current = showFloorCoords;
+    if (floorCoordsGroupRef.current) {
+      floorCoordsGroupRef.current.visible = showFloorCoords;
+    }
+    if (!showFloorCoords) {
+      if (cursorMarkerRef.current) cursorMarkerRef.current.visible = false;
+      setCursorFloorCoord(null);
+    }
+  }, [showFloorCoords]);
   const [isHudExpanded, setIsHudExpanded] = useState(false);
   const isHudExpandedRef = useRef(false);
   useEffect(() => {
@@ -439,6 +457,114 @@ export const Warehouse3DView = ({
       isDarkMode: false,
     });
     forestRef.current = forest;
+
+    // --- FLOOR COORDINATE GRID OVERLAY (UNTUK MEMUDAHKAN PEMINDAHAN LEMARI / RAK) ---
+    const isPointInsideFloor = (px, pz) => {
+      if (px >= -30 && px <= 0 && pz >= -50 && pz <= 50) return true;
+      if (px >= 0 && px <= 15 && pz >= -50 && pz <= -14) return true;
+      if (px >= 15 && px <= 55 && pz >= -50 && pz <= -30) return true;
+      if (px >= 15 && px <= 35 && pz >= -30 && pz <= -14) return true;
+      return false;
+    };
+
+    const floorCoordsGroup = new THREE.Group();
+    floorCoordsGroup.visible = showFloorCoordsRef.current;
+    scene.add(floorCoordsGroup);
+    floorCoordsGroupRef.current = floorCoordsGroup;
+
+    // 1. Grid Lines (tiap 5m minor, tiap 10m major) tepat di atas lantai putih (y = 0.075)
+    const minorLinePoints = [];
+    const majorLinePoints = [];
+    const gridY = 0.075;
+
+    // Vertical lines (constant X, varying Z)
+    for (let x = -30; x <= 55; x += 5) {
+      const targetArr = x % 10 === 0 ? majorLinePoints : minorLinePoints;
+      for (let z = -50; z < 50; z += 1) {
+        const midZ = z + 0.5;
+        if (isPointInsideFloor(x, midZ)) {
+          targetArr.push(x, gridY, z, x, gridY, z + 1);
+        }
+      }
+    }
+    // Horizontal lines (constant Z, varying X)
+    for (let z = -50; z <= 50; z += 5) {
+      const targetArr = z % 10 === 0 ? majorLinePoints : minorLinePoints;
+      for (let x = -30; x < 55; x += 1) {
+        const midX = x + 0.5;
+        if (isPointInsideFloor(midX, z)) {
+          targetArr.push(x, gridY, z, x + 1, gridY, z);
+        }
+      }
+    }
+
+    if (minorLinePoints.length > 0) {
+      const minorGeo = new THREE.BufferGeometry();
+      minorGeo.setAttribute('position', new THREE.Float32BufferAttribute(minorLinePoints, 3));
+      const minorMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.4 });
+      floorCoordsGroup.add(new THREE.LineSegments(minorGeo, minorMat));
+    }
+    if (majorLinePoints.length > 0) {
+      const majorGeo = new THREE.BufferGeometry();
+      majorGeo.setAttribute('position', new THREE.Float32BufferAttribute(majorLinePoints, 3));
+      const majorMat = new THREE.LineBasicMaterial({ color: 0x2563eb, transparent: true, opacity: 0.55 });
+      floorCoordsGroup.add(new THREE.LineSegments(majorGeo, majorMat));
+    }
+
+    // 2. Flat Coordinate Labels di persimpangan grid tiap 10m (plus titik tengah Bilik 1-3)
+    const createFloorCoordLabel = (text, bgColor = 'rgba(255,255,255,0.88)', textColor = '#1d4ed8') => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 80;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = bgColor;
+      ctx.beginPath();
+      ctx.roundRect(4, 4, 248, 72, 16);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.fillStyle = textColor;
+      ctx.font = 'bold 34px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 128, 42);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.12), mat);
+      plane.rotation.x = -Math.PI / 2;
+      return plane;
+    };
+
+    for (let x = -25; x <= 50; x += 10) {
+      for (let z = -45; z <= 45; z += 10) {
+        if (isPointInsideFloor(x, z)) {
+          const label = createFloorCoordLabel(`${x},${z}`);
+          label.position.set(x, 0.085, z);
+          floorCoordsGroup.add(label);
+        }
+      }
+    }
+
+    // 3. Live Mouse Cursor Target Ring di Lantai
+    const cursorMarker = new THREE.Group();
+    const outerRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.45, 0.65, 24),
+      new THREE.MeshBasicMaterial({ color: 0x0071e3, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
+    );
+    outerRing.rotation.x = -Math.PI / 2;
+    const centerDot = new THREE.Mesh(
+      new THREE.CircleGeometry(0.16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide })
+    );
+    centerDot.rotation.x = -Math.PI / 2;
+    cursorMarker.add(outerRing, centerDot);
+    cursorMarker.visible = false;
+    scene.add(cursorMarker);
+    cursorMarkerRef.current = cursorMarker;
+    const floorHitPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.06);
+    const floorHitPoint = new THREE.Vector3();
 
     const boxMeshes = [];
     const interactiveRackMeshes = [];
@@ -962,6 +1088,29 @@ export const Warehouse3DView = ({
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
+
+      // Update live floor coordinate tracker saat fitur Koordinat Lantai aktif
+      if (showFloorCoordsRef.current && raycaster.ray.intersectPlane(floorHitPlane, floorHitPoint)) {
+        if (isPointInsideFloor(floorHitPoint.x, floorHitPoint.z)) {
+          cursorMarker.position.set(floorHitPoint.x, 0.095, floorHitPoint.z);
+          cursorMarker.visible = true;
+          const rx = Math.round(floorHitPoint.x * 2) / 2;
+          const rz = Math.round(floorHitPoint.z * 2) / 2;
+          if (lastCursorCoordRef.current.x !== rx || lastCursorCoordRef.current.z !== rz) {
+            lastCursorCoordRef.current = { x: rx, z: rz };
+            setCursorFloorCoord({ x: rx, z: rz });
+          }
+        } else {
+          cursorMarker.visible = false;
+          if (lastCursorCoordRef.current.x !== null) {
+            lastCursorCoordRef.current = { x: null, z: null };
+            setCursorFloorCoord(null);
+          }
+        }
+      } else {
+        cursorMarker.visible = false;
+      }
+
       const allClickable = [...boxMeshesRef.current, ...interactiveRackMeshesRef.current];
       const intersects = raycaster.intersectObjects(allClickable);
 
@@ -1038,6 +1187,15 @@ export const Warehouse3DView = ({
       } else {
         lastClickTime = 0;
         lastClickedBoxNumber = null;
+        // Jika Koordinat Lantai aktif & klik area lantai kosong, kunci titik koordinat agar mudah dibaca/disalin
+        if (showFloorCoordsRef.current && raycaster.ray.intersectPlane(floorHitPlane, floorHitPoint)) {
+          if (isPointInsideFloor(floorHitPoint.x, floorHitPoint.z)) {
+            setPinnedFloorCoord({
+              x: Math.round(floorHitPoint.x * 2) / 2,
+              z: Math.round(floorHitPoint.z * 2) / 2,
+            });
+          }
+        }
       }
     };
 
@@ -1556,8 +1714,21 @@ export const Warehouse3DView = ({
           </div>
         )}
 
-        {/* Controls (Top Right): Fit View Default (Apple Floating Pill) */}
+        {/* Controls (Top Right): Koordinat Lantai + Fit View Default (Apple Floating Pills) */}
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2 font-apple">
+          <button
+            type="button"
+            onClick={() => setShowFloorCoords((prev) => !prev)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md backdrop-blur-2xl border cursor-pointer active:scale-95 ${
+              showFloorCoords
+                ? 'bg-[#1d1d1f] text-white border-[#1d1d1f]'
+                : 'bg-white/85 text-[#1d1d1f] hover:bg-white border-black/[0.08]'
+            }`}
+            title="Tampilkan / sembunyikan grid koordinat lantai (X, Z) untuk pemindahan lemari atau rak"
+          >
+            <Crosshair className={`h-3.5 w-3.5 ${showFloorCoords ? 'text-[#38bdf8]' : 'text-[#0071e3]'}`} />
+            <span>Koordinat Lantai</span>
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -1571,6 +1742,37 @@ export const Warehouse3DView = ({
             <span>Fit View Default</span>
           </button>
         </div>
+
+        {/* Live Floor Coordinate Readout Pill (Bottom Left) */}
+        {showFloorCoords && (
+          <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-10 bg-white/92 backdrop-blur-2xl px-3.5 py-2 rounded-[16px] border border-black/[0.08] shadow-lg font-apple text-[11px] text-[#1d1d1f] flex flex-col gap-1 max-w-[90vw]">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1 font-bold text-[#0071e3]">
+                <Crosshair className="w-3.5 h-3.5" />
+                <span>Koordinat Lantai</span>
+              </span>
+              <span className="text-black/20">•</span>
+              <span className="font-mono font-semibold text-[#92400e] bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300/70">
+                Lemari 1: X 13.5, Z -33.5
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap text-[#1d1d1f]">
+              <span className="font-mono font-semibold">
+                {cursorFloorCoord
+                  ? `Kursor: X ${cursorFloorCoord.x}, Z ${cursorFloorCoord.z}`
+                  : 'Arahkan kursor ke lantai untuk cek titik X, Z'}
+              </span>
+              {pinnedFloorCoord && (
+                <>
+                  <span className="text-black/20">•</span>
+                  <span className="font-mono font-bold text-[#0071e3] bg-[#0071e3]/10 px-2 py-0.5 rounded-md border border-[#0071e3]/25">
+                    Titik Klik: X {pinnedFloorCoord.x}, Z {pinnedFloorCoord.z}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Anjing Penjaga 15-Menit Inactivity Reminder Banner */}
         {dogReminderActive && (
