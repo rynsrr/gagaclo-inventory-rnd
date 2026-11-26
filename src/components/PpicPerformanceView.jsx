@@ -32,8 +32,9 @@ import {
 } from '../utils/dateUtils';
 import { getDailyTargetForDate } from '../utils/targetUtils';
 import { getDynamicMemberQuote } from '../data/motivationalQuotes';
+import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 
-// 8 Anggota Tim R&D Resmi (5 PPIC & 3 Support)
+// 9 Anggota Tim R&D Resmi (5 PPIC, 3 Support, & 1 Leader)
 const DEFAULT_TEAM_MEMBERS = [
   { name: 'Royan', role: 'PPIC #1', type: 'PPIC', tagBg: 'bg-blue-100 text-blue-800', border: 'border-blue-200', bg: 'bg-blue-50/40', textAccent: 'text-blue-900' },
   { name: 'Cynara', role: 'PPIC #2', type: 'PPIC', tagBg: 'bg-purple-100 text-purple-800', border: 'border-purple-200', bg: 'bg-purple-50/40', textAccent: 'text-purple-900' },
@@ -43,6 +44,7 @@ const DEFAULT_TEAM_MEMBERS = [
   { name: 'Sheva', role: 'Support #1', type: 'Support', tagBg: 'bg-teal-100 text-teal-800', border: 'border-teal-200', bg: 'bg-teal-50/40', textAccent: 'text-teal-900' },
   { name: 'Ade', role: 'Support #2', type: 'Support', tagBg: 'bg-cyan-100 text-cyan-800', border: 'border-cyan-200', bg: 'bg-cyan-50/40', textAccent: 'text-cyan-900' },
   { name: 'Tri', role: 'Support #3', type: 'Support', tagBg: 'bg-sky-100 text-sky-800', border: 'border-sky-200', bg: 'bg-sky-50/40', textAccent: 'text-sky-900' },
+  { name: 'Jasmine', role: 'Leader', type: 'Leader', tagBg: 'bg-indigo-100 text-indigo-800', border: 'border-indigo-200', bg: 'bg-indigo-50/40', textAccent: 'text-indigo-900' },
 ];
 
 export function PpicPerformanceView() {
@@ -190,7 +192,7 @@ export function PpicPerformanceView() {
       const enrichedItem = {
         ...item,
         recordDate: dateKey,
-        boxLabel: `BOX ${item.boxNumber}`,
+        boxLabel: `BOX ${getBoxDisplayNumber(item.boxNumber)}`,
         rackName: box?.rackName || 'RACK -',
         style: (item.style || item.name || 'TANPA STYLE').trim(),
         kode: item.kode || item.sku || 'NA',
@@ -592,7 +594,7 @@ export function PpicPerformanceView() {
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Capaian 8 Anggota</span>
+            <span>Capaian 9 Anggota</span>
           </button>
 
           <button
@@ -675,30 +677,30 @@ export function PpicPerformanceView() {
         </div>
       </div>
 
-      {/* 8 KARTU ANGGOTA TIM: 5 PPIC & 3 Support Berdampingan Setara */}
+      {/* 9 KARTU ANGGOTA TIM: 5 PPIC, 3 Support, & 1 Leader Berdampingan Setara */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
             <Users className="h-4 w-4 text-slate-600" />
-            <span>Capaian Input Harian 8 Anggota Tim (5 PPIC &amp; 3 Support)</span>
+            <span>Capaian Input Harian 9 Anggota Tim (5 PPIC, 3 Support &amp; 1 Leader)</span>
           </h2>
           <span className="text-xs text-slate-500 font-semibold">
             Tanggal: {formatDateIndoFull(selectedDailyDate)}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {DEFAULT_TEAM_MEMBERS.map((member) => {
             const stats = currentDailyData.byPerson?.[member.name] || { pcs: 0, items: 0, itemsList: [], assistedBoxes: {} };
             const allTime = allTimeTeamTotals.byPerson?.[member.name] || { pcs: 0, items: 0 };
             const isExpanded = Boolean(expandedCards[member.name]);
             const assistedList = Object.entries(stats.assistedBoxes || {}).filter(([_, pcs]) => pcs > 0);
 
-            // Perhitungan Target Individu (Auto derive dari Daily Team Target, PIC Asli +10% dibanding Support)
-            const isPicAsli = !member.role?.toLowerCase()?.includes('support');
+            // Perhitungan Target Individu (Auto derive dari Daily Team Target ke 9 orang, PIC Asli +10% dibanding Support/Leader)
+            const isPicAsli = member.type === 'PPIC';
             const autoTarget = isPicAsli
-              ? Math.max(1, Math.round((dailyTarget / 8.5) * 1.1))
-              : Math.max(1, Math.round(dailyTarget / 8.5));
+              ? Math.max(1, Math.round((dailyTarget / 9.5) * 1.1))
+              : Math.max(1, Math.round(dailyTarget / 9.5));
             const personTarget = autoTarget;
             const personPercent = Math.round((stats.pcs / personTarget) * 100);
             const isPersonAchieved = stats.pcs >= personTarget;
@@ -722,7 +724,7 @@ export function PpicPerformanceView() {
                     <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wide">
                       <span>Di-Input Hari Ini:</span>
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 lowercase">
-                        {isPicAsli ? 'pic asli (+10%)' : 'support'}
+                        {isPicAsli ? 'pic asli (+10%)' : member.type === 'Leader' ? 'leader' : 'support'}
                       </span>
                     </div>
 

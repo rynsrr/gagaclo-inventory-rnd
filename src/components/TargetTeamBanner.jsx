@@ -5,7 +5,7 @@ import { getItemRecordDate, getLocalTodayIso } from '../utils/dateUtils';
 import { getDailyTargetForDate, saveDailyTargetForDate } from '../utils/targetUtils';
 import { isManager, isSuperuser } from '../utils/authUtils';
 
-// 8 Anggota Tim Resmi: 5 PIC Asli (PPIC) & 3 Support (Helper)
+// 9 Anggota Tim Resmi: 5 PIC Asli (PPIC), 3 Support (Helper), & 1 Leader (Jasmine)
 export const TEAM_MEMBERS = [
   { name: 'Royan', role: 'PPIC #1', isPicAsli: true },
   { name: 'Cynara', role: 'PPIC #2', isPicAsli: true },
@@ -15,6 +15,7 @@ export const TEAM_MEMBERS = [
   { name: 'Sheva', role: 'Support #1', isPicAsli: false },
   { name: 'Ade', role: 'Support #2', isPicAsli: false },
   { name: 'Tri', role: 'Support #3', isPicAsli: false },
+  { name: 'Jasmine', role: 'Leader', isPicAsli: false, isLeader: true },
 ];
 
 export function TargetTeamBanner({ onOpenUserProfile }) {
@@ -143,17 +144,15 @@ export function TargetTeamBanner({ onOpenUserProfile }) {
       }
     });
 
-    // Hitung pembagian target harian dari Daily Team Target ke 8 orang:
-    // 5 PIC Asli (PPIC #1-#5) mendapatkan 10% lebih banyak daripada 3 Support (Helper)
-    // Rumus: 5 * (1.10 * S) + 3 * S = 8.5 * S = dailyTarget
-    // S (Support) = dailyTarget / 8.5
-    // P (PIC Asli) = S * 1.10
-    const supportTargetCalc = Math.max(1, Math.round(dailyTarget / 8.5));
-    const picTargetCalc = Math.max(1, Math.round((dailyTarget / 8.5) * 1.1));
+    // Hitung pembagian target harian dari Daily Team Target ke 9 orang:
+    // 5 PIC Asli (PPIC #1-#5) mendapatkan 10% lebih banyak daripada 3 Support & 1 Leader
+    // Rumus: 5 * (1.10 * S) + 4 * S = 9.5 * S = dailyTarget
+    const baseTargetCalc = Math.max(1, Math.round(dailyTarget / 9.5));
+    const picTargetCalc = Math.max(1, Math.round((dailyTarget / 9.5) * 1.1));
 
     return TEAM_MEMBERS.map((m) => {
-      const isPicAsli = m.isPicAsli ?? !m.role?.toLowerCase()?.includes('support');
-      const target = isPicAsli ? picTargetCalc : supportTargetCalc;
+      const isPicAsli = Boolean(m.isPicAsli);
+      const target = isPicAsli ? picTargetCalc : baseTargetCalc;
       const currentPcs = pcsMap[m.name] || 0;
       const isAchieved = currentPcs >= target;
       return {
