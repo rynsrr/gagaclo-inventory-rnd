@@ -93,7 +93,7 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
                 }}
                 className="p-1.5 rounded-lg border border-slate-300 bg-white font-medium"
               >
-                <option value="ALL">Semua Rak (1-5)</option>
+                <option value="ALL">Semua Penyimpanan ({racks.length} Lokasi)</option>
                 {racks.map(r => (
                   <option key={r.id} value={r.id}>
                     {r.name} ({r.category} - {r.totalBoxes} Box)

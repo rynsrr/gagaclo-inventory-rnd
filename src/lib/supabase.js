@@ -189,16 +189,24 @@ export function localBoxToDb(box) {
 
 export function dbBoxToLocal(db, defaultBoxes = []) {
   const defaultBox = defaultBoxes.find(b => Number(b.boxNumber) === Number(db.box_number)) || {};
+  const resolvedRackId = Number(db.rack_id ?? defaultBox.rackId ?? (db.rack_name === 'LANTAI' ? 0 : 1));
+  const resolvedRackName = db.rack_name || defaultBox.rackName || 'LANTAI';
+  const isCarton =
+    defaultBox.boxType === 'CARTON' ||
+    resolvedRackId === 6 ||
+    String(resolvedRackName).toUpperCase().includes('LEMARI') ||
+    String(db.code || '').toUpperCase().startsWith('CARTON');
   return {
     ...defaultBox,
     boxNumber: Number(db.box_number),
     code: db.code || defaultBox.code,
     // Use ?? so rackId 0 (LANTAI / floor) is preserved instead of falling back to 1
-    rackId: Number(db.rack_id ?? defaultBox.rackId ?? (db.rack_name === 'LANTAI' ? 0 : 1)),
-    rackName: db.rack_name || defaultBox.rackName || 'LANTAI',
-    rackDescription: defaultBox.rackDescription || (db.rack_name === 'LANTAI' ? 'Lantai (tanpa rak)' : ''),
-    location: defaultBox.location || (db.rack_name === 'LANTAI' ? 'Lantai (tanpa rak)' : ''),
+    rackId: resolvedRackId,
+    rackName: resolvedRackName,
+    rackDescription: defaultBox.rackDescription || (resolvedRackName === 'LANTAI' ? 'Lantai (tanpa rak)' : (isCarton ? 'Lemari penyimpanan, 10 box carton coklat' : '')),
+    location: defaultBox.location || (resolvedRackName === 'LANTAI' ? 'Lantai (tanpa rak)' : (isCarton ? 'Sample warehouse (Lemari Carton)' : '')),
     category: db.category || defaultBox.category || 'SAMPLE',
+    boxType: isCarton ? 'CARTON' : (defaultBox.boxType || 'CONTAINER'),
     picName: db.pic_name || defaultBox.picName || 'Royan',
     // Leave ppicId empty when unknown: guessing 'royan' here would make a
     // rename of that person incorrectly reassign unrelated remote boxes.

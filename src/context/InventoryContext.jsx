@@ -241,12 +241,18 @@ export const InventoryProvider = ({ children }) => {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed.map(r => {
+          const migrated = parsed.map(r => {
             if ([3, 4, 5].includes(Number(r.id)) && r.category === 'MATERIAL') {
               return { ...r, category: 'SAMPLE' };
             }
             return r;
           });
+          // Auto-migration: pastikan LEMARI 1 (id: 6) selalu tersedia di daftar penyimpanan
+          const lemariDefault = RACKS_DATA.find(r => Number(r.id) === 6);
+          if (lemariDefault && !migrated.some(r => Number(r.id) === 6)) {
+            migrated.push(lemariDefault);
+          }
+          return migrated;
         }
       }
     } catch (e) {
@@ -426,9 +432,8 @@ export const InventoryProvider = ({ children }) => {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed.filter(b => (
+          const cleaned = parsed.filter(b => (
             Number(b.boxNumber) > 0 &&
-            Number(b.boxNumber) !== 73 &&
             b.code !== 'DELETED' &&
             b.rackName !== 'DELETED' &&
             String(b.picName).trim().toLowerCase() !== 'anzo'
@@ -437,8 +442,19 @@ export const InventoryProvider = ({ children }) => {
             if (Number(b.boxNumber) >= 1 && Number(b.boxNumber) <= 72 && b.category === 'MATERIAL') {
               return { ...b, category: 'SAMPLE' };
             }
+            if (Number(b.rackId) === 6 || String(b.rackName || '').toUpperCase().includes('LEMARI')) {
+              return { ...b, boxType: 'CARTON' };
+            }
             return b;
           });
+          // Auto-migration: pastikan 10 box carton coklat di LEMARI 1 (Box 73 - 82) otomatis ditambahkan jika belum ada
+          const defaultLemariBoxes = generateInitialBoxes().filter(b => Number(b.rackId) === 6);
+          const existingNums = new Set(cleaned.map(b => Number(b.boxNumber)));
+          const missingLemari = defaultLemariBoxes.filter(b => !existingNums.has(Number(b.boxNumber)));
+          if (missingLemari.length > 0) {
+            return [...cleaned, ...missingLemari].sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
+          }
+          return cleaned;
         }
       }
     } catch (e) {
@@ -1401,7 +1417,6 @@ export const InventoryProvider = ({ children }) => {
               b.rack_name === 'DELETED' ||
               b.pic_name === 'DELETED' ||
               String(b.pic_name || '').trim().toLowerCase() === 'anzo' ||
-              Number(b.box_number) === 73 ||
               Number(b.box_number) === CODE_REVISIONS_BOX_NUMBER
             ))
             .map(b => Number(b.box_number))
@@ -1416,20 +1431,31 @@ export const InventoryProvider = ({ children }) => {
           b.code !== 'DELETED' &&
           b.rack_name !== 'DELETED' &&
           b.pic_name !== 'DELETED' &&
-          String(b.pic_name || '').trim().toLowerCase() !== 'anzo' &&
-          Number(b.box_number) !== 73
+          String(b.pic_name || '').trim().toLowerCase() !== 'anzo'
         ));
 
+        const defaultLemariBoxes = generateInitialBoxes().filter(b => Number(b.rackId) === 6);
+        const lemariBoxNums = new Set(defaultLemariBoxes.map(b => Number(b.boxNumber)));
+        const validRemoteBoxNums = new Set(userDbBoxes.map(b => Number(b.box_number)));
+        const missingRemoteLemari = defaultLemariBoxes.filter(b => !validRemoteBoxNums.has(Number(b.boxNumber)));
+
+        if (supabase && missingRemoteLemari.length > 0) {
+          supabase
+            .from('boxes')
+            .upsert(missingRemoteLemari.map(localBoxToDb), { onConflict: 'box_number' })
+            .then(() => {})
+            .catch(() => {});
+        }
+
         setBoxes(prev => {
-          // Remove any deleted box, box 73, or box with PIC Anzo
+          // Remove any deleted box (kecuali box Lemari 1 yang baru dimigrasi) atau box dengan PIC Anzo
           const cleanedPrev = prev.filter(b => (
-            !deletedBoxNumbers.has(Number(b.boxNumber)) &&
-            Number(b.boxNumber) !== 73 &&
+            (!deletedBoxNumbers.has(Number(b.boxNumber)) || lemariBoxNums.has(Number(b.boxNumber))) &&
             String(b.picName).trim().toLowerCase() !== 'anzo'
           ));
 
           const updated = cleanedPrev.map(box => {
-            const remoteBox = userDbBoxes.find(b => b.box_number === box.boxNumber);
+            const remoteBox = userDbBoxes.find(b => Number(b.box_number) === Number(box.boxNumber));
             const res = remoteBox ? dbBoxToLocal(remoteBox, [box]) : box;
             if (Number(res.boxNumber) >= 1 && Number(res.boxNumber) <= 72 && res.category === 'MATERIAL') {
               return { ...res, category: 'SAMPLE' };
@@ -1437,17 +1463,20 @@ export const InventoryProvider = ({ children }) => {
             return res;
           });
           // Include boxes that exist remotely but not locally (added on another device)
-          const knownNumbers = new Set(updated.map(b => b.boxNumber));
+          const knownNumbers = new Set(updated.map(b => Number(b.boxNumber)));
           const extra = userDbBoxes
             .filter(b => !knownNumbers.has(Number(b.box_number)))
             .map(b => {
-              const res = dbBoxToLocal(b, []);
+              const res = dbBoxToLocal(b, defaultLemariBoxes);
               if (Number(res.boxNumber) >= 1 && Number(res.boxNumber) <= 72 && res.category === 'MATERIAL') {
                 return { ...res, category: 'SAMPLE' };
               }
               return res;
             });
-          const next = [...updated, ...extra].sort((a, b) => a.boxNumber - b.boxNumber);
+          const mergedWithRemote = [...updated, ...extra];
+          const mergedNums = new Set(mergedWithRemote.map(b => Number(b.boxNumber)));
+          const missingLocalLemari = defaultLemariBoxes.filter(b => !mergedNums.has(Number(b.boxNumber)));
+          const next = [...mergedWithRemote, ...missingLocalLemari].sort((a, b) => a.boxNumber - b.boxNumber);
 
           if (supabase) {
             const materialBoxesToMigrate = userDbBoxes.filter(b => Number(b.box_number) >= 1 && Number(b.box_number) <= 72 && b.category === 'MATERIAL');

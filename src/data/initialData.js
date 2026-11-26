@@ -72,6 +72,20 @@ export const RACKS_DATA = [
     badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300',
     accentColor: 'indigo',
   },
+  {
+    id: 6,
+    name: 'LEMARI 1',
+    category: 'SAMPLE',
+    rackType: 'Lemari',
+    location: 'Sample warehouse (Lemari Carton)',
+    fullDescription: 'Lemari penyimpanan, 10 box carton coklat',
+    boxRange: 'BOX 73 - 82',
+    boxStart: 73,
+    boxEnd: 82,
+    totalBoxes: 10,
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    accentColor: 'amber',
+  },
 ];
 
 export const PPIC_MEMBERS = [
@@ -259,32 +273,42 @@ export const generateInitialBoxes = () => {
   [67, 68].forEach(b => { ppicByBoxNumber[b] = 'Ryan'; });
   [69, 70, 71].forEach(b => { ppicByBoxNumber[b] = 'Hanami'; });
 
+  // Lemari 1 (10 Box Carton Coklat: Box 73 - 82)
+  [73, 74].forEach(b => { ppicByBoxNumber[b] = 'Royan'; });
+  [75, 76].forEach(b => { ppicByBoxNumber[b] = 'Cynara'; });
+  [77, 78].forEach(b => { ppicByBoxNumber[b] = 'Ami'; });
+  [79, 80].forEach(b => { ppicByBoxNumber[b] = 'Ryan'; });
+  [81, 82].forEach(b => { ppicByBoxNumber[b] = 'Hanami'; });
+
   const boxes = [];
-  for (let boxNum = 1; boxNum <= 72; boxNum++) {
+  for (let boxNum = 1; boxNum <= 82; boxNum++) {
     let rackId = 1;
     if (boxNum >= 1 && boxNum <= 16) rackId = 1;
     else if (boxNum >= 17 && boxNum <= 36) rackId = 2;
     else if (boxNum >= 37 && boxNum <= 48) rackId = 3;
     else if (boxNum >= 49 && boxNum <= 60) rackId = 4;
     else if (boxNum >= 61 && boxNum <= 72) rackId = 5;
+    else if (boxNum >= 73 && boxNum <= 82) rackId = 6;
 
     const rack = RACKS_DATA.find(r => r.id === rackId);
     const picName = ppicByBoxNumber[boxNum] || 'Royan';
     const ppicObj = PPIC_MEMBERS.find(p => p.name === picName);
+    const isCartonBox = rackId === 6;
 
     boxes.push({
       boxNumber: boxNum,
-      code: `BOX-${String(boxNum).padStart(2, '0')}`,
+      code: isCartonBox ? `CARTON-${String(boxNum - 72).padStart(2, '0')}` : `BOX-${String(boxNum).padStart(2, '0')}`,
       rackId: rack.id,
       rackName: rack.name,
       category: rack.category,
+      boxType: isCartonBox ? 'CARTON' : 'CONTAINER',
       location: rack.location,
       rackDescription: rack.fullDescription,
       picName: picName,
       ppicId: ppicObj ? ppicObj.id : 'royan',
       ppicNumber: ppicObj ? ppicObj.ppicNumber : 1,
       capacityLimit: 20, // default nominal max items
-      notes: '',
+      notes: isCartonBox ? 'Box Carton Coklat (Lemari 1)' : '',
     });
   }
   return boxes;

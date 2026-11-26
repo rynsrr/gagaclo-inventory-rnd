@@ -202,27 +202,50 @@ export const Warehouse3DView = ({
    * Rack & Location Subtitle
    * Footer: INVENTORY MANAGEMENT RND
    */
-  const createBoxFaceTexture = (boxNumber, picName, category, rackName, rackDescription, itemCount = 0, isFull = false) => {
+  const createBoxFaceTexture = (boxNumber, picName, category, rackName, rackDescription, itemCount = 0, isFull = false, isCarton = false) => {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 384; // 4:3 aspect ratio
     const ctx = canvas.getContext('2d');
 
-    // 1. Background White
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 512, 384);
+    if (isCarton) {
+      // Kraft brown carton face with pasted white official label
+      ctx.fillStyle = '#b5835a';
+      ctx.fillRect(0, 0, 512, 384);
 
-    // 2. Thick Outer Black Border
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 14;
-    ctx.strokeRect(7, 7, 498, 370);
+      // Subtle cardboard corrugated grain stripes
+      ctx.fillStyle = 'rgba(92, 58, 33, 0.08)';
+      for (let y = 0; y < 384; y += 12) {
+        ctx.fillRect(0, y, 512, 4);
+      }
 
-    // 3. Header: SAMPLE BOX or MATERIAL BOX (left-aligned)
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 30px system-ui, sans-serif';
+      // Packing tape strip along top edge
+      ctx.fillStyle = '#cfa378';
+      ctx.fillRect(0, 0, 512, 22);
+
+      // Inner white sticker label pasted on carton
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(22, 24, 468, 338);
+      ctx.strokeStyle = '#3b2414';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(22, 24, 468, 338);
+    } else {
+      // 1. Background White
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 512, 384);
+
+      // 2. Thick Outer Black Border
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 14;
+      ctx.strokeRect(7, 7, 498, 370);
+    }
+
+    // 3. Header: CARTON BOX, SAMPLE BOX, or MATERIAL BOX (left-aligned)
+    ctx.fillStyle = isCarton ? '#5c3317' : '#000000';
+    ctx.font = 'bold 28px system-ui, sans-serif';
     ctx.textAlign = 'left';
-    const headerTitle = category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX';
-    ctx.fillText(headerTitle, 26, 48);
+    const headerTitle = isCarton ? 'CARTON BOX' : (category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX');
+    ctx.fillText(headerTitle, isCarton ? 38 : 26, isCarton ? 58 : 48);
 
     // Occupancy Status Pill at top-right of label
     let badgeBg = '#64748b';
@@ -375,6 +398,7 @@ export const Warehouse3DView = ({
       3: { x: -22.5, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
       4: { x: -14.0, z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
       5: { x: -5.5,  z: 46.5, rotationY: Math.PI, cols: 4, rows: 3, beamColor: 0xe2e8f0 },
+      6: { x: 13.5, z: -33.5, rotationY: -Math.PI / 2, cols: 2, rows: 5, beamColor: 0x6b4f3b, isCabinet: true, shelfHeight: 1.32 },
     };
     let nextExtraX = 22;
     const rackPositions = racks
@@ -384,7 +408,18 @@ export const Warehouse3DView = ({
         if (preset) {
           return { rackId: r.id, ...preset };
         }
-        const conf = { rackId: r.id, x: nextExtraX, z: -42, rotationY: 0, cols: 4, rows: 3, beamColor: 0xcbd5e1 };
+        const isLemari = String(r.rackType || r.name || '').toLowerCase().includes('lemari');
+        const conf = {
+          rackId: r.id,
+          x: nextExtraX,
+          z: -42,
+          rotationY: 0,
+          cols: isLemari ? 2 : 4,
+          rows: isLemari ? 5 : 3,
+          beamColor: isLemari ? 0x6b4f3b : 0xcbd5e1,
+          isCabinet: isLemari,
+          shelfHeight: isLemari ? 1.32 : 1.9,
+        };
         nextExtraX += 10;
         return conf;
       });
@@ -410,12 +445,13 @@ export const Warehouse3DView = ({
       const rackData = racks.find((r) => Number(r.id) === Number(rackConf.rackId));
       if (!rackData) return;
 
-      const { x: rx, z: rz, rotationY = 0, cols, rows, beamColor } = rackConf;
-      const rackWidth = cols * 1.8 + 0.4;
-      const shelfHeight = 1.9;
-      const rackDepth = 1.6;
+      const { x: rx, z: rz, rotationY = 0, cols, rows, beamColor, isCabinet = false } = rackConf;
+      const isLemari = isCabinet || String(rackData.rackType || rackData.name || '').toLowerCase().includes('lemari');
+      const rackWidth = cols * 1.8 + (isLemari ? 0.5 : 0.4);
+      const shelfHeight = rackConf.shelfHeight || (isLemari ? 1.32 : 1.9);
+      const rackDepth = isLemari ? 1.65 : 1.6;
       const totalRackHeight = rows * shelfHeight + 0.5;
-      const hasTopCover = rackConf.rackId !== 1 && rackConf.rackId !== 2;
+      const hasTopCover = isLemari || (rackConf.rackId !== 1 && rackConf.rackId !== 2);
       const firstShelfY = 0.2;
       const pillarHeight = hasTopCover
         ? totalRackHeight
@@ -426,74 +462,196 @@ export const Warehouse3DView = ({
       rackGroup.rotation.y = rotationY;
       scene.add(rackGroup);
 
-      // 1. Upright Steel Pillars (4 vertical posts)
-      const pillarGeo = new THREE.BoxGeometry(0.15, pillarHeight, 0.15);
-      const pillarMat = new THREE.MeshStandardMaterial({
-        color: beamColor,
-        metalness: 0.6,
-        roughness: 0.3,
-      });
-
       const halfW = rackWidth / 2;
       const halfD = rackDepth / 2;
 
-      const postPositions = [
-        [-halfW, halfD],
-        [halfW, halfD],
-        [-halfW, -halfD],
-        [halfW, -halfD],
-      ];
-
-      postPositions.forEach(([px, pz]) => {
-        const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-        pillar.position.set(px, pillarHeight / 2, pz);
-        pillar.castShadow = true;
-        pillar.receiveShadow = true;
-        pillar.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
-        rackGroup.add(pillar);
-        interactiveRackMeshes.push(pillar);
-      });
-
-      // 2. Horizontal Beam Shelves
-      const shelfCount = hasTopCover ? rows + 1 : rows;
-      for (let r = 0; r < shelfCount; r++) {
-        const sy = firstShelfY + r * shelfHeight;
-        
-        // Front beam
-        const beamGeo = new THREE.BoxGeometry(rackWidth, 0.12, 0.12);
-        const frontBeam = new THREE.Mesh(beamGeo, pillarMat);
-        frontBeam.position.set(0, sy, halfD);
-        frontBeam.castShadow = true;
-        frontBeam.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
-        rackGroup.add(frontBeam);
-        interactiveRackMeshes.push(frontBeam);
-
-        // Back beam
-        const backBeam = new THREE.Mesh(beamGeo, pillarMat);
-        backBeam.position.set(0, sy, -halfD);
-        backBeam.castShadow = true;
-        backBeam.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
-        rackGroup.add(backBeam);
-        interactiveRackMeshes.push(backBeam);
-
-        // Wooden/wire deck plank
-        const deckGeo = new THREE.BoxGeometry(rackWidth - 0.1, 0.06, rackDepth - 0.2);
-        const deckMat = new THREE.MeshStandardMaterial({
-          color: 0x94a3b8,
-          metalness: 0.2,
-          roughness: 0.7,
+      if (isLemari) {
+        // --- 3D LEMARI PENYIMPANAN (WOODEN CABINET WITH OPEN DOORS & SHELVES) ---
+        const cabinetBodyMat = new THREE.MeshStandardMaterial({
+          color: 0x5c4033, // Rich walnut / dark oak cabinet exterior
+          roughness: 0.62,
+          metalness: 0.08,
         });
-        const deck = new THREE.Mesh(deckGeo, deckMat);
-        deck.position.set(0, sy + 0.05, 0);
-        deck.receiveShadow = true;
-        deck.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
-        rackGroup.add(deck);
-        interactiveRackMeshes.push(deck);
+        const cabinetShelfMat = new THREE.MeshStandardMaterial({
+          color: 0x8b6b52, // Warm wood interior shelves
+          roughness: 0.72,
+          metalness: 0.05,
+        });
+        const doorHandleMat = new THREE.MeshStandardMaterial({
+          color: 0xd1d5db, // Brushed steel handle
+          roughness: 0.25,
+          metalness: 0.85,
+        });
+
+        // Left & Right Side Walls
+        const sideWallGeo = new THREE.BoxGeometry(0.16, totalRackHeight, rackDepth);
+        [-halfW, halfW].forEach((sx) => {
+          const wall = new THREE.Mesh(sideWallGeo, cabinetBodyMat);
+          wall.position.set(sx, totalRackHeight / 2, 0);
+          wall.castShadow = true;
+          wall.receiveShadow = true;
+          wall.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+          rackGroup.add(wall);
+          interactiveRackMeshes.push(wall);
+        });
+
+        // Solid Back Panel
+        const backPanelGeo = new THREE.BoxGeometry(rackWidth + 0.16, totalRackHeight, 0.12);
+        const backPanel = new THREE.Mesh(backPanelGeo, cabinetBodyMat);
+        backPanel.position.set(0, totalRackHeight / 2, -halfD + 0.02);
+        backPanel.castShadow = true;
+        backPanel.receiveShadow = true;
+        backPanel.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+        rackGroup.add(backPanel);
+        interactiveRackMeshes.push(backPanel);
+
+        // Top Roof Crown
+        const topPanelGeo = new THREE.BoxGeometry(rackWidth + 0.32, 0.18, rackDepth + 0.16);
+        const topPanel = new THREE.Mesh(topPanelGeo, cabinetBodyMat);
+        topPanel.position.set(0, totalRackHeight + 0.08, 0.04);
+        topPanel.castShadow = true;
+        topPanel.receiveShadow = true;
+        topPanel.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+        rackGroup.add(topPanel);
+        interactiveRackMeshes.push(topPanel);
+
+        // Base Plinth
+        const baseGeo = new THREE.BoxGeometry(rackWidth + 0.12, 0.22, rackDepth);
+        const baseMesh = new THREE.Mesh(baseGeo, cabinetBodyMat);
+        baseMesh.position.set(0, 0.11, 0);
+        baseMesh.castShadow = true;
+        baseMesh.receiveShadow = true;
+        baseMesh.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+        rackGroup.add(baseMesh);
+        interactiveRackMeshes.push(baseMesh);
+
+        // Center Vertical Divider (between 2 columns of carton boxes)
+        if (cols === 2) {
+          const divGeo = new THREE.BoxGeometry(0.10, totalRackHeight - 0.22, rackDepth - 0.18);
+          const divMesh = new THREE.Mesh(divGeo, cabinetShelfMat);
+          divMesh.position.set(0, totalRackHeight / 2 + 0.08, -0.02);
+          divMesh.castShadow = true;
+          divMesh.receiveShadow = true;
+          divMesh.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+          rackGroup.add(divMesh);
+          interactiveRackMeshes.push(divMesh);
+        }
+
+        // Horizontal Wooden Shelves
+        for (let r = 0; r < rows; r++) {
+          const sy = firstShelfY + r * shelfHeight;
+          const shelfGeo = new THREE.BoxGeometry(rackWidth - 0.08, 0.09, rackDepth - 0.16);
+          const shelf = new THREE.Mesh(shelfGeo, cabinetShelfMat);
+          shelf.position.set(0, sy + 0.04, 0);
+          shelf.castShadow = true;
+          shelf.receiveShadow = true;
+          shelf.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+          rackGroup.add(shelf);
+          interactiveRackMeshes.push(shelf);
+        }
+
+        // Open Cabinet Doors (swung wide outward at ±115° so all 10 carton boxes are 100% visible & clickable)
+        const doorW = (rackWidth - 0.12) / 2;
+        const doorH = totalRackHeight - 0.24;
+        const doorGeo = new THREE.BoxGeometry(doorW, doorH, 0.08);
+        const handleGeo = new THREE.BoxGeometry(0.06, 0.55, 0.12);
+
+        // Left Door Pivot
+        const leftPivot = new THREE.Group();
+        leftPivot.position.set(-halfW, 0.22, halfD);
+        leftPivot.rotation.y = -2.05; // Swung open to the left
+        const leftDoor = new THREE.Mesh(doorGeo, cabinetBodyMat);
+        leftDoor.position.set(doorW / 2, doorH / 2, 0);
+        leftDoor.castShadow = true;
+        leftDoor.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+        leftPivot.add(leftDoor);
+        const leftHandle = new THREE.Mesh(handleGeo, doorHandleMat);
+        leftHandle.position.set(doorW - 0.16, doorH * 0.5, 0.07);
+        leftPivot.add(leftHandle);
+        rackGroup.add(leftPivot);
+        interactiveRackMeshes.push(leftDoor);
+
+        // Right Door Pivot
+        const rightPivot = new THREE.Group();
+        rightPivot.position.set(halfW, 0.22, halfD);
+        rightPivot.rotation.y = 2.05; // Swung open to the right
+        const rightDoor = new THREE.Mesh(doorGeo, cabinetBodyMat);
+        rightDoor.position.set(-doorW / 2, doorH / 2, 0);
+        rightDoor.castShadow = true;
+        rightDoor.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+        rightPivot.add(rightDoor);
+        const rightHandle = new THREE.Mesh(handleGeo, doorHandleMat);
+        rightHandle.position.set(-doorW + 0.16, doorH * 0.5, 0.07);
+        rightPivot.add(rightHandle);
+        rackGroup.add(rightPivot);
+        interactiveRackMeshes.push(rightDoor);
+      } else {
+        // 1. Upright Steel Pillars (4 vertical posts)
+        const pillarGeo = new THREE.BoxGeometry(0.15, pillarHeight, 0.15);
+        const pillarMat = new THREE.MeshStandardMaterial({
+          color: beamColor,
+          metalness: 0.6,
+          roughness: 0.3,
+        });
+
+        const postPositions = [
+          [-halfW, halfD],
+          [halfW, halfD],
+          [-halfW, -halfD],
+          [halfW, -halfD],
+        ];
+
+        postPositions.forEach(([px, pz]) => {
+          const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+          pillar.position.set(px, pillarHeight / 2, pz);
+          pillar.castShadow = true;
+          pillar.receiveShadow = true;
+          pillar.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+          rackGroup.add(pillar);
+          interactiveRackMeshes.push(pillar);
+        });
+
+        // 2. Horizontal Beam Shelves
+        const shelfCount = hasTopCover ? rows + 1 : rows;
+        for (let r = 0; r < shelfCount; r++) {
+          const sy = firstShelfY + r * shelfHeight;
+          
+          // Front beam
+          const beamGeo = new THREE.BoxGeometry(rackWidth, 0.12, 0.12);
+          const frontBeam = new THREE.Mesh(beamGeo, pillarMat);
+          frontBeam.position.set(0, sy, halfD);
+          frontBeam.castShadow = true;
+          frontBeam.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+          rackGroup.add(frontBeam);
+          interactiveRackMeshes.push(frontBeam);
+
+          // Back beam
+          const backBeam = new THREE.Mesh(beamGeo, pillarMat);
+          backBeam.position.set(0, sy, -halfD);
+          backBeam.castShadow = true;
+          backBeam.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+          rackGroup.add(backBeam);
+          interactiveRackMeshes.push(backBeam);
+
+          // Wooden/wire deck plank
+          const deckGeo = new THREE.BoxGeometry(rackWidth - 0.1, 0.06, rackDepth - 0.2);
+          const deckMat = new THREE.MeshStandardMaterial({
+            color: 0x94a3b8,
+            metalness: 0.2,
+            roughness: 0.7,
+          });
+          const deck = new THREE.Mesh(deckGeo, deckMat);
+          deck.position.set(0, sy + 0.05, 0);
+          deck.receiveShadow = true;
+          deck.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
+          rackGroup.add(deck);
+          interactiveRackMeshes.push(deck);
+        }
       }
 
-      // 3. High-Visibility All-Angle Billboard Sprite (Papan Nama Rak Terapung)
+      // 3. High-Visibility All-Angle Billboard Sprite (Papan Nama Rak / Lemari Terapung)
       const isSample = rackData.category === 'SAMPLE';
-      const badgeAccent = isSample ? '#f59e0b' : '#10b981';
+      const badgeAccent = isLemari ? '#d97706' : (isSample ? '#f59e0b' : '#10b981');
 
       // Floating Billboard Sprite (Selalu Menghadap Kamera dari Segala Sudut / All-Angle View)
       const spriteCanvas = document.createElement('canvas');
@@ -504,7 +662,7 @@ export const Warehouse3DView = ({
       // Rounded container pill
       spCtx.beginPath();
       spCtx.roundRect(16, 16, 992, 288, 56);
-      spCtx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+      spCtx.fillStyle = isLemari ? 'rgba(69, 39, 18, 0.95)' : 'rgba(15, 23, 42, 0.94)';
       spCtx.fill();
       spCtx.lineWidth = 14;
       spCtx.strokeStyle = badgeAccent;
@@ -524,9 +682,12 @@ export const Warehouse3DView = ({
       spCtx.fillText(rackData.name.toUpperCase(), 175, 125);
 
       // Subtitle info
-      spCtx.fillStyle = '#cbd5e1';
-      spCtx.font = 'bold 46px system-ui, -apple-system, sans-serif';
-      const subInfo = `${isSample ? 'SAMPLE R&D' : 'FABRIC/MATERIAL'} • ${cols * rows} BOX`;
+      spCtx.fillStyle = isLemari ? '#fde68a' : '#cbd5e1';
+      spCtx.font = 'bold 44px system-ui, -apple-system, sans-serif';
+      const rackBoxes = boxes.filter((b) => Number(b.rackId) === Number(rackConf.rackId));
+      const subInfo = isLemari
+        ? `BOX CARTON COKLAT • ${rackBoxes.length || cols * rows} BOX`
+        : `${isSample ? 'SAMPLE R&D' : 'FABRIC/MATERIAL'} • ${cols * rows} BOX`;
       spCtx.fillText(subInfo, 178, 225);
 
       const spriteTex = new THREE.CanvasTexture(spriteCanvas);
@@ -548,16 +709,18 @@ export const Warehouse3DView = ({
       interactiveRackMeshes.push(rackSprite);
 
       // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
-      const rackBoxes = boxes.filter((b) => Number(b.rackId) === Number(rackConf.rackId));
-
       rackBoxes.forEach((boxObj, index) => {
         const colIdx = index % cols;
         const rowIdx = Math.floor(index / cols);
 
         // Position coordinates in rackGroup local space
-        const localX = -halfW + 0.9 + colIdx * 1.8;
+        const localX = isLemari
+          ? -halfW + 0.95 + colIdx * 1.85
+          : -halfW + 0.9 + colIdx * 1.8;
         const localY = 0.2 + rowIdx * shelfHeight + 0.48;
         const localZ = 0;
+
+        const isCarton = isLemari || boxObj.boxType === 'CARTON' || String(boxObj.code || '').toUpperCase().startsWith('CARTON');
 
         // Box geometry: 1.35m wide, 0.75m high, 1.1m deep
         const boxGeo = new THREE.BoxGeometry(1.35, 0.75, 1.1);
@@ -570,19 +733,20 @@ export const Warehouse3DView = ({
           boxObj.rackName,
           boxObj.rackDescription,
           boxItems.length,
-          boxObj.isFull
+          boxObj.isFull,
+          isCarton
         );
-        const baseColor = ppicColorMap[boxObj.picName] || 0x3b82f6;
+        const baseColor = isCarton ? 0xb5835a : (ppicColorMap[boxObj.picName] || 0x3b82f6);
 
         const sideMat = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
-          roughness: 0.6,
-          metalness: 0.05,
+          color: isCarton ? 0xb5835a : 0xffffff,
+          roughness: isCarton ? 0.88 : 0.6,
+          metalness: isCarton ? 0.02 : 0.05,
         });
 
         const frontMat = new THREE.MeshStandardMaterial({
           map: frontTexture,
-          roughness: 0.3,
+          roughness: isCarton ? 0.55 : 0.3,
           metalness: 0.05,
           emissive: new THREE.Color(0x000000),
           emissiveIntensity: 0,
@@ -611,6 +775,7 @@ export const Warehouse3DView = ({
           rackName: boxObj.rackName,
           category: boxObj.category,
           picName: boxObj.picName,
+          isCarton,
           baseColor: baseColor,
           initialLocalX: localX,
           initialLocalY: localY,
@@ -746,9 +911,9 @@ export const Warehouse3DView = ({
       const conf = rackPositions.find(r => Number(r.rackId) === rId);
       if (!conf) return;
 
-      const { x: rx, z: rz, rotationY = 0, cols, rows } = conf;
-      const rackWidth = cols * 1.8 + 0.4;
-      const shelfHeight = 1.9;
+      const { x: rx, z: rz, rotationY = 0, cols, rows, isCabinet = false } = conf;
+      const rackWidth = cols * 1.8 + (isCabinet ? 0.5 : 0.4);
+      const shelfHeight = conf.shelfHeight || (isCabinet ? 1.32 : 1.9);
       const totalRackHeight = rows * shelfHeight + 0.5;
 
       // Hitung dimensi & posisi plang judul rak (rack sign sprite) di atas rak
@@ -1094,8 +1259,8 @@ export const Warehouse3DView = ({
       } else {
         const curRackId = Number(activeRackRef.current);
         lookTarget = center.clone();
-        if (curRackId === 1) {
-          // Rak 1 faces West (-X)
+        if (curRackId === 1 || curRackId === 6) {
+          // Rak 1 & Lemari 1 face West (-X)
           targetPos = new THREE.Vector3(center.x - distance, center.y + 0.5, center.z);
         } else if (curRackId >= 2 && curRackId <= 5) {
           // Rak 2, 3, 4, 5 face North (-Z)
@@ -1501,7 +1666,7 @@ export const Warehouse3DView = ({
                   </div>
                   <div>
                     <h3 className="text-xs sm:text-sm font-bold text-[#1d1d1f] leading-none">Status &amp; Rekap Pengisian Box</h3>
-                    <p className="text-[10px] text-[#86868b] mt-0.5">72 Box • 5 Rak • 5 PIC PPIC</p>
+                    <p className="text-[10px] text-[#86868b] mt-0.5">{boxes.length} Box • {racks.length} Penyimpanan • {ppicMembers.length} PIC PPIC</p>
                   </div>
                 </div>
                 <button

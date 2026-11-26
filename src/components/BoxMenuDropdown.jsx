@@ -10,7 +10,7 @@ export const BoxMenuDropdown = ({
   onSelectPic,
   highlightBoxNumbers = null,
 }) => {
-  const { boxes, getItemsInBox, setSelectedBoxNumber } = useInventory();
+  const { boxes, racks, ppicMembers, getItemsInBox, setSelectedBoxNumber } = useInventory();
 
   const occupancyGroups = useMemo(() => {
     const groups = [
@@ -69,7 +69,7 @@ export const BoxMenuDropdown = ({
               Status &amp; Rekap Pengisian Box
             </h3>
             <p className="text-[11px] text-[#86868b] mt-0.5">
-              72 Box • 5 Rak • 5 PIC PPIC
+              {boxes.length} Box • {racks.length} Penyimpanan • {ppicMembers.length} PIC PPIC
             </p>
           </div>
         </div>

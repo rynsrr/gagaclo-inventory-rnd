@@ -13,6 +13,7 @@ import { useInventory } from '../context/InventoryContext';
 export function BoxOwnershipModal({ isOpen, onClose }) {
   const {
     boxes,
+    racks,
     items,
     ppicMembers,
     reassignBoxOwnership,
@@ -66,9 +67,9 @@ export function BoxOwnershipModal({ isOpen, onClose }) {
     });
   }, [ppicMembers, boxes, itemCountByBox]);
 
-  // Filter boxes 1-72
+  // Filter semua box aktif (termasuk Rak 1-5 & Lemari 1)
   const filteredBoxes = useMemo(() => {
-    const userBoxes = boxes.filter((b) => Number(b.boxNumber) > 0 && Number(b.boxNumber) <= 72);
+    const userBoxes = boxes.filter((b) => Number(b.boxNumber) > 0 && Number(b.boxNumber) < 900000);
     return userBoxes.filter((b) => {
       if (selectedRackFilter !== 'ALL' && String(b.rackId) !== String(selectedRackFilter)) {
         return false;
@@ -249,12 +250,12 @@ export function BoxOwnershipModal({ isOpen, onClose }) {
                 onChange={(e) => setSelectedRackFilter(e.target.value)}
                 className="bg-[#f5f5f7] border border-black/[0.06] rounded-xl px-2.5 py-1.5 text-xs font-semibold text-[#1d1d1f] focus:outline-hidden cursor-pointer"
               >
-                <option value="ALL">Semua Rak (1-5)</option>
-                <option value="1">Rak 1 (Box 1-16)</option>
-                <option value="2">Rak 2 (Box 17-36)</option>
-                <option value="3">Rak 3 (Box 37-48)</option>
-                <option value="4">Rak 4 (Box 49-60)</option>
-                <option value="5">Rak 5 (Box 61-72)</option>
+                <option value="ALL">Semua Penyimpanan ({racks.length})</option>
+                {racks.map((r) => (
+                  <option key={r.id} value={String(r.id)}>
+                    {r.name} {r.boxRange ? `(${r.boxRange})` : ''}
+                  </option>
+                ))}
               </select>
             </div>
 

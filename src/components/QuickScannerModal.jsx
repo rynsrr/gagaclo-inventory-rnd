@@ -8,6 +8,7 @@ export const QuickScannerModal = () => {
     setQuickScannerOpen, 
     setSelectedBoxNumber, 
     boxes, 
+    racks,
     getItemsInBox 
   } = useInventory();
 
@@ -15,6 +16,8 @@ export const QuickScannerModal = () => {
   const [filterRack, setFilterRack] = useState('ALL');
 
   if (!quickScannerOpen) return null;
+
+  const maxBoxNumber = boxes.reduce((max, b) => Math.max(max, Number(b.boxNumber) || 0), 82);
 
   const handleSelectBox = (boxNumber) => {
     setSelectedBoxNumber(boxNumber);
@@ -24,10 +27,10 @@ export const QuickScannerModal = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const cleanNum = parseInt(inputVal.replace(/\D/g, ''), 10);
-    if (cleanNum >= 1 && cleanNum <= 72) {
+    if (boxes.some(b => Number(b.boxNumber) === cleanNum)) {
       handleSelectBox(cleanNum);
     } else {
-      alert('Masukkan nomor box valid antara 1 sampai 72.');
+      alert(`Masukkan nomor box valid antara 1 sampai ${maxBoxNumber}.`);
     }
   };
 
@@ -54,7 +57,7 @@ export const QuickScannerModal = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0071e3]/10 text-[#0071e3]">
               <QrCode className="w-4 h-4" />
             </div>
-            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Lompat Cepat ke Box (1 - 72)</h3>
+            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Lompat Cepat ke Box (1 - {maxBoxNumber})</h3>
           </div>
           <button
             onClick={() => setQuickScannerOpen(false)}
@@ -90,19 +93,30 @@ export const QuickScannerModal = () => {
 
           {/* Quick rack filter */}
           <div className="flex items-center space-x-2 mt-3 text-xs overflow-x-auto py-1">
-            <span className="text-slate-500 font-medium">Filter Rak:</span>
-            {['ALL', '1', '2', '3', '4', '5'].map(r => (
+            <span className="text-slate-500 font-medium shrink-0">Filter Lokasi:</span>
+            <button
+              type="button"
+              onClick={() => setFilterRack('ALL')}
+              className={`px-2.5 py-1 rounded-lg font-bold transition shrink-0 ${
+                filterRack === 'ALL'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              Semua
+            </button>
+            {racks.map(r => (
               <button
-                key={r}
+                key={r.id}
                 type="button"
-                onClick={() => setFilterRack(r)}
-                className={`px-2.5 py-1 rounded-lg font-bold transition ${
-                  filterRack === r
+                onClick={() => setFilterRack(String(r.id))}
+                className={`px-2.5 py-1 rounded-lg font-bold transition shrink-0 ${
+                  filterRack === String(r.id)
                     ? 'bg-slate-900 text-white'
                     : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                {r === 'ALL' ? 'Semua Rak' : `Rak ${r}`}
+                {r.name}
               </button>
             ))}
           </div>
