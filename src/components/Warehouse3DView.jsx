@@ -709,7 +709,7 @@ export const Warehouse3DView = ({
       const halfD = rackDepth / 2;
 
       if (isLemari) {
-        // --- 3D LEMARI PENYIMPANAN (WOODEN CABINET WITH OPEN DOORS & SHELVES) ---
+        // --- 3D LEMARI PENYIMPANAN (OPEN-FRONT WOODEN CABINET WITHOUT DOORS) ---
         const cabinetBodyMat = new THREE.MeshStandardMaterial({
           color: 0x5c4033, // Rich walnut / dark oak cabinet exterior
           roughness: 0.62,
@@ -719,11 +719,6 @@ export const Warehouse3DView = ({
           color: 0x8b6b52, // Warm wood interior shelves
           roughness: 0.72,
           metalness: 0.05,
-        });
-        const doorHandleMat = new THREE.MeshStandardMaterial({
-          color: 0xd1d5db, // Brushed steel handle
-          roughness: 0.25,
-          metalness: 0.85,
         });
 
         // Left & Right Side Walls
@@ -792,42 +787,6 @@ export const Warehouse3DView = ({
           rackGroup.add(shelf);
           interactiveRackMeshes.push(shelf);
         }
-
-        // Open Cabinet Doors (swung wide outward at ±115° so all 10 carton boxes are 100% visible & clickable)
-        const doorW = (rackWidth - 0.12) / 2;
-        const doorH = totalRackHeight - 0.24;
-        const doorGeo = new THREE.BoxGeometry(doorW, doorH, 0.08);
-        const handleGeo = new THREE.BoxGeometry(0.06, 0.55, 0.12);
-
-        // Left Door Pivot
-        const leftPivot = new THREE.Group();
-        leftPivot.position.set(-halfW, 0.22, halfD);
-        leftPivot.rotation.y = -2.05; // Swung open to the left
-        const leftDoor = new THREE.Mesh(doorGeo, cabinetBodyMat);
-        leftDoor.position.set(doorW / 2, doorH / 2, 0);
-        leftDoor.castShadow = true;
-        leftDoor.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
-        leftPivot.add(leftDoor);
-        const leftHandle = new THREE.Mesh(handleGeo, doorHandleMat);
-        leftHandle.position.set(doorW - 0.16, doorH * 0.5, 0.07);
-        leftPivot.add(leftHandle);
-        rackGroup.add(leftPivot);
-        interactiveRackMeshes.push(leftDoor);
-
-        // Right Door Pivot
-        const rightPivot = new THREE.Group();
-        rightPivot.position.set(halfW, 0.22, halfD);
-        rightPivot.rotation.y = 2.05; // Swung open to the right
-        const rightDoor = new THREE.Mesh(doorGeo, cabinetBodyMat);
-        rightDoor.position.set(-doorW / 2, doorH / 2, 0);
-        rightDoor.castShadow = true;
-        rightDoor.userData = { rackId: rackConf.rackId, type: 'rack-structure' };
-        rightPivot.add(rightDoor);
-        const rightHandle = new THREE.Mesh(handleGeo, doorHandleMat);
-        rightHandle.position.set(-doorW + 0.16, doorH * 0.5, 0.07);
-        rightPivot.add(rightHandle);
-        rackGroup.add(rightPivot);
-        interactiveRackMeshes.push(rightDoor);
       } else {
         // 1. Upright Steel Pillars (4 vertical posts)
         const pillarGeo = new THREE.BoxGeometry(0.15, pillarHeight, 0.15);
