@@ -37,7 +37,7 @@ import {
   ArrowUpDown,
   RotateCcw,
 } from 'lucide-react';
-import { BoxLabel } from './BoxLabel';
+import { BoxLabelPrintModal } from './BoxLabelPrintModal';
 import { CardPrintModal } from './CardPrintModal';
 import { SampleListPrintModal } from './SampleListPrintModal';
 import { DispatchModal } from './DispatchModal';
@@ -1389,40 +1389,13 @@ function BoxDetail({ box }) {
 
       </div>
 
-      {/* Box Label Print Modal Preview */}
+      {/* Box Label Print Modal (A5 on A4, Multi-Select, pre-selected to current box) */}
       {showBoxLabelModal && (
-        <div className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 print:p-0 print:bg-transparent print:block">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full max-h-[92vh] overflow-y-auto flex flex-col items-center animate-fade-in print:p-0 print:max-w-none print:max-h-none print:shadow-none print:rounded-none print:w-full">
-            <div className="no-print w-full flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
-              <h3 className="font-black text-slate-900 text-sm">Preview Label Box #{box.boxNumber}</h3>
-              <button onClick={() => setShowBoxLabelModal(false)} className="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-200 transition">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Exact Box Label Component */}
-            <div className="my-2">
-              <BoxLabel box={box} isPrintMode={true} />
-            </div>
-
-            {/* Print & Close Buttons */}
-            <div className="no-print w-full flex items-center justify-end space-x-2 pt-4 border-t border-slate-100">
-              <button
-                onClick={() => setShowBoxLabelModal(false)}
-                className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Tutup
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-md"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Cetak Label Ini</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <BoxLabelPrintModal
+          isOpen={showBoxLabelModal}
+          onClose={() => setShowBoxLabelModal(false)}
+          initialBoxNumber={box.boxNumber}
+        />
       )}
 
       {/* Printable Physical Inventory Cards Modal */}
