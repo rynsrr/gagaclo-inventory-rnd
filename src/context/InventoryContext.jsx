@@ -234,44 +234,108 @@ export function normalizeItemTextUppercase(item) {
 }
 
 /**
- * Pengalihan credit input Ami -> Jasmine untuk tanggal 4 s/d 16 November 2026.
- * Hanya mengalihkan credit penginput (inputtedBy / inputted_by:Jasmine), tidak mengubah pemilik box fisik.
+ * Pengalihan credit input resmi untuk data historis Ami:
+ * 1. Tanggal 4 s/d 16 November 2026 -> seluruh credit Ami dipindah ke Jasmine.
+ * 2. Tanggal 18 November 2026 -> seluruh credit Ami dibagi 2 secara acak (deterministik & seimbang PCE) ke Sheva dan Ade.
+ * Hanya mengalihkan credit penginput (inputtedBy / inputted_by:...), tidak mengubah pemilik box fisik.
  */
-function migrateAmiNovCreditToJasmine(item) {
-  if (!item) return { item, migrated: false };
-  const dateKey = item.recordDate || getItemRecordDate(item);
-  if (!dateKey || dateKey < '2026-11-04' || dateKey > '2026-11-16') {
-    return { item, migrated: false };
+function deterministicHash(str) {
+  let h = 2166136261;
+  const s = String(str || '');
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
   }
-  const tags = Array.isArray(item.tags) ? item.tags : [];
+  return h >>> 0;
+}
+
+function getEffectiveCreditOwner(item) {
+  const tags = Array.isArray(item?.tags) ? item.tags : [];
   const inputtedByTag = tags.find((t) => typeof t === 'string' && t.startsWith('inputted_by:'));
   const supportTag = tags.find((t) => typeof t === 'string' && (t.startsWith('support:') || t.startsWith('helper:')));
   const rawInputter =
-    item.inputtedBy ||
-    item.createdBy ||
+    item?.inputtedBy ||
+    item?.createdBy ||
     (inputtedByTag ? decodeURIComponent(inputtedByTag.slice(12)) : null) ||
-    item.supportName ||
-    item.helperName ||
+    item?.supportName ||
+    item?.helperName ||
     (supportTag ? decodeURIComponent(supportTag.slice(supportTag.indexOf(':') + 1)) : null);
+  return String(rawInputter || item?.picName || '').trim().toLowerCase();
+}
 
-  const effectiveCredit = String(rawInputter || item.picName || '').trim().toLowerCase();
-  if (effectiveCredit !== 'ami') {
-    return { item, migrated: false };
-  }
-
+function applyCreditTagToItem(item, newOwner, isSupportOwner = false) {
+  const tags = Array.isArray(item.tags) ? item.tags : [];
+  const cleanedTags = tags.filter(
+    (t) => typeof t !== 'string' || (!t.startsWith('inputted_by:') && (!isSupportOwner || !t.startsWith('helper:')))
+  );
   const nextTags = [
-    ...tags.filter((t) => typeof t !== 'string' || !t.startsWith('inputted_by:')),
-    'inputted_by:Jasmine',
+    ...cleanedTags,
+    `inputted_by:${newOwner}`,
+    ...(isSupportOwner ? [`helper:${newOwner}`] : []),
   ];
   return {
-    item: {
-      ...item,
-      inputtedBy: 'Jasmine',
-      createdBy: 'Jasmine',
-      tags: nextTags,
-    },
-    migrated: true,
+    ...item,
+    inputtedBy: newOwner,
+    createdBy: newOwner,
+    ...(isSupportOwner ? { helperName: newOwner } : {}),
+    tags: nextTags,
   };
+}
+
+function applyHistoricalAmiCreditTransfers(itemsList) {
+  if (!Array.isArray(itemsList) || itemsList.length === 0) {
+    return { items: itemsList || [], migratedItems: [] };
+  }
+
+  // Kumpulkan semua item Ami tanggal 18 November 2026 untuk dibagi 2 secara acak & seimbang ke Sheva & Ade
+  const nov18AmiIndices = [];
+  itemsList.forEach((item, idx) => {
+    const dateKey = item?.recordDate || getItemRecordDate(item);
+    if (dateKey === '2026-11-18' && getEffectiveCreditOwner(item) === 'ami') {
+      nov18AmiIndices.push({
+        idx,
+        pcs: Number(item.jumlah ?? item.qty ?? 1) || 1,
+        hash: deterministicHash(item.id || item.kode || `nov18-${idx}`),
+      });
+    }
+  });
+
+  // Urutkan pseudo-random (deterministik berdasarkan hash ID) lalu bagi seimbang 50/50 ke Sheva & Ade
+  const nov18AssigneeByIdx = new Map();
+  if (nov18AmiIndices.length > 0) {
+    nov18AmiIndices.sort((a, b) => a.hash - b.hash);
+    let shevaPcs = 0;
+    let adePcs = 0;
+    nov18AmiIndices.forEach((entry, i) => {
+      let target;
+      if (shevaPcs < adePcs) target = 'Sheva';
+      else if (adePcs < shevaPcs) target = 'Ade';
+      else target = i % 2 === 0 ? 'Sheva' : 'Ade';
+
+      if (target === 'Sheva') shevaPcs += entry.pcs;
+      else adePcs += entry.pcs;
+      nov18AssigneeByIdx.set(entry.idx, target);
+    });
+  }
+
+  const migratedItems = [];
+  const nextItems = itemsList.map((item, idx) => {
+    const dateKey = item?.recordDate || getItemRecordDate(item);
+    if (dateKey >= '2026-11-04' && dateKey <= '2026-11-16' && getEffectiveCreditOwner(item) === 'ami') {
+      const updated = applyCreditTagToItem(item, 'Jasmine', false);
+      migratedItems.push(updated);
+      return updated;
+    }
+    if (nov18AssigneeByIdx.has(idx)) {
+      const assignee = nov18AssigneeByIdx.get(idx);
+      const updated = applyCreditTagToItem(item, assignee, true);
+      migratedItems.push(updated);
+      return updated;
+    }
+    return item;
+  });
+
+  return { items: nextItems, migratedItems };
 }
 
 export const InventoryProvider = ({ children }) => {
@@ -556,22 +620,22 @@ export const InventoryProvider = ({ children }) => {
                 datesRepaired = true;
                 updated = upperItem;
               }
-              const { item: creditItem, migrated: creditMigrated } = migrateAmiNovCreditToJasmine(updated);
-              if (creditMigrated) {
-                datesRepaired = true;
-                updated = creditItem;
-              }
               return updated;
             });
 
-          if (datesRepaired || cleanItems.length !== parsed.length) {
+          const { items: creditMigratedItems, migratedItems: newlyMigrated } = applyHistoricalAmiCreditTransfers(cleanItems);
+          if (newlyMigrated.length > 0) {
+            datesRepaired = true;
+          }
+
+          if (datesRepaired || creditMigratedItems.length !== parsed.length) {
             try {
-              localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(cleanItems));
+              localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(creditMigratedItems));
               localStorage.removeItem('gagaclo_demo_all_achieved_active');
               sessionStorage.removeItem('gagaclo_pre_demo_items');
             } catch {}
           }
-          return cleanItems;
+          return creditMigratedItems;
         }
       }
     } catch (e) {
@@ -1403,10 +1467,8 @@ export const InventoryProvider = ({ children }) => {
           !deletedIds.has(String(i.id))
         ));
 
-        const mappedUserItems = userItems.map((db) => {
-          const local = dbItemToLocal(db);
-          return migrateAmiNovCreditToJasmine(local).item;
-        });
+        const rawLocalUserItems = userItems.map(dbItemToLocal);
+        const { items: mappedUserItems, migratedItems: amiCreditsMigrated } = applyHistoricalAmiCreditTransfers(rawLocalUserItems);
 
         setItems(prev => {
           if (prev.length !== mappedUserItems.length) {
@@ -1444,19 +1506,13 @@ export const InventoryProvider = ({ children }) => {
           return hasChange ? mappedUserItems : prev;
         });
 
-        // Sinkronkan pengalihan credit Ami -> Jasmine (4-16 Nov 2026) ke Supabase Cloud
-        if (supabase) {
-          const amiCreditsToSync = userItems
-            .map((db) => migrateAmiNovCreditToJasmine(dbItemToLocal(db)))
-            .filter((res) => res.migrated)
-            .map((res) => localItemToDb(res.item));
-          if (amiCreditsToSync.length > 0) {
-            supabase
-              .from('items')
-              .upsert(amiCreditsToSync, { onConflict: 'id' })
-              .then(() => {})
-              .catch(() => {});
-          }
+        // Sinkronkan pengalihan credit Ami (4-16 Nov -> Jasmine, 18 Nov -> bagi 2 Sheva & Ade) ke Supabase Cloud
+        if (supabase && amiCreditsMigrated.length > 0) {
+          supabase
+            .from('items')
+            .upsert(amiCreditsMigrated.map(localItemToDb), { onConflict: 'id' })
+            .then(() => {})
+            .catch(() => {});
         }
 
         if (supabase) {
