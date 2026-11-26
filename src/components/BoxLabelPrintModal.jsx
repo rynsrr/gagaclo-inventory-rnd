@@ -92,8 +92,232 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
     setSelectedBoxIds([]);
   };
 
+  const escapeHtml = (str) =>
+    String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
   const handlePrint = () => {
-    window.print();
+    if (a4PrintSheets.length === 0) return;
+
+    const renderSlotHtml = (box) => {
+      if (!box) return `<div class="a5-slot"></div>`;
+      const headerTitle = box.category === 'MATERIAL' ? 'MATERIAL BOX' : 'SAMPLE BOX';
+      const displayNum = getBoxDisplayNumber(box);
+      const isLongNum = displayNum.length >= 3;
+      const picText = box.picName ? escapeHtml(box.picName) : '&nbsp;';
+      const locText = escapeHtml(`${box.rackName || ''}  |  ${box.rackDescription || box.location || ''}`);
+      return `
+        <div class="a5-slot">
+          <div class="label-frame">
+            <div class="label-header">${escapeHtml(headerTitle)}</div>
+            <div class="label-number-wrap">
+              <div class="label-number${isLongNum ? ' long' : ''}">${escapeHtml(displayNum)}</div>
+            </div>
+            <div class="label-bottom">
+              <div class="label-divider"></div>
+              <div class="label-pic-bar">
+                <div class="label-pic-text">${picText}</div>
+              </div>
+              <div class="label-location">${locText}</div>
+              <div class="label-footer">INVENTORY MANAGEMENT RND</div>
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    const sheetsHtml = a4PrintSheets
+      .map(
+        (pair) => `
+        <div class="a4-sheet">
+          ${renderSlotHtml(pair[0])}
+          <div class="cut-line"></div>
+          ${renderSlotHtml(pair[1])}
+        </div>
+      `
+      )
+      .join('');
+
+    const htmlDoc = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Cetak Label Box A5 (A4 2-Up)</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 210mm;
+      background: #ffffff;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .a4-sheet {
+      width: 210mm;
+      height: 296mm;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      overflow: hidden;
+      page-break-after: always;
+      break-after: page;
+    }
+    .a4-sheet:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .a5-slot {
+      width: 210mm;
+      height: 147.5mm;
+      padding: 6mm 8mm;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .cut-line {
+      width: 210mm;
+      height: 0;
+      border-top: 1px dashed #94a3b8;
+    }
+    .label-frame {
+      width: 100%;
+      height: 100%;
+      border: 3.5px solid #000000;
+      padding: 6mm 9mm 5mm 9mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+      background: #ffffff;
+    }
+    .label-header {
+      font-size: 28pt;
+      font-weight: 700;
+      color: #000000;
+      text-transform: uppercase;
+      line-height: 1.05;
+    }
+    .label-number-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .label-number {
+      font-size: 132pt;
+      font-weight: 700;
+      color: #000000;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+    }
+    .label-number.long {
+      font-size: 112pt;
+    }
+    .label-bottom {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .label-divider {
+      width: 100%;
+      height: 3px;
+      background: #000000;
+      margin-bottom: 2.5mm;
+    }
+    .label-pic-bar {
+      width: 100%;
+      min-height: 18mm;
+      background: #ccd7ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5mm 4mm;
+    }
+    .label-pic-text {
+      font-size: 34pt;
+      font-weight: 400;
+      color: #000000;
+      line-height: 1.1;
+    }
+    .label-location {
+      margin-top: 2mm;
+      font-size: 15pt;
+      font-weight: 400;
+      color: #000000;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .label-footer {
+      margin-top: 1.5mm;
+      font-size: 12pt;
+      font-weight: 700;
+      color: #000000;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      line-height: 1.1;
+    }
+  </style>
+</head>
+<body>${sheetsHtml}</body>
+</html>`;
+
+    // Print via isolated hidden iframe so there are ZERO blank pages and ZERO border clipping
+    const existingFrame = document.getElementById('gagaclo-a4-label-print-frame');
+    if (existingFrame) existingFrame.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'gagaclo-a4-label-print-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+    doc.open();
+    doc.write(htmlDoc);
+    doc.close();
+
+    setTimeout(() => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch {
+        window.print();
+      }
+      setTimeout(() => {
+        iframe.remove();
+      }, 2000);
+    }, 150);
   };
 
   const allFilteredSelected =
