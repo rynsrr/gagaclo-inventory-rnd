@@ -29,7 +29,20 @@ export const InventoryCard = ({ item, isPrintMode = false }) => {
     ? (isPrintMode ? 'NA' : '-')
     : jumlahRaw;
   const satuan = naOr(item.satuan || item.unit);
-  const place = naOr(item.place || (item.boxNumber ? `BOX ${getBoxDisplayNumber(item.boxNumber)}` : null));
+  const formatPlaceWithoutPic = () => {
+    const rawPlace = String(item.place || '').trim();
+    if (rawPlace && rawPlace !== '-') {
+      // Hapus nama PIC di dalam kurung, misal: "BOX 56 (RACK 4 - AMI)" -> "BOX 56 (RACK 4)"
+      return rawPlace.replace(/\s*-\s*[^)]+\)/g, ')').trim();
+    }
+    if (item.boxNumber) {
+      const boxDisp = getBoxDisplayNumber(item.boxNumber);
+      const rName = String(item.rackName || '').trim();
+      return rName ? `BOX ${boxDisp} (${rName})` : `BOX ${boxDisp}`;
+    }
+    return isPrintMode ? 'NA' : '-';
+  };
+  const place = formatPlaceWithoutPic();
   const styleDisplay = naOr(item.style);
   const sampleNoDisplay = naOr(item.sampleNo);
   const sizeDisplay = naOr(item.size);
