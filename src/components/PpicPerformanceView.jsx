@@ -189,6 +189,11 @@ export function PpicPerformanceView() {
         contributor = matchPic ? matchPic.name : (boxPic || 'Royan');
       }
 
+      // Pengalihan resmi: seluruh credit input Ami tanggal 4 s/d 16 November 2026 dialihkan ke Jasmine
+      if (contributor === 'Ami' && dateKey >= '2026-11-04' && dateKey <= '2026-11-16') {
+        contributor = 'Jasmine';
+      }
+
       const enrichedItem = {
         ...item,
         recordDate: dateKey,

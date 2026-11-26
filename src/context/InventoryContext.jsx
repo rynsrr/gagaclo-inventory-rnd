@@ -28,7 +28,7 @@ import { collectHistoricalCodeRevisions, filterUnrecordedRevisions, revisionKey 
 import { resolveUniqueCode, getNextSampleCode, getNextMaterialCode, allocateNextSequentialCode, allocateSequentialCodeBatch, normalizeSequentialCode, releaseCode } from '../utils/sequenceResolver';
 import { isItemDispatched, encodeDispatchTags, decodeDispatchData } from '../utils/dispatchUtils';
 import { isSuperuser, isHelper, isManager } from '../utils/authUtils';
-import { getLocalTodayIso, formatToDDMMYYYY } from '../utils/dateUtils';
+import { getLocalTodayIso, formatToDDMMYYYY, getItemRecordDate } from '../utils/dateUtils';
 export { isSuperuser, isHelper, isManager };
 import {
   checkAndTriggerDailyAutoBackup,
@@ -231,6 +231,47 @@ export function normalizeItemTextUppercase(item) {
     }
   }
   return { item: upperObj, changed };
+}
+
+/**
+ * Pengalihan credit input Ami -> Jasmine untuk tanggal 4 s/d 16 November 2026.
+ * Hanya mengalihkan credit penginput (inputtedBy / inputted_by:Jasmine), tidak mengubah pemilik box fisik.
+ */
+function migrateAmiNovCreditToJasmine(item) {
+  if (!item) return { item, migrated: false };
+  const dateKey = item.recordDate || getItemRecordDate(item);
+  if (!dateKey || dateKey < '2026-11-04' || dateKey > '2026-11-16') {
+    return { item, migrated: false };
+  }
+  const tags = Array.isArray(item.tags) ? item.tags : [];
+  const inputtedByTag = tags.find((t) => typeof t === 'string' && t.startsWith('inputted_by:'));
+  const supportTag = tags.find((t) => typeof t === 'string' && (t.startsWith('support:') || t.startsWith('helper:')));
+  const rawInputter =
+    item.inputtedBy ||
+    item.createdBy ||
+    (inputtedByTag ? decodeURIComponent(inputtedByTag.slice(12)) : null) ||
+    item.supportName ||
+    item.helperName ||
+    (supportTag ? decodeURIComponent(supportTag.slice(supportTag.indexOf(':') + 1)) : null);
+
+  const effectiveCredit = String(rawInputter || item.picName || '').trim().toLowerCase();
+  if (effectiveCredit !== 'ami') {
+    return { item, migrated: false };
+  }
+
+  const nextTags = [
+    ...tags.filter((t) => typeof t !== 'string' || !t.startsWith('inputted_by:')),
+    'inputted_by:Jasmine',
+  ];
+  return {
+    item: {
+      ...item,
+      inputtedBy: 'Jasmine',
+      createdBy: 'Jasmine',
+      tags: nextTags,
+    },
+    migrated: true,
+  };
 }
 
 export const InventoryProvider = ({ children }) => {
@@ -514,6 +555,11 @@ export const InventoryProvider = ({ children }) => {
               if (upperChanged) {
                 datesRepaired = true;
                 updated = upperItem;
+              }
+              const { item: creditItem, migrated: creditMigrated } = migrateAmiNovCreditToJasmine(updated);
+              if (creditMigrated) {
+                datesRepaired = true;
+                updated = creditItem;
               }
               return updated;
             });
@@ -1357,14 +1403,18 @@ export const InventoryProvider = ({ children }) => {
           !deletedIds.has(String(i.id))
         ));
 
+        const mappedUserItems = userItems.map((db) => {
+          const local = dbItemToLocal(db);
+          return migrateAmiNovCreditToJasmine(local).item;
+        });
+
         setItems(prev => {
-          if (prev.length !== userItems.length) {
-            return userItems.map(dbItemToLocal);
+          if (prev.length !== mappedUserItems.length) {
+            return mappedUserItems;
           }
-          const mapped = userItems.map(dbItemToLocal);
           const prevMap = new Map(prev.map(item => [String(item.id), item]));
           let hasChange = false;
-          for (const item of mapped) {
+          for (const item of mappedUserItems) {
             const old = prevMap.get(String(item.id));
             if (!old) {
               hasChange = true;
@@ -1375,6 +1425,7 @@ export const InventoryProvider = ({ children }) => {
               old.boxNumber !== item.boxNumber ||
               old.kode !== item.kode ||
               old.picName !== item.picName ||
+              old.inputtedBy !== item.inputtedBy ||
               old.recordDate !== item.recordDate ||
               old.storageDate !== item.storageDate ||
               old.style !== item.style ||
@@ -1390,8 +1441,23 @@ export const InventoryProvider = ({ children }) => {
               break;
             }
           }
-          return hasChange ? mapped : prev;
+          return hasChange ? mappedUserItems : prev;
         });
+
+        // Sinkronkan pengalihan credit Ami -> Jasmine (4-16 Nov 2026) ke Supabase Cloud
+        if (supabase) {
+          const amiCreditsToSync = userItems
+            .map((db) => migrateAmiNovCreditToJasmine(dbItemToLocal(db)))
+            .filter((res) => res.migrated)
+            .map((res) => localItemToDb(res.item));
+          if (amiCreditsToSync.length > 0) {
+            supabase
+              .from('items')
+              .upsert(amiCreditsToSync, { onConflict: 'id' })
+              .then(() => {})
+              .catch(() => {});
+          }
+        }
 
         if (supabase) {
           const itemsNeedingRemoteUpdate = userItems.filter(db => {
