@@ -314,106 +314,72 @@ export const Warehouse3DView = ({
   const createBoxFaceTexture = (boxNumber, picName, category, rackName, rackDescription, itemCount = 0, isFull = false, isCarton = false) => {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
-    canvas.height = 384; // 4:3 aspect ratio
+    canvas.height = 384; // 4:3 aspect ratio matching official A5 landscape label
     const ctx = canvas.getContext('2d');
 
-    if (isCarton) {
-      // Kraft brown carton face with pasted white official label
-      ctx.fillStyle = '#b5835a';
-      ctx.fillRect(0, 0, 512, 384);
+    // Outer background: kraft cardboard rim for carton boxes, crisp white margin for rack boxes
+    ctx.fillStyle = isCarton ? '#b5835a' : '#ffffff';
+    ctx.fillRect(0, 0, 512, 384);
 
-      // Subtle cardboard corrugated grain stripes
-      ctx.fillStyle = 'rgba(92, 58, 33, 0.08)';
-      for (let y = 0; y < 384; y += 12) {
-        ctx.fillRect(0, y, 512, 4);
-      }
-
-      // Packing tape strip along top edge
-      ctx.fillStyle = '#cfa378';
-      ctx.fillRect(0, 0, 512, 22);
-
-      // Inner white sticker label pasted on carton
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(22, 24, 468, 338);
-      ctx.strokeStyle = '#3b2414';
-      ctx.lineWidth = 10;
-      ctx.strokeRect(22, 24, 468, 338);
-    } else {
-      // 1. Background White
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 512, 384);
-
-      // 2. Thick Outer Black Border
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 14;
-      ctx.strokeRect(7, 7, 498, 370);
-    }
-
-    // 3. Header: CARTON BOX, SAMPLE BOX, or MATERIAL BOX (left-aligned)
-    ctx.fillStyle = isCarton ? '#5c3317' : '#000000';
-    ctx.font = 'bold 28px system-ui, sans-serif';
-    ctx.textAlign = 'left';
-    const headerTitle = isCarton ? 'CARTON BOX' : (category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX');
-    ctx.fillText(headerTitle, isCarton ? 38 : 26, isCarton ? 58 : 48);
-
-    // Occupancy Status Pill at top-right of label
-    let badgeBg = '#64748b';
-    let badgeText = 'KOSONG';
-    if (isFull) {
-      badgeBg = '#059669';
-      badgeText = 'PENUH';
-    } else if (itemCount > 0) {
-      badgeBg = '#d97706';
-      badgeText = `${itemCount} ITEM`;
-    }
-
-    ctx.fillStyle = badgeBg;
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(330, 18, 154, 38, 8);
-      ctx.fill();
-    } else {
-      ctx.fillRect(330, 18, 154, 38);
-    }
+    // White sticker sheet with exact black rectangular border (1:1 PDF layout)
+    const padX = isCarton ? 16 : 12;
+    const padY = isCarton ? 14 : 12;
+    const cardW = 512 - padX * 2;
+    const cardH = 384 - padY * 2;
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 17px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(badgeText, 407, 43);
+    ctx.fillRect(padX, padY, cardW, cardH);
 
-    // 4. Giant Box Number (1-72 atau 1A-10A untuk Lemari 1)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(padX, padY, cardW, cardH);
+
+    // 1. Header: SAMPLE BOX / MATERIAL BOX (Centered Bold, exact PDF match)
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 30px Arial, Helvetica, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const headerTitle = category === 'MATERIAL' ? 'MATERIAL BOX' : 'SAMPLE BOX';
+    ctx.fillText(headerTitle, 256, padY + 46);
+
+    // 2. Giant Centered Box Number (1-72 atau 1A-12J untuk Lemari 1-12)
     const displayNum = getBoxDisplayNumber(boxNumber);
     ctx.fillStyle = '#000000';
-    ctx.font = displayNum.length >= 3 ? '900 128px system-ui, sans-serif' : '900 150px system-ui, sans-serif';
+    ctx.font = displayNum.length >= 3
+      ? 'bold 132px Arial, Helvetica, sans-serif'
+      : 'bold 156px Arial, Helvetica, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(displayNum, 256, 205);
+    ctx.fillText(displayNum, 256, padY + 200);
 
-    // 5. Black Divider Line
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(14, 230);
-    ctx.lineTo(498, 230);
-    ctx.stroke();
-
-    // 6. Lavender Bar for PIC Name (matching user image #c8d0ff)
-    ctx.fillStyle = '#c8d0ff';
-    ctx.fillRect(14, 234, 484, 60);
-
-    // PIC Name text (kosongkan jika box campur tanpa PIC)
+    // 3. Inset Horizontal Black Divider Line (exact PDF match)
+    const insetX = padX + 26;
+    const insetW = cardW - 52;
+    const dividerY = padY + 224;
     ctx.fillStyle = '#000000';
-    ctx.font = '900 42px system-ui, sans-serif';
-    ctx.fillText(picName || '', 256, 278);
+    ctx.fillRect(insetX, dividerY, insetW, 4);
 
-    // 7. Rack & Location Subtitle
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 20px system-ui, sans-serif';
-    const locationText = `${rackName}  |  ${rackDescription || ''}`;
-    ctx.fillText(locationText, 256, 326);
+    // 4. Soft Periwinkle/Lavender Bar (#ccd7ff) for PIC Name (inset matching divider)
+    const barY = dividerY + 10;
+    const barH = 54;
+    ctx.fillStyle = '#ccd7ff';
+    ctx.fillRect(insetX, barY, insetW, barH);
 
-    // 8. Footer: INVENTORY MANAGEMENT RND
+    // PIC Name text (clean regular Arial matching PDF; blank for Lemari mixed boxes)
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 16px system-ui, sans-serif';
-    ctx.fillText('INVENTORY MANAGEMENT RND', 256, 356);
+    ctx.font = '40px Arial, Helvetica, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(picName || '', 256, barY + 40);
+
+    // 5. Rack / Lemari & Location Subtitle (regular Arial)
+    ctx.fillStyle = '#000000';
+    ctx.font = '18px Arial, Helvetica, sans-serif';
+    const locationText = `${rackName || ''}  |  ${rackDescription || ''}`;
+    ctx.fillText(locationText, 256, barY + barH + 26);
+
+    // 6. Footer: INVENTORY MANAGEMENT RND (bold uppercase)
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 14px Arial, Helvetica, sans-serif';
+    ctx.fillText('INVENTORY MANAGEMENT RND', 256, barY + barH + 50);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;

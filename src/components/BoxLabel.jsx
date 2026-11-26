@@ -22,63 +22,68 @@ import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 export const BoxLabel = ({ box, isPrintMode = false }) => {
   if (!box) return null;
 
-  const isCarton = box.boxType === 'CARTON' || Number(box.rackId) >= 6 || String(box.rackName || '').toUpperCase().includes('LEMARI');
-  const headerTitle = isCarton ? 'CARTON BOX' : (box.category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX');
+  const headerTitle = box.category === 'MATERIAL' ? 'MATERIAL BOX' : 'SAMPLE BOX';
   const displayNum = getBoxDisplayNumber(box);
+  const locationText = `${box.rackName || ''}  |  ${box.rackDescription || box.location || ''}`;
 
   return (
-    <div 
-      className={`bg-white text-black font-sans box-border text-center flex flex-col border-4 border-black ${
-        isPrintMode 
-          ? 'w-full max-w-[460px] aspect-[210/148] p-5 print:w-[210mm] print:h-[148mm] print:max-w-none print:p-8 print:m-0 break-inside-avoid print-page-a5-landscape'
-          : 'w-full max-w-[460px] aspect-[210/148] p-5 shadow-xl rounded-none'
+    <div
+      className={`bg-white text-black font-sans box-border ${
+        isPrintMode
+          ? 'w-full max-w-[460px] aspect-[210/148] p-2.5 print:w-[210mm] print:h-[148mm] print:max-w-none print:p-[6mm] print:m-0 break-inside-avoid print-page-a5-landscape'
+          : 'w-full max-w-[460px] aspect-[210/148] p-2.5 shadow-xl rounded-none'
       }`}
-      style={{ boxSizing: 'border-box' }}
+      style={{ boxSizing: 'border-box', fontFamily: 'Arial, Helvetica, sans-serif' }}
     >
-      {/* 1. Header: SAMPLE BOX or MATERIAL BOX */}
-      <div className="shrink-0 pt-1">
-        <h2 className="text-2xl sm:text-3xl font-black tracking-wide text-black uppercase font-sans">
-          {headerTitle}
-        </h2>
-      </div>
+      {/* Crisp Outer Black Rectangular Frame (exact 1:1 PDF layout) */}
+      <div className="w-full h-full border-[3.5px] border-black flex flex-col items-center justify-between px-5 sm:px-7 py-3.5 sm:py-5 text-center box-border">
+        {/* 1. Header: SAMPLE BOX / MATERIAL BOX (Centered Bold) */}
+        <div className="shrink-0 pt-0.5">
+          <h2 className="text-xl sm:text-[26px] print:text-[32pt] font-bold tracking-normal text-black uppercase leading-tight">
+            {headerTitle}
+          </h2>
+        </div>
 
-      {/* 2. Giant Box Number (flexes to fill the middle, never overflows) */}
-      <div className="flex-1 flex items-center justify-center min-h-0 py-1">
-        <span 
-          className="text-7xl sm:text-8xl font-black text-black leading-none block font-sans select-all"
-          style={{ letterSpacing: '-0.04em' }}
-        >
-          {displayNum}
-        </span>
-      </div>
-
-      {/* 3. Divider, PIC bar, Rack location & Footer */}
-      <div className="w-full shrink-0 space-y-2">
-        {/* Horizontal Divider Line above the PIC bar */}
-        <div className="w-full h-1 bg-black mb-1" />
-
-        {/* PIC Name on Lavender / Periwinkle background bar */}
-        <div 
-          className="w-full py-1.5 px-3 text-center"
-          style={{ backgroundColor: '#c8d0ff' }}
-        >
-          <span className="text-2xl sm:text-3xl font-black text-black tracking-tight block">
-            {box.picName || '\u00A0'}
+        {/* 2. Giant Centered Box Number (1-72 or 1A-12J) */}
+        <div className="flex-1 flex items-center justify-center min-h-0 w-full">
+          <span
+            className={`${
+              displayNum.length >= 3
+                ? 'text-[76px] sm:text-[104px] print:text-[130pt]'
+                : 'text-[92px] sm:text-[124px] print:text-[155pt]'
+            } font-bold text-black leading-none block select-all`}
+            style={{ letterSpacing: '-0.02em' }}
+          >
+            {displayNum}
           </span>
         </div>
 
-        {/* Location / Rack description */}
-        <div className="pt-1 text-xs sm:text-sm font-bold text-black flex items-center justify-center space-x-2 flex-wrap">
-          <span>{box.rackName}</span>
-          <span>|</span>
-          <span className="font-semibold">{box.rackDescription || box.location}</span>
-        </div>
+        {/* 3. Inset Divider, Periwinkle PIC Bar, Rack/Lemari Location & Footer */}
+        <div className="w-full shrink-0 flex flex-col items-center">
+          {/* Horizontal Black Divider Line (inset matching PDF) */}
+          <div className="w-full h-[3px] bg-black mb-2" />
 
-        {/* Organization / Unit Footer */}
-        <div className="pt-0.5 pb-0.5">
-          <p className="text-xs sm:text-xs font-black tracking-widest text-black uppercase">
-            INVENTORY MANAGEMENT RND
-          </p>
+          {/* PIC Name on Soft Periwinkle/Lavender Bar (#ccd7ff) */}
+          <div
+            className="w-full py-1.5 sm:py-2 px-3 text-center flex items-center justify-center min-h-[38px] sm:min-h-[48px] print:min-h-[20mm]"
+            style={{ backgroundColor: '#ccd7ff' }}
+          >
+            <span className="text-2xl sm:text-[34px] print:text-[38pt] font-normal text-black leading-tight block">
+              {box.picName || '\u00A0'}
+            </span>
+          </div>
+
+          {/* Location / Rack or Lemari Description */}
+          <div className="pt-1.5 sm:pt-2 text-xs sm:text-[15px] print:text-[18pt] font-normal text-black leading-snug">
+            {locationText}
+          </div>
+
+          {/* Footer: INVENTORY MANAGEMENT RND */}
+          <div className="pt-1 sm:pt-1.5">
+            <p className="text-[11px] sm:text-xs print:text-[13pt] font-bold tracking-wide text-black uppercase">
+              INVENTORY MANAGEMENT RND
+            </p>
+          </div>
         </div>
       </div>
     </div>

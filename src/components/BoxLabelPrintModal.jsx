@@ -18,8 +18,10 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
 
   // Filter boxes based on user selection
   const filteredBoxes = boxes.filter(box => {
-    if (selectedRackId !== 'ALL' && box.rackId !== Number(selectedRackId)) return false;
-    if (selectedPpic !== 'ALL' && box.picName.toLowerCase() !== selectedPpic.toLowerCase()) return false;
+    if (selectedRackId === 'RACKS_ONLY' && Number(box.rackId) > 5) return false;
+    if (selectedRackId === 'LEMARI_ONLY' && Number(box.rackId) < 6) return false;
+    if (selectedRackId !== 'ALL' && selectedRackId !== 'RACKS_ONLY' && selectedRackId !== 'LEMARI_ONLY' && Number(box.rackId) !== Number(selectedRackId)) return false;
+    if (selectedPpic !== 'ALL' && String(box.picName || '').toLowerCase() !== selectedPpic.toLowerCase()) return false;
     return true;
   });
 
@@ -94,9 +96,11 @@ export const BoxLabelPrintModal = ({ isOpen, onClose, initialBoxNumber = null })
                 className="p-1.5 rounded-lg border border-slate-300 bg-white font-medium"
               >
                 <option value="ALL">Semua Penyimpanan ({racks.length} Lokasi)</option>
+                <option value="RACKS_ONLY">Semua Rak (Rak 1 - 5 • 72 Box)</option>
+                <option value="LEMARI_ONLY">Semua Lemari (Lemari 1 - 12 • 120 Box)</option>
                 {racks.map(r => (
                   <option key={r.id} value={r.id}>
-                    {r.name} ({r.category} - {r.totalBoxes} Box)
+                    {r.name} ({r.boxRange || `${r.totalBoxes} Box`})
                   </option>
                 ))}
               </select>
