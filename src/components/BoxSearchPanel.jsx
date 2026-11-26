@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Box as BoxIcon, Package, Pencil, Search, X } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 
 // Fields scanned when the user searches. Boxes and items use different shapes
 // because items come from both the local seed data and Supabase imports.
 const BOX_FIELDS = [
-  'boxNumber', 'code', 'picName', 'rackName', 'rackDescription', 'location',
+  'boxNumber', 'displayNumber', 'code', 'picName', 'rackName', 'rackDescription', 'location',
   'category', 'rackType', 'notes',
 ];
 
@@ -48,13 +49,15 @@ export function computeSearchResults(boxes = [], items = [], query = '') {
   const boxMatches = boxes
     .filter((box) =>
       matchesRecord(box, BOX_FIELDS, q) ||
-      String(box.boxNumber) === bareNumber
+      String(box.boxNumber) === bareNumber ||
+      getBoxDisplayNumber(box).toLowerCase() === bareNumber
     )
     .sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
 
   const itemMatches = items.filter((item) =>
     matchesRecord(item, ITEM_FIELDS, q) ||
-    String(item.boxNumber) === bareNumber
+    String(item.boxNumber) === bareNumber ||
+    getBoxDisplayNumber(item.boxNumber).toLowerCase() === bareNumber
   );
 
   const matchedBoxNumbers = new Set();

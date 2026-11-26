@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
+import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 import { Box as BoxIcon, X } from 'lucide-react';
 
 export const BoxMenuDropdown = ({
@@ -123,15 +124,15 @@ export const BoxMenuDropdown = ({
                   <button
                     key={box.boxNumber}
                     type="button"
-                    aria-label={`Buka Box ${box.boxNumber}, ${group.label}`}
+                    aria-label={`Buka Box ${getBoxDisplayNumber(box)}, ${group.label}`}
                     onClick={() => {
                       setSelectedBoxNumber(box.boxNumber);
                       onClose();
                     }}
                     className={`inline-flex h-7 min-w-7 items-center justify-center rounded-[8px] px-1.5 text-xs font-semibold tabular-nums transition-all border active:scale-95 cursor-pointer ${group.boxClass}`}
-                    title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName || 'Rak'}, PIC: ${box.picName || '-'})`}
+                    title={`Klik untuk buka BOX #${getBoxDisplayNumber(box)} (${box.rackName || 'Rak'}, PIC: ${box.picName || '-'})`}
                   >
-                    {box.boxNumber}
+                    {getBoxDisplayNumber(box)}
                   </button>
                 ))}
                 {group.boxes.length === 0 && (

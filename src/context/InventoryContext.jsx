@@ -245,6 +245,9 @@ export const InventoryProvider = ({ children }) => {
             if ([3, 4, 5].includes(Number(r.id)) && r.category === 'MATERIAL') {
               return { ...r, category: 'SAMPLE' };
             }
+            if (Number(r.id) === 6) {
+              return { ...r, boxRange: 'BOX 1A - 1J' };
+            }
             return r;
           });
           // Auto-migration: pastikan LEMARI 1 (id: 6) selalu tersedia di daftar penyimpanan
@@ -443,7 +446,14 @@ export const InventoryProvider = ({ children }) => {
               return { ...b, category: 'SAMPLE' };
             }
             if (Number(b.rackId) === 6 || String(b.rackName || '').toUpperCase().includes('LEMARI')) {
-              return { ...b, boxType: 'CARTON' };
+              const bNum = Number(b.boxNumber);
+              const disp = (bNum >= 73 && bNum <= 82) ? `1${String.fromCharCode(64 + (bNum - 72))}` : (b.displayNumber || String(bNum));
+              return {
+                ...b,
+                boxType: 'CARTON',
+                displayNumber: disp,
+                code: (bNum >= 73 && bNum <= 82) ? `BOX-${disp}` : b.code,
+              };
             }
             return b;
           });

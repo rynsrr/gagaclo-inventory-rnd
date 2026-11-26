@@ -7,6 +7,7 @@ import { TargetTeamBanner } from './components/TargetTeamBanner';
 import { CelebrationFlareOverlay } from './components/CelebrationFlareOverlay';
 import { InventoryImport } from './components/InventoryImport';
 import { computeSearchResults } from './components/BoxSearchPanel';
+import { getBoxDisplayNumber } from './utils/boxDisplayUtils';
 
 // Code-split heavy 3D scene & secondary views for ultra lightweight initial load
 const Warehouse3DView = lazy(() =>
@@ -915,10 +916,10 @@ const AppContent = () => {
                             setIsSearchOpen(false);
                           }}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#ff9500]/10 hover:bg-[#ff9500]/20 text-[#c96700] border border-[#ff9500]/25 transition shadow-2xs cursor-pointer active:scale-95"
-                          title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName})`}
+                          title={`Klik untuk buka BOX #${getBoxDisplayNumber(box)} (${box.rackName})`}
                         >
                           <BoxIcon className="h-3 w-3 text-[#ff9500]" aria-hidden="true" />
-                          <span>BOX #{box.boxNumber}</span>
+                          <span>BOX #{getBoxDisplayNumber(box)}</span>
                           <span className="text-[11px] font-normal opacity-80">({box.rackName || 'LANTAI'})</span>
                         </button>
                       ))}
@@ -947,10 +948,10 @@ const AppContent = () => {
                               setIsSearchOpen(false);
                             }}
                             className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
-                            title={`Buka BOX #${item.boxNumber} tempat sampel ini disimpan`}
+                            title={`Buka BOX #${getBoxDisplayNumber(item.boxNumber)} tempat sampel ini disimpan`}
                           >
-                            <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-[6px] bg-[#0071e3]/10 text-[#0071e3] font-bold text-[11px] tabular-nums">
-                              #{item.boxNumber}
+                            <span className="flex h-5.5 min-w-5.5 px-1 shrink-0 items-center justify-center rounded-[6px] bg-[#0071e3]/10 text-[#0071e3] font-bold text-[11px] tabular-nums">
+                              #{getBoxDisplayNumber(item.boxNumber)}
                             </span>
                             <div className="min-w-0">
                               <div className="font-semibold text-[#1d1d1f] truncate text-xs group-hover:text-[#0071e3]">

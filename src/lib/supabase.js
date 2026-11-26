@@ -188,7 +188,8 @@ export function localBoxToDb(box) {
 }
 
 export function dbBoxToLocal(db, defaultBoxes = []) {
-  const defaultBox = defaultBoxes.find(b => Number(b.boxNumber) === Number(db.box_number)) || {};
+  const bNum = Number(db.box_number);
+  const defaultBox = defaultBoxes.find(b => Number(b.boxNumber) === bNum) || {};
   const resolvedRackId = Number(db.rack_id ?? defaultBox.rackId ?? (db.rack_name === 'LANTAI' ? 0 : 1));
   const resolvedRackName = db.rack_name || defaultBox.rackName || 'LANTAI';
   const isCarton =
@@ -196,10 +197,17 @@ export function dbBoxToLocal(db, defaultBoxes = []) {
     resolvedRackId === 6 ||
     String(resolvedRackName).toUpperCase().includes('LEMARI') ||
     String(db.code || '').toUpperCase().startsWith('CARTON');
+  const displayNumber = (bNum >= 73 && bNum <= 82)
+    ? `1${String.fromCharCode(64 + (bNum - 72))}`
+    : (defaultBox.displayNumber || String(bNum));
+  const normalizedCode = (bNum >= 73 && bNum <= 82)
+    ? `BOX-${displayNumber}`
+    : (db.code || defaultBox.code);
   return {
     ...defaultBox,
-    boxNumber: Number(db.box_number),
-    code: db.code || defaultBox.code,
+    boxNumber: bNum,
+    displayNumber,
+    code: normalizedCode,
     // Use ?? so rackId 0 (LANTAI / floor) is preserved instead of falling back to 1
     rackId: resolvedRackId,
     rackName: resolvedRackName,

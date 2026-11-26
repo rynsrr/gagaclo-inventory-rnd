@@ -79,7 +79,7 @@ export const RACKS_DATA = [
     rackType: 'Lemari',
     location: 'Sample warehouse (Lemari Carton)',
     fullDescription: 'Lemari penyimpanan, 10 box carton coklat',
-    boxRange: 'BOX 73 - 82',
+    boxRange: 'BOX 1A - 1J',
     boxStart: 73,
     boxEnd: 82,
     totalBoxes: 10,
@@ -294,10 +294,12 @@ export const generateInitialBoxes = () => {
     const picName = ppicByBoxNumber[boxNum] || 'Royan';
     const ppicObj = PPIC_MEMBERS.find(p => p.name === picName);
     const isCartonBox = rackId === 6;
+    const displayNumber = isCartonBox ? `1${String.fromCharCode(64 + (boxNum - 72))}` : String(boxNum);
 
     boxes.push({
       boxNumber: boxNum,
-      code: isCartonBox ? `CARTON-${String(boxNum - 72).padStart(2, '0')}` : `BOX-${String(boxNum).padStart(2, '0')}`,
+      displayNumber,
+      code: isCartonBox ? `BOX-${displayNumber}` : `BOX-${String(boxNum).padStart(2, '0')}`,
       rackId: rack.id,
       rackName: rack.name,
       category: rack.category,

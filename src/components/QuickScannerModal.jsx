@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useInventory } from '../context/InventoryContext';
+import { getBoxDisplayNumber, parseBoxInputToNumber } from '../utils/boxDisplayUtils';
 import { X, Search, QrCode, ArrowRight } from 'lucide-react';
 
 export const QuickScannerModal = () => {
@@ -26,11 +27,11 @@ export const QuickScannerModal = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    const cleanNum = parseInt(inputVal.replace(/\D/g, ''), 10);
-    if (boxes.some(b => Number(b.boxNumber) === cleanNum)) {
-      handleSelectBox(cleanNum);
+    const resolvedNum = parseBoxInputToNumber(inputVal, boxes);
+    if (resolvedNum !== null) {
+      handleSelectBox(resolvedNum);
     } else {
-      alert(`Masukkan nomor box valid antara 1 sampai ${maxBoxNumber}.`);
+      alert('Masukkan nomor box valid (contoh: 1 - 72 atau 1A - 1J untuk Lemari 1).');
     }
   };
 
@@ -39,6 +40,7 @@ export const QuickScannerModal = () => {
     if (inputVal.trim()) {
       const q = inputVal.toLowerCase();
       return (
+        getBoxDisplayNumber(b).toLowerCase().includes(q) ||
         String(b.boxNumber).includes(q) ||
         b.picName.toLowerCase().includes(q) ||
         b.code.toLowerCase().includes(q)
@@ -57,7 +59,7 @@ export const QuickScannerModal = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0071e3]/10 text-[#0071e3]">
               <QrCode className="w-4 h-4" />
             </div>
-            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Lompat Cepat ke Box (1 - {maxBoxNumber})</h3>
+            <h3 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">Lompat Cepat ke Box (1 - 72 &amp; 1A - 1J)</h3>
           </div>
           <button
             onClick={() => setQuickScannerOpen(false)}
@@ -76,7 +78,7 @@ export const QuickScannerModal = () => {
               <input
                 type="text"
                 autoFocus
-                placeholder="Ketik nomor box (cth: 16) atau nama PIC lalu tekan Enter..."
+                placeholder="Ketik nomor box (cth: 16 atau 1A) atau nama PIC lalu tekan Enter..."
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -141,7 +143,7 @@ export const QuickScannerModal = () => {
                       : 'bg-white border-slate-200 text-slate-700 font-bold hover:border-slate-400'
                   }`}
                 >
-                  <span className="text-sm font-black">#{b.boxNumber}</span>
+                  <span className="text-sm font-black">#{getBoxDisplayNumber(b)}</span>
                   <span className="text-xs text-slate-500 font-medium mt-0.5 truncate w-full">
                     {b.picName}
                   </span>

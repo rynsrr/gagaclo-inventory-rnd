@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildLowPolyForestScene } from './lowPolyForestScene';
 import { useInventory } from '../context/InventoryContext';
 import { PpicMissingMentionBar } from './PpicMissingMentionBar';
+import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 import { 
   RotateCcw, 
   ZoomIn, 
@@ -272,11 +273,12 @@ export const Warehouse3DView = ({
     ctx.textAlign = 'center';
     ctx.fillText(badgeText, 407, 43);
 
-    // 4. Giant Box Number
+    // 4. Giant Box Number (1-72 atau 1A-10A untuk Lemari 1)
+    const displayNum = getBoxDisplayNumber(boxNumber);
     ctx.fillStyle = '#000000';
-    ctx.font = '900 150px system-ui, sans-serif';
+    ctx.font = displayNum.length >= 3 ? '900 128px system-ui, sans-serif' : '900 150px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(String(boxNumber), 256, 205);
+    ctx.fillText(displayNum, 256, 205);
 
     // 5. Black Divider Line
     ctx.lineWidth = 6;
@@ -1732,9 +1734,9 @@ export const Warehouse3DView = ({
                               setIsHudExpanded(false);
                             }}
                             className={`inline-flex h-6.5 min-w-6.5 items-center justify-center rounded-[7px] px-1 text-xs font-semibold tabular-nums transition-all border active:scale-95 cursor-pointer ${group.boxClass}`}
-                            title={`Klik untuk buka BOX #${box.boxNumber} (${box.rackName || 'Rak'}, PIC: ${box.picName || '-'})`}
+                            title={`Klik untuk buka BOX #${getBoxDisplayNumber(box)} (${box.rackName || 'Rak'}, PIC: ${box.picName || '-'})`}
                           >
-                            {box.boxNumber}
+                            {getBoxDisplayNumber(box)}
                           </button>
                         ))}
                         {group.boxes.length === 0 && <span className="text-[11px] text-[#86868b] italic py-1">Tidak ada box</span>}
@@ -1758,7 +1760,7 @@ export const Warehouse3DView = ({
           <div className="absolute bottom-13 right-3 sm:bottom-14 sm:right-4 z-20 bg-black/85 backdrop-blur-2xl p-4 rounded-[20px] border border-white/[0.12] text-white text-xs max-w-sm shadow-2xl animate-fade-in pointer-events-none font-apple">
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold text-white tabular-nums">
-                #{hoveredBox.boxNumber}
+                #{getBoxDisplayNumber(hoveredBox)}
               </span>
               <span className="font-mono text-xs text-white/60">
                 {hoveredBox.code}

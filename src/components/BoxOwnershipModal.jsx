@@ -9,6 +9,7 @@ import {
   Package,
 } from 'lucide-react';
 import { useInventory } from '../context/InventoryContext';
+import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 
 export function BoxOwnershipModal({ isOpen, onClose }) {
   const {
@@ -82,10 +83,11 @@ export function BoxOwnershipModal({ isOpen, onClose }) {
       }
       if (search.trim()) {
         const q = search.trim().toLowerCase();
+        const dispMatch = getBoxDisplayNumber(b).toLowerCase().includes(q);
         const numMatch = String(b.boxNumber).includes(q);
         const nameMatch = String(b.picName || '').toLowerCase().includes(q);
         const rackMatch = String(b.rackName || '').toLowerCase().includes(q);
-        if (!numMatch && !nameMatch && !rackMatch) return false;
+        if (!dispMatch && !numMatch && !nameMatch && !rackMatch) return false;
       }
       return true;
     }).sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
@@ -366,7 +368,7 @@ export function BoxOwnershipModal({ isOpen, onClose }) {
                           />
                           <div>
                             <span className="font-mono text-sm font-black text-[#1d1d1f]">
-                              BOX #{box.boxNumber}
+                              BOX #{getBoxDisplayNumber(box)}
                             </span>
                             <span className="text-[11px] text-[#86868b] font-medium block">
                               {box.rackName}

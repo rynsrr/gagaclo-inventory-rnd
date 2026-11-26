@@ -1,4 +1,5 @@
 import React from 'react';
+import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 
 /**
  * Exact replica of the official GAGACLO Box Label (A5 landscape):
@@ -21,7 +22,9 @@ import React from 'react';
 export const BoxLabel = ({ box, isPrintMode = false }) => {
   if (!box) return null;
 
-  const headerTitle = box.category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX';
+  const isCarton = box.boxType === 'CARTON' || Number(box.rackId) === 6 || String(box.rackName || '').toUpperCase().includes('LEMARI');
+  const headerTitle = isCarton ? 'CARTON BOX' : (box.category === 'SAMPLE' ? 'SAMPLE BOX' : 'MATERIAL BOX');
+  const displayNum = getBoxDisplayNumber(box);
 
   return (
     <div 
@@ -45,7 +48,7 @@ export const BoxLabel = ({ box, isPrintMode = false }) => {
           className="text-7xl sm:text-8xl font-black text-black leading-none block font-sans select-all"
           style={{ letterSpacing: '-0.04em' }}
         >
-          {box.boxNumber}
+          {displayNum}
         </span>
       </div>
 

@@ -153,25 +153,25 @@ export const RACK_GROUPS = [
     id: 6,
     name: 'LEMARI 1 (CARTON COKLAT)',
     detail: 'Lemari penyimpanan, 10 box carton coklat',
-    range: 'Box 73 s/d 82',
+    range: 'Box 1A s/d 1J',
     category: 'SAMPLE',
     boxes: [
-      { boxNumber: 73, pic: 'Royan' },
-      { boxNumber: 74, pic: 'Royan' },
-      { boxNumber: 75, pic: 'Cynara' },
-      { boxNumber: 76, pic: 'Cynara' },
-      { boxNumber: 77, pic: 'Ami' },
-      { boxNumber: 78, pic: 'Ami' },
-      { boxNumber: 79, pic: 'Ryan' },
-      { boxNumber: 80, pic: 'Ryan' },
-      { boxNumber: 81, pic: 'Hanami' },
-      { boxNumber: 82, pic: 'Hanami' },
+      { boxNumber: 73, displayNumber: '1A', pic: 'Royan' },
+      { boxNumber: 74, displayNumber: '1B', pic: 'Royan' },
+      { boxNumber: 75, displayNumber: '1C', pic: 'Cynara' },
+      { boxNumber: 76, displayNumber: '1D', pic: 'Cynara' },
+      { boxNumber: 77, displayNumber: '1E', pic: 'Ami' },
+      { boxNumber: 78, displayNumber: '1F', pic: 'Ami' },
+      { boxNumber: 79, displayNumber: '1G', pic: 'Ryan' },
+      { boxNumber: 80, displayNumber: '1H', pic: 'Ryan' },
+      { boxNumber: 81, displayNumber: '1I', pic: 'Hanami' },
+      { boxNumber: 82, displayNumber: '1J', pic: 'Hanami' },
     ].map(b => ({
       ...b,
       rack: 'LEMARI 1',
       category: 'SAMPLE',
-      value: `BOX ${b.boxNumber} (LEMARI 1 - ${b.pic})`,
-      label: `BOX ${b.boxNumber} (Carton Coklat) - PIC: ${b.pic}`
+      value: `BOX ${b.displayNumber} (LEMARI 1 - ${b.pic})`,
+      label: `BOX ${b.displayNumber} (Carton Coklat) - PIC: ${b.pic}`
     }))
   }
 ];

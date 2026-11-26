@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   useInventory 
 } from '../context/InventoryContext';
+import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
 import { 
   X, 
   Plus, 
@@ -1487,29 +1488,24 @@ function BoxDetail({ box }) {
               {/* Destination Box Picker */}
               <div>
                 <label className="block font-medium text-[#1d1d1f] mb-1.5">
-                  Nomor Box Tujuan (saat ini di Box #{box.boxNumber}):
+                  Nomor Box Tujuan (saat ini di Box #{getBoxDisplayNumber(box)}):
                 </label>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 border border-black/[0.08] rounded-xl px-3 py-2 bg-[#f5f5f7] flex-1 focus-within:bg-white focus-within:border-[#0071e3] focus-within:ring-4 focus-within:ring-[#0071e3]/15 transition">
                     <span className="font-semibold text-[#86868b] text-xs">BOX #</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="72"
+                    <select
                       value={targetBoxNum}
-                      onChange={(e) => setTargetBoxNum(Math.max(1, Math.min(72, Number(e.target.value) || 1)))}
-                      className="w-16 font-mono font-semibold text-sm text-[#1d1d1f] focus:outline-hidden bg-transparent"
-                    />
-                    {(() => {
-                      const dest = boxes.find(b => Number(b.boxNumber) === Number(targetBoxNum));
-                      return dest ? (
-                        <span className="text-[11px] font-medium text-[#0071e3] bg-[#0071e3]/10 px-2 py-0.5 rounded-full border border-[#0071e3]/20 ml-auto truncate">
-                          {dest.rackName || 'LANTAI'} • {dest.picName || 'Royan'}
-                        </span>
-                      ) : (
-                        <span className="text-xs font-semibold text-[#ff3b30] ml-auto">Box #{targetBoxNum}</span>
-                      );
-                    })()}
+                      onChange={(e) => setTargetBoxNum(Number(e.target.value) || 1)}
+                      className="font-mono font-semibold text-sm text-[#1d1d1f] focus:outline-hidden bg-transparent cursor-pointer"
+                    >
+                      {boxes
+                        .filter(b => Number(b.boxNumber) !== Number(box.boxNumber) && Number(b.boxNumber) < 900000)
+                        .map(b => (
+                          <option key={b.boxNumber} value={b.boxNumber}>
+                            {getBoxDisplayNumber(b)} ({b.rackName || 'LANTAI'} - {b.picName || 'Royan'})
+                          </option>
+                        ))}
+                    </select>
                   </div>
                 </div>
 
@@ -1517,8 +1513,8 @@ function BoxDetail({ box }) {
                 <div className="flex items-center gap-1 mt-2.5 flex-wrap text-xs">
                   <span className="text-[#86868b] font-medium mr-0.5">Pilihan Box:</span>
                   {boxes
-                    .filter(b => Number(b.boxNumber) !== Number(box.boxNumber) && Number(b.boxNumber) <= 72)
-                    .slice(0, 10)
+                    .filter(b => Number(b.boxNumber) !== Number(box.boxNumber) && Number(b.boxNumber) < 900000)
+                    .slice(0, 12)
                     .map(b => (
                       <button
                         key={b.boxNumber}
@@ -1530,7 +1526,7 @@ function BoxDetail({ box }) {
                             : 'bg-[#f5f5f7] hover:bg-[#ebebee] text-[#1d1d1f] border border-black/[0.06]'
                         }`}
                       >
-                        #{b.boxNumber}
+                        #{getBoxDisplayNumber(b)}
                       </button>
                     ))}
                 </div>
