@@ -40,7 +40,13 @@
     margin: 8mm 10mm;
   }
 
-  /* Box labels use A5 landscape (210x148mm) — one label per sheet */
+  /* Box labels: 2x A5 landscape (210x148mm each) stacked vertically on 1 A4 portrait sheet (210x297mm) */
+  @page box-label-a4 {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Single A5 landscape fallback */
   @page box-label {
     size: A5 landscape;
     margin: 0;
@@ -94,7 +100,28 @@
     page-break-inside: avoid;
   }
 
-  /* Box label sheets use A5 landscape with zero margin */
+  /* Box label sheets: 2x A5 landscape stacked on A4 portrait with zero margin */
+  .print-a4-two-up-sheet {
+    page: box-label-a4;
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-a4-two-up-sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Single A5 landscape sheet */
   .print-page-a5-landscape {
     page: box-label;
   }

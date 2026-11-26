@@ -19,18 +19,22 @@ import { getBoxDisplayNumber } from '../utils/boxDisplayUtils';
  * Internal layout uses flex so the giant number fills the middle without
  * overflowing the border (footer/divider always stay inside).
  */
-export const BoxLabel = ({ box, isPrintMode = false }) => {
+export const BoxLabel = ({ box, isPrintMode = false, fitA4Sheet = false }) => {
   if (!box) return null;
 
   const headerTitle = box.category === 'MATERIAL' ? 'MATERIAL BOX' : 'SAMPLE BOX';
   const displayNum = getBoxDisplayNumber(box);
   const locationText = `${box.rackName || ''}  |  ${box.rackDescription || box.location || ''}`;
 
+  const printSizeClass = fitA4Sheet
+    ? 'w-full max-w-[460px] aspect-[210/148] p-2.5 print:w-[210mm] print:h-[148mm] print:max-w-none print:p-[6mm] print:m-0 break-inside-avoid'
+    : 'w-full max-w-[460px] aspect-[210/148] p-2.5 print:w-[210mm] print:h-[148mm] print:max-w-none print:p-[6mm] print:m-0 break-inside-avoid print-page-a5-landscape';
+
   return (
     <div
       className={`bg-white text-black font-sans box-border ${
         isPrintMode
-          ? 'w-full max-w-[460px] aspect-[210/148] p-2.5 print:w-[210mm] print:h-[148mm] print:max-w-none print:p-[6mm] print:m-0 break-inside-avoid print-page-a5-landscape'
+          ? printSizeClass
           : 'w-full max-w-[460px] aspect-[210/148] p-2.5 shadow-xl rounded-none'
       }`}
       style={{ boxSizing: 'border-box', fontFamily: 'Arial, Helvetica, sans-serif' }}
