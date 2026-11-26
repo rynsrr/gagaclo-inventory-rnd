@@ -837,9 +837,12 @@ export const Warehouse3DView = ({
       interactiveRackMeshes.push(rackSprite);
 
       // 4. Place 3D Boxes with the Official GAGACLO Label on Front Face
-      rackBoxes.forEach((boxObj, index) => {
+      const sortedRackBoxes = [...rackBoxes].sort((a, b) => Number(a.boxNumber) - Number(b.boxNumber));
+      sortedRackBoxes.forEach((boxObj, index) => {
         const colIdx = index % cols;
-        const rowIdx = Math.floor(index / cols);
+        const rawRowIdx = Math.floor(index / cols);
+        // Untuk Lemari, urutan box dimulai dari rak paling ATAS (1A, 1B di atas -> 1I, 1J di bawah)
+        const rowIdx = isLemari ? Math.max(0, (rows - 1) - rawRowIdx) : rawRowIdx;
 
         // Position coordinates in rackGroup local space
         const localX = isLemari
